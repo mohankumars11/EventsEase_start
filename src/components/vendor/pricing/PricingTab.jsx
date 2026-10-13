@@ -6,8 +6,8 @@
  * trade keeps SambramoPricingStudio until it is ported, so nothing that
  * works today changes for them.
  */
-import { useMemo, useState } from 'react'
-import { Loader2, Sparkles, ArrowRight, CircleAlert, Hourglass, CircleHelp, CheckCircle2, ChevronRight, X } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { Loader2, Sparkles, ArrowRight, CircleAlert, Hourglass, CircleHelp, CheckCircle2, ChevronRight, X, ArrowLeft, MapPin, Package, CalendarClock, SlidersHorizontal } from 'lucide-react'
 import PricingControlCenter, { SeasonalUpdate } from './PricingControlCenter'
 import TradePricing from './TradePricing'
 import { useEngineReady, onEngine } from '../../../lib/tradeEngine'
@@ -21,6 +21,7 @@ import { buildListingPayload } from '../anchor/payload'
 import { rupees } from '../../../lib/tierPackages'
 import { supabase } from '../../../lib/supabase'
 import { useToast, friendlyError } from '../../../context/ToastContext'
+import SambramoTradePictogram from '../SambramoTradePictogram'
 
 const MODEL_UNIT = { hour: '/hr', multi_day: '/day' }
 const MODEL_LABEL = { hour: 'Per hour', session: 'Per session', event: 'Per event', half_day: 'Half-day', full_day: 'Full-day', multi_day: 'Multi-day' }
@@ -31,26 +32,205 @@ const TRAVEL = { included_radius: 'Included within your area', flat: 'Flat outst
 const label = id => ADDONS_V3.find(a => a.id === id)?.label ?? id
 const title = t => t.charAt(0) + t.slice(1).toLowerCase()
 
+const statusCopy = {
+  LIVE: { label: 'Live', tone: 'bg-emerald-50 text-emerald-800 ring-emerald-200' },
+  UNDER_REVIEW: { label: 'In review', tone: 'bg-amber-50 text-amber-800 ring-amber-200' },
+  ACTION_REQUIRED: { label: 'Action needed', tone: 'bg-rose-50 text-rose-800 ring-rose-200' },
+  REJECTED: { label: 'Changes needed', tone: 'bg-rose-50 text-rose-800 ring-rose-200' },
+  DRAFT: { label: 'Draft', tone: 'bg-violet-50 text-violet-800 ring-violet-200' },
+  ARCHIVED: { label: 'Hidden', tone: 'bg-slate-100 text-slate-600 ring-slate-200' },
+  NOT_CONFIGURED: { label: 'Setup needed', tone: 'bg-slate-100 text-slate-600 ring-slate-200' },
+}
+const statusGroup = status => status === 'LIVE' ? 'live'
+  : ['UNDER_REVIEW', 'ACTION_REQUIRED', 'REJECTED'].includes(status) ? 'review' : 'draft'
+const shortDate = value => value ? new Date(value).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : ''
+
 export default function PricingTab({ vendor, services = [], onOpenListings, onEditListing, onOpenPayout }) {
   const [helpOpen, setHelpOpen] = useState(false)
+  const [selectedServiceId, setSelectedServiceId] = useState(null)
+  const [listingMeta, setListingMeta] = useState({ byId: {}, packagesById: {}, nextPriceDate: null, loading: true })
   const engineReady = useEngineReady()
   const anchors = services.filter(s => hasProfileFor(s.category))
   const engine = engineReady ? services.filter(s => onEngine(s.category)) : []
   const others = services.filter(s => !hasProfileFor(s.category) && !engine.includes(s))
-  if (engineReady === null && services.some(s => onEngine(s.category))) return <div className="flex justify-center py-10"><Loader2 className="animate-spin text-plum-600" /></div>
-  if (!anchors.length && !engine.length) return <SambramoPricingStudio vendor={vendor} services={services} onOpenListings={onOpenListings} />
-  return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between gap-3 rounded-[22px] bg-gradient-to-br from-plum-50 to-white p-4 ring-1 ring-plum-100">
-        <div className="min-w-0">
-          <h1 className="text-[clamp(1.35rem,6vw,1.6rem)] font-extrabold leading-tight tracking-tight text-plum-950">Pricing & Listings</h1>
-          <p className="mt-1 text-[13px] text-ink/60">Manage your services, packages and rates.</p>
-        </div>
-        <button type="button" onClick={() => setHelpOpen(true)} aria-label="Pricing setup help"
-          className="flex h-11 shrink-0 items-center gap-2 rounded-full border border-plum-200 bg-white px-3.5 text-[13px] font-extrabold text-plum-700 shadow-sm">
-          <CircleHelp size={19} /> Help
-        </button>
+  const selectedService = services.find(s => s.id === selectedServiceId) ?? null
+
+  useEffect(() => {
+    let alive = true
+    const ids = services.map(s => s.id).filter(Boolean)
+    if (!ids.length) {
+      setListingMeta({ byId: {}, packagesById: {}, nextPriceDate: null, loading: false })
+      return () => { alive = false }
+    }
+    setListingMeta(s => ({ ...s, loading: true }))
+    Promise.all([
+      supabase.from('sambramo_listing_versions')
+        .select('vendor_service_id,version,status,seasonal_window_id,price_locked_until,published_at')
+        .in('vendor_service_id', ids).order('version', { ascending: false }),
+      supabase.from('sambramo_trade_packages')
+        .select('id,vendor_service_id,status,trade_inputs,commercial_inputs,calculation_snapshot')
+        .in('vendor_service_id', ids),
+      supabase.from('sambramo_catering_packages')
+        .select('id,vendor_service_id,status')
+        .in('vendor_service_id', ids),
+    ]).then(([versionsRes, packagesRes, cateringRes]) => {
+      if (!alive) return
+      const versions = versionsRes.data ?? []
+      const packages = packagesRes.data ?? []
+      const catering = cateringRes.data ?? []
+      const byId = {}
+      for (const id of ids) {
+        const regular = versions.filter(v => v.vendor_service_id === id && !v.seasonal_window_id)
+        const latest = regular[0] ?? null
+        const ownPackages = [...packages.filter(p => p.vendor_service_id === id), ...catering.filter(p => p.vendor_service_id === id)]
+        const fallback = ownPackages.some(p => ['LIVE', 'ACTIVE'].includes(String(p.status).toUpperCase())) ? 'LIVE'
+          : ownPackages.some(p => ['UNDER_REVIEW', 'ACTION_REQUIRED', 'REJECTED'].includes(String(p.status).toUpperCase())) ? 'UNDER_REVIEW'
+          : ownPackages.length ? 'DRAFT' : 'NOT_CONFIGURED'
+        byId[id] = latest?.status ?? fallback
+      }
+      const packagesById = {}
+      for (const p of [...packages, ...catering]) {
+        if (!p.vendor_service_id) continue
+        packagesById[p.vendor_service_id] = (packagesById[p.vendor_service_id] ?? 0) + (p.status === 'ARCHIVED' ? 0 : 1)
+      }
+      const futureLocks = versions.map(v => v.price_locked_until).filter(d => d && new Date(d) > new Date()).sort()
+      setListingMeta({ byId, packagesById, nextPriceDate: futureLocks[0] ?? null, loading: false })
+    }).catch(() => {
+      if (alive) setListingMeta(s => ({ ...s, loading: false }))
+    })
+    return () => { alive = false }
+  }, [services])
+
+  if (engineReady === null && services.some(s => onEngine(s.category))) {
+    return <div className="flex justify-center py-10"><Loader2 className="animate-spin text-plum-600" /></div>
+  }
+
+  const counts = services.reduce((out, service) => {
+    const status = listingMeta.byId[service.id] ?? 'NOT_CONFIGURED'
+    out[statusGroup(status)] += 1
+    return out
+  }, { live: 0, review: 0, draft: 0 })
+
+  const detailHeader = selectedService ? (
+    <div className="mb-4 flex items-center gap-3">
+      <button type="button" onClick={() => setSelectedServiceId(null)} aria-label="Back to all listings"
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-plum-800 ring-1 ring-ink/[0.08]">
+        <ArrowLeft size={19} />
+      </button>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-[18px] font-extrabold text-plum-950">{selectedService.name || selectedService.category}</p>
+        <p className="text-[12px] text-ink/55">Listing details · packages · terms & pricing</p>
       </div>
+      <button type="button" onClick={() => setHelpOpen(true)} aria-label="Pricing setup help"
+        className="flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-full border border-plum-200 bg-white px-3 text-[12px] font-extrabold text-plum-700">
+        <CircleHelp size={18} /> Help
+      </button>
+    </div>
+  ) : null
+
+  return (
+    <div className="space-y-4 pb-5">
+      {!selectedService ? (
+        <>
+          <section className="relative -mx-4 -mt-4 overflow-hidden rounded-b-[30px] bg-gradient-to-br from-plum-800 via-plum-700 to-[#321067] px-5 pb-7 pt-5 text-white sm:-mx-6">
+            <div className="pointer-events-none absolute -right-12 -top-10 h-44 w-44 rounded-full border border-white/10 bg-white/[0.04]" />
+            <div className="relative flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-white/60">Sambramo partner studio</p>
+                <h1 className="mt-1 text-[clamp(1.45rem,6vw,1.8rem)] font-extrabold leading-tight tracking-tight">Pricing & Listings</h1>
+                <p className="mt-1 text-[13px] text-white/75">Manage your services, packages and rates.</p>
+              </div>
+              <button type="button" onClick={() => setHelpOpen(true)} aria-label="Pricing help and setup guidance"
+                className="flex h-11 shrink-0 items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3.5 text-[13px] font-extrabold text-white shadow-sm backdrop-blur">
+                <CircleHelp size={19} /> Help
+              </button>
+            </div>
+            <div className="relative mt-5 grid grid-cols-3 gap-2 rounded-[22px] bg-white p-3 text-plum-950 shadow-[0_12px_30px_rgba(20,0,50,0.18)]">
+              <StatusMetric label="Live" count={counts.live} glyph="✓" tone="text-emerald-700 bg-emerald-50" />
+              <StatusMetric label="In review" count={counts.review} glyph="◷" tone="text-amber-700 bg-amber-50" />
+              <StatusMetric label="Drafts" count={counts.draft} glyph="▤" tone="text-violet-700 bg-violet-50" />
+            </div>
+          </section>
+
+          <button type="button" onClick={() => setSelectedServiceId(services[0]?.id ?? null)}
+            disabled={!listingMeta.nextPriceDate}
+            className="flex w-full items-center gap-3 rounded-[22px] bg-gradient-to-r from-plum-50 to-white p-4 text-left ring-1 ring-plum-100 disabled:cursor-default">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-plum-100 text-plum-700"><CalendarClock size={23} /></span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[13.5px] font-extrabold text-plum-950">Price update window</span>
+              <span className="mt-0.5 block text-[14px] font-extrabold text-plum-800">{listingMeta.nextPriceDate ? `Next eligible price change · ${shortDate(listingMeta.nextPriceDate)}` : 'Your price-update dates appear here once a listing is published'}</span>
+              <span className="mt-0.5 block text-[11.5px] text-ink/55">Regular prices follow the 15-day update policy. An approved seasonal window, when available, is shown inside the listing.</span>
+            </span>
+            <ChevronRight size={19} className="shrink-0 text-plum-700" />
+          </button>
+
+          <div className="flex items-center justify-between gap-3 px-1">
+            <div>
+              <h2 className="text-[21px] font-extrabold tracking-tight text-plum-950">Your listings</h2>
+              <p className="text-[12px] text-ink/50">{services.length} service{services.length === 1 ? '' : 's'} · status from saved listing data</p>
+            </div>
+            <button type="button" onClick={() => onOpenListings?.()} className="flex h-10 shrink-0 items-center gap-1.5 rounded-full border border-plum-200 bg-white px-3 text-[12px] font-extrabold text-plum-700">
+              <SlidersHorizontal size={15} /> Manage
+            </button>
+          </div>
+
+          {services.length ? (
+            <div className="space-y-3">
+              {services.map(service => {
+                const status = listingMeta.byId[service.id] ?? 'NOT_CONFIGURED'
+                const look = statusCopy[status] ?? statusCopy.NOT_CONFIGURED
+                const packCount = listingMeta.packagesById[service.id] ?? 0
+                const configName = service.category || service.trade || 'Service'
+                return (
+                  <button key={service.id} type="button" onClick={() => setSelectedServiceId(service.id)}
+                    className="group flex w-full items-center gap-3 rounded-[24px] bg-white p-3.5 text-left ring-1 ring-ink/[0.07] shadow-[0_6px_22px_rgba(30,15,55,0.04)] transition active:scale-[0.995]">
+                    <span className="flex w-[92px] shrink-0 flex-col items-center gap-1.5">
+                      <span className="flex h-[82px] w-[82px] items-center justify-center overflow-hidden rounded-[22px] bg-gradient-to-br from-plum-50 to-violet-100 ring-1 ring-plum-100">
+                        <SambramoTradePictogram trade={configName} size="sm" showSparkle={false} title={false} />
+                      </span>
+                      <span className="max-w-full text-center text-[10.5px] font-bold leading-tight text-ink/70">{configName}</span>
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="flex flex-wrap items-center gap-2">
+                        <span className="text-[15px] font-extrabold text-plum-950">{service.name || configName}</span>
+                        <span className={`rounded-full px-2.5 py-1 text-[10.5px] font-extrabold ring-1 ${look.tone}`}>{look.label}</span>
+                      </span>
+                      <span className="mt-1.5 flex items-center gap-1.5 text-[11.5px] text-ink/55"><MapPin size={13} className="shrink-0 text-plum-600" />{service.city || service.location || vendor?.city || 'Service location not set'}</span>
+                      <span className="mt-2 inline-flex items-center gap-1.5 rounded-xl bg-plum-50 px-2.5 py-1.5 text-[11.5px] font-bold text-plum-800">
+                        <Package size={14} />{listingMeta.loading ? 'Checking packages…' : packCount ? `${packCount} package${packCount === 1 ? '' : 's'}` : 'Finish package setup'}
+                        <ChevronRight size={14} className="ml-1" />
+                      </span>
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          ) : (
+            <section className="rounded-[24px] bg-white p-5 text-center ring-1 ring-ink/[0.07]">
+              <p className="text-[16px] font-extrabold text-plum-950">Your pricing starts with a listing</p>
+              <p className="mt-1 text-[12.5px] text-ink/60">Add a service first, then configure its packages, prices and booking rules.</p>
+              <button type="button" onClick={onOpenListings} className="mt-4 rounded-full bg-plum-700 px-5 py-3 text-[13px] font-extrabold text-white">Open my listings</button>
+            </section>
+          )}
+        </>
+      ) : (
+        <>
+          {detailHeader}
+          {anchors.some(s => s.id === selectedService.id) ? (
+            <AnchorPricing service={selectedService} vendor={vendor}
+              onEdit={() => onEditListing?.(selectedService)}
+              onOpenPayout={onOpenPayout} />
+          ) : engine.some(s => s.id === selectedService.id) ? (
+            <TradePricing service={selectedService}
+              onEdit={() => onEditListing?.(selectedService)}
+              onOpenPayout={onOpenPayout} />
+          ) : (
+            <SambramoPricingStudio vendor={vendor} services={[selectedService]} initialServiceId={selectedService.id}
+              onOpenListings={onOpenListings} onReturnToPricing={() => setSelectedServiceId(null)} />
+          )}
+        </>
+      )}
+
       {helpOpen && (
         <div className="fixed inset-0 z-[100] flex items-end justify-center bg-ink/45 p-0 sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="pricing-help-title">
           <button type="button" aria-label="Close help" onClick={() => setHelpOpen(false)} className="absolute inset-0 cursor-default" />
@@ -87,19 +267,20 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
           </section>
         </div>
       )}
-      {anchors.map(s => <AnchorPricing key={s.id} service={s} onEdit={() => onEditListing?.(s)} onOpenPayout={onOpenPayout} />)}
-      {engine.map(s => <TradePricing key={s.id} service={s} onEdit={() => onEditListing?.(s)} onOpenPayout={onOpenPayout} />)}
-      {others.length > 0 && (
-        <div>
-          <p className="mb-2 px-1 text-[12px] font-extrabold uppercase tracking-[0.12em] text-ink/45">Your other services</p>
-          <SambramoPricingStudio vendor={vendor} services={others} onOpenListings={onOpenListings} />
-        </div>
-      )}
     </div>
   )
 }
 
-function AnchorPricing({ service, onEdit, onOpenPayout }) {
+function StatusMetric({ label, count, glyph, tone }) {
+  return (
+    <div className="flex min-w-0 items-center gap-2 border-r border-ink/[0.06] px-1.5 last:border-0">
+      <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-full text-[18px] font-black ${tone}`}>{glyph}</span>
+      <span className="min-w-0"><span className="block truncate text-[9px] font-extrabold uppercase tracking-wide text-ink/50">{label}</span><span className="block text-[20px] font-black leading-tight text-plum-950">{count}</span></span>
+    </div>
+  )
+}
+
+function AnchorPricing({ service, vendor, onEdit, onOpenPayout }) {
   const toast = useToast()
   const d = useAnchorPricing(service)
   const [sheet, setSheet] = useState(null)       // 'preview' | 'seasonal' | {tier}
