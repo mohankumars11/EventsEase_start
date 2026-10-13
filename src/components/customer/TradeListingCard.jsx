@@ -143,12 +143,16 @@ export default function TradeListingCard({ listing, tradeName, onPick, showBooki
             <div className="flex snap-x snap-mandatory items-start gap-3">
               {packages.map(pkg => {
                 const PackageSurface = onPick ? "button" : "div"
+                const popular = pkg.is_popular === true || pkg.is_featured === true
                 return (
                   <PackageSurface key={pkg.key ?? pkg.name} type={onPick ? "button" : undefined}
                     onClick={onPick ? () => onPick(pkg) : undefined}
                     className={"relative flex w-[78%] max-w-[300px] shrink-0 snap-center flex-col rounded-[22px] bg-gradient-to-b from-plum-50 to-white p-4 text-left ring-1 ring-plum-100 " + (onPick ? "active:scale-[0.99]" : "")}>
-                    {String(pkg.tier ?? pkg.key ?? "").toUpperCase() === "SIGNATURE" && (
-                      <span className="absolute right-3 top-3 rounded-full bg-plum-700 px-2.5 py-1 text-[9px] font-extrabold uppercase text-white">★ Popular</span>
+                    {listing.is_live === false && pkg.status && (
+                      <span className={"absolute right-3 top-3 rounded-full px-2.5 py-1 text-[8px] font-extrabold uppercase " + (pkg.status === "LIVE" ? "bg-emerald-100 text-emerald-800" : pkg.status === "DRAFT" ? "bg-violet-100 text-violet-800" : "bg-amber-100 text-amber-900")}>{String(pkg.status).replace(/_/g, " ")}</span>
+                    )}
+                    {popular && (
+                      <span className={"absolute right-3 rounded-full bg-plum-700 px-2.5 py-1 text-[9px] font-extrabold uppercase text-white " + (listing.is_live === false && pkg.status ? "top-10" : "top-3")}>★ Partner pick</span>
                     )}
                     <p className="pr-16 text-[14.5px] font-extrabold text-ink">{pkg.name}</p>
                     {pkg.hours && <p className="mt-0.5 text-[11.5px] font-bold text-ink/50">{pkg.hours} hours</p>}
