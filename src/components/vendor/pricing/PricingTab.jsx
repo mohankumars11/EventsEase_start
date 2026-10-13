@@ -52,7 +52,7 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
   const [selectedServiceId, setSelectedServiceId] = useState(null)
   const [legacyScreen, setLegacyScreen] = useState('details')
   const [filterStatus, setFilterStatus] = useState('all')
-  const [listingMeta, setListingMeta] = useState({ byId: {}, packagesById: {}, priceById: {}, priceUnitById: {}, nextPriceDate: null, nextPriceServiceId: null, loading: true })
+  const [listingMeta, setListingMeta] = useState({ byId: {}, packagesById: {}, priceById: {}, priceUnitById: {}, packageDetailsById: {}, priceLockById: {}, nextPriceDate: null, nextPriceServiceId: null, loading: true })
   const engineReady = useEngineReady()
   const anchors = services.filter(s => hasProfileFor(s.category))
   const engine = engineReady ? services.filter(s => onEngine(s.category)) : []
@@ -63,7 +63,7 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
     let alive = true
     const ids = services.map(s => s.id).filter(Boolean)
     if (!ids.length) {
-      setListingMeta({ byId: {}, packagesById: {}, priceById: {}, priceUnitById: {}, packageDetailsById: {}, nextPriceDate: null, nextPriceServiceId: null, loading: false })
+      setListingMeta({ byId: {}, packagesById: {}, priceById: {}, priceUnitById: {}, packageDetailsById: {}, priceLockById: {}, nextPriceDate: null, nextPriceServiceId: null, loading: false })
       return () => { alive = false }
     }
     setListingMeta(s => ({ ...s, loading: true }))
@@ -96,6 +96,7 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
       const priceById = {}
       const priceUnitById = {}
       const packageDetailsById = {}
+      const priceLockById = {}
       for (const p of packages) {
         if (!p.vendor_service_id) continue
         packagesById[p.vendor_service_id] = (packagesById[p.vendor_service_id] ?? 0) + (p.status === 'ARCHIVED' ? 0 : 1)
@@ -130,7 +131,14 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
         ...packages.filter(p => p.status === 'LIVE' && p.price_locked_until && new Date(p.price_locked_until) > new Date())
           .map(p => ({ date: p.price_locked_until, serviceId: p.vendor_service_id })),
       ].sort((a, b) => new Date(a.date) - new Date(b.date))
-      setListingMeta({ byId, packagesById, priceById, priceUnitById, packageDetailsById, nextPriceDate: futureLocks[0]?.date ?? null, nextPriceServiceId: futureLocks[0]?.serviceId ?? null, loading: false })
+      for (const id of ids) {
+        const listingLock = versions.find(v => v.vendor_service_id === id && !v.seasonal_window_id && v.status === 'LIVE')?.price_locked_until
+        const packageLock = packages.filter(p => p.vendor_service_id === id && p.status === 'LIVE' && p.price_locked_until)
+          .map(p => p.price_locked_until).sort((a, b) => new Date(a) - new Date(b))[0]
+        const lock = [listingLock, packageLock].filter(value => value && new Date(value) > new Date()).sort((a, b) => new Date(a) - new Date(b))[0]
+        if (lock) priceLockById[id] = lock
+      }
+      setListingMeta({ byId, packagesById, priceById, priceUnitById, packageDetailsById, priceLockById, nextPriceDate: futureLocks[0]?.date ?? null, nextPriceServiceId: futureLocks[0]?.serviceId ?? null, loading: false })
     }).catch(() => {
       if (alive) setListingMeta(s => ({ ...s, loading: false }))
     })
@@ -149,7 +157,7 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
 
   const detailHeader = selectedService ? (
     <div className="mb-4 flex items-center gap-3">
-      <button type="button" onClick={() => setSelectedServiceId(null)} aria-label="Back to all listings"
+      <button type="button" onClick={() => { setSelectedServiceId(null); setLegacyScreen('details') }} aria-label="Back to all listings"
         className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-plum-800 ring-1 ring-ink/[0.08]">
         <ArrowLeft size={19} />
       </button>
@@ -233,7 +241,7 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
                 const packCount = listingMeta.packagesById[service.id] ?? 0
                 const configName = service.category || service.trade || 'Service'
                 return (
-                  <button key={service.id} type="button" onClick={() => setSelectedServiceId(service.id)}
+                  <button key={service.id} type="button" onClick={() => { setSelectedServiceId(service.id); setLegacyScreen('details') }}
                     className="group flex w-full items-center gap-3 rounded-[24px] bg-white p-3.5 text-left ring-1 ring-ink/[0.07] shadow-[0_6px_22px_rgba(30,15,55,0.04)] transition active:scale-[0.995]">
                     <span className="flex w-[92px] shrink-0 flex-col items-center gap-1.5">
                       <span className="flex h-[82px] w-[82px] items-center justify-center overflow-hidden rounded-[22px] bg-gradient-to-br from-plum-50 to-violet-100 ring-1 ring-plum-100">
