@@ -32,6 +32,7 @@ declare
   v_additional_duration_rate numeric;
   v_setup_fee numeric;
   v_teardown_fee numeric;
+  v_has_base boolean := false;
 begin
   select * into v_parent
     from public.sambramo_trade_packages p
@@ -59,8 +60,9 @@ begin
      and b.status = 'active'
    order by b.version desc
    limit 1;
+  v_has_base := found;
 
-  if found then
+  if v_has_base then
     v_locked_until := greatest(
       coalesce(v_parent.price_locked_until, '-infinity'::timestamptz),
       coalesce(coalesce(v_base.effective_from, v_base.created_at) + make_interval(days => v_lock_days), '-infinity'::timestamptz)
@@ -145,6 +147,10 @@ begin
         raise exception 'Published add-on prices are protected until %. Add-on rates and quantities cannot change during the configured price-lock window.', v_locked_until::date;
       end if;
     end if;
+  end if;
+
+  if not v_has_base and v_parent.price_locked_until is not null and v_parent.price_locked_until > now() then
+    raise exception 'Published prices are protected until %. The saved base price is unavailable for safe comparison; please contact Sambramo support rather than submitting a new rate.', v_parent.price_locked_until::date;
   end if;
 
   v_package := jsonb_set(
