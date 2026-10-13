@@ -13,7 +13,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Loader2, ArrowRight, CircleAlert, Hourglass, Lock, Pencil, Eye, Sparkles, RefreshCw } from 'lucide-react'
 import ReadinessChecklist from './ReadinessChecklist'
-import { SeasonalUpdate } from './PricingControlCenter'
+import PricingControlCenter, { SeasonalUpdate } from './PricingControlCenter'
 import { Sheet } from '../anchor/ui'
 import { supabase } from '../../../lib/supabase'
 import { rupees } from '../../../lib/tierPackages'
@@ -105,6 +105,7 @@ export default function TradePricing({ service, vendor, onEdit, onOpenPayout }) 
      before the migration and no better, which is the honest failure. */
   const [preview, setPreview] = useState(false)
   const [previewData, setPreviewData] = useState(null)
+  const [previewRequest, setPreviewRequest] = useState(0)
   const [previewError, setPreviewError] = useState('')
   const [previewMedia, setPreviewMedia] = useState({ loading: false, rows: [], unavailable: false })
   const [selectedPreviewPackage, setSelectedPreviewPackage] = useState(null)
@@ -133,7 +134,7 @@ export default function TradePricing({ service, vendor, onEdit, onOpenPayout }) 
       }
     })()
     return () => { alive = false }
-  }, [preview, service.id])
+  }, [preview, service.id, previewRequest])
 
   useEffect(() => {
     if (!preview || !vendor?.id) {
@@ -221,132 +222,178 @@ export default function TradePricing({ service, vendor, onEdit, onOpenPayout }) 
   }
 
   const v = d.current
-  /* The platform fee used to be read off calculation_snapshot here, and
-     inferred by dividing take-home by customer price when that was
-     missing, so this screen could print customer totals beside the
-     partner's rates. Partner screens show the partner's rate only, so
-     there is nothing left to derive the fee for -- and a rate a screen
-     never computes is a rate it cannot leak. */
-  const locked = d.live?.price_locked_until && new Date(d.live.price_locked_until) > new Date()
-  const [label, tone] = STATUS[v.status] ?? STATUS.DRAFT
+  const profile = v.profile && typeof v.profile === 'object' ? v.profile : {}
+  const booking = v.booking_rules && typeof v.booking_rules === 'object' ? v.booking_rules : {}
+  const travel = v.travel_rules && typeof v.travel_rules === 'object' ? v.travel_rules : {}
+  const asList = value => Array.isArray(value) ? value : typeof value === 'string' ? value.split(',').map(item => item.trim()).filter(Boolean) : []
+  const displayValue = value => typeof value === 'string' || typeof value === 'number' ? String(value) : value?.label ?? value?.name ?? value?.value ?? value?.id ?? ''
+  const positiveNumber = value => value !== undefined && value !== null && value !== '' && Number.isFinite(Number(value)) && Number(value) > 0 ? Number(value) : null
+  const humanize = value => String(value || '').replace(/[_-]+/g, ' ').replace(/\b\w/g, char => char.toUpperCase())
+  const modelNames = { hour: 'Per hour', session: 'Per session', event: 'Per event', half_day: 'Half-day', full_day: 'Full-day', multi_day: 'Multi-day' }
+  const modelUnits = { hour: '/hr', session: '/session', event: '/event', half_day: '/half-day', full_day: '/day', multi_day: '/day' }
+  const controlPackages = d.packages.map((item, index) => {
+    const inputs = item.trade_inputs && typeof item.trade_inputs === 'object' ? item.trade_inputs : {}
+    const commercial = item.commercial_inputs && typeof item.commercial_inputs === 'object' ? item.commercial_inputs : {}
+    const snapshot = item.calculation_snapshot && typeof item.calculation_snapshot === 'object' ? item.calculation_snapshot : {}
+    const inclusions = asList(commercial.inclusions ?? inputs.inclusions).map(displayValue).filter(Boolean)
+    const rate = positiveNumber(inputs.take_home_paise ?? snapshot.take_home_paise ?? item.take_home_paise)
+    const customerPrice = positiveNumber(inputs.customer_paise ?? snapshot.customer_paise ?? item.customer_paise)
+    const hours = positiveNumber(inputs.duration_hours ?? inputs.included_hours ?? snapshot.duration_hours)
+    return {
+      key: item.id ?? commercial.tier ?? item.name ?? String(index),
+      tier: commercial.tier ?? inputs.tier ?? item.name,
+      name: item.name || humanize(commercial.tier) || 'Package',
+      status: item.status,
+      price_paise: customerPrice,
+      take_home_paise: rate,
+      rate_paise: rate,
+      hours,
+      sessions: positiveNumber(inputs.included_sessions ?? snapshot.included_sessions),
+      inclusions,
+      description: item.description || commercial.description || inputs.description || '',
+      edited: inputs.edited_by_partner === true,
+      basis: snapshot.basis,
+    }
+  })
+  const controlModels = d.rules.map((rule, index) => {
+    const id = rule.model || rule.rule_kind || rule.id || ('model_' + index)
+    const includedHours = positiveNumber(rule.included_hours)
+    const minHours = positiveNumber(rule.min_hours)
+    const maxHours = positiveNumber(rule.max_hours)
+    const includedSessions = positiveNumber(rule.included_sessions)
+    const maxDays = positiveNumber(rule.multi_day?.max_days)
+    const ruleSummary = [
+      includedHours ? includedHours + ' hrs included' : null,
+      minHours ? 'min ' + minHours + ' hrs' : null,
+      maxHours ? 'max ' + maxHours + ' hrs' : null,
+      includedSessions ? includedSessions + ' session' + (includedSessions === 1 ? '' : 's') : null,
+      maxDays ? 'up to ' + maxDays + ' days' : null,
+    ].filter(Boolean).join(' · ') || 'Saved rate'
+    return {
+      id,
+      label: modelNames[id] || humanize(id),
+      customer_paise: positiveNumber(rule.customer_paise),
+      unit: modelUnits[id] || (rule.unit ? '/' + humanize(rule.unit) : ''),
+      rules: ruleSummary,
+    }
+  })
+  const controlAddons = d.addons.map((addon, index) => ({
+    id: addon.id || addon.addon_id || addon.label || String(index),
+    name: addon.label || addon.name || 'Optional extra',
+    paise: positiveNumber(addon.take_home_paise),
+    unit: humanize(addon.unit || 'per event'),
+    in: asList(addon.included_in).map(value => humanize(value)),
+  }))
+  const chargeRows = []
+  for (const rule of d.rules) {
+    const overtime = positiveNumber(rule.extra_hour_take_home_paise)
+    if (overtime) chargeRows.push({ k: 'Overtime · ' + (modelNames[rule.model] || humanize(rule.model)), v: rupees(overtime) + ' per hour' })
+    const extraSession = positiveNumber(rule.extra_session_take_home_paise)
+    if (extraSession) chargeRows.push({ k: 'Extra session · ' + (modelNames[rule.model] || humanize(rule.model)), v: rupees(extraSession) + ' each' })
+    if (rule.overtime_step_minutes) chargeRows.push({ k: 'Overtime increments', v: rule.overtime_step_minutes + '-minute steps after ' + (rule.overtime_grace_minutes || 0) + ' min' })
+  }
+  for (const charge of asList(booking.charges)) {
+    if (charge && typeof charge === 'object') chargeRows.push({
+      k: charge.label || charge.name || 'Booking charge',
+      v: positiveNumber(charge.take_home_paise) ? rupees(charge.take_home_paise) : displayValue(charge.value ?? charge.description) || 'As listed',
+    })
+  }
+  const travelModel = travel.model || travel.scope || travel.policy
+  const travelLabels = { included_radius: 'Included within your area', included: 'Included within your area', flat: 'Flat outstation fee', per_km: 'Per km beyond your area', customer_arranged: 'Customer arranges travel and stay', actuals_capped: 'Actuals, capped', custom: 'Custom quote' }
+  if (travelModel) chargeRows.push({ k: 'Travel', v: travelLabels[travelModel] || humanize(travelModel) })
+  const flatTravel = positiveNumber(travel.flat_take_home_paise)
+  if (flatTravel) chargeRows.push({ k: 'Outstation fee', v: rupees(flatTravel) })
+  const perKm = positiveNumber(travel.per_km_take_home_paise)
+  if (perKm) chargeRows.push({ k: 'Travel per km', v: rupees(perKm) + ' per km' })
+
+  const bookingRules = []
+  const pushRule = (label, value) => { if (value !== undefined && value !== null && value !== '') bookingRules.push({ k: label, v: value }) }
+  if (booking.instant !== undefined && booking.instant !== null) pushRule('Instant booking', booking.instant === true || booking.instant === 'true' ? 'On' : 'Off')
+  if (booking.custom_quotes !== undefined && booking.custom_quotes !== null) pushRule('Custom quotes', booking.custom_quotes === false ? 'Off' : 'On' + (booking.quote_hours ? ' · reply within ' + booking.quote_hours + ' hrs' : ''))
+  if (booking.advance_pct != null) pushRule('Advance payment', booking.advance_pct + '% at booking')
+  if (booking.payment_policy) pushRule('Payment terms', humanize(booking.payment_policy))
+  if (booking.min_notice_days != null) pushRule('Minimum notice', booking.min_notice_days + ' day' + (Number(booking.min_notice_days) === 1 ? '' : 's'))
+  if (booking.cancellation) pushRule('Cancellation', humanize(booking.cancellation))
+  if (booking.cancellation_details) pushRule('Cancellation details', booking.cancellation_details)
+  if (booking.reschedule_policy) pushRule('Rescheduling', humanize(booking.reschedule_policy))
+  if (booking.waiting?.free_minutes != null) pushRule('Waiting time', booking.waiting.free_minutes + ' min free')
+  if (booking.surcharge?.pct != null) pushRule('Surcharges', '+' + booking.surcharge.pct + '%')
+  if (booking.minimum_order != null) pushRule('Minimum order', String(booking.minimum_order))
+  const events = asList(profile.events ?? profile.event_types ?? profile.supported_events ?? profile.specialties).map(displayValue).filter(Boolean)
+  const languages = asList(profile.languages ?? profile.language).map(displayValue).filter(Boolean)
+  const formats = asList(profile.formats ?? profile.service_formats ?? profile.service_types).map(displayValue).filter(Boolean)
+  const cityValues = [profile.locality, profile.city, service.city, vendor?.area, vendor?.city].filter(Boolean).map(displayValue).filter(Boolean)
+  const city = cityValues.filter((value, index) => cityValues.indexOf(value) === index).join(', ')
+  const displayName = profile.stage_name || profile.display_name || profile.business_name || profile.name || vendor?.business_name || service.name || config.name
+  const years = profile.years ?? profile.years_experience ?? profile.years_active
+  const audience = profile.max_audience ?? profile.max_guests ?? profile.capacity
+  const controlData = {
+    status: v.status === 'REJECTED' ? 'ACTION_REQUIRED' : v.status,
+    version: v.version,
+    published_at: d.live?.published_at || v.published_at,
+    price_locked_until: d.live?.price_locked_until || v.price_locked_until,
+    now: new Date().toISOString(),
+    editable: !d.live,
+    seasonal: d.window ? { name: d.window.name, deadline: d.window.closes_at } : null,
+    packages: controlPackages,
+    listing: {
+      initials: String(displayName || 'S').slice(0, 2).toUpperCase(),
+      stage_name: displayName,
+      role: profile.role ? humanize(profile.role) : config.name,
+      years,
+      tagline: profile.tagline || profile.bio || profile.about || '',
+      city,
+      travel: travel.scope ? (/^\d+$/.test(String(travel.scope)) ? 'up to ' + travel.scope + ' km' : humanize(travel.scope)) : '',
+      languages: languages.join(' · '),
+      audience: audience != null && audience !== '' ? (Number.isFinite(Number(audience)) ? Number(audience).toLocaleString('en-IN') : String(audience)) : '',
+      formats: formats.join(', '),
+      events,
+    },
+    models: controlModels,
+    addons: controlAddons,
+    charges: chargeRows,
+    rules: bookingRules,
+  }
+  const controlBanner = (
+    <>
+      {(v.status === 'ACTION_REQUIRED' || v.status === 'REJECTED') ? (
+        <div className="flex gap-2.5 rounded-[20px] bg-rose-50 p-4 ring-1 ring-rose-200">
+          <CircleAlert size={17} className="mt-0.5 shrink-0 text-rose-600" />
+          <div><p className="text-[13.5px] font-extrabold text-rose-900">Sambramo asked for changes</p><p className="mt-0.5 text-[12.5px] text-rose-900/80">{v.review_note || 'Open your listing to see what to change.'}</p><button type="button" onClick={onEdit} className="mt-2 text-[12.5px] font-extrabold text-rose-800 underline">Update listing</button></div>
+        </div>
+      ) : null}
+      {(d.live && d.pending) ? <div className="flex gap-2.5 rounded-[20px] bg-amber-50 p-4 ring-1 ring-amber-200"><Hourglass size={17} className="mt-0.5 shrink-0 text-amber-700"/><p className="text-[12.5px] font-semibold text-amber-900">Version {d.pending.version} is with our team. Customers keep seeing your live prices until it is approved.</p></div> : null}
+      {d.seasonal.filter(item => item.status === 'LIVE').map(item => <div key={item.id} className="flex gap-2.5 rounded-[20px] bg-white p-4 ring-1 ring-amber-200"><Sparkles size={17} className="mt-0.5 shrink-0 text-amber-600"/><p className="text-[12.5px] font-semibold text-ink/75">Seasonal prices are live for {fmt(item.effective_from)} – {fmt(item.effective_to)}.</p></div>)}
+    </>
+  )
 
   return (
     <div className="space-y-3">
-      <div className="rounded-[22px] bg-gradient-to-br from-plum-700 to-plum-950 p-4 text-white">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-plum-200">{config.name} · v{v.version}</p>
-            <p className="mt-1 truncate text-[18px] font-extrabold">{v.profile?.display_name ?? service.name}</p>
-            {d.live?.published_at && <p className="text-[12px] text-plum-100">Live since {fmt(d.live.published_at)}</p>}
-          </div>
-          <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-extrabold ${tone}`}>{label}</span>
-        </div>
-        <div className="mt-3 flex gap-2">
-          <button type="button" onClick={onEdit}
-            className="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-full bg-white text-[13px] font-extrabold text-plum-800">
-            <Pencil size={14} /> Edit listing
-          </button>
-          {/* Was <a href="/book/s/..."> -- in a Capacitor WebView that is a
-              full page reload onto the live customer route, leaving the
-              partner on a customer screen with the partner tab bar still
-              underneath. And it was gated on d.live, so a partner who had
-              not published yet -- the one most likely to want a preview --
-              never saw the button at all. */}
-          <button type="button" onClick={() => setPreview(true)}
-            className="flex h-10 items-center gap-1.5 rounded-full bg-white/15 px-4 text-[13px] font-extrabold">
-            <Eye size={14} /> Preview
-          </button>
-        </div>
-      </div>
-
-      {(v.status === 'ACTION_REQUIRED' || v.status === 'REJECTED') && (
-        <div className="flex gap-2.5 rounded-[20px] bg-rose-50 p-4 ring-1 ring-rose-200">
-          <CircleAlert size={17} className="mt-0.5 shrink-0 text-rose-600" />
-          <div><p className="text-[13.5px] font-extrabold text-rose-900">Sambramo asked for changes</p>
-            <p className="mt-0.5 text-[12.5px] text-rose-900/80">{v.review_note || 'Open your listing to see what to change.'}</p>
-            <button type="button" onClick={onEdit} className="mt-2 text-[12.5px] font-extrabold text-rose-800 underline">Update listing</button></div>
-        </div>
-      )}
-      {d.live && d.pending && (
-        <div className="flex gap-2.5 rounded-[20px] bg-amber-50 p-4 ring-1 ring-amber-200">
-          <Hourglass size={17} className="mt-0.5 shrink-0 text-amber-700" />
-          <p className="text-[12.5px] font-semibold text-amber-900">Version {d.pending.version} is with our team. Customers keep seeing your live prices until it is approved.</p>
-        </div>
-      )}
-      {d.seasonal.filter(s => s.status === 'LIVE').map(s => (
-        <div key={s.id} className="flex gap-2.5 rounded-[20px] bg-white p-4 ring-1 ring-amber-200">
-          <Sparkles size={17} className="mt-0.5 shrink-0 text-amber-600" />
-          <p className="text-[12.5px] font-semibold text-ink/75">Seasonal prices are live for {fmt(s.effective_from)} – {fmt(s.effective_to)}.</p>
-        </div>
-      ))}
-      {d.live && (
-        <section className="rounded-[22px] bg-gradient-to-r from-plum-50 via-white to-violet-50 p-4 ring-1 ring-plum-100">
-          <div className="flex items-start gap-3">
-            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-plum-100 text-plum-700"><Lock size={20} /></span>
-            <div className="min-w-0 flex-1">
-              <p className="text-[13.5px] font-extrabold text-plum-950">Price update window</p>
-              {locked
-                ? <p className="mt-1 text-[13px] font-extrabold text-plum-800">Next eligible price change in {Math.max(0, Math.ceil((new Date(d.live.price_locked_until).getTime() - Date.now()) / 86400000))} day(s) · {fmt(d.live.price_locked_until)}</p>
-                : <p className="mt-1 text-[13px] font-extrabold text-plum-800">Regular price editing is available</p>}
-              <p className="mt-1 text-[11.5px] leading-relaxed text-ink/55">Published prices follow the 15-day change policy. New versions are reviewed before replacing live prices; confirmed bookings keep their agreed rate.</p>
-              {d.window && <p className="mt-2 rounded-xl bg-amber-50 px-3 py-2 text-[11.5px] font-bold text-amber-900 ring-1 ring-amber-200">{d.window.name} is open until {fmt(d.window.closes_at)}.</p>}
-            </div>
-          </div>
-          <button type="button" onClick={d.window ? () => setSheet('seasonal') : locked ? undefined : onEdit}
-            disabled={locked && !d.window}
-            className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-plum-700 to-violet-600 px-4 text-[13px] font-extrabold text-white shadow-sm disabled:bg-ink/10 disabled:text-ink/45 disabled:shadow-none">
-            {d.window ? 'Edit prices in this update window' : locked ? `Price editing opens on ${fmt(d.live.price_locked_until)}` : 'Edit prices'}
-            <ArrowRight size={15} />
-          </button>
-        </section>
-      )}
-
-      {d.readiness?.items && <ReadinessChecklist state={d.readiness.state} items={d.readiness.items} quotesOk={d.readiness.quotes_ok}
-        onOpen={item => (item.id === 'payout' ? onOpenPayout?.() : onEdit?.())} />}
-
-      {d.rules.length > 0 && (
-        <Section title="How you charge">
-          {d.rules.map(r => <Line key={r.id} k={`${RULE_KINDS[r.rule_kind]?.label ?? r.rule_kind}${r.label ? ` · ${r.label}` : ''}`}
-            v={rupees(r.take_home_paise)} sub={`Your rate${r.min_qty ? ` · min ${r.min_qty}` : ''}${r.included_hours ? ` · ${r.included_hours} hrs incl.` : ''}${r.included_qty ? ` · ${r.included_qty} incl.` : ''}`} />)}
-        </Section>
-      )}
-      {d.items.length > 0 && (
-        <Section title={config.catalogue?.title ?? 'Your list'}>
-          {d.items.map(i => <Line key={i.id} k={i.name} v={i.take_home_paise ? rupees(i.take_home_paise) : 'On request'}
-            sub={[i.take_home_paise && `Your rate / ${i.unit}`, i.stock_qty != null && `${i.stock_qty} in stock`, i.lead_days && `${i.lead_days} days lead`].filter(Boolean).join(' · ')} />)}
-        </Section>
-      )}
-      {/* ── The same card Anchor & MC has, for every other trade ──────
-          This was <Line k={name} v={customer_paise}> -- a flat text list,
-          headlining a customer total derived from the platform fee, while
-          Anchor & MC got the carousel in its Control Center. Same app,
-          same partner, two different ideas of what a package is.
-
-          Now one component, and the figure is the partner's own rate. */}
-      {d.packages.length > 0 && (
-        <Section title="Your packages">
-          <PackageCarousel
-            packages={d.packages.map(p => ({
-              key: p.name?.toUpperCase(),
-              name: p.name,
-              ratePaise: p.trade_inputs?.take_home_paise,
-              unit: config.pricing?.unitLabel ?? 'per event',
-              meta: p.trade_inputs?.duration_hours ? `${p.trade_inputs.duration_hours} hrs` : null,
-              status: STATUS_LABEL[p.status] ?? p.status,
-              base: p.trade_inputs?.duration_hours
-                ? `${p.trade_inputs.duration_hours} hours of ${config.name}`
-                : `${config.name} for your event`,
-            }))}
-          />
-        </Section>
-      )}
-      {(d.addons.length > 0 || (v.booking_rules?.charges ?? []).length > 0) && (
-        <Section title="Extras & charges">
-          {d.addons.map(a => <Line key={a.id} k={a.label} v={a.take_home_paise ? rupees(a.take_home_paise) : 'On request'} sub={`Your rate · ${a.unit.replace('per_', 'per ')}`} />)}
-          {(v.booking_rules?.charges ?? []).map(c => <Line key={c.id} k={c.label} v={rupees(c.take_home_paise)} sub="Your rate" />)}
-        </Section>
-      )}
-
+      <PricingControlCenter
+        data={controlData}
+        banner={controlBanner}
+        onEdit={() => onEdit?.()}
+        onPayout={onOpenPayout}
+        onSeasonal={() => setSheet('seasonal')}
+        onPreview={() => setPreview(true)}
+        onViewPackage={key => {
+          const item = d.packages.find(pkg => [pkg.id, pkg.commercial_inputs?.tier, pkg.name].filter(Boolean).some(candidate => String(candidate) === String(key)))
+          if (!item) { setSelectedPreviewPackage(null); return }
+          const inputs = item.trade_inputs || {}
+          const snapshot = item.calculation_snapshot || {}
+          const included = asList(item.commercial_inputs?.inclusions ?? inputs.inclusions).map(displayValue).filter(Boolean)
+          const rate = positiveNumber(inputs.take_home_paise ?? snapshot.take_home_paise)
+          setSelectedPreviewPackage({
+            name: item.name,
+            rate_paise: rate,
+            customer_paise: rate,
+            hours: positiveNumber(inputs.duration_hours ?? inputs.included_hours ?? snapshot.duration_hours),
+            description: item.description || item.commercial_inputs?.description || '',
+            inclusions: included,
+            addons: [],
+          })
+        }}
+      />
       {preview && (
         <TradeCustomerPreviewScreen
           vendor={vendor}
@@ -366,7 +413,7 @@ export default function TradePricing({ service, vendor, onEdit, onOpenPayout }) 
           previewLoading={!previewData && !previewError}
           previewError={previewError}
           previewState={previewData?.status || previewData?.state}
-          onRetry={() => { setPreviewData(null); setPreviewError('') }}
+          onRetry={() => { setPreviewData(null); setPreviewError(''); setPreviewRequest(value => value + 1) }}
           media={previewMedia.rows.length ? previewMedia.rows : undefined}
           onClose={() => setPreview(false)}
           onAction={message => setPreviewActionNote(message)}
@@ -377,7 +424,7 @@ export default function TradePricing({ service, vendor, onEdit, onOpenPayout }) 
         {selectedPreviewPackage && (
           <div className="space-y-3">
             <div className="rounded-[22px] bg-gradient-to-br from-plum-50 to-white p-4 ring-1 ring-plum-100">
-              <p className="text-[25px] font-extrabold tracking-tight text-plum-950">{Number(selectedPreviewPackage.customer_paise) > 0 ? rupees(selectedPreviewPackage.customer_paise) : 'Price on request'}</p>
+              <p className="text-[25px] font-extrabold tracking-tight text-plum-950">{Number(selectedPreviewPackage.rate_paise ?? selectedPreviewPackage.customer_paise) > 0 ? rupees(selectedPreviewPackage.rate_paise ?? selectedPreviewPackage.customer_paise) : 'Price on request'}</p><p className="text-[11.5px] font-bold text-ink/55">Your rate</p>
               {selectedPreviewPackage.hours && <p className="mt-1 text-[12px] font-bold text-ink/55">{selectedPreviewPackage.hours} hours included</p>}
               {selectedPreviewPackage.description && <p className="mt-2 text-[12.5px] leading-relaxed text-ink/70">{selectedPreviewPackage.description}</p>}
             </div>
