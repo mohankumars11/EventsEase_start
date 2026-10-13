@@ -11,7 +11,7 @@
  * re-list it. Old setups are not bookable (forced re-onboarding).
  */
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Loader2, ArrowRight, CircleAlert, Hourglass, Lock, Pencil, Eye, Sparkles, RefreshCw } from 'lucide-react'
+import { Loader2, ArrowRight, CircleAlert, Hourglass, Lock, Pencil, Eye, Sparkles, RefreshCw, ArrowLeft, Share2, Heart } from 'lucide-react'
 import ReadinessChecklist from './ReadinessChecklist'
 import { SeasonalUpdate } from './PricingControlCenter'
 import { Sheet } from '../anchor/ui'
@@ -350,37 +350,50 @@ export default function TradePricing({ service, vendor, onEdit, onOpenPayout }) 
         </Section>
       )}
 
-      <Sheet open={preview} onOpenChange={o => !o && setPreview(false)} title="What customers see">
-        {!previewData
-          ? <div className="flex h-40 items-center justify-center"><Loader2 size={22} className="animate-spin text-plum-700" /></div>
-          : previewData.state === 'ERROR'
-            ? <div className="space-y-3 py-5 text-center"><CircleAlert size={28} className="mx-auto text-rose-600" /><p className="text-[14px] font-extrabold text-plum-950">Your preview could not load</p><p className="px-4 text-[12px] leading-relaxed text-ink/60">{previewError || 'Check your connection and try again.'}</p><button type="button" onClick={() => { setPreviewData(null); setPreviewError(''); setPreview(false); setTimeout(() => setPreview(true), 0) }} className="rounded-full bg-plum-700 px-4 py-2.5 text-[12px] font-extrabold text-white">Try again</button></div>
-            : previewData.state === 'NONE'
-              ? <p className="py-6 text-center text-[13px] font-bold text-ink/55">Finish your listing once and your customer page appears here.</p>
-              : (
-                <>
-                  {previewData.is_live === false && (
-                    <p className="mb-3 rounded-2xl bg-saffron-50 px-3.5 py-2.5 text-[12.5px] font-bold text-saffron-900 ring-1 ring-saffron-200">
-                      {PREVIEW_NOTE[previewData.state] ?? 'This is a preview. It is not live yet.'}
-                    </p>
-                  )}
-                  <StorefrontReadiness vendor={vendor} draft={previewData} packages={previewData.packages ?? []} media={previewMedia.rows}
-                    onEditStep={() => { setPreview(false); onEdit?.() }} onManageMedia={() => { setPreview(false); onEdit?.() }} />
-                  <TradeListingCard listing={{ ...previewData, business_name: previewData.business_name ?? vendor?.business_name, avatar_url: previewData.avatar_url ?? vendor?.avatar_url, city: previewData.city ?? [vendor?.area, vendor?.city].filter(Boolean).join(', '), rating: previewData.rating ?? vendor?.rating_avg, is_verified: previewData.is_verified ?? vendor?.is_verified }} tradeName={config.name} onPick={setSelectedPreviewPackage}
-                    media={previewMedia.rows}
-                    avatarSlot={<PartnerAvatarInput vendor={vendor} draft={{ profile: previewData.profile ?? {} }} businessName={previewData.profile?.business_name ?? previewData.profile?.stage_name ?? vendor?.business_name ?? 'Your business'} editable variant="marketplace" />} />
-                  <div className="mt-4"><PartnerMediaLinks vendor={vendor} profile={previewData.profile ?? {}} visibility={previewData.is_live === true ? 'customer' : 'partner'} /></div>
-                  <div className="sppc-booking-cta-wrap">
-                    <button type="button" className="sppc-booking-cta" onClick={() => setPreviewActionNote('Preview only. The live booking flow checks the event date, availability and final payable amount before payment.')}>
-                      <span className="sppc-booking-bolt">✦</span>
-                      <span><b>{(previewData.terms?.instant ?? previewData.booking_rules?.instant) === true || (previewData.terms?.instant ?? previewData.booking_rules?.instant) === 'true' ? 'Instant Book & Pay' : 'Check availability & request quote'}</b><small>Availability and final total confirmed at checkout</small></span>
-                      <ArrowRight size={19} />
-                    </button>
-                    {previewActionNote ? <p className="sppc-booking-note" role="status">{previewActionNote}</p> : <p className="sppc-booking-note">Preview only · no booking or payment starts from this screen.</p>}
-                  </div>
-                </>
-              )}
-      </Sheet>
+      {preview && (
+        <div className="fixed inset-0 z-[220] flex flex-col bg-[#f7fbff] text-[#102250]"
+          style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
+          role="dialog" aria-modal="true" aria-label="Full-screen customer storefront preview">
+          <header className="z-20 flex h-[54px] shrink-0 items-center gap-2 border-b border-[#e4edf9] bg-white/95 px-3 backdrop-blur">
+            <button type="button" onClick={() => setPreview(false)} aria-label="Close customer preview" className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#eff6ff] text-[#16356b]"><ArrowLeft size={19}/></button>
+            <div className="min-w-0 flex-1"><p className="truncate text-[12px] font-black text-[#102250]">Customer preview</p><p className="truncate text-[9px] font-semibold text-[#657897]">{config.name} · mobile storefront</p></div>
+            <button type="button" onClick={() => { try { navigator.share ? navigator.share({title: config.name + ' customer preview', text: 'Preview this Sambramo listing'}) : navigator.clipboard?.writeText(window.location.href) } catch {} }} aria-label="Share preview" className="grid h-9 w-9 place-items-center rounded-full bg-[#eff6ff] text-[#16356b]"><Share2 size={17}/></button>
+            <button type="button" onClick={e => e.currentTarget.classList.toggle('text-rose-600')} aria-label="Favourite preview" className="grid h-9 w-9 place-items-center rounded-full bg-[#eff6ff] text-[#16356b]"><Heart size={17}/></button>
+          </header>
+          <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-4">
+            {!previewData
+              ? <div className="flex h-40 items-center justify-center"><Loader2 size={22} className="animate-spin text-plum-700"/></div>
+              : previewData.state === 'ERROR'
+                ? <div className="space-y-3 py-8 text-center"><CircleAlert size={28} className="mx-auto text-rose-600"/><p className="text-[14px] font-extrabold text-plum-950">Your preview could not load</p><p className="px-5 text-[12px] leading-relaxed text-ink/60">{previewError || 'Check your connection and try again.'}</p><button type="button" onClick={() => {setPreviewData(null);setPreviewError('')}} className="rounded-full bg-plum-700 px-4 py-2.5 text-[12px] font-extrabold text-white">Retry</button></div>
+                : previewData.state === 'NONE'
+                  ? <div className="mx-4 mt-5 rounded-2xl bg-white p-5 text-center text-[13px] font-bold text-ink/55">Finish your listing once and your customer page appears here.</div>
+                  : <>
+                    {previewData.is_live === false && <p className="mx-3 mt-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-[10.5px] font-semibold leading-snug text-amber-900">{PREVIEW_NOTE[previewData.state] ?? 'This is a preview. It is not live yet.'}</p>}
+                    <div className="mx-3 mt-2 overflow-hidden rounded-[25px] bg-gradient-to-br from-[#c7efff] via-[#72c6ff] to-[#1b9cf0] p-4 text-[#102453] shadow-[0_12px_28px_rgba(26,129,232,.15)]">
+                      <p className="text-[9px] font-black uppercase tracking-[.18em] text-[#13549c]">SAMBRAMO · {config.name}</p>
+                      <h2 className="mt-3 max-w-[280px] text-[24px] font-black leading-[1.02] tracking-tight">{previewData.profile?.tagline || 'Make Your Service Unforgettable'}</h2>
+                      <p className="mt-2 text-[11px] font-semibold text-[#173c73]">{previewData.description || 'Trusted professionals · tailored services · memorable experiences'}</p>
+                    </div>
+                    <StorefrontReadiness vendor={vendor} draft={previewData} packages={previewData.packages ?? []} media={previewMedia.rows}
+                      onEditStep={() => {setPreview(false);onEdit?.()}} onManageMedia={() => {setPreview(false);onEdit?.()}}/>
+                    <TradeListingCard listing={{...previewData,business_name:previewData.business_name??vendor?.business_name,avatar_url:previewData.avatar_url??vendor?.avatar_url,city:previewData.city??[vendor?.area,vendor?.city].filter(Boolean).join(', '),rating:previewData.rating??vendor?.rating_avg,is_verified:previewData.is_verified??vendor?.is_verified}} tradeName={config.name} onPick={setSelectedPreviewPackage}
+                      media={previewMedia.rows}
+                      avatarSlot={<PartnerAvatarInput vendor={vendor} draft={{profile:previewData.profile??{}}} businessName={previewData.profile?.business_name??previewData.profile?.stage_name??vendor?.business_name??'Your business'} editable variant="marketplace"/>}/>
+                    <div className="mx-3 mt-3 rounded-[20px] border border-[#e5eef9] bg-white p-3.5 shadow-sm">
+                      <h3 className="text-[12px] font-black text-[#102453]">How they charge · booking terms</h3>
+                      <p className="mt-1 text-[10.5px] leading-relaxed text-[#596b8b]">Review the package inclusions, optional extras, service charges, availability and payment terms shown in the listing below.</p>
+                    </div>
+                  </>}
+          </main>
+          <footer className="z-20 shrink-0 border-t border-[#e4ecfa] bg-white/95 px-3 pb-2 pt-2 shadow-[0_-5px_20px_rgba(26,75,140,.08)] backdrop-blur">
+            <button type="button" onClick={() => setPreviewActionNote('Preview only. The live booking flow checks the event date, availability and final payable amount before payment.')}
+              className="flex min-h-[50px] w-full items-center justify-center gap-2 rounded-[17px] bg-gradient-to-r from-[#4935dc] to-[#7134ed] px-4 text-center text-[13px] font-black text-white shadow-lg">
+              <span>{(previewData?.terms?.instant ?? previewData?.booking_rules?.instant) === true || (previewData?.terms?.instant ?? previewData?.booking_rules?.instant) === 'true' ? 'Instant Book & Pay' : 'Check availability & request quote'}</span><span aria-hidden="true">→</span>
+            </button>
+            <p className="mt-1.5 text-center text-[9px] font-medium text-[#657594]" role={previewActionNote ? "status" : undefined}>{previewActionNote || "Preview only · secure payment and booking confirmation happen in the customer flow."}</p>
+          </footer>
+        </div>
+      )}
 
       <Sheet open={!!selectedPreviewPackage} onOpenChange={o => !o && setSelectedPreviewPackage(null)} title={selectedPreviewPackage?.name ?? 'Package details'}>
         {selectedPreviewPackage && (

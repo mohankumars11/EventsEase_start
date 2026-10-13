@@ -723,7 +723,7 @@ function TradePackageEditor({ vendor, service, config, packages = [], draft, set
       ) : null}
 
       {activeStep === 'preview' ? (
-        <PreviewStep vendor={vendor} service={service} packages={packages} config={config} draft={draft} fields={fields} addons={addons} media={media} onOpenListings={onOpenListings} onManageMedia={previewOnly ? undefined : () => setMediaOpen(true)} onPreviewAction={message => setPreviewAction(message)} onEditStep={previewOnly ? undefined : goTo} />
+        <PreviewStep vendor={vendor} service={service} packages={packages} config={config} draft={draft} fields={fields} addons={addons} media={media} onOpenListings={onOpenListings} onManageMedia={previewOnly ? undefined : () => setMediaOpen(true)} onPreviewAction={message => setPreviewAction(message)} onEditStep={previewOnly ? undefined : goTo} fullScreen={previewOnly} onClosePreview={onBack} />
       ) : null}
 
       {!readOnly && !previewOnly && isPreview ? (
@@ -1059,11 +1059,12 @@ function AddonsStep({ config, addons, suggestions, readOnly, onAdd, onUpdate, on
   )
 }
 
-function PreviewStep({ vendor, service, config, packages = [], draft, fields, addons, media, onManageMedia, onPreviewAction, onEditStep }) {
+function PreviewStep({ vendor, service, config, packages = [], draft, fields, addons, media, onManageMedia, onPreviewAction, onEditStep, fullScreen = false, onClosePreview }) {
   const action = message => onPreviewAction?.(message)
   return (
-    <section className="trade-pricing-panel trade-step-preview sambramo-preview-page">
-      <div className="sambramo-preview-toolbar">
+    <section className={"trade-pricing-panel trade-step-preview sambramo-preview-page " + (fullScreen ? "sambramo-preview-fullscreen" : "")} style={fullScreen ? {position:"fixed",inset:0,zIndex:230,overflowY:"auto",background:"#f7fbff",paddingTop:"env(safe-area-inset-top)",paddingBottom:"env(safe-area-inset-bottom)"} : undefined}>
+      {fullScreen ? <header className="sticky top-0 z-30 flex h-[54px] items-center gap-2 border-b border-[#e4edf9] bg-white/95 px-3 backdrop-blur"><button type="button" onClick={onClosePreview} aria-label="Close customer preview" className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#eff6ff] text-[#16356b]"><ArrowLeft size={19}/></button><div className="min-w-0 flex-1"><p className="truncate text-[12px] font-black text-[#102250]">Customer preview</p><p className="truncate text-[9px] font-semibold text-[#657897]">{config?.name || service?.name} · mobile storefront</p></div></header> : null}
+      {!fullScreen ? <div className="sambramo-preview-toolbar">
         <div className="min-w-0">
           <p className="trade-pricing-overline">Partner preview · customer storefront</p>
           <h2>Preview your customer-facing catalog</h2>
@@ -1072,9 +1073,9 @@ function PreviewStep({ vendor, service, config, packages = [], draft, fields, ad
         <button type="button" onClick={onManageMedia} className="sambramo-preview-manage">
           <Images size={16} /> Manage media
         </button>
-      </div>
-      <StorefrontReadiness vendor={vendor} draft={draft} packages={packages} media={media}
-        onEditStep={onEditStep} onManageMedia={onManageMedia} />
+      </div> : null}
+      {!fullScreen ? <StorefrontReadiness vendor={vendor} draft={draft} packages={packages} media={media}
+        onEditStep={onEditStep} onManageMedia={onManageMedia} /> : null}
       <SambramoPartnerPreviewCard
         vendor={vendor}
         service={service}

@@ -87,13 +87,13 @@ export default function TradeListingCard({ listing, tradeName, onPick, showBooki
 
   return (
     <div className="overflow-hidden rounded-[26px] bg-white ring-1 ring-ink/[0.07]">
-      <div className="relative isolate overflow-hidden bg-gradient-to-br from-plum-950 via-plum-800 to-plum-700 text-white">
+      <div className="relative isolate overflow-hidden bg-gradient-to-br from-[#c7efff] via-[#72c6ff] to-[#1b9cf0] text-[#102453]">
         {heroMedia && heroMedia.kind === 'photo' ? <img src={heroMedia.url} alt="" className="absolute inset-0 h-full w-full object-cover opacity-45" /> : null}
         {heroMedia && heroMedia.kind === 'video' ? <video src={heroMedia.url} muted playsInline className="absolute inset-0 h-full w-full object-cover opacity-40" /> : null}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#160b27]/95 via-[#2a085c]/75 to-[#5b21b6]/55" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#c7efff]/95 via-[#80caff]/72 to-[#1599ec]/15" />
         <div className="relative p-5">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/80">{tradeName ?? listing.trade_id}</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#13549c]">{tradeName ?? listing.trade_id}</p>
             <div className="flex flex-wrap items-center gap-1.5">
               {verified ? <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200/30 bg-emerald-300/15 px-2.5 py-1 text-[9px] font-extrabold text-emerald-50"><Check size={11}/> Verified partner</span> : null}
               {hasPendingMedia ? <span className="rounded-full border border-amber-200/40 bg-amber-200/15 px-2.5 py-1 text-[9px] font-extrabold text-amber-50">Portfolio awaiting review</span> : null}
@@ -111,8 +111,8 @@ export default function TradeListingCard({ listing, tradeName, onPick, showBooki
             )}
             <div className="min-w-0 flex-1">
               <h2 className="break-words text-[21px] font-extrabold leading-tight tracking-tight">{displayName}</h2>
-              {p.tagline && <p className="mt-1 text-[12px] leading-snug text-white/85">{p.tagline}</p>}
-              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11.5px] font-semibold text-white/85">
+              {p.tagline && <p className="mt-1 text-[12px] leading-snug text-[#173c73]">{p.tagline}</p>}
+              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11.5px] font-semibold text-[#173c73]">
                 {listing.city && <span className="flex items-center gap-1.5"><MapPin size={13}/>{listing.city}</span>}
                 {Number(listing.rating) > 0 && <span className="flex items-center gap-1.5"><Star size={13} className="fill-current text-amber-300"/>{Number(listing.rating).toFixed(1)}{listing.review_count ? ' · '+listing.review_count+' reviews' : ''}</span>}
                 {(terms.instant === true || terms.instant === 'true') && <span className="rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-extrabold">Instant booking</span>}
@@ -127,8 +127,8 @@ export default function TradeListingCard({ listing, tradeName, onPick, showBooki
               ) : null}
             </div>
           </div>
-          {entry > 0 && <p className="mt-4 text-[12px] font-bold text-white/80">From <span className="ml-1 text-[28px] font-black tracking-tight text-white">{rupees(entry)}</span></p>}
-          {listing.description && <p className="mt-2 max-w-xl text-[11.5px] leading-relaxed text-white/80">{listing.description}</p>}
+          {entry > 0 && <p className="mt-4 text-[12px] font-bold text-[#173c73]">From <span className="ml-1 text-[28px] font-black tracking-tight text-[#102453]">{rupees(entry)}</span></p>}
+          {listing.description && <p className="mt-2 max-w-xl text-[11.5px] leading-relaxed text-[#173c73]">{listing.description}</p>}
         </div>
       </div>
       {portfolio.length > 0 && (
@@ -150,41 +150,40 @@ export default function TradeListingCard({ listing, tradeName, onPick, showBooki
         </section>
       )}
       {packages.length > 0 && (
-        <Section icon={Package} title="Packages & pricing">
-          <div className="-mx-5 overflow-x-auto px-5 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <div className="flex snap-x snap-mandatory items-start gap-3">
-              {packages.map(pkg => {
-                const PackageSurface = onPick ? "button" : "div"
-                const popular = pkg.is_popular === true || pkg.is_featured === true
-                const inclusions = Array.isArray(pkg.inclusions) ? pkg.inclusions : Array.isArray(pkg.commercial_inputs?.inclusions) ? pkg.commercial_inputs.inclusions : []
-                return (
-                  <PackageSurface key={pkg.key ?? pkg.name} type={onPick ? "button" : undefined}
-                    onClick={onPick ? () => onPick(pkg) : undefined}
-                    className={"relative flex w-[78%] max-w-[300px] shrink-0 snap-center flex-col rounded-[22px] bg-gradient-to-b from-plum-50 to-white p-4 text-left ring-1 ring-plum-100 " + (onPick ? "active:scale-[0.99]" : "")}>
-                    {listing.is_live === false && pkg.status && (
-                      <span className={"absolute right-3 top-3 rounded-full px-2.5 py-1 text-[8px] font-extrabold uppercase " + (pkg.status === "LIVE" ? "bg-emerald-100 text-emerald-800" : pkg.status === "DRAFT" ? "bg-violet-100 text-violet-800" : "bg-amber-100 text-amber-900")}>{String(pkg.status).replace(/_/g, " ")}</span>
-                    )}
-                    {popular && (
-                      <span className={"absolute right-3 rounded-full bg-plum-700 px-2.5 py-1 text-[9px] font-extrabold uppercase text-white " + (listing.is_live === false && pkg.status ? "top-10" : "top-3")}>★ Partner pick</span>
-                    )}
-                    <p className="pr-16 text-[14.5px] font-extrabold text-ink">{pkg.name}</p>
-                    {pkg.hours && <p className="mt-0.5 text-[11.5px] font-bold text-ink/50">{pkg.hours} hours</p>}
-                    <p className="mt-3 text-[24px] font-extrabold tracking-tight text-ink">{Number(pkg.customer_paise) > 0 ? rupees(pkg.customer_paise) : 'Price on request'}</p>
-                    {!!inclusions.length && (
-                      <div className="mt-3 space-y-1.5">
-                        {inclusions.map((inc, i) => (
-                          <p key={i} className="flex items-start gap-1.5 text-[11.5px] leading-snug text-ink/70">
-                            <Check size={12} className="mt-0.5 shrink-0 text-forest-600" strokeWidth={3} />
-                            <span>{typeof inc === "string" ? inc : inc.label ?? inc.id}</span>
-                          </p>
-                        ))}
-                      </div>
-                    )}
-                    {onPick && <span className="mt-auto flex items-center gap-1 pt-4 text-[12px] font-extrabold text-plum-700">View details ›</span>}
-                  </PackageSurface>
-                )
-              })}
-            </div>
+        <Section icon={Package} title="Popular Packages">
+          <div className="space-y-2.5">
+            {packages.map((pkg, index) => {
+              const PackageSurface = onPick ? "button" : "div"
+              const popular = pkg.is_popular === true || pkg.is_featured === true
+              const inclusions = Array.isArray(pkg.inclusions) ? pkg.inclusions : Array.isArray(pkg.commercial_inputs?.inclusions) ? pkg.commercial_inputs.inclusions : []
+              const thumb = portfolio[index % Math.max(portfolio.length, 1)]?.url || heroMedia?.url || ""
+              const tones = ["bg-gradient-to-r from-[#eaf4ff] to-[#f8fbff] ring-[#dceaff]", "bg-gradient-to-r from-[#f0e7ff] to-[#fcf9ff] ring-[#e5d7ff]", "bg-gradient-to-r from-[#fff4dc] to-[#fffbf2] ring-[#f5e2ba]"]
+              const accent = index === 1 ? "text-[#6b2bdf]" : index === 2 ? "text-[#a46808]" : "text-[#1761cb]"
+              const checkTone = index === 1 ? "text-[#7537e8]" : index === 2 ? "text-[#b4760e]" : "text-[#176de1]"
+              return (
+                <PackageSurface key={pkg.key ?? pkg.name} type={onPick ? "button" : undefined}
+                  onClick={onPick ? () => onPick(pkg) : undefined}
+                  className={"relative block w-full overflow-hidden rounded-[20px] p-2.5 text-left ring-1 transition " + tones[index % 3] + (onPick ? " active:scale-[.995]" : "")}>
+                  {popular && <span className="absolute left-2.5 top-1.5 z-10 rounded-full bg-[#6d35e9] px-2 py-1 text-[8px] font-extrabold text-white">★ Partner pick</span>}
+                  <div className={"grid grid-cols-[58px_minmax(84px,1fr)_minmax(80px,1fr)_18px] items-center gap-2.5 max-[380px]:grid-cols-[48px_minmax(70px,1fr)_minmax(64px,.9fr)_16px] max-[380px]:gap-1.5 " + (popular ? "pt-5" : "")}>
+                    <div className="h-[76px] w-[58px] overflow-hidden rounded-[13px] bg-white/80 ring-1 ring-white max-[380px]:h-[66px] max-[380px]:w-[48px]">
+                      {thumb ? <img src={thumb} alt="" className="h-full w-full object-cover" /> : <span className="flex h-full items-center justify-center text-[#327ee3]"><Package size={22}/></span>}
+                    </div>
+                    <div className="min-w-0">
+                      <p className={"break-words text-[12px] font-black leading-tight " + accent}>{pkg.name || "Package"}</p>
+                      <p className="mt-1 break-words text-[16px] font-black leading-tight tracking-tight text-[#101f50] max-[380px]:text-[13px]">{Number(pkg.customer_paise) > 0 ? rupees(pkg.customer_paise) : "Price on request"}</p>
+                      <p className="mt-1 text-[9px] font-semibold leading-tight text-[#556586]">{pkg.hours ? pkg.hours + " Hours" : pkg.duration ? pkg.duration + " included" : unitOf(pkg.unit || "per_event")}</p>
+                    </div>
+                    <div className="min-w-0 space-y-1">
+                      {(inclusions.length ? inclusions.slice(0,3) : [pkg.description || "Details as listed"]).map((inc,i)=><p key={i} className="flex min-w-0 items-start gap-1 text-[9px] font-semibold leading-tight text-[#2f426d] max-[380px]:text-[8px]"><Check size={10} strokeWidth={3} className={"mt-0.5 shrink-0 " + checkTone}/><span className="line-clamp-2 break-words">{typeof inc === "string" ? inc : inc?.label ?? inc?.name ?? inc?.id ?? "Included service"}</span></p>)}
+                    </div>
+                    <span className="grid h-7 w-[18px] place-items-center rounded-full bg-white/90 text-[#6933e9] shadow-sm"><span aria-hidden="true">›</span></span>
+                  </div>
+                  {onPick && <span className="mt-2 flex items-center justify-end gap-1 text-[9.5px] font-extrabold text-[#5f2be4]">View details ›</span>}
+                  {listing.is_live === false && pkg.status && <span className="mt-1 block text-[8px] font-extrabold uppercase text-amber-800">{String(pkg.status).replace(/_/g," ")}</span>}
+                </PackageSurface>
+              )
+            })}
           </div>
         </Section>
       )}
