@@ -51,12 +51,12 @@ function Row({ k, v, sub }) {
         <p className="whitespace-normal break-words text-[13.5px] font-bold text-ink">{k}</p>
         {sub && <p className="text-[11.5px] text-ink/50">{sub}</p>}
       </div>
-      <p className="shrink-0 text-[13.5px] font-extrabold text-ink">{v}</p>
+      <p className="max-w-[55%] whitespace-normal break-words text-right text-[13.5px] font-extrabold text-ink">{v}</p>
     </div>
   )
 }
 
-export default function TradeListingCard({ listing, tradeName, onPick }) {
+export default function TradeListingCard({ listing, tradeName, onPick, showBookingCtaPreview = false }) {
   if (!listing) return null
   const p = listing.profile ?? {}
   const terms = listing.terms ?? {}
@@ -152,9 +152,7 @@ export default function TradeListingCard({ listing, tradeName, onPick }) {
             <Row key={c.item_key} k={c.name} v={c.customer_paise ? rupees(c.customer_paise) : 'On request'}
               sub={[unitOf(c.unit), c.lead_days && `${c.lead_days} days notice`].filter(Boolean).join(' · ')} />
           ))}
-          {catalogue.length > 12 && (
-            <p className="pt-1.5 text-[12px] font-bold text-ink/45">+{catalogue.length - 12} more</p>
-          )}
+
         </Section>
       )}
 
@@ -166,18 +164,27 @@ export default function TradeListingCard({ listing, tradeName, onPick }) {
         </Section>
       )}
 
-      <Section icon={Info} title="Booking terms">
+      <Section icon={Info} title="Booking & payment terms">
         {terms.min_notice_days != null && (
           <Row k="Book at least" v={`${terms.min_notice_days} day${Number(terms.min_notice_days) === 1 ? '' : 's'} ahead`} />
         )}
         {terms.cancellation && (
           <Row k="Cancellation" v={String(terms.cancellation).replace(/^./, c => c.toUpperCase())}
-            sub={CANCELLATION_COPY[terms.cancellation]} />
+            sub={terms.cancellation_policy ?? terms.cancellation_details ?? CANCELLATION_COPY[terms.cancellation] ?? 'Check the booking terms for the policy that applies to this listing.'} />
         )}
         {(terms.charges ?? []).map((c, i) => (
           <Row key={i} k={c.label} v={rupees(c.customer_paise)} sub={c.role} />
         ))}
       </Section>
+
+      {showBookingCtaPreview && (
+        <div className="border-t border-ink/[0.06] p-4">
+          <div aria-label="Customer action preview" className={"flex min-h-[52px] items-center justify-center gap-2 rounded-full px-5 text-center text-[14px] font-extrabold text-white " + ((terms.instant === true || terms.instant === 'true') ? "bg-gradient-to-r from-plum-700 to-violet-600 shadow-lg shadow-plum-700/15" : "bg-slate-400")}>
+            {(terms.instant === true || terms.instant === 'true') ? "Instant Book & Pay" : "Instant booking is not enabled"} <span aria-hidden="true">→</span>
+          </div>
+          <p className="mt-2 text-center text-[10.5px] text-ink/45">Customer action preview · live booking checks availability and the final payable amount.</p>
+        </div>
+      )}
     </div>
   )
 }
