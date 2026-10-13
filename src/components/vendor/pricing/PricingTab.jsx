@@ -163,7 +163,7 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
           </section>
 
           <button type="button" onClick={() => setSelectedServiceId(listingMeta.nextPriceServiceId ?? services[0]?.id ?? null)}
-            disabled={!services.length}
+            disabled={!listingMeta.nextPriceServiceId}
             className="flex w-full items-center gap-3 rounded-[22px] bg-gradient-to-r from-plum-50 to-white p-4 text-left ring-1 ring-plum-100 disabled:cursor-default">
             <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-plum-100 text-plum-700"><CalendarClock size={23} /></span>
             <span className="min-w-0 flex-1">
@@ -393,7 +393,7 @@ function AnchorPricing({ service, vendor, onEdit, onOpenPayout }) {
           <AnchorProfileCard profile={d.current.profile} city={view.listing.city}
             packages={view.packages.map(p => ({ tier: p.tier, name: p.name, hours: p.hours, customer_paise: p.price_paise, inclusions: p.inclusions }))}
             onPick={pkg => setSheet({ tier: pkg.tier })} showBookingCtaPreview
-            instantBookEnabled={d.current.booking_rules?.instant !== false} />
+            instantBookEnabled={d.current.booking_rules?.instant !== false && d.current.booking_rules?.instant !== 'false'} />
           <PartnerMediaLinks vendor={vendor} profile={d.current.profile} />
           <PreviewSection title="What you can order" icon={Package}>
             {view.models.length ? view.models.map(m => {
