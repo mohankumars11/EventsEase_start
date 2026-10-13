@@ -198,14 +198,7 @@ export default function SambramoPartnerPreviewCard({vendor,service,config,draft=
       <section className="sppc-section sppc-addons"><div className="sppc-section-heading"><div><h3><Plus size={18}/> Popular add-ons</h3><p>Optional upgrades with their own exact prices.</p></div><button type="button" className="sppc-view-details sppc-edit-link" onClick={()=>onEdit?.('addons')}>Edit add-ons<ChevronRight size={16}/></button></div><div className="sppc-addon-grid">{activeAddons.length?activeAddons.map((addon,i)=><button type="button" key={addon.id||i} className={'sppc-addon-card tone-'+(i%3)} onClick={()=>onManageMedia?.('addon:'+addon.name)}><span className="sppc-addon-icon"><Plus size={16}/></span><span><b>{addon.name}</b><strong>+{formatINR(Math.round(Number(addon.rate_paise??addon.rate??0)/(addon.rate_paise!=null?100:1)))}</strong></span></button>):<div className="sppc-addon-empty">No add-ons configured for this package.</div>}</div></section>
       <section className="sppc-manage-media"><div><b>Manage your customer gallery</b><small>Add, remove and review the approved photos and videos shown in this catalogue.</small></div><button type="button" onClick={()=>onManageMedia?.('media')}>Manage media <Images size={15}/></button></section>
       <section className="sppc-trust"><div><ShieldCheck size={21}/><span><b>Secure booking flow</b><small>Final amount confirmed at checkout</small></span></div><div><BadgeCheck size={21}/><span><b>{verified?'Verified by Sambramo':'Verification status'}</b><small>{verified?'Partner verification complete':'Approval shown before publish'}</small></span></div><div><Users size={21}/><span><b>{completedEvents!=null&&Number(completedEvents)>0?'Completed '+completedEvents+'+ events':'Made for your event'}</b><small>{rating!=null&&Number(rating)>0?Number(rating).toFixed(1)+' partner rating':'Review and package details above'}</small></span></div></section>
-      <div className="sppc-booking-cta-wrap">
-        <button type="button" className="sppc-booking-cta" onClick={()=>onBookingPreview?.()}>
-          <span className="sppc-booking-bolt">✦</span>
-          <span><b>{String(draft?.availability_policy??draft?.commercial_inputs?.availability_policy??'instant').toLowerCase()==='instant'?'Instant Book & Pay':'Check availability & request quote'}</b><small>Availability and final total confirmed at checkout</small></span>
-          <ChevronRight size={20}/>
-        </button>
-        <p className="sppc-booking-note">Preview only · no booking or payment starts from this screen.</p>
-      </div>
+
     </article>
     {selectedMediaIndex !== null ? <MediaViewer items={displayMedia} index={selectedMediaIndex} onChange={setSelectedMediaIndex} onClose={()=>setSelectedMediaIndex(null)}/> : null}
   </>
