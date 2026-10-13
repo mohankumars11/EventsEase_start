@@ -327,6 +327,7 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
           ) : (
             <SambramoPricingStudio vendor={vendor} services={[selectedService]} initialServiceId={selectedService.id}
               startPreview={legacyScreen === 'preview'}
+              priceLockedUntil={listingMeta.priceLockById[selectedService.id] ?? null}
               onOpenListings={onOpenListings} onReturnToPricing={() => setLegacyScreen('details')} />
           )}
         </>
