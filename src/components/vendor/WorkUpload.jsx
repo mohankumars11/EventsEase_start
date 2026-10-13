@@ -27,7 +27,7 @@ import { useToast, friendlyError } from '../../context/ToastContext'
  * hand tied.
  *
  * ══════════════════════════════════════════════════════════════════════
- * THREE KINDS, BECAUSE THEY ARE NOT THE SAME THING
+ * FOUR MEDIA TYPES, BECAUSE THEY ARE NOT THE SAME THING
  * ══════════════════════════════════════════════════════════════════════
  *
  *   photo        the work, still
@@ -100,9 +100,9 @@ export default function WorkUpload({
 
       const added = []
       for (const file of files) {
-        const isVideo = file.type.startsWith('video/')
+        const isVideo = kind === 'video' || file.type.startsWith('video/')
         const isAudio = kind === 'audio' || file.type.startsWith('audio/')
-        const isPdf = file.type === 'application/pdf'
+        const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
 
         if (isAudio && file.size > MAX_AUDIO) {
           toast.error(`${file.name} is ${Math.round(file.size / 1048576)} MB. Audio samples must be 20 MB or smaller.`)
@@ -115,7 +115,7 @@ export default function WorkUpload({
           continue
         }
 
-        /* Video and PDF go up as they are: there is nothing to compress
+        /* Video, audio and PDF go up as they are: there is nothing to compress
            in the browser without a re-encode that would take longer than
            the upload it saves. */
         const body = (isVideo || isAudio || isPdf)
@@ -127,7 +127,7 @@ export default function WorkUpload({
 
         const { error } = await supabase.storage
           .from('partner-uploads')
-          .upload(path, body, { contentType: file.type || (isAudio ? 'audio/mpeg' : 'image/jpeg') })
+          .upload(path, body, { contentType: file.type || (isVideo ? 'video/mp4' : isAudio ? 'audio/mpeg' : isPdf ? 'application/pdf' : 'image/jpeg') })
         if (error) throw error
 
         added.push({
