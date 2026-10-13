@@ -33,13 +33,14 @@ const sectionForCourse = courseId => ({
 const iid = () => crypto?.randomUUID?.() ?? ('tmp-' + Date.now() + Math.random())
 const normDishName = value => String(value ?? '').toLowerCase().replace(/[^a-z0-9]+/g, '')
 
-export default function CateringPricingStudio({ vendor, service, onBack, onOpenListings, onboarding = false }) {
+export default function CateringPricingStudio({ vendor, service, onBack, onOpenListings, onboarding = false, startPreview = false }) {
   const capability = useMemo(() => cateringCapabilityFromListing(service), [service])
   const [packages, setPackages] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [editing, setEditing] = useState(null)
   const [preview, setPreview] = useState(false)
+  const [previewLaunchHandled, setPreviewLaunchHandled] = useState(false)
   const [catalogueDishes, setCatalogueDishes] = useState([])
   const [catalogueError, setCatalogueError] = useState('')
 
@@ -137,8 +138,8 @@ export default function CateringPricingStudio({ vendor, service, onBack, onOpenL
     })
   }
 
-  function openExisting(pkg) {
-    setPreview(false)
+  function openExisting(pkg, previewMode = false) {
+    setPreview(previewMode)
     setEditing({
       id: pkg.id,
       parentPackageId: pkg.parent_package_id ?? null,
@@ -175,6 +176,13 @@ export default function CateringPricingStudio({ vendor, service, onBack, onOpenL
       version: pkg.price?.version ?? 0,
     })
   }
+
+  useEffect(() => {
+    if (!startPreview || previewLaunchHandled || loading) return
+    setPreviewLaunchHandled(true)
+    const pkg = packages.find(item => ['ACTIVE', 'LIVE'].includes(String(item.status).toUpperCase())) ?? packages[0]
+    if (pkg) openExisting(pkg, true)
+  }, [startPreview, previewLaunchHandled, loading, packages])
 
   async function removePackage(pkg) {
     if (!confirm('Archive this menu package? It will no longer be offered to customers.')) return
