@@ -49,6 +49,7 @@ const daysUntil = value => value ? Math.max(0, Math.ceil((new Date(value).getTim
 
 export default function PricingTab({ vendor, services = [], onOpenListings, onEditListing, onOpenPayout }) {
   const [helpOpen, setHelpOpen] = useState(false)
+  const [manageOpen, setManageOpen] = useState(false)
   const [selectedServiceId, setSelectedServiceId] = useState(null)
   const [legacyScreen, setLegacyScreen] = useState('details')
   const [filterStatus, setFilterStatus] = useState('all')
@@ -216,10 +217,10 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
   ) : null
 
   return (
-    <div className="space-y-4 pb-5">
+    <div className="space-y-4 pb-5 pt-2" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 8px)' }}>
       {!selectedService ? (
         <>
-          <section className="relative -mx-4 -mt-4 overflow-hidden rounded-b-[30px] bg-gradient-to-br from-plum-800 via-plum-700 to-[#321067] px-5 pb-7 pt-5 text-white sm:-mx-6">
+          <section className="relative -mx-4 overflow-hidden rounded-[26px] bg-gradient-to-br from-plum-800 via-plum-700 to-[#321067] px-5 pb-5 pt-5 text-white sm:-mx-6">
             <div className="pointer-events-none absolute -right-12 -top-10 h-44 w-44 rounded-full border border-white/10 bg-white/[0.04]" />
             <div className="relative flex items-start justify-between gap-3">
               <div className="min-w-0">
@@ -257,7 +258,7 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
               <h2 className="text-[21px] font-extrabold tracking-tight text-plum-950">Your listings</h2>
               <p className="text-[12px] text-ink/50">{services.length} service{services.length === 1 ? '' : 's'} · status from saved listing data</p>
             </div>
-            <button type="button" onClick={() => onOpenListings?.()} className="flex h-10 shrink-0 items-center gap-1.5 rounded-full border border-plum-200 bg-white px-3 text-[12px] font-extrabold text-plum-700">
+            <button type="button" onClick={() => setManageOpen(true)} className="flex h-10 shrink-0 items-center gap-1.5 rounded-full border border-plum-200 bg-white px-3 text-[12px] font-extrabold text-plum-700 shadow-sm">
               <SlidersHorizontal size={15} /> Manage
             </button>
           </div>
@@ -346,6 +347,43 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
               onOpenListings={onOpenListings} onReturnToPricing={() => setLegacyScreen('details')} />
           )}
         </>
+      )}
+
+      {manageOpen && (
+        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-ink/45 p-0 sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="manage-pricing-title">
+          <button type="button" aria-label="Close manage listings" onClick={() => setManageOpen(false)} className="absolute inset-0 cursor-default" />
+          <section className="relative max-h-[86dvh] w-full max-w-lg overflow-y-auto rounded-t-[28px] bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-2xl sm:rounded-[28px]">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-plum-600">Listing controls</p>
+                <h2 id="manage-pricing-title" className="mt-1 text-[20px] font-extrabold text-plum-950">Manage your listings</h2>
+                <p className="mt-1 text-[12px] leading-relaxed text-ink/60">Choose a service to review prices or edit its saved listing. You’ll stay in the right workflow.</p>
+              </div>
+              <button type="button" onClick={() => setManageOpen(false)} aria-label="Close manage listings" className="rounded-full p-2 text-ink/60 hover:bg-plum-50"><X size={20} /></button>
+            </div>
+            <div className="mt-4 space-y-2">
+              {services.map(service => {
+                const status = listingMeta.byId[service.id] ?? 'NOT_CONFIGURED'
+                const look = statusCopy[status] ?? statusCopy.NOT_CONFIGURED
+                return <div key={service.id} className="rounded-2xl border border-ink/[0.08] p-3">
+                  <div className="flex items-center gap-3">
+                    <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-plum-50 text-plum-700"><SambramoTradePictogram trade={service.category || service.trade || 'Service'} size="xs" showSparkle={false} title={false} /></span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[13.5px] font-extrabold text-plum-950">{service.name || service.category || 'Service listing'}</p>
+                      <p className="mt-0.5 text-[11px] text-ink/55">{listingMeta.packagesById[service.id] ?? 0} packages · {listingMeta.priceById[service.id] ? `from ${rupees(listingMeta.priceById[service.id])}` : 'price not set'}</p>
+                    </div>
+                    <span className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-extrabold ring-1 ${look.tone}`}>{look.label}</span>
+                  </div>
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <button type="button" onClick={() => { setSelectedServiceId(service.id); setLegacyScreen('details'); setManageOpen(false) }} className="flex min-h-10 items-center justify-center gap-1.5 rounded-full border border-plum-200 bg-white px-3 text-[11.5px] font-extrabold text-plum-700"><Eye size={14} /> Pricing details</button>
+                    <button type="button" onClick={() => { setManageOpen(false); onEditListing?.(service) }} className="flex min-h-10 items-center justify-center gap-1.5 rounded-full bg-plum-700 px-3 text-[11.5px] font-extrabold text-white"><Pencil size={14} /> Edit listing</button>
+                  </div>
+                </div>
+              })}
+            </div>
+            <button type="button" onClick={() => { setManageOpen(false); onOpenListings?.() }} className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-plum-800 to-plum-600 px-4 text-[12.5px] font-extrabold text-white">Open full listing manager <ArrowRight size={15} /></button>
+          </section>
+        </div>
       )}
 
       {helpOpen && (
@@ -510,10 +548,10 @@ function LegacyListingDetails({
 
 function StatusMetric({ label, count, glyph, tone }) {
   return (
-    <div className="flex min-w-0 flex-col items-center justify-center gap-1 border-r border-ink/[0.06] px-0.5 text-center last:border-0">
+    <div className="flex min-w-0 flex-col items-center justify-center gap-1 rounded-[14px] border border-plum-100 bg-gradient-to-b from-white to-plum-50 px-0.5 py-2 text-center shadow-[0_2px_8px_rgba(35,12,64,0.06)]">
       <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-full text-[15px] font-black ${tone}`}>{glyph}</span>
-      <span className="block w-full truncate text-[8px] font-extrabold uppercase tracking-wide text-ink/50">{label}</span>
-      <span className="block text-[19px] font-black leading-tight text-plum-950">{count}</span>
+      <span className="block w-full truncate text-[8.5px] font-black uppercase tracking-[0.03em] text-plum-800">{label}</span>
+      <span className="block text-[22px] font-black leading-tight tabular-nums text-[#211035]">{count}</span>
     </div>
   )
 }
