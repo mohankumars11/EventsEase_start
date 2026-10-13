@@ -50,6 +50,7 @@ const daysUntil = value => value ? Math.max(0, Math.ceil((new Date(value).getTim
 export default function PricingTab({ vendor, services = [], onOpenListings, onEditListing, onOpenPayout }) {
   const [helpOpen, setHelpOpen] = useState(false)
   const [selectedServiceId, setSelectedServiceId] = useState(null)
+  const [legacyScreen, setLegacyScreen] = useState('details')
   const [filterStatus, setFilterStatus] = useState('all')
   const [listingMeta, setListingMeta] = useState({ byId: {}, packagesById: {}, priceById: {}, priceUnitById: {}, nextPriceDate: null, nextPriceServiceId: null, loading: true })
   const engineReady = useEngineReady()
@@ -62,7 +63,7 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
     let alive = true
     const ids = services.map(s => s.id).filter(Boolean)
     if (!ids.length) {
-      setListingMeta({ byId: {}, packagesById: {}, priceById: {}, priceUnitById: {}, nextPriceDate: null, nextPriceServiceId: null, loading: false })
+      setListingMeta({ byId: {}, packagesById: {}, priceById: {}, priceUnitById: {}, packageDetailsById: {}, nextPriceDate: null, nextPriceServiceId: null, loading: false })
       return () => { alive = false }
     }
     setListingMeta(s => ({ ...s, loading: true }))
@@ -71,10 +72,10 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
         .select('vendor_service_id,version,status,seasonal_window_id,price_locked_until,published_at')
         .in('vendor_service_id', ids).order('version', { ascending: false }),
       supabase.from('sambramo_trade_packages')
-        .select('id,vendor_service_id,status,trade_inputs,commercial_inputs,calculation_snapshot,price_locked_until')
+        .select('id,vendor_service_id,name,description,status,trade_inputs,commercial_inputs,calculation_snapshot,price_locked_until')
         .in('vendor_service_id', ids),
       supabase.from('sambramo_catering_packages')
-        .select('id,vendor_service_id,status,rate_bands')
+        .select('id,vendor_service_id,name,status,rate_bands,min_guests,max_guests,service_hours,notes,price_locked_until')
         .in('vendor_service_id', ids),
     ]).then(([versionsRes, packagesRes, cateringRes]) => {
       if (!alive) return
@@ -94,14 +95,26 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
       const packagesById = {}
       const priceById = {}
       const priceUnitById = {}
+      const packageDetailsById = {}
       for (const p of packages) {
         if (!p.vendor_service_id) continue
         packagesById[p.vendor_service_id] = (packagesById[p.vendor_service_id] ?? 0) + (p.status === 'ARCHIVED' ? 0 : 1)
+        if (p.status !== 'ARCHIVED') (packageDetailsById[p.vendor_service_id] ??= []).push({
+          id: p.id, name: p.name, description: p.description, status: p.status,
+          pricePaise: Number(p.trade_inputs?.customer_paise ?? 0),
+          duration: p.trade_inputs?.duration_hours ?? p.trade_inputs?.duration ?? null,
+          inclusions: Array.isArray(p.commercial_inputs?.inclusions) ? p.commercial_inputs.inclusions : [],
+        })
         const partnerRate = Number(p.trade_inputs?.take_home_paise ?? p.take_home_paise ?? 0)
         if (partnerRate > 0 && p.status !== 'ARCHIVED') priceById[p.vendor_service_id] = Math.min(priceById[p.vendor_service_id] ?? partnerRate, partnerRate)
       }
       for (const p of catering) {
         if (!p.vendor_service_id || p.status === 'ARCHIVED') continue
+        (packageDetailsById[p.vendor_service_id] ??= []).push({
+          id: p.id, name: p.name, status: p.status, rateBands: Array.isArray(p.rate_bands) ? p.rate_bands : [],
+          minGuests: p.min_guests, maxGuests: p.max_guests, serviceHours: p.service_hours, description: p.notes,
+          inclusions: [],
+        })
         const bands = Array.isArray(p.rate_bands) ? p.rate_bands : []
         const rates = bands.map(b => Number(b?.rate)).filter(rate => Number.isFinite(rate) && rate > 0)
         const ratePerGuestPaise = rates.length ? Math.min(...rates) * 100 : 0
@@ -117,7 +130,7 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
         ...packages.filter(p => p.status === 'LIVE' && p.price_locked_until && new Date(p.price_locked_until) > new Date())
           .map(p => ({ date: p.price_locked_until, serviceId: p.vendor_service_id })),
       ].sort((a, b) => new Date(a.date) - new Date(b.date))
-      setListingMeta({ byId, packagesById, priceById, priceUnitById, nextPriceDate: futureLocks[0]?.date ?? null, nextPriceServiceId: futureLocks[0]?.serviceId ?? null, loading: false })
+      setListingMeta({ byId, packagesById, priceById, priceUnitById, packageDetailsById, nextPriceDate: futureLocks[0]?.date ?? null, nextPriceServiceId: futureLocks[0]?.serviceId ?? null, loading: false })
     }).catch(() => {
       if (alive) setListingMeta(s => ({ ...s, loading: false }))
     })
