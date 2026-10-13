@@ -78,8 +78,8 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
         .select('id,vendor_service_id,name,status,rate_bands,min_guests,max_guests,service_hours,notes,price_locked_until')
         .in('vendor_service_id', ids),
       supabase.from('sambramo_partner_price_books')
-        .select('vendor_service_id,offering_id,component_id,status,effective_from,rate_paise,unit')
-        .in('vendor_service_id', ids).eq('component_id', 'base').eq('status', 'active'),
+        .select('vendor_service_id,offering_id,component_id,status,effective_from,rate_paise,unit,minimum_quantity,included_quantity,quantity_formula,version,created_at')
+        .in('vendor_service_id', ids).eq('component_id', 'base').in('status', ['active', 'draft']).order('version', { ascending: false }),
       supabase.from('sambramo_pricing_config').select('price_lock_days').limit(1).maybeSingle(),
     ]).then(async ([versionsRes, packagesRes, cateringRes, priceBooksRes, pricingConfigRes]) => {
       if (!alive) return
@@ -122,14 +122,15 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
       for (const p of packages) {
         if (!p.vendor_service_id) continue
         packagesById[p.vendor_service_id] = (packagesById[p.vendor_service_id] ?? 0) + (p.status === 'ARCHIVED' ? 0 : 1)
+        const priceBook = priceBooks.find(row => row.offering_id === String(p.id) && row.vendor_service_id === p.vendor_service_id && row.component_id === 'base') ?? null
+        const savedRatePaise = Number(priceBook?.rate_paise ?? p.trade_inputs?.take_home_paise ?? p.take_home_paise ?? 0)
         if (p.status !== 'ARCHIVED') (packageDetailsById[p.vendor_service_id] ??= []).push({
           id: p.id, name: p.name, description: p.description, status: p.status,
-          pricePaise: Number(p.trade_inputs?.customer_paise ?? 0),
-          duration: p.trade_inputs?.duration_hours ?? p.trade_inputs?.duration ?? null,
+          pricePaise: savedRatePaise,
+          duration: p.trade_inputs?.duration_hours ?? p.trade_inputs?.duration ?? priceBook?.quantity_formula?.included_duration ?? null,
           inclusions: Array.isArray(p.commercial_inputs?.inclusions) ? p.commercial_inputs.inclusions : [],
         })
-        const partnerRate = Number(p.trade_inputs?.take_home_paise ?? p.take_home_paise ?? 0)
-        if (partnerRate > 0 && p.status !== 'ARCHIVED') priceById[p.vendor_service_id] = Math.min(priceById[p.vendor_service_id] ?? partnerRate, partnerRate)
+        if (savedRatePaise > 0 && p.status !== 'ARCHIVED') priceById[p.vendor_service_id] = Math.min(priceById[p.vendor_service_id] ?? savedRatePaise, savedRatePaise)
       }
       for (const p of catering) {
         if (!p.vendor_service_id || p.status === 'ARCHIVED') continue
@@ -139,8 +140,13 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
           inclusions: [],
         })
         const bands = Array.isArray(p.rate_bands) ? p.rate_bands : []
-        const rates = bands.map(b => Number(b?.rate)).filter(rate => Number.isFinite(rate) && rate > 0)
-        const ratePerGuestPaise = rates.length ? Math.min(...rates) * 100 : 0
+        const rates = bands.map(b => {
+          const paise = Number(b?.rate_paise)
+          if (Number.isFinite(paise) && paise > 0) return paise
+          const rupeesValue = Number(b?.rate)
+          return Number.isFinite(rupeesValue) && rupeesValue > 0 ? Math.round(rupeesValue * 100) : 0
+        }).filter(rate => rate > 0)
+        const ratePerGuestPaise = rates.length ? Math.min(...rates) : 0
         if (ratePerGuestPaise > 0 && !(priceById[p.vendor_service_id] > 0)) {
           priceById[p.vendor_service_id] = ratePerGuestPaise
           priceUnitById[p.vendor_service_id] = 'per guest'
