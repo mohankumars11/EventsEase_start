@@ -17,7 +17,7 @@
  * Anchor & MC keeps AnchorProfileCard -- it has a profile shape of its
  * own (role, languages, event groups) that the engine trades do not.
  */
-import { MapPin, Star, Check, Clock, Package, Boxes, Plus, Info } from 'lucide-react'
+import { MapPin, Star, Check, Clock, Package, Boxes, Plus, Info, UserRound, Camera, Mic2 } from 'lucide-react'
 import { rupees } from '../../lib/tierPackages'
 
 const UNIT_LABEL = {
@@ -58,7 +58,9 @@ function Row({ k, v, sub }) {
 
 export default function TradeListingCard({ listing, tradeName, onPick, showBookingCtaPreview = false }) {
   if (!listing) return null
-  const p = listing.profile ?? {}
+  const p = listing.profile && typeof listing.profile === 'object' ? listing.profile : {}
+  const profileAvatar = p.avatar_url || p.profile_photo_url || p.photo_url || p.avatar || p.logo_url || p.business_logo_url || ''
+  const displayName = p.business_name ?? p.stage_name ?? p.name ?? 'This partner'
   const terms = listing.terms ?? {}
   const packages = listing.packages ?? []
   const catalogue = listing.catalogue ?? []
@@ -76,13 +78,23 @@ export default function TradeListingCard({ listing, tradeName, onPick, showBooki
   return (
     <div className="overflow-hidden rounded-[26px] bg-white ring-1 ring-ink/[0.07]">
       <div className="bg-gradient-to-br from-plum-700 to-plum-950 p-5 text-white">
-        <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-white/70">
+        <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-white/75">
           {tradeName ?? listing.trade_id}
         </p>
-        <h2 className="mt-1 text-[22px] font-extrabold leading-tight">
-          {p.business_name ?? p.stage_name ?? p.name ?? 'This partner'}
-        </h2>
-        {p.tagline && <p className="mt-1 text-[13px] leading-snug text-white/80">{p.tagline}</p>}
+        <div className="mt-2.5 flex min-w-0 items-center gap-3">
+          <span className="grid h-[68px] w-[68px] shrink-0 place-items-center overflow-hidden rounded-full border-2 border-white/70 bg-white/15 shadow-[0_4px_14px_rgba(20,0,40,0.22)]">
+            {profileAvatar
+              ? <img src={profileAvatar} alt={`${displayName} profile`} className="h-full w-full object-cover" onError={e => { e.currentTarget.style.display = 'none' }} />
+              : <span className="flex h-full w-full flex-col items-center justify-center gap-0.5 bg-gradient-to-br from-violet-100 to-fuchsia-200 text-plum-900">
+                  {String(tradeName ?? listing.trade_id ?? '').toLowerCase().includes('anchor') || String(tradeName ?? '').toLowerCase().includes('mc') ? <Mic2 size={24} /> : String(tradeName ?? '').toLowerCase().includes('photo') ? <Camera size={24} /> : <UserRound size={24} />}
+                  <span className="text-[9px] font-black">{String(displayName).split(/\s+/).map(x => x[0]).join('').slice(0,2).toUpperCase()}</span>
+                </span>}
+          </span>
+          <div className="min-w-0 flex-1">
+            <h2 className="break-words text-[20px] font-extrabold leading-tight">{displayName}</h2>
+            {p.tagline && <p className="mt-1 text-[12px] leading-snug text-white/80">{p.tagline}</p>}
+          </div>
+        </div>
 
         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12.5px] font-semibold text-white/85">
           {listing.city && <span className="flex items-center gap-1.5"><MapPin size={14} />{listing.city}</span>}
