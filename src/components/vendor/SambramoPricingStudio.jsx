@@ -10,7 +10,7 @@ import { transactionLaneFor, transactionLaneCopy } from '../../lib/sambramoTrans
 
 const CATERING = 'Catering & Food'
 
-export default function SambramoPricingStudio({ vendor, services = [], onOpenListings = null, onExit = null, onboarding = false, initialServiceId = null, onReturnToPricing = null }) {
+export default function SambramoPricingStudio({ vendor, services = [], onOpenListings = null, onExit = null, onboarding = false, initialServiceId = null, onReturnToPricing = null, startPreview = false }) {
   const [selectedServiceId, setSelectedServiceId] = useState(initialServiceId)
   const [statusByService, setStatusByService] = useState({})
   const [revisionByService, setRevisionByService] = useState({})
@@ -62,9 +62,9 @@ export default function SambramoPricingStudio({ vendor, services = [], onOpenLis
   if (selected) {
     const config = normalizeTrade(selected.category, selected.trade_id)
     if (selected.category === CATERING) {
-      return <CateringPricingStudio vendor={vendor} service={selected} onboarding={onboarding} onBack={() => (onReturnToPricing ? onReturnToPricing() : onboarding && onExit ? onExit() : setSelectedServiceId(null))} onOpenListings={onOpenListings} />
+      return <CateringPricingStudio vendor={vendor} service={selected} onboarding={onboarding} startPreview={startPreview} onBack={() => (onReturnToPricing ? onReturnToPricing() : onboarding && onExit ? onExit() : setSelectedServiceId(null))} onOpenListings={onOpenListings} />
     }
-    return <TradePricingStudio vendor={vendor} service={selected} config={config} onBack={() => (onReturnToPricing ? onReturnToPricing() : onboarding && onExit ? onExit() : setSelectedServiceId(null))} onOpenListings={onOpenListings} onboarding={onboarding} />
+    return <TradePricingStudio vendor={vendor} service={selected} config={config} startPreview={startPreview} onBack={() => (onReturnToPricing ? onReturnToPricing() : onboarding && onExit ? onExit() : setSelectedServiceId(null))} onOpenListings={onOpenListings} onboarding={onboarding} />
   }
 
   if (!listed.length) {
