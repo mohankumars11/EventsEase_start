@@ -1060,6 +1060,49 @@ function PreviewStep({ vendor, service, config, packages = [], draft, fields, ad
           else onManageMedia?.()
         }}
       />
+      <section className="mt-4 rounded-[22px] bg-white p-4 ring-1 ring-ink/[0.07]">
+        <h3 className="text-[14px] font-extrabold text-plum-950">Booking & payment terms</h3>
+        <div className="mt-2 divide-y divide-ink/[0.06]">
+          <div className="flex items-start justify-between gap-3 py-2 text-[12.5px]">
+            <span className="text-ink/55">Booking mode</span>
+            <span className="text-right font-bold">{String(draft?.availability_policy ?? draft?.commercial_inputs?.availability_policy ?? 'instant').toLowerCase() === 'instant' ? 'Instant Book & Pay' : 'Booking availability confirmed at checkout'}</span>
+          </div>
+          {draft?.payment_policy || draft?.commercial_inputs?.payment_policy ? (
+            <div className="flex items-start justify-between gap-3 py-2 text-[12.5px]">
+              <span className="text-ink/55">Payment terms</span>
+              <span className="text-right font-bold">{String(draft.payment_policy ?? draft.commercial_inputs.payment_policy).replace(/_/g, ' ')}</span>
+            </div>
+          ) : null}
+          {draft?.lead_time !== '' && draft?.lead_time != null ? (
+            <div className="flex items-start justify-between gap-3 py-2 text-[12.5px]">
+              <span className="text-ink/55">Minimum notice</span>
+              <span className="text-right font-bold">{draft.lead_time} day(s)</span>
+            </div>
+          ) : null}
+          {draft?.minimum_order !== '' && draft?.minimum_order != null ? (
+            <div className="flex items-start justify-between gap-3 py-2 text-[12.5px]">
+              <span className="text-ink/55">Minimum order</span>
+              <span className="text-right font-bold">{draft.minimum_order} {draft.pricing_unit || 'units'}</span>
+            </div>
+          ) : null}
+          {draft?.travel_policy ? (
+            <div className="flex items-start justify-between gap-3 py-2 text-[12.5px]">
+              <span className="text-ink/55">Travel</span>
+              <span className="text-right font-bold">{String(draft.travel_policy).replace(/_/g, ' ')}</span>
+            </div>
+          ) : null}
+          {draft?.cancellation_policy ? (
+            <div className="flex items-start justify-between gap-3 py-2 text-[12.5px]">
+              <span className="text-ink/55">Cancellation policy</span>
+              <span className="text-right font-bold">{String(draft.cancellation_policy).replace(/_/g, ' ')}</span>
+            </div>
+          ) : null}
+        </div>
+        <div className="mt-3 rounded-full bg-gradient-to-r from-plum-700 to-violet-600 px-4 py-3 text-center text-[13.5px] font-extrabold text-white">
+          {String(draft?.availability_policy ?? draft?.commercial_inputs?.availability_policy ?? 'instant').toLowerCase() === 'instant' ? 'Instant Book & Pay' : 'Continue to secure booking'} <span aria-hidden="true">→</span>
+        </div>
+        <p className="mt-2 text-center text-[10.5px] leading-relaxed text-ink/45">Preview only. Availability and the final payable total are validated in the existing Sambramo booking flow.</p>
+      </section>
       <div className="mt-4">
         <PartnerMediaLinks vendor={vendor} profile={draft?.trade_inputs ?? {}} />
       </div>
