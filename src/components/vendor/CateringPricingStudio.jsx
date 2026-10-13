@@ -932,11 +932,13 @@ function CateringPackageEditor({ vendor, service, capability, catalogueDishes = 
           </button>
         </div>
         {preview ? (
-          <CustomerPreview draft={draft} dishes={dishes} previewGuests={previewGuests} setPreviewGuests={setPreviewGuests}
-            terms={service?.specs?.trade_v1 ?? service?.specs?.catering_v1 ?? {}} />
-          <div className="mt-3">
-            <PartnerMediaLinks vendor={vendor} profile={service?.specs?.trade_v1 ?? vendor ?? {}} />
-          </div>
+          <>
+            <CustomerPreview draft={draft} dishes={dishes} previewGuests={previewGuests} setPreviewGuests={setPreviewGuests}
+              terms={service?.specs?.trade_v1 ?? service?.specs?.catering_v1 ?? {}} />
+            <div className="mt-3">
+              <PartnerMediaLinks vendor={vendor} profile={service?.specs?.trade_v1 ?? vendor ?? {}} />
+            </div>
+          </>
         ) : (
           <div className="mt-3 grid grid-cols-2 gap-2">
             <InfoMetric label="Dishes" value={String(draft.items.length)} icon={UtensilsCrossed} />
