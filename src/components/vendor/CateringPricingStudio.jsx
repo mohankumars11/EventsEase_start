@@ -924,7 +924,8 @@ function CateringPackageEditor({ vendor, service, capability, catalogueDishes = 
           </button>
         </div>
         {preview ? (
-          <CustomerPreview draft={draft} dishes={dishes} previewGuests={previewGuests} setPreviewGuests={setPreviewGuests} />
+          <CustomerPreview draft={draft} dishes={dishes} previewGuests={previewGuests} setPreviewGuests={setPreviewGuests}
+            terms={service?.specs?.trade_v1 ?? service?.specs?.catering_v1 ?? {}} />
           <div className="mt-3">
             <PartnerMediaLinks vendor={vendor} profile={service?.specs?.trade_v1 ?? vendor ?? {}} />
           </div>
@@ -954,7 +955,7 @@ function CateringPackageEditor({ vendor, service, capability, catalogueDishes = 
   )
 }
 
-function CustomerPreview({ draft, dishes, previewGuests, setPreviewGuests }) {
+function CustomerPreview({ draft, dishes, previewGuests, setPreviewGuests, terms = {} }) {
   const byId = new Map(dishes.map(d => [d.id, d]))
   const sections = CATERING_MENU_SECTIONS
     .map(section => ({
@@ -1003,6 +1004,21 @@ function CustomerPreview({ draft, dishes, previewGuests, setPreviewGuests }) {
             </div>
           </div>
         )}
+      </div>
+      {(terms.min_notice_days != null || terms.cancellation_policy || terms.payment_policy || terms.reschedule_policy) && (
+        <section className="border-t border-ink/[0.07] bg-white p-4">
+          <p className="mb-2 text-[10px] font-extrabold uppercase tracking-[0.08em] text-ink-mute">Booking & payment terms</p>
+          {terms.min_notice_days != null && <div className="flex justify-between gap-3 py-1.5 text-[11.5px]"><span className="text-ink-soft">Book at least</span><b>{terms.min_notice_days} day(s) ahead</b></div>}
+          {terms.payment_policy && <div className="flex justify-between gap-3 py-1.5 text-[11.5px]"><span className="text-ink-soft">Payment</span><b>{String(terms.payment_policy).replace(/_/g, ' ')}</b></div>}
+          {terms.cancellation_policy && <div className="flex justify-between gap-3 py-1.5 text-[11.5px]"><span className="text-ink-soft">Cancellation</span><b className="text-right">{String(terms.cancellation_policy).replace(/_/g, ' ')}</b></div>}
+          {terms.reschedule_policy && <div className="flex justify-between gap-3 py-1.5 text-[11.5px]"><span className="text-ink-soft">Rescheduling</span><b className="text-right">{String(terms.reschedule_policy).replace(/_/g, ' ')}</b></div>}
+        </section>
+      )}
+      <div className="border-t border-ink/[0.07] bg-white p-4">
+        <div aria-label="Customer action preview" className={"rounded-full px-4 py-3 text-center text-[13px] font-extrabold text-white " + (String(terms.availability_policy ?? terms.booking_mode ?? 'instant').toLowerCase() === 'instant' ? "bg-gradient-to-r from-plum-700 to-violet-600" : "bg-slate-500")}>
+          {String(terms.availability_policy ?? terms.booking_mode ?? 'instant').toLowerCase() === 'instant' ? 'Instant Book & Pay' : 'Continue to secure booking'} →
+        </div>
+        <p className="mt-2 text-center text-[10px] leading-relaxed text-ink-mute">Preview only. Sambramo validates availability and the payable total through the existing booking flow.</p>
       </div>
     </div>
   )
