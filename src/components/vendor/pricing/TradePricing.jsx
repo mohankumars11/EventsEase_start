@@ -368,7 +368,7 @@ export default function TradePricing({ service, vendor, onEdit, onOpenPayout }) 
                     onEditStep={() => { setPreview(false); onEdit?.() }} onManageMedia={() => { setPreview(false); onEdit?.() }} />
                   <TradeListingCard listing={previewData} tradeName={config.name} onPick={setSelectedPreviewPackage}
                     media={previewMedia.rows}
-                    avatarSlot={<PartnerAvatarInput vendor={vendor} draft={{ profile: previewData.profile ?? {} }} businessName={previewData.profile?.business_name ?? previewData.profile?.stage_name ?? vendor?.business_name ?? 'Your business'} editable />} />
+                    avatarSlot={<PartnerAvatarInput vendor={vendor} draft={{ profile: previewData.profile ?? {} }} businessName={previewData.profile?.business_name ?? previewData.profile?.stage_name ?? vendor?.business_name ?? 'Your business'} editable variant="marketplace" />} />
                   <div className="mt-4"><PartnerMediaLinks vendor={vendor} profile={previewData.profile ?? {}} visibility={previewData.is_live === true ? 'customer' : 'partner'} /></div>
                   <div className="sppc-booking-cta-wrap">
                     <button type="button" className="sppc-booking-cta" onClick={() => setPreviewActionNote('Preview only. The live booking flow checks the event date, availability and final payable amount before payment.')}>
