@@ -15,6 +15,7 @@ export default function AnchorCustomerPreviewScreen({
   instantBookEnabled = true, isLive = false, onClose, onPick,
 }) {
   const [favorite, setFavorite] = useState(false)
+  const [bookingNote, setBookingNote] = useState(false)
   const [mediaState, setMediaState] = useState({ loading: true, rows: [], unavailable: false })
   useEffect(() => {
     let alive = true
@@ -97,11 +98,11 @@ export default function AnchorCustomerPreviewScreen({
       </main>
 
       <footer className="z-20 shrink-0 border-t border-[#e4ecfa] bg-white/95 px-3 pb-2 pt-2 shadow-[0_-5px_20px_rgba(26,75,140,.08)] backdrop-blur">
-        <button type="button" onClick={() => window.alert('Preview only. A customer booking must check availability and the final payable amount before payment.')}
+        <button type="button" onClick={() => setBookingNote(true)}
           className={`flex min-h-[50px] w-full items-center justify-center gap-2 rounded-[17px] px-4 text-center text-[13px] font-black text-white shadow-lg ${instant ? 'bg-gradient-to-r from-[#4935dc] to-[#7134ed]' : 'bg-gradient-to-r from-[#287be9] to-[#1557cc]'}`}>
           <span>{instant ? 'Instant Book & Pay' : 'Check availability & request quote'}</span><span aria-hidden="true">→</span>
         </button>
-        <p className="mt-1.5 text-center text-[9px] font-medium text-[#657594]">Preview only · secure payment and booking confirmation happen in the customer flow.</p>
+        <p className="mt-1.5 text-center text-[9px] font-medium text-[#657594]" role={bookingNote ? "status" : undefined}>{bookingNote ? "Preview only: availability and the final payable amount are confirmed in the customer booking flow." : "Preview only · secure payment and booking confirmation happen in the customer flow."}</p>
       </footer>
     </div>
   )

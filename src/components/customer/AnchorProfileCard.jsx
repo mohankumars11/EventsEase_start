@@ -109,11 +109,15 @@ export default function AnchorProfileCard({
       {/* Profile identity, with the real uploaded avatar in the circular slot. */}
       <section id="anchor-preview-profile" className="mx-3 mt-2 rounded-[25px] border border-[#e6f0fc] bg-white/95 p-3.5 shadow-[0_5px_22px_rgba(29,76,141,.06)]">
         <div className="flex items-start gap-3">
-          <div className="relative h-[72px] w-[72px] shrink-0 overflow-hidden rounded-full border-[3px] border-white bg-gradient-to-br from-[#d8f0ff] to-[#c3d8ff] shadow-[0_3px_12px_rgba(20,100,210,.16)]">
-            {avatarSlot || (avatar
-              ? <img src={avatar} alt={`${name} profile`} className="h-full w-full object-cover" onError={e => { e.currentTarget.style.display = 'none' }} />
-              : <span className="flex h-full w-full flex-col items-center justify-center text-[#1168d9]"><Mic2 size={24} /><b className="mt-0.5 text-[8px] font-black">ANCHOR</b></span>)}
-          </div>
+          {avatarSlot ? (
+            <div className="relative w-[72px] shrink-0">{avatarSlot}</div>
+          ) : (
+            <div className="relative h-[72px] w-[72px] shrink-0 overflow-hidden rounded-full border-[3px] border-white bg-gradient-to-br from-[#d8f0ff] to-[#c3d8ff] shadow-[0_3px_12px_rgba(20,100,210,.16)]">
+              {avatar
+                ? <img src={avatar} alt={`${name} profile`} className="h-full w-full object-cover" onError={e => { e.currentTarget.style.display = 'none' }} />
+                : <span className="flex h-full w-full flex-col items-center justify-center text-[#1168d9]"><Mic2 size={24} /><b className="mt-0.5 text-[8px] font-black">ANCHOR</b></span>}
+            </div>
+          )}
           <div className="min-w-0 flex-1 pt-1">
             <div className="flex min-w-0 flex-wrap items-center gap-1.5">
               <h3 className="max-w-full break-words text-[16px] font-black leading-tight text-[#111f50]">{name}</h3>
