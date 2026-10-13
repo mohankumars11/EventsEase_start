@@ -72,6 +72,10 @@ export default function TradeListingCard({ listing, tradeName, onPick, showBooki
   const heroMedia = portfolio.find(item => item.kind === 'photo') ?? portfolio[0] ?? null
   const verified = listing.is_verified === true || p.is_verified === true || listing.verified === true
   const hasPendingMedia = listing.is_live === false && portfolio.some(item => item.review_status !== 'live')
+  const languages = Array.isArray(p.languages) ? p.languages.map(item => typeof item === 'string' ? item : item?.name).filter(Boolean) : typeof p.languages === 'string' ? p.languages.split(',').map(item => item.trim()).filter(Boolean) : []
+  const experience = p.years_experience ?? p.years_active ?? p.years ?? listing.years_experience
+  const audience = p.max_audience ?? p.max_guests ?? p.audience ?? listing.max_guests
+  const eventTypes = Array.isArray(p.events) ? p.events.map(item => typeof item === 'string' ? item : item?.label ?? item?.name ?? item?.id).filter(Boolean) : typeof p.events === 'string' ? p.events.split(',').map(item => item.trim()).filter(Boolean) : []
 
   /* The cheapest real number on the listing, whatever shape the trade
      prices in. "From" is honest where a single headline price is not. */
@@ -113,6 +117,14 @@ export default function TradeListingCard({ listing, tradeName, onPick, showBooki
                 {Number(listing.rating) > 0 && <span className="flex items-center gap-1.5"><Star size={13} className="fill-current text-amber-300"/>{Number(listing.rating).toFixed(1)}{listing.review_count ? ' · '+listing.review_count+' reviews' : ''}</span>}
                 {(terms.instant === true || terms.instant === 'true') && <span className="rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-extrabold">Instant booking</span>}
               </div>
+              {(experience || audience || languages.length || eventTypes.length) ? (
+                <div className="mt-2.5 flex flex-wrap gap-1.5">
+                  {experience && Number(experience) > 0 ? <span className="rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-[9.5px] font-semibold text-white/90">{experience}+ years experience</span> : null}
+                  {audience && Number(audience) > 0 ? <span className="rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-[9.5px] font-semibold text-white/90">Up to {Number(audience).toLocaleString('en-IN')} guests</span> : null}
+                  {languages.slice(0, 3).map(language => <span key={language} className="rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-[9.5px] font-semibold text-white/90">{language}</span>)}
+                  {eventTypes.slice(0, 2).map(event => <span key={event} className="rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-[9.5px] font-semibold text-white/90">{event}</span>)}
+                </div>
+              ) : null}
             </div>
           </div>
           {entry > 0 && <p className="mt-4 text-[12px] font-bold text-white/80">From <span className="ml-1 text-[28px] font-black tracking-tight text-white">{rupees(entry)}</span></p>}
