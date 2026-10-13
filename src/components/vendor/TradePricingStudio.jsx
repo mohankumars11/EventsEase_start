@@ -27,6 +27,7 @@ import {
 } from '../../data/sambramoPricingCatalog'
 import WorkLibrary from './WorkLibrary'
 import SambramoPartnerPreviewCard, { SAMBRAMO_EVENT_OPTIONS, readSupportedEvents } from './SambramoPartnerPreviewCard'
+import PartnerMediaLinks from './pricing/PartnerMediaLinks'
 import { transactionLaneFor, transactionLaneCopy, TRANSACTION_LANES } from '../../lib/sambramoTransactionLane'
 
 const DEFAULT_UNITS = {
@@ -1059,6 +1060,9 @@ function PreviewStep({ vendor, service, config, packages = [], draft, fields, ad
           else onManageMedia?.()
         }}
       />
+      <div className="mt-4">
+        <PartnerMediaLinks vendor={vendor} profile={draft?.trade_inputs ?? {}} />
+      </div>
     </section>
   )
 }
