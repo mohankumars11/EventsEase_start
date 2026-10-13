@@ -163,9 +163,9 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
                 <h1 className="mt-1 text-[clamp(1.45rem,6vw,1.8rem)] font-extrabold leading-tight tracking-tight">Pricing & Listings</h1>
                 <p className="mt-1 text-[13px] text-white/75">Manage your services, packages and rates.</p>
               </div>
-              <button type="button" onClick={() => setHelpOpen(true)} aria-label="Pricing help and setup guidance"
-                className="flex h-11 shrink-0 items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3.5 text-[13px] font-extrabold text-white shadow-sm backdrop-blur">
-                <CircleHelp size={19} /> Help
+              <button type="button" onClick={() => setHelpOpen(true)} aria-label="Pricing help and setup guidance" title="Pricing help"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/25 bg-white/10 text-white shadow-sm backdrop-blur transition hover:bg-white/15 active:scale-95">
+                <CircleHelp size={22} />
               </button>
             </div>
             <div className="relative mt-5 grid grid-cols-4 gap-1 rounded-[22px] bg-white p-3 text-plum-950 shadow-[0_12px_30px_rgba(20,0,50,0.18)]">
