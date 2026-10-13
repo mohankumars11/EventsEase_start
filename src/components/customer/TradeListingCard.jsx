@@ -58,7 +58,7 @@ function Row({ k, v, sub }) {
   )
 }
 
-export default function TradeListingCard({ listing, tradeName, onPick, showBookingCtaPreview = false }) {
+export default function TradeListingCard({ listing, tradeName, onPick, showBookingCtaPreview = false, media = [], avatarSlot = null }) {
   if (!listing) return null
   const p = listing.profile && typeof listing.profile === 'object' ? listing.profile : {}
   const profileAvatar = p.avatar_url || p.profile_photo_url || p.photo_url || p.avatar || p.logo_url || p.business_logo_url || listing.avatar_url || listing.vendor_avatar_url || listing.profile_photo_url || ''
@@ -68,6 +68,10 @@ export default function TradeListingCard({ listing, tradeName, onPick, showBooki
   const catalogue = listing.catalogue ?? []
   const rules = listing.rules ?? []
   const addons = listing.addons ?? []
+  const portfolio = (Array.isArray(media) && media.length ? media : Array.isArray(listing.media) ? listing.media : []).filter(item => item?.url && ['photo', 'video'].includes(item.kind))
+  const heroMedia = portfolio.find(item => item.kind === 'photo') ?? portfolio[0] ?? null
+  const verified = listing.is_verified === true || p.is_verified === true || listing.verified === true
+  const hasPendingMedia = listing.is_live === false && portfolio.some(item => item.review_status !== 'live')
 
   /* The cheapest real number on the listing, whatever shape the trade
      prices in. "From" is honest where a single headline price is not. */
@@ -79,41 +83,60 @@ export default function TradeListingCard({ listing, tradeName, onPick, showBooki
 
   return (
     <div className="overflow-hidden rounded-[26px] bg-white ring-1 ring-ink/[0.07]">
-      <div className="bg-gradient-to-br from-plum-700 to-plum-950 p-5 text-white">
-        <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-white/75">
-          {tradeName ?? listing.trade_id}
-        </p>
-        <div className="mt-2.5 flex min-w-0 items-center gap-3">
-          <span className="relative grid h-[68px] w-[68px] shrink-0 place-items-center overflow-hidden rounded-full border-2 border-white/70 bg-white/15 shadow-[0_4px_14px_rgba(20,0,40,0.22)]">
-            <span className="absolute inset-0 flex h-full w-full flex-col items-center justify-center gap-0.5 bg-gradient-to-br from-violet-100 to-fuchsia-200 text-plum-900">
-              {String(tradeName ?? listing.trade_id ?? '').toLowerCase().includes('anchor') || String(tradeName ?? '').toLowerCase().includes('mc') ? <Mic2 size={24} /> : String(tradeName ?? '').toLowerCase().includes('photo') ? <Camera size={24} /> : <UserRound size={24} />}
-              <b>{String(displayName).split(/\s+/).map(x => x[0]).join('').slice(0,2).toUpperCase()}</b>
-            </span>
-            {profileAvatar ? <PartnerAvatarPhoto src={profileAvatar} alt={`${displayName} profile`} /> : null}
-          </span>
-          <div className="min-w-0 flex-1">
-            <h2 className="break-words text-[20px] font-extrabold leading-tight">{displayName}</h2>
-            {p.tagline && <p className="mt-1 text-[12px] leading-snug text-white/80">{p.tagline}</p>}
+      <div className="relative isolate overflow-hidden bg-gradient-to-br from-plum-950 via-plum-800 to-plum-700 text-white">
+        {heroMedia && heroMedia.kind === 'photo' ? <img src={heroMedia.url} alt="" className="absolute inset-0 h-full w-full object-cover opacity-45" /> : null}
+        {heroMedia && heroMedia.kind === 'video' ? <video src={heroMedia.url} muted playsInline className="absolute inset-0 h-full w-full object-cover opacity-40" /> : null}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#160b27]/95 via-[#2a085c]/75 to-[#5b21b6]/55" />
+        <div className="relative p-5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/80">{tradeName ?? listing.trade_id}</p>
+            <div className="flex flex-wrap items-center gap-1.5">
+              {verified ? <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200/30 bg-emerald-300/15 px-2.5 py-1 text-[9px] font-extrabold text-emerald-50"><Check size={11}/> Verified partner</span> : null}
+              {hasPendingMedia ? <span className="rounded-full border border-amber-200/40 bg-amber-200/15 px-2.5 py-1 text-[9px] font-extrabold text-amber-50">Portfolio awaiting review</span> : null}
+            </div>
           </div>
+          <div className="mt-3 flex min-w-0 items-center gap-3">
+            {avatarSlot || (
+              <span className="relative grid h-[72px] w-[72px] shrink-0 place-items-center overflow-hidden rounded-full border-2 border-white/80 bg-white/15 shadow-[0_5px_18px_rgba(15,5,30,.25)]">
+                <span className="absolute inset-0 flex h-full w-full flex-col items-center justify-center gap-0.5 bg-gradient-to-br from-violet-100 to-fuchsia-200 text-plum-900">
+                  {String(tradeName ?? listing.trade_id ?? '').toLowerCase().includes('anchor') || String(tradeName ?? '').toLowerCase().includes('mc') ? <Mic2 size={24} /> : String(tradeName ?? '').toLowerCase().includes('photo') ? <Camera size={24} /> : <UserRound size={24} />}
+                  <b className="text-[9px] font-black">{String(displayName).split(/\s+/).map(x => x[0]).join('').slice(0,2).toUpperCase()}</b>
+                </span>
+                {profileAvatar ? <PartnerAvatarPhoto src={profileAvatar} alt={displayName + ' profile'} /> : null}
+              </span>
+            )}
+            <div className="min-w-0 flex-1">
+              <h2 className="break-words text-[21px] font-extrabold leading-tight tracking-tight">{displayName}</h2>
+              {p.tagline && <p className="mt-1 text-[12px] leading-snug text-white/85">{p.tagline}</p>}
+              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11.5px] font-semibold text-white/85">
+                {listing.city && <span className="flex items-center gap-1.5"><MapPin size={13}/>{listing.city}</span>}
+                {Number(listing.rating) > 0 && <span className="flex items-center gap-1.5"><Star size={13} className="fill-current text-amber-300"/>{Number(listing.rating).toFixed(1)}{listing.review_count ? ' · '+listing.review_count+' reviews' : ''}</span>}
+                {(terms.instant === true || terms.instant === 'true') && <span className="rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-extrabold">Instant booking</span>}
+              </div>
+            </div>
+          </div>
+          {entry > 0 && <p className="mt-4 text-[12px] font-bold text-white/80">From <span className="ml-1 text-[28px] font-black tracking-tight text-white">{rupees(entry)}</span></p>}
+          {listing.description && <p className="mt-2 max-w-xl text-[11.5px] leading-relaxed text-white/80">{listing.description}</p>}
         </div>
-
-        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12.5px] font-semibold text-white/85">
-          {listing.city && <span className="flex items-center gap-1.5"><MapPin size={14} />{listing.city}</span>}
-          {Number(listing.rating) > 0 && (
-            <span className="flex items-center gap-1.5"><Star size={14} className="fill-current" />{Number(listing.rating).toFixed(1)}</span>
-          )}
-          {(terms.instant === true || terms.instant === 'true') && (
-            <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-[11px] font-extrabold">Instant booking</span>
-          )}
-        </div>
-
-        {entry > 0 && (
-          <p className="mt-4 text-[13px] font-bold text-white/80">
-            From <span className="text-[24px] font-extrabold text-white">{rupees(entry)}</span>
-          </p>
-        )}
       </div>
-
+      {portfolio.length > 0 && (
+        <section className="border-b border-ink/[0.06] bg-white px-4 py-3">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/45">Portfolio highlights</p>
+            <span className="text-[10px] font-bold text-plum-700">{portfolio.length} {portfolio.length === 1 ? 'item' : 'items'}</span>
+          </div>
+          <div className="flex snap-x snap-mandatory gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {portfolio.slice(0, 5).map((item, index) => (
+              <a key={item.id || item.storage_path || index} href={item.url} target="_blank" rel="noreferrer" className="relative h-[86px] w-[112px] shrink-0 snap-start overflow-hidden rounded-[15px] bg-plum-50 ring-1 ring-ink/[0.06]">
+                {item.kind === 'video' ? <video src={item.url} muted playsInline className="h-full w-full object-cover"/> : <img src={item.url} alt={item.caption || 'Partner portfolio'} className="h-full w-full object-cover"/>}
+                {item.kind === 'video' ? <span className="absolute bottom-1.5 left-1.5 rounded-full bg-black/70 px-2 py-1 text-[8px] font-extrabold text-white">▶ Video</span> : null}
+                {item.review_status && item.review_status !== 'live' ? <span className="absolute left-1 right-1 top-1 rounded-full bg-amber-100/95 px-1 py-1 text-center text-[7px] font-extrabold text-amber-900">{item.review_status === 'rejected' ? 'Changes needed' : 'In review'}</span> : null}
+              </a>
+            ))}
+            {portfolio.length > 5 ? <div className="grid h-[86px] w-[82px] shrink-0 place-items-center rounded-[15px] bg-plum-50 text-center text-[11px] font-extrabold text-plum-700">+{portfolio.length - 5}<br/>more</div> : null}
+          </div>
+        </section>
+      )}
       {packages.length > 0 && (
         <Section icon={Package} title="Packages & pricing">
           <div className="-mx-5 overflow-x-auto px-5 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
