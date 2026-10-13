@@ -283,9 +283,23 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
             <TradePricing service={selectedService} vendor={vendor}
               onEdit={() => onEditListing?.(selectedService)}
               onOpenPayout={onOpenPayout} />
+          ) : legacyScreen === 'details' ? (
+            <LegacyListingDetails
+              service={selectedService}
+              vendor={vendor}
+              status={listingMeta.byId[selectedService.id] ?? 'NOT_CONFIGURED'}
+              packageCount={listingMeta.packagesById[selectedService.id] ?? 0}
+              startingPricePaise={listingMeta.priceById[selectedService.id] ?? null}
+              priceUnit={listingMeta.priceUnitById[selectedService.id] ?? null}
+              priceLockedUntil={listingMeta.priceLockById[selectedService.id] ?? null}
+              packages={listingMeta.packageDetailsById[selectedService.id] ?? []}
+              onPreview={() => setLegacyScreen('preview')}
+              onEdit={() => setLegacyScreen('edit')}
+            />
           ) : (
             <SambramoPricingStudio vendor={vendor} services={[selectedService]} initialServiceId={selectedService.id}
-              onOpenListings={onOpenListings} onReturnToPricing={() => setSelectedServiceId(null)} />
+              startPreview={legacyScreen === 'preview'}
+              onOpenListings={onOpenListings} onReturnToPricing={() => setLegacyScreen('details')} />
           )}
         </>
       )}
@@ -326,6 +340,126 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
           </section>
         </div>
       )}
+    </div>
+  )
+}
+
+function LegacyListingDetails({
+  service, vendor, status, packageCount, startingPricePaise, priceUnit, priceLockedUntil,
+  packages = [], onPreview, onEdit,
+}) {
+  const category = service?.category || service?.trade || service?.name || 'Service'
+  const specs = service?.specs && typeof service.specs === 'object' ? service.specs : {}
+  const profile = specs.trade_v1 ?? specs.trade_inputs ?? specs.profile ?? specs
+  const lockDays = priceLockedUntil ? Math.max(0, Math.ceil((new Date(priceLockedUntil).getTime() - Date.now()) / 86400000)) : null
+  const look = statusCopy[status] ?? statusCopy.NOT_CONFIGURED
+  const details = [
+    ['Location', service?.city ?? service?.location ?? vendor?.city ?? profile?.city],
+    ['Service area', profile?.travel_policy ?? profile?.service_area ?? profile?.travel_radius_km ?? profile?.travel_radius],
+    ['Languages', profile?.languages ?? profile?.language],
+    ['Events / services', profile?.supported_events ?? profile?.event_types ?? profile?.events ?? profile?.service_types],
+    ['Capacity', profile?.guest_capacity ?? profile?.max_guests ?? profile?.capacity],
+    ['Minimum notice', profile?.lead_time_days ?? profile?.min_notice_days],
+    ['Booking mode', profile?.availability_policy ?? profile?.booking_mode],
+    ['Payment terms', profile?.payment_policy ?? profile?.payment_terms],
+    ['Cancellation policy', profile?.cancellation_policy ?? profile?.cancellation],
+    ['Rescheduling policy', profile?.reschedule_policy ?? profile?.rescheduling_policy],
+  ].filter(([, value]) => value !== undefined && value !== null && value !== '' && !(Array.isArray(value) && !value.length))
+    .map(([label, value]) => [label, Array.isArray(value) ? value.map(v => typeof v === 'object' ? (v.label ?? v.name ?? v.value ?? '') : String(v)).filter(Boolean).join(', ') : typeof value === 'object' ? (value.label ?? value.name ?? value.value ?? '') : String(value)])
+    .filter(([, value]) => value !== '')
+  const shownPackages = packages.filter(pkg => pkg.status !== 'ARCHIVED').sort((a, b) => {
+    const aa = String(a.name ?? '').toLowerCase(), bb = String(b.name ?? '').toLowerCase()
+    const rank = name => name.includes('essential') || name.includes('basic') ? 0 : name.includes('signature') || name.includes('premium') ? 1 : name.includes('vip') ? 2 : 3
+    return rank(aa) - rank(bb) || aa.localeCompare(bb)
+  })
+
+  function priceOf(pkg) {
+    if (Number(pkg.pricePaise) > 0) return Number(pkg.pricePaise)
+    const bands = Array.isArray(pkg.rateBands) ? pkg.rateBands : []
+    const bandPaise = bands.map(band => {
+      if (Number(band?.rate_paise) > 0) return Number(band.rate_paise)
+      const rate = Number(band?.rate)
+      return Number.isFinite(rate) && rate > 0 ? Math.round(rate * 100) : 0
+    }).filter(value => value > 0)
+    return bandPaise.length ? Math.min(...bandPaise) : null
+  }
+
+  return (
+    <div className="space-y-4 pb-5">
+      <section className="overflow-hidden rounded-[26px] bg-white ring-1 ring-ink/[0.07] shadow-[0_10px_28px_rgba(40,15,70,0.05)]">
+        <div className="bg-gradient-to-br from-plum-800 via-plum-700 to-[#321067] p-4 text-white">
+          <div className="flex items-start gap-3">
+            <span className="flex shrink-0 flex-col items-center gap-1.5">
+              <span className="grid h-[76px] w-[76px] place-items-center rounded-[22px] bg-white/10 ring-1 ring-white/20">
+                <SambramoTradePictogram trade={category} size="sm" showSparkle={false} title={false} />
+              </span>
+              <span className="max-w-[90px] text-center text-[10px] font-bold leading-tight text-white/80">{category}</span>
+            </span>
+            <div className="min-w-0 flex-1">
+              <span className={`inline-flex rounded-full px-2.5 py-1 text-[10.5px] font-extrabold ring-1 ${look.tone}`}>{look.label}</span>
+              <h2 className="mt-2 text-[19px] font-extrabold leading-tight">{service?.name || category}</h2>
+              <p className="mt-1 text-[12px] leading-relaxed text-white/70">{service?.description || 'Your saved trade-specific profile, packages and booking rules.'}</p>
+              <p className="mt-2 flex items-center gap-1.5 text-[11.5px] text-white/85"><MapPin size={14} />{service?.city || service?.location || vendor?.city || 'Location not set'}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 divide-x divide-ink/[0.06] p-3">
+          <div className="px-2"><p className="text-[9px] font-extrabold uppercase tracking-wide text-ink/45">Packages</p><p className="mt-1 text-[20px] font-black text-plum-950">{packageCount}</p></div>
+          <div className="px-2"><p className="text-[9px] font-extrabold uppercase tracking-wide text-ink/45">Starting price</p><p className="mt-1 text-[15px] font-black text-plum-800">{startingPricePaise ? rupees(startingPricePaise) : '—'}</p>{priceUnit ? <p className="text-[9.5px] text-ink/50">{priceUnit}</p> : null}</div>
+          <div className="px-2"><p className="text-[9px] font-extrabold uppercase tracking-wide text-ink/45">Availability</p><p className="mt-1 text-[12px] font-extrabold text-ink">{String(profile?.availability_policy ?? profile?.booking_mode ?? 'Check at booking').replace(/_/g, ' ')}</p></div>
+        </div>
+      </section>
+
+      {priceLockedUntil && lockDays !== null && (
+        <section className="flex items-start gap-3 rounded-[22px] bg-gradient-to-r from-plum-50 to-white p-4 ring-1 ring-plum-100">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-plum-100 text-plum-700"><CalendarClock size={20} /></span>
+          <div className="min-w-0">
+            <p className="text-[13px] font-extrabold text-plum-950">{lockDays > 0 ? `Next eligible price change in ${lockDays} day${lockDays === 1 ? '' : 's'}` : 'Regular price editing is available'}</p>
+            <p className="mt-0.5 text-[11.5px] leading-relaxed text-ink/60">The 15-day price policy applies to published rates. You can still update your profile, media and booking terms while prices are locked.</p>
+          </div>
+        </section>
+      )}
+
+      {shownPackages.length > 0 && (
+        <section className="rounded-[24px] bg-white p-4 ring-1 ring-ink/[0.07]">
+          <div className="mb-3 flex items-end justify-between gap-3">
+            <div><h3 className="text-[16px] font-extrabold text-plum-950">Packages & pricing</h3><p className="mt-0.5 text-[11px] text-ink/55">Swipe horizontally to review each saved package.</p></div>
+            <span className="text-[10px] font-bold text-ink/45">{shownPackages.length} saved</span>
+          </div>
+          <div className="-mx-1 overflow-x-auto px-1 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="flex snap-x snap-mandatory items-stretch gap-3">
+              {shownPackages.map((pkg, index) => {
+                const price = priceOf(pkg)
+                return (
+                  <article key={pkg.id ?? pkg.name ?? index} className="flex w-[78%] max-w-[280px] shrink-0 snap-center flex-col rounded-[22px] bg-gradient-to-b from-plum-50 to-white p-4 ring-1 ring-plum-100">
+                    <p className="text-[14px] font-extrabold text-plum-950">{pkg.name || 'Package'}</p>
+                    {pkg.duration ? <p className="mt-1 text-[11px] text-ink/55">{pkg.duration} hours</p> : pkg.serviceHours ? <p className="mt-1 text-[11px] text-ink/55">{pkg.serviceHours} service hours</p> : null}
+                    <p className="mt-3 text-[23px] font-extrabold text-plum-950">{price ? rupees(price) : 'Price not set'}</p>
+                    {pkg.minGuests ? <p className="mt-1 text-[10.5px] text-ink/55">{pkg.minGuests}{pkg.maxGuests ? `–${pkg.maxGuests}` : '+'} guests</p> : null}
+                    {!!pkg.inclusions?.length && <div className="mt-3 space-y-1.5">{pkg.inclusions.map((item, i) => <p key={i} className="flex items-start gap-1.5 text-[11px] leading-snug text-ink/70"><CheckCircle2 size={12} className="mt-0.5 shrink-0 text-emerald-700"/><span>{typeof item === 'string' ? item : item?.label ?? item?.name ?? item?.id ?? String(item)}</span></p>)}</div>}
+                    <div className="mt-auto pt-4"><span className="inline-flex rounded-full bg-white px-2.5 py-1 text-[9.5px] font-extrabold text-ink/60 ring-1 ring-ink/[0.08]">{statusCopy[pkg.status] ? statusCopy[pkg.status].label : String(pkg.status ?? 'Saved').replace(/_/g, ' ')}</span></div>
+                  </article>
+                )
+              })}
+            </div>
+          </div>
+        </section>
+      )}
+
+      <PartnerMediaLinks vendor={vendor} profile={profile ?? vendor ?? {}} />
+
+      {details.length > 0 && (
+        <section className="rounded-[22px] bg-white p-4 ring-1 ring-ink/[0.07]">
+          <h3 className="mb-2 text-[13px] font-extrabold text-plum-950">Booking & listing details</h3>
+          <div className="divide-y divide-ink/[0.05]">{details.map(([label, value]) => <Row key={label} k={label} v={value} />)}</div>
+        </section>
+      )}
+
+      <div className="grid grid-cols-2 gap-2">
+        <button type="button" onClick={onPreview} className="flex min-h-12 items-center justify-center gap-2 rounded-full bg-white px-3 text-[12.5px] font-extrabold text-plum-700 ring-1 ring-plum-300"><Eye size={16}/>Customer preview</button>
+        <button type="button" onClick={onEdit} className="flex min-h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-plum-700 to-violet-600 px-3 text-[12.5px] font-extrabold text-white shadow-sm"><Pencil size={16}/>Edit listing</button>
+      </div>
     </div>
   )
 }
