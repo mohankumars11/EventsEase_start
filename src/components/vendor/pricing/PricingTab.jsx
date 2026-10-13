@@ -50,6 +50,7 @@ const daysUntil = value => value ? Math.max(0, Math.ceil((new Date(value).getTim
 export default function PricingTab({ vendor, services = [], onOpenListings, onEditListing, onOpenPayout }) {
   const [helpOpen, setHelpOpen] = useState(false)
   const [selectedServiceId, setSelectedServiceId] = useState(null)
+  const [filterStatus, setFilterStatus] = useState('all')
   const [listingMeta, setListingMeta] = useState({ byId: {}, packagesById: {}, priceById: {}, nextPriceDate: null, nextPriceServiceId: null, loading: true })
   const engineReady = useEngineReady()
   const anchors = services.filter(s => hasProfileFor(s.category))
@@ -98,7 +99,10 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
         const partnerRate = Number(p.trade_inputs?.take_home_paise ?? p.take_home_paise ?? 0)
         if (partnerRate > 0 && p.status !== 'ARCHIVED') priceById[p.vendor_service_id] = Math.min(priceById[p.vendor_service_id] ?? partnerRate, partnerRate)
       }
-      const futureLocks = versions.filter(v => v.price_locked_until && new Date(v.price_locked_until) > new Date()).map(v => ({ date: v.price_locked_until, serviceId: v.vendor_service_id })).sort((a, b) => new Date(a.date) - new Date(b.date))
+      const futureLocks = ids.map(id => versions.find(v => v.vendor_service_id === id && !v.seasonal_window_id && v.status === 'LIVE'))
+        .filter(v => v?.price_locked_until && new Date(v.price_locked_until) > new Date())
+        .map(v => ({ date: v.price_locked_until, serviceId: v.vendor_service_id }))
+        .sort((a, b) => new Date(a.date) - new Date(b.date))
       setListingMeta({ byId, packagesById, priceById, nextPriceDate: futureLocks[0]?.date ?? null, nextPriceServiceId: futureLocks[0]?.serviceId ?? null, loading: false })
     }).catch(() => {
       if (alive) setListingMeta(s => ({ ...s, loading: false }))
@@ -180,9 +184,23 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
             </button>
           </div>
 
+          <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {[
+              ['all', `All · ${services.length}`],
+              ['live', `Live · ${counts.live}`],
+              ['review', `In review · ${counts.review}`],
+              ['draft', `Draft · ${counts.draft}`],
+            ].map(([key, label]) => (
+              <button key={key} type="button" onClick={() => setFilterStatus(key)}
+                className={`shrink-0 rounded-full px-3.5 py-2 text-[11.5px] font-extrabold ring-1 transition ${filterStatus === key ? 'bg-plum-700 text-white ring-plum-700' : 'bg-white text-ink/65 ring-ink/[0.09]'}`}>
+                {label}
+              </button>
+            ))}
+          </div>
+
           {services.length ? (
             <div className="space-y-3">
-              {services.map(service => {
+              {services.filter(service => filterStatus === 'all' || statusGroup(listingMeta.byId[service.id] ?? 'NOT_CONFIGURED') === filterStatus).map(service => {
                 const status = listingMeta.byId[service.id] ?? 'NOT_CONFIGURED'
                 const look = statusCopy[status] ?? statusCopy.NOT_CONFIGURED
                 const packCount = listingMeta.packagesById[service.id] ?? 0
