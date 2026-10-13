@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { BadgeCheck, CalendarDays, Camera, Check, ChevronLeft, ChevronRight, Clock3, Image as ImageIcon, Images, MapPin, Play, Plus, ShieldCheck, Star, Truck, Users, Video } from 'lucide-react'
 import './SambramoPartnerPreviewCard.css'
 import { fetchWork, signedUrlsFor } from '../../lib/partnerWork'
+import PartnerAvatarInput from './PartnerAvatarInput'
 
 export const SAMBRAMO_EVENT_OPTIONS = [
   'Birthday','Wedding','Engagement','Reception','Baby Shower','Naming Ceremony',
@@ -80,7 +81,7 @@ export default function SambramoPartnerPreviewCard({vendor,service,config,draft=
   },[vendor?.id,media])
   const displayMedia=media?.length?media:loadedMedia
   const businessName=vendor?.business_name||vendor?.name||'Partner business'
-  const location=[vendor?.city,vendor?.state].filter(Boolean).join(', ')||vendor?.location||'Bengaluru, Karnataka'
+  const location=[vendor?.area,vendor?.city,vendor?.state].filter(Boolean).join(', ')||vendor?.location||'Location not added'
   const verified=isVerified(vendor)
   const events=readSupportedEvents(draft?.trade_inputs??{})
   const visibleEvents=events.length?events:[draft?.trade_inputs?.event_type||draft?.trade_inputs?.function||'Celebrations']
@@ -102,7 +103,7 @@ export default function SambramoPartnerPreviewCard({vendor,service,config,draft=
   const rating=vendor?.rating??vendor?.average_rating
   const reviewCount=vendor?.review_count??vendor?.reviews_count
   const completedEvents=vendor?.events_completed??vendor?.completed_events
-  const sinceYear=vendor?.created_at?new Date(vendor.created_at).getFullYear():vendor?.since_year
+  const yearsExperience=vendor?.years_experience??vendor?.years_active??draft?.trade_inputs?.years_experience??draft?.trade_inputs?.years_active
   return <>
     <article className={'sambramo-partner-preview-card'+(compact?' is-compact':'')}>
       <header className="sppc-header">
@@ -110,14 +111,14 @@ export default function SambramoPartnerPreviewCard({vendor,service,config,draft=
         <div className="sppc-wordmark">SAMBRAMO</div><div className="sppc-header-spacer"/>
       </header>
       <section className="sppc-partner">
-        <div className="sppc-avatar">{initials(businessName)}</div>
+        <PartnerAvatarInput vendor={vendor} draft={draft} businessName={businessName} editable={!!onEdit} compact={compact} />
         <div className="sppc-partner-copy">
           <h2>{businessName}</h2><p>{config?.name||service?.name||'Event Partner'}</p>
           <p className="sppc-location"><MapPin size={14}/> {location}</p>
           <div className="sppc-stats">
             {rating!=null?<span><Star size={14} fill="currentColor"/><b>{Number(rating).toFixed(1)}</b>{reviewCount!=null?' ('+reviewCount+')':''}</span>:null}
             {completedEvents!=null?<><i/><span>{completedEvents}+ Events</span></>:null}
-            {sinceYear?<><i/><span>Since {sinceYear}</span></>:null}
+            {yearsExperience!=null&&Number(yearsExperience)>0?<><i/><span>{Number(yearsExperience)}+ years experience</span></>:null}
           </div>
         </div>
         <div className="sppc-badge-stack">
@@ -127,13 +128,14 @@ export default function SambramoPartnerPreviewCard({vendor,service,config,draft=
       </section>
       <section className="sppc-gallery">
         <div className="sppc-hero-wrap">
-          {hero&&mediaUrl(hero)?hero.kind==='video'?<button type="button" className="sppc-media-button" onClick={()=>setSelectedMediaIndex(0)}><video src={mediaUrl(hero)} muted playsInline className="sppc-hero-image"/><span className="sppc-video-chip"><Play size={11} fill="currentColor"/>Video</span></button>:<button type="button" className="sppc-media-button" onClick={()=>setSelectedMediaIndex(0)}><img src={mediaUrl(hero)} alt={hero.caption||businessName+' work'} className="sppc-hero-image"/></button>:<button type="button" className="sppc-empty-media" onClick={()=>onManageMedia?.('media')}><Images size={30}/><b>Add approved business photos or video</b><span>Your first approved portfolio item becomes the featured cover.</span></button>}
+          {hero&&mediaUrl(hero)?hero.kind==='video'?<button type="button" className="sppc-media-button" onClick={()=>setSelectedMediaIndex(0)}><video src={mediaUrl(hero)} muted playsInline className="sppc-hero-image"/><span className="sppc-video-chip"><Play size={11} fill="currentColor"/>Video</span></button>:<button type="button" className="sppc-media-button" onClick={()=>setSelectedMediaIndex(0)}><img src={mediaUrl(hero)} alt={hero.caption||businessName+' work'} className="sppc-hero-image"/></button>:<button type="button" className="sppc-empty-media" onClick={()=>onManageMedia?.('media')}><Images size={30}/><b>Add real photos of your work</b><span>Approved portfolio items become your featured cover on the live marketplace.</span></button>}
+          {hero&&hero.review_status!=='live'?<span className="sppc-review-chip">{hero.review_status==='rejected'?'Needs changes':hero.review_status==='under_review'?'Awaiting approval':'New upload · review pending'}</span>:null}
           <span className="sppc-featured">FEATURED PACKAGE</span>
           <div className="sppc-hero-caption"><strong>{current?.name||draft?.name||'Featured Package'}</strong><span>{current?.description||draft?.description||'Professional event service with a clear scope, premium execution and coordinated event-day delivery.'}</span></div>
           {displayMedia.length?<span className="sppc-counter">1/{displayMedia.length}</span>:null}
         </div>
         <div className="sppc-thumb-stack">
-          {thumbs.map((item,i)=><button type="button" key={item.id||item.storage_path||i} className="sppc-thumb-button" onClick={()=>setSelectedMediaIndex(displayMedia.indexOf(item))}>{item.kind==='video'?<video src={mediaUrl(item)} muted playsInline className="sppc-thumb"/>:<img src={mediaUrl(item)} alt="" className="sppc-thumb"/>}{item.kind==='video'?<span className="sppc-video-chip small"><Play size={10} fill="currentColor"/>Video</span>:null}{i===1&&displayMedia.length>3?<span className="sppc-photo-count">+{displayMedia.length-2} more</span>:null}</button>)}
+          {thumbs.map((item,i)=><button type="button" key={item.id||item.storage_path||i} className="sppc-thumb-button" onClick={()=>setSelectedMediaIndex(displayMedia.indexOf(item))}>{item.kind==='video'?<video src={mediaUrl(item)} muted playsInline className="sppc-thumb"/>:<img src={mediaUrl(item)} alt="" className="sppc-thumb"/>}{item.kind==='video'?<span className="sppc-video-chip small"><Play size={10} fill="currentColor"/>Video</span>:null}{item.review_status!=='live'?<span className="sppc-thumb-review">{item.review_status==='rejected'?'Changes needed':'Review pending'}</span>:null}{i===1&&displayMedia.length>3?<span className="sppc-photo-count">+{displayMedia.length-2} more</span>:null}</button>)}
           {!thumbs.length?<button type="button" className="sppc-thumb-placeholder" onClick={()=>onManageMedia?.('media')}><Images size={19}/><span>Add work</span></button>:null}
         </div>
       </section>
