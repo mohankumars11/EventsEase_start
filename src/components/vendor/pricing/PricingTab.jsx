@@ -45,6 +45,7 @@ const statusCopy = {
 const statusGroup = status => status === 'LIVE' ? 'live'
   : ['UNDER_REVIEW', 'ACTION_REQUIRED', 'REJECTED'].includes(status) ? 'review' : 'draft'
 const shortDate = value => value ? new Date(value).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : ''
+const daysUntil = value => value ? Math.max(0, Math.ceil((new Date(value).getTime() - Date.now()) / 86400000)) : null
 
 export default function PricingTab({ vendor, services = [], onOpenListings, onEditListing, onOpenPayout }) {
   const [helpOpen, setHelpOpen] = useState(false)
@@ -60,7 +61,7 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
     let alive = true
     const ids = services.map(s => s.id).filter(Boolean)
     if (!ids.length) {
-      setListingMeta({ byId: {}, packagesById: {}, nextPriceDate: null, loading: false })
+      setListingMeta({ byId: {}, packagesById: {}, nextPriceDate: null, nextPriceServiceId: null, loading: false })
       return () => { alive = false }
     }
     setListingMeta(s => ({ ...s, loading: true }))
@@ -94,8 +95,8 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
         if (!p.vendor_service_id) continue
         packagesById[p.vendor_service_id] = (packagesById[p.vendor_service_id] ?? 0) + (p.status === 'ARCHIVED' ? 0 : 1)
       }
-      const futureLocks = versions.map(v => v.price_locked_until).filter(d => d && new Date(d) > new Date()).sort()
-      setListingMeta({ byId, packagesById, nextPriceDate: futureLocks[0] ?? null, loading: false })
+      const futureLocks = versions.filter(v => v.price_locked_until && new Date(v.price_locked_until) > new Date()).map(v => ({ date: v.price_locked_until, serviceId: v.vendor_service_id })).sort((a, b) => new Date(a.date) - new Date(b.date))
+      setListingMeta({ byId, packagesById, nextPriceDate: futureLocks[0]?.date ?? null, nextPriceServiceId: futureLocks[0]?.serviceId ?? null, loading: false })
     }).catch(() => {
       if (alive) setListingMeta(s => ({ ...s, loading: false }))
     })
@@ -146,20 +147,21 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
                 <CircleHelp size={19} /> Help
               </button>
             </div>
-            <div className="relative mt-5 grid grid-cols-3 gap-2 rounded-[22px] bg-white p-3 text-plum-950 shadow-[0_12px_30px_rgba(20,0,50,0.18)]">
+            <div className="relative mt-5 grid grid-cols-4 gap-1 rounded-[22px] bg-white p-3 text-plum-950 shadow-[0_12px_30px_rgba(20,0,50,0.18)]">
               <StatusMetric label="Live" count={counts.live} glyph="✓" tone="text-emerald-700 bg-emerald-50" />
               <StatusMetric label="In review" count={counts.review} glyph="◷" tone="text-amber-700 bg-amber-50" />
               <StatusMetric label="Drafts" count={counts.draft} glyph="▤" tone="text-violet-700 bg-violet-50" />
+              <StatusMetric label="Total" count={services.length} glyph="▥" tone="text-slate-700 bg-slate-100" />
             </div>
           </section>
 
-          <button type="button" onClick={() => setSelectedServiceId(services[0]?.id ?? null)}
-            disabled={!listingMeta.nextPriceDate}
+          <button type="button" onClick={() => setSelectedServiceId(listingMeta.nextPriceServiceId ?? services[0]?.id ?? null)}
+            disabled={!services.length}
             className="flex w-full items-center gap-3 rounded-[22px] bg-gradient-to-r from-plum-50 to-white p-4 text-left ring-1 ring-plum-100 disabled:cursor-default">
             <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-plum-100 text-plum-700"><CalendarClock size={23} /></span>
             <span className="min-w-0 flex-1">
               <span className="block text-[13.5px] font-extrabold text-plum-950">Price update window</span>
-              <span className="mt-0.5 block text-[14px] font-extrabold text-plum-800">{listingMeta.nextPriceDate ? `Next eligible price change · ${shortDate(listingMeta.nextPriceDate)}` : 'Your price-update dates appear here once a listing is published'}</span>
+              <span className="mt-0.5 block text-[14px] font-extrabold text-plum-800">{listingMeta.nextPriceDate ? `Next eligible price change in ${daysUntil(listingMeta.nextPriceDate)} day${daysUntil(listingMeta.nextPriceDate) === 1 ? '' : 's'}` : 'Your price-update dates appear here once a listing is published'}</span>
               <span className="mt-0.5 block text-[11.5px] text-ink/55">Regular prices follow the 15-day update policy. An approved seasonal window, when available, is shown inside the listing.</span>
             </span>
             <ChevronRight size={19} className="shrink-0 text-plum-700" />
@@ -274,9 +276,10 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
 
 function StatusMetric({ label, count, glyph, tone }) {
   return (
-    <div className="flex min-w-0 items-center gap-2 border-r border-ink/[0.06] px-1.5 last:border-0">
-      <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-full text-[18px] font-black ${tone}`}>{glyph}</span>
-      <span className="min-w-0"><span className="block truncate text-[9px] font-extrabold uppercase tracking-wide text-ink/50">{label}</span><span className="block text-[20px] font-black leading-tight text-plum-950">{count}</span></span>
+    <div className="flex min-w-0 flex-col items-center justify-center gap-1 border-r border-ink/[0.06] px-0.5 text-center last:border-0">
+      <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-full text-[15px] font-black ${tone}`}>{glyph}</span>
+      <span className="block w-full truncate text-[8px] font-extrabold uppercase tracking-wide text-ink/50">{label}</span>
+      <span className="block text-[19px] font-black leading-tight text-plum-950">{count}</span>
     </div>
   )
 }
