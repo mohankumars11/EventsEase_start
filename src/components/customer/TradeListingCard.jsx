@@ -63,11 +63,11 @@ export default function TradeListingCard({ listing, tradeName, onPick, showBooki
   const p = listing.profile && typeof listing.profile === 'object' ? listing.profile : {}
   const profileAvatar = p.avatar_url || p.profile_photo_url || p.photo_url || p.avatar || p.logo_url || p.business_logo_url || listing.avatar_url || listing.vendor_avatar_url || listing.profile_photo_url || ''
   const displayName = p.business_name ?? listing.business_name ?? p.stage_name ?? p.name ?? listing.vendor_name ?? 'This partner'
-  const terms = listing.terms ?? {}
-  const packages = listing.packages ?? []
-  const catalogue = listing.catalogue ?? []
-  const rules = listing.rules ?? []
-  const addons = listing.addons ?? []
+  const terms = listing.terms && typeof listing.terms === 'object' ? listing.terms : {}
+  const packages = Array.isArray(listing.packages) ? listing.packages : []
+  const catalogue = Array.isArray(listing.catalogue) ? listing.catalogue : []
+  const rules = Array.isArray(listing.rules) ? listing.rules : []
+  const addons = Array.isArray(listing.addons) ? listing.addons : []
   const portfolio = (Array.isArray(media) && media.length ? media : Array.isArray(listing.media) ? listing.media : []).filter(item => item?.url && ['photo', 'video'].includes(item.kind))
   const heroMedia = portfolio.find(item => item.kind === 'photo') ?? portfolio[0] ?? null
   const verified = listing.is_verified === true || p.is_verified === true || listing.verified === true
@@ -144,6 +144,7 @@ export default function TradeListingCard({ listing, tradeName, onPick, showBooki
               {packages.map(pkg => {
                 const PackageSurface = onPick ? "button" : "div"
                 const popular = pkg.is_popular === true || pkg.is_featured === true
+                const inclusions = Array.isArray(pkg.inclusions) ? pkg.inclusions : []
                 return (
                   <PackageSurface key={pkg.key ?? pkg.name} type={onPick ? "button" : undefined}
                     onClick={onPick ? () => onPick(pkg) : undefined}
@@ -157,9 +158,9 @@ export default function TradeListingCard({ listing, tradeName, onPick, showBooki
                     <p className="pr-16 text-[14.5px] font-extrabold text-ink">{pkg.name}</p>
                     {pkg.hours && <p className="mt-0.5 text-[11.5px] font-bold text-ink/50">{pkg.hours} hours</p>}
                     <p className="mt-3 text-[24px] font-extrabold tracking-tight text-ink">{rupees(pkg.customer_paise)}</p>
-                    {!!(pkg.inclusions ?? []).length && (
+                    {!!inclusions.length && (
                       <div className="mt-3 space-y-1.5">
-                        {(pkg.inclusions ?? []).map((inc, i) => (
+                        {inclusions.map((inc, i) => (
                           <p key={i} className="flex items-start gap-1.5 text-[11.5px] leading-snug text-ink/70">
                             <Check size={12} className="mt-0.5 shrink-0 text-forest-600" strokeWidth={3} />
                             <span>{typeof inc === "string" ? inc : inc.label ?? inc.id}</span>
@@ -218,7 +219,7 @@ export default function TradeListingCard({ listing, tradeName, onPick, showBooki
             sub={terms.cancellation_policy ?? terms.cancellation_details ?? CANCELLATION_COPY[terms.cancellation] ?? 'Check the booking terms for the policy that applies to this listing.'} />
         )}
         {terms.reschedule_policy && <Row k="Rescheduling" v={String(terms.reschedule_policy).replace(/_/g, ' ')} />}
-        {(terms.charges ?? []).map((c, i) => (
+        {(Array.isArray(terms.charges) ? terms.charges : []).map((c, i) => (
           <Row key={i} k={c.label} v={rupees(c.customer_paise)} sub={c.role} />
         ))}
       </Section>
