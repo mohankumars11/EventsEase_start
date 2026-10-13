@@ -13,7 +13,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import {
-  ChevronDown, Lock, Sparkles, Zap, Wallet, Eye, Award, Crown, Gem, Check, Pencil, MapPin, Languages, Users,
+  ChevronDown, Lock, Sparkles, Eye, Award, Crown, Gem, Check, Pencil, MapPin, Languages, Users,
   Clock, Mic2, CalendarCheck, Sun, SunMedium, CalendarRange, ArrowRight,
 } from 'lucide-react'
 import { rupees, takeHomeOf } from '../../../lib/tierPackages'
@@ -77,22 +77,10 @@ export default function PricingControlCenter({ data, onEdit, onSeasonal, onPayou
           <div className="mt-3 flex items-start gap-2.5 rounded-2xl bg-white/10 p-3">
             <Lock size={16} className="mt-0.5 shrink-0 text-plum-200" />
             <p className="text-[12.5px] leading-snug text-plum-50">
-              <b className="text-white">Your prices are protected for 15 days after publication.</b> Your next regular price update is available on <b className="text-white">{fmtDate(d.price_locked_until)}</b>. You can still manage your calendar.
+              <b className="text-white">Regular prices are protected for 15 days after publication.</b> Your next eligible update is <b className="text-white">{fmtDate(d.price_locked_until)}</b>. Your other listing details remain editable through the listing editor.
             </p>
           </div>
         )}
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          <button type="button" className="rounded-2xl bg-white/10 p-3 text-left">
-            <Zap size={16} className={d.instant_ready ? 'text-emerald-300' : 'text-amber-300'} />
-            <p className="mt-1 text-[12px] font-extrabold">Instant Book & Pay</p>
-            <p className="text-[11px] text-plum-200">{d.instant_ready ? 'Ready' : `${d.instant_missing} item${d.instant_missing === 1 ? '' : 's'} to finish`}</p>
-          </button>
-          <button type="button" onClick={onPayout} className="rounded-2xl bg-white/10 p-3 text-left">
-            <Wallet size={16} className={d.payout_status === 'active' ? 'text-emerald-300' : 'text-amber-300'} />
-            <p className="mt-1 text-[12px] font-extrabold">Payouts</p>
-            <p className="text-[11px] text-plum-200">{d.payout_status === 'active' ? 'Active · Razorpay' : 'Action needed'} ›</p>
-          </button>
-        </div>
       </div>
 
       {banner}
@@ -107,6 +95,30 @@ export default function PricingControlCenter({ data, onEdit, onSeasonal, onPayou
           </button>
         </motion.div>
       )}
+
+      <section className="rounded-[22px] bg-gradient-to-r from-plum-50 via-white to-violet-50 p-4 ring-1 ring-plum-100">
+        <div className="flex items-start gap-3">
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-plum-100 text-plum-700"><CalendarRange size={21} /></span>
+          <div className="min-w-0 flex-1">
+            <p className="text-[13.5px] font-extrabold text-plum-950">Price update window</p>
+            {locked
+              ? <p className="mt-1 text-[13px] font-extrabold text-plum-800">Next eligible price change · {fmtDate(d.price_locked_until)}</p>
+              : <p className="mt-1 text-[13px] font-extrabold text-plum-800">Regular price editing is available</p>}
+            <p className="mt-1 text-[11.5px] leading-relaxed text-ink/55">Published prices follow the 15-day change policy. Any new version is reviewed before replacing live prices; confirmed bookings keep their agreed rate.</p>
+            {d.seasonal && (
+              <p className="mt-2 rounded-xl bg-amber-50 px-3 py-2 text-[11.5px] font-bold text-amber-900 ring-1 ring-amber-200">
+                {d.seasonal.name} is open until {fmtDate(d.seasonal.deadline)}.
+              </p>
+            )}
+          </div>
+        </div>
+        <button type="button" onClick={d.seasonal ? onSeasonal : locked ? undefined : () => onEdit?.('pricing')}
+          disabled={locked && !d.seasonal}
+          className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-plum-700 to-violet-600 px-4 text-[13px] font-extrabold text-white shadow-sm disabled:bg-ink/10 disabled:text-ink/45 disabled:shadow-none">
+          {d.seasonal ? 'Edit prices in this update window' : locked ? `Price editing opens on ${fmtDate(d.price_locked_until)}` : 'Edit prices'}
+          <ArrowRight size={15} />
+        </button>
+      </section>
 
       {/* C · the three packages, swipeable
           Was a fourth hand-rolled copy of the tier card -- a w-[72%]
@@ -128,7 +140,7 @@ export default function PricingControlCenter({ data, onEdit, onSeasonal, onPayou
             meta: `${p.hours} hrs${p.sessions ? ` · ${p.sessions} function${p.sessions > 1 ? 's' : ''}` : ''}`,
             status: (STATUS_LOOK[p.status] ?? [])[0] ?? 'In review',
             base: `${p.hours} hours of hosting`,
-            inclusions: p.inclusions.slice(0, 3).map(i => ({ id: i, label: i, included: true })),
+            inclusions: p.inclusions.map(i => ({ id: i, label: i, included: true })),
           }))}
           onViewDetails={p => onViewPackage?.(p.key)}
         />
