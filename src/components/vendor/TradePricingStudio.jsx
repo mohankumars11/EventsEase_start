@@ -28,6 +28,8 @@ import {
 import WorkLibrary from './WorkLibrary'
 import SambramoPartnerPreviewCard, { SAMBRAMO_EVENT_OPTIONS, readSupportedEvents } from './SambramoPartnerPreviewCard'
 import PartnerMediaLinks from './pricing/PartnerMediaLinks'
+import StorefrontReadiness from './pricing/StorefrontReadiness'
+import './pricing/StorefrontReadiness.css'
 import { transactionLaneFor, transactionLaneCopy, TRANSACTION_LANES } from '../../lib/sambramoTransactionLane'
 
 const DEFAULT_UNITS = {
@@ -1071,6 +1073,8 @@ function PreviewStep({ vendor, service, config, packages = [], draft, fields, ad
           <Images size={16} /> Manage media
         </button>
       </div>
+      <StorefrontReadiness vendor={vendor} draft={draft} packages={packages} media={media}
+        onEditStep={onEditStep} onManageMedia={onManageMedia} />
       <SambramoPartnerPreviewCard
         vendor={vendor}
         service={service}
