@@ -386,7 +386,7 @@ export default function TradePricing({ service, vendor, onEdit, onOpenPayout }) 
         {selectedPreviewPackage && (
           <div className="space-y-3">
             <div className="rounded-[22px] bg-gradient-to-br from-plum-50 to-white p-4 ring-1 ring-plum-100">
-              <p className="text-[25px] font-extrabold tracking-tight text-plum-950">{rupees(selectedPreviewPackage.customer_paise)}</p>
+              <p className="text-[25px] font-extrabold tracking-tight text-plum-950">{Number(selectedPreviewPackage.customer_paise) > 0 ? rupees(selectedPreviewPackage.customer_paise) : 'Price on request'}</p>
               {selectedPreviewPackage.hours && <p className="mt-1 text-[12px] font-bold text-ink/55">{selectedPreviewPackage.hours} hours included</p>}
               {selectedPreviewPackage.description && <p className="mt-2 text-[12.5px] leading-relaxed text-ink/70">{selectedPreviewPackage.description}</p>}
             </div>
