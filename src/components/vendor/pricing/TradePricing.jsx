@@ -199,9 +199,9 @@ export default function TradePricing({ service, vendor, onEdit, onOpenPayout }) 
           <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-extrabold ${tone}`}>{label}</span>
         </div>
         <div className="mt-3 flex gap-2">
-          <button type="button" disabled={locked} onClick={onEdit}
-            className="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-full bg-white text-[13px] font-extrabold text-plum-800 disabled:opacity-60">
-            {locked ? <><Lock size={14} /> Editable from {fmt(d.live.price_locked_until)}</> : <><Pencil size={14} /> Edit listing</>}
+          <button type="button" onClick={onEdit}
+            className="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-full bg-white text-[13px] font-extrabold text-plum-800">
+            <Pencil size={14} /> Edit listing
           </button>
           {/* Was <a href="/book/s/..."> -- in a Capacitor WebView that is a
               full page reload onto the live customer route, leaving the
