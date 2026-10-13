@@ -19,3 +19,22 @@
 .sppc-package-status.status-draft{background:#f0e8ff;color:#5b21b6}
 .sppc-package-status.status-rejected{background:#fff0f1;color:#a32642}
 .sppc-package-status+.sppc-popular-pill{margin-top:20px}
+
+.sppc-rate-list,.sppc-order-list{margin-top:10px;display:grid;gap:0}
+.sppc-rate-list>div,.sppc-order-list>div{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:10px 1px;border-bottom:1px solid #f0eaf5;color:#5d526d;font:550 11px/1.3 Manrope,Inter,sans-serif}
+.sppc-rate-list>div:last-child,.sppc-order-list>div:last-child{border-bottom:0}
+.sppc-rate-list b,.sppc-order-list strong{color:#24133e;font:800 12px/1.25 Manrope,Inter,sans-serif;text-align:right}
+.sppc-order-list>div>span{display:flex;flex-direction:column;gap:3px;min-width:0}
+.sppc-order-list b{color:#2b1c42;font:750 11.5px/1.25 Manrope,Inter,sans-serif}
+.sppc-order-list small{color:#8a7e96;font:550 9px/1.2 Manrope,Inter,sans-serif}
+.sppc-rate-empty{margin-top:10px;color:#81758f;font:550 10px/1.4 Manrope,Inter,sans-serif}
+.sppc-booking-cta-wrap{position:sticky;bottom:0;z-index:5;padding:10px 18px calc(12px + env(safe-area-inset-bottom,0px));background:linear-gradient(180deg,rgba(255,255,255,.82),#fff 22%);border-top:1px solid #eee8f4}
+.sppc-booking-cta{display:flex;align-items:center;gap:10px;width:100%;min-height:58px;padding:12px 15px;border:0;border-radius:999px;background:linear-gradient(100deg,#6d28d9,#7c3aed);color:#fff;text-align:left;box-shadow:0 8px 20px rgba(91,33,182,.22)}
+.sppc-booking-bolt{display:grid;place-items:center;width:31px;height:31px;flex:0 0 31px;border-radius:50%;background:rgba(255,255,255,.15);font-size:20px}
+.sppc-booking-cta>span:nth-child(2){display:flex;flex:1;min-width:0;flex-direction:column;gap:4px}
+.sppc-booking-cta b{font:800 13px/1.2 Manrope,Inter,sans-serif}
+.sppc-booking-cta small{color:#eee5ff;font:550 9px/1.3 Manrope,Inter,sans-serif}
+.sppc-booking-note{margin:7px 0 0;color:#8a7e96;text-align:center;font:500 8.5px/1.3 Manrope,Inter,sans-serif}
+@media(max-width:640px){.sppc-booking-cta-wrap{padding:9px 12px calc(10px + env(safe-area-inset-bottom,0px))}.sppc-booking-cta{min-height:54px;padding:10px 13px}.sppc-booking-cta b{font-size:12px}.sppc-booking-cta small{font-size:8.5px}}
+@media(max-width:380px){.sppc-booking-cta-wrap{padding-left:9px;padding-right:9px}.sppc-booking-cta{gap:7px;padding:9px 10px}}
+.sppc-package-status+.sppc-popular-pill{top:32px;margin-top:0}
