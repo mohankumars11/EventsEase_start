@@ -257,7 +257,8 @@ function PartnerAvatarPhoto({ src, alt }) {
       if (!src) { setResolved(''); return }
       if (/^https?:\/\//i.test(String(src))) { setResolved(src); return }
       try {
-        const { data, error } = await supabase.storage.from('partner-uploads').createSignedUrl(String(src), 600)
+        let { data, error } = await supabase.storage.from('partner-avatars').createSignedUrl(String(src), 600)
+        if (error) ({ data, error } = await supabase.storage.from('partner-uploads').createSignedUrl(String(src), 600))
         if (alive) setResolved(error ? '' : data?.signedUrl || '')
       } catch { if (alive) setResolved('') }
     }
