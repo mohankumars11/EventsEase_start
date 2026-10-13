@@ -194,6 +194,17 @@ export default function PricingControlCenter({ data, onEdit, onSeasonal, onPayou
       <Section title="Booking & payment rules">
         {d.rules.map(c => <Row key={c.k} k={c.k} v={c.v} />)}
       </Section>
+
+      <div className="grid grid-cols-2 gap-2 pt-1">
+        <button type="button" onClick={onPreview}
+          className="flex min-h-12 items-center justify-center gap-2 rounded-full bg-white px-3 text-[12.5px] font-extrabold text-plum-700 ring-1 ring-plum-300">
+          <Eye size={16} /> Customer preview
+        </button>
+        <button type="button" onClick={() => onEdit?.('listing')}
+          className="flex min-h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-plum-700 to-violet-600 px-3 text-[12.5px] font-extrabold text-white shadow-sm">
+          <Pencil size={16} /> Edit listing
+        </button>
+      </div>
     </div>
   )
 }
