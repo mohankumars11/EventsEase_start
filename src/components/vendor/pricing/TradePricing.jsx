@@ -19,6 +19,7 @@ import { supabase } from '../../../lib/supabase'
 import { rupees } from '../../../lib/tierPackages'
 import PackageCarousel from '../packages/PackageCarousel'
 import TradeListingCard from '../../customer/TradeListingCard'
+import PartnerMediaLinks from './PartnerMediaLinks'
 import { configFor } from '../../../data/trades'
 import { RULE_KINDS } from '../../../data/trades/schema'
 import { buildTradePayload } from '../listing/payload'
@@ -86,7 +87,7 @@ export function useListingPricing(service) {
   return { ...state, reload: load }
 }
 
-export default function TradePricing({ service, onEdit, onOpenPayout }) {
+export default function TradePricing({ service, vendor, onEdit, onOpenPayout }) {
   const config = configFor(service.category)
   const d = useListingPricing(service)
   const toast = useToast()
@@ -234,13 +235,26 @@ export default function TradePricing({ service, onEdit, onOpenPayout }) {
           <p className="text-[12.5px] font-semibold text-ink/75">Seasonal prices are live for {fmt(s.effective_from)} – {fmt(s.effective_to)}.</p>
         </div>
       ))}
-      {d.window && d.live && (
-        <button type="button" onClick={() => setSheet('seasonal')}
-          className="flex w-full items-center gap-2.5 rounded-[20px] bg-amber-100 p-4 text-left ring-1 ring-amber-300">
-          <Sparkles size={17} className="shrink-0 text-amber-700" />
-          <span className="flex-1 text-[13px] font-extrabold text-amber-900">{d.window.name} is open — update prices until {fmt(d.window.closes_at)}</span>
-          <ArrowRight size={16} className="text-amber-800" />
-        </button>
+      {d.live && (
+        <section className="rounded-[22px] bg-gradient-to-r from-plum-50 via-white to-violet-50 p-4 ring-1 ring-plum-100">
+          <div className="flex items-start gap-3">
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-plum-100 text-plum-700"><Lock size={20} /></span>
+            <div className="min-w-0 flex-1">
+              <p className="text-[13.5px] font-extrabold text-plum-950">Price update window</p>
+              {locked
+                ? <p className="mt-1 text-[13px] font-extrabold text-plum-800">Next eligible price change in {Math.max(0, Math.ceil((new Date(d.live.price_locked_until).getTime() - Date.now()) / 86400000))} day(s) · {fmt(d.live.price_locked_until)}</p>
+                : <p className="mt-1 text-[13px] font-extrabold text-plum-800">Regular price editing is available</p>}
+              <p className="mt-1 text-[11.5px] leading-relaxed text-ink/55">Published prices follow the 15-day change policy. New versions are reviewed before replacing live prices; confirmed bookings keep their agreed rate.</p>
+              {d.window && <p className="mt-2 rounded-xl bg-amber-50 px-3 py-2 text-[11.5px] font-bold text-amber-900 ring-1 ring-amber-200">{d.window.name} is open until {fmt(d.window.closes_at)}.</p>}
+            </div>
+          </div>
+          <button type="button" onClick={d.window ? () => setSheet('seasonal') : locked ? undefined : onEdit}
+            disabled={locked && !d.window}
+            className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-plum-700 to-violet-600 px-4 text-[13px] font-extrabold text-white shadow-sm disabled:bg-ink/10 disabled:text-ink/45 disabled:shadow-none">
+            {d.window ? 'Edit prices in this update window' : locked ? `Price editing opens on ${fmt(d.live.price_locked_until)}` : 'Edit prices'}
+            <ArrowRight size={15} />
+          </button>
+        </section>
       )}
 
       {d.readiness?.items && <ReadinessChecklist state={d.readiness.state} items={d.readiness.items} quotesOk={d.readiness.quotes_ok}
@@ -306,6 +320,7 @@ export default function TradePricing({ service, onEdit, onOpenPayout }) {
                   </p>
                 )}
                 <TradeListingCard listing={previewData} tradeName={config.name} />
+                <div className="mt-4"><PartnerMediaLinks vendor={vendor} profile={previewData.profile ?? {}} /></div>
               </>
             )}
       </Sheet>
