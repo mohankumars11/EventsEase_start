@@ -14,6 +14,7 @@ import {
 } from '../../data/cateringPricing'
 import { CUISINE_BY_ID } from '../../data/cuisineMenus'
 import { SOURCING_MODES } from '../../data/cateringModel'
+import PartnerMediaLinks from './pricing/PartnerMediaLinks'
 
 const sectionForCourse = courseId => ({
   welcome: 'welcome',
@@ -924,6 +925,9 @@ function CateringPackageEditor({ vendor, service, capability, catalogueDishes = 
         </div>
         {preview ? (
           <CustomerPreview draft={draft} dishes={dishes} previewGuests={previewGuests} setPreviewGuests={setPreviewGuests} />
+          <div className="mt-3">
+            <PartnerMediaLinks vendor={vendor} profile={service?.specs?.trade_v1 ?? vendor ?? {}} />
+          </div>
         ) : (
           <div className="mt-3 grid grid-cols-2 gap-2">
             <InfoMetric label="Dishes" value={String(draft.items.length)} icon={UtensilsCrossed} />
