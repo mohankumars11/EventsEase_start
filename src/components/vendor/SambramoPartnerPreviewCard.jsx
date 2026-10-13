@@ -149,32 +149,28 @@ export default function SambramoPartnerPreviewCard({vendor,service,config,draft=
       </section>
       {activePackages.length > 0 && (
         <section className="sppc-section">
-          <div className="sppc-section-heading">
-            <div><h3>Packages & pricing</h3><p>Swipe to compare every saved package and inclusion.</p></div>
-          </div>
-          <div className="-mx-1 mt-3 overflow-x-auto px-1 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <div className="flex snap-x snap-mandatory items-stretch gap-3">
-              {activePackages.map((pkg,i) => {
-                const price = packagePrice(pkg)
-                const items = Array.from(new Set([
-                  ...(Array.isArray(pkg?.commercial_inputs?.inclusions) ? pkg.commercial_inputs.inclusions : []),
-                  ...(Array.isArray(pkg?.inclusions) ? pkg.inclusions : []),
-                ].filter(Boolean)))
-                const popular = pkg?.is_popular === true || pkg?.is_featured === true || pkg?.commercial_inputs?.is_popular === true
-                const duration = pkg?.duration ?? pkg?.included_duration ?? pkg?.trade_inputs?.duration_hours
-                return (
-                  <div key={pkg.id || pkg.name || i}
-                    className={"relative flex w-[78%] max-w-[290px] shrink-0 snap-center flex-col rounded-[22px] p-4 ring-1 " + (popular ? "bg-gradient-to-b from-plum-50 to-white ring-plum-400" : "bg-white ring-ink/[0.08]")}>
-                    <span className={'sppc-package-status status-'+String(pkg.status||'DRAFT').toLowerCase().replace(/[^a-z_]/g,'')}>{String(pkg.status||'DRAFT').replace(/_/g,' ')}</span>
-                    {popular && <span className="absolute right-3 top-3 rounded-full bg-plum-700 px-2.5 py-1 text-[9px] font-extrabold uppercase text-white">★ Partner pick</span>}
-                    <p className="pr-14 text-[14px] font-extrabold text-[#211735]">{pkg.name || pkg.title || 'Package'}</p>
-                    {duration ? <p className="mt-1 text-[11px] text-ink/55">{duration} {typeof duration === 'number' ? 'hours' : ''}</p> : null}
-                    <p className="mt-3 text-[23px] font-extrabold tracking-tight text-[#211735]">{price != null ? formatINR(price) : 'Price not set'}</p>
-                    {!!items.length && <div className="mt-3 space-y-1.5">{items.map((item,j) => <p key={j} className="flex items-start gap-1.5 text-[11px] leading-snug text-ink/70"><Check size={12} className="mt-0.5 shrink-0 text-emerald-700"/><span>{typeof item === 'string' ? item : item?.label ?? item?.name ?? item?.id ?? String(item)}</span></p>)}</div>}
+          <div className="sppc-section-heading"><div><h3>Popular Packages</h3><p>Compare every saved package and its inclusions.</p></div></div>
+          <div className="mt-3 space-y-2.5">
+            {activePackages.map((pkg,i)=>{
+              const price=packagePrice(pkg)
+              const items=Array.from(new Set([...(Array.isArray(pkg?.commercial_inputs?.inclusions)?pkg.commercial_inputs.inclusions:[]),...(Array.isArray(pkg?.inclusions)?pkg.inclusions:[])].filter(Boolean)))
+              const popular=pkg?.is_popular===true||pkg?.is_featured===true||pkg?.commercial_inputs?.is_popular===true
+              const duration=pkg?.duration??pkg?.included_duration??pkg?.trade_inputs?.duration_hours
+              const image=displayMedia[i%Math.max(displayMedia.length,1)]
+              const tone=["bg-gradient-to-r from-[#eaf4ff] to-[#f8fbff] ring-[#dceaff]","bg-gradient-to-r from-[#f0e7ff] to-[#fcf9ff] ring-[#e5d7ff]","bg-gradient-to-r from-[#fff4dc] to-[#fffbf2] ring-[#f5e2ba]"][i%3]
+              const accent=i===1?"text-[#6b2bdf]":i===2?"text-[#a46808]":"text-[#1761cb]"
+              return <div key={pkg.id||pkg.name||i} className={"relative w-full overflow-hidden rounded-[20px] p-2.5 ring-1 "+tone}>
+                {popular?<span className="absolute left-2.5 top-1.5 z-10 rounded-full bg-[#6d35e9] px-2 py-1 text-[8px] font-extrabold text-white">★ Partner pick</span>:null}
+                <div className={"grid grid-cols-[58px_minmax(84px,1fr)_minmax(80px,1fr)] items-center gap-2.5 max-[380px]:grid-cols-[46px_minmax(66px,1fr)_minmax(62px,.9fr)] max-[380px]:gap-1.5 "+(popular?"pt-5":"")}>
+                  <div className="h-[76px] w-[58px] overflow-hidden rounded-[13px] bg-white/80 ring-1 ring-white max-[380px]:h-[64px] max-[380px]:w-[46px]">
+                    {image?.url?<img src={image.url} alt="" className="h-full w-full object-cover"/>:<span className="grid h-full place-items-center text-[#327ee3]"><Package size={21}/></span>}
                   </div>
-                )
-              })}
-            </div>
+                  <div className="min-w-0"><p className={"break-words text-[12px] font-black leading-tight "+accent}>{pkg.name||pkg.title||"Package"}</p><p className="mt-1 break-words text-[16px] font-black leading-tight tracking-tight text-[#101f50] max-[380px]:text-[13px]">{price!=null?formatINR(price):"Price on request"}</p><p className="mt-1 text-[9px] font-semibold leading-tight text-[#556586]">{duration?String(duration)+(typeof duration==="number"?" hours":"") : unitLabel(pkg.unit||draft.pricing_unit)}</p></div>
+                  <div className="min-w-0 space-y-1">{(items.length?items.slice(0,3):[pkg.description||"Details as listed"]).map((item,j)=><p key={j} className="flex min-w-0 items-start gap-1 text-[9px] font-semibold leading-tight text-[#2f426d] max-[380px]:text-[8px]"><Check size={10} strokeWidth={3} className={"mt-0.5 shrink-0 "+(i===1?"text-[#7537e8]":i===2?"text-[#b4760e]":"text-[#176de1]")}/><span>{typeof item==="string"?item:item?.label??item?.name??item?.id??"Included service"}</span></p>)}</div>
+                </div>
+                <p className="mt-2 text-right text-[8px] font-extrabold uppercase text-[#687b9a]">{String(pkg.status||"Saved").replace(/_/g," ")}</p>
+              </div>
+            })}
           </div>
         </section>
       )}
