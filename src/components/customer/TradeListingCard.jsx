@@ -156,7 +156,7 @@ export default function TradeListingCard({ listing, tradeName, onPick, showBooki
               {packages.map(pkg => {
                 const PackageSurface = onPick ? "button" : "div"
                 const popular = pkg.is_popular === true || pkg.is_featured === true
-                const inclusions = Array.isArray(pkg.inclusions) ? pkg.inclusions : []
+                const inclusions = Array.isArray(pkg.inclusions) ? pkg.inclusions : Array.isArray(pkg.commercial_inputs?.inclusions) ? pkg.commercial_inputs.inclusions : []
                 return (
                   <PackageSurface key={pkg.key ?? pkg.name} type={onPick ? "button" : undefined}
                     onClick={onPick ? () => onPick(pkg) : undefined}
@@ -169,7 +169,7 @@ export default function TradeListingCard({ listing, tradeName, onPick, showBooki
                     )}
                     <p className="pr-16 text-[14.5px] font-extrabold text-ink">{pkg.name}</p>
                     {pkg.hours && <p className="mt-0.5 text-[11.5px] font-bold text-ink/50">{pkg.hours} hours</p>}
-                    <p className="mt-3 text-[24px] font-extrabold tracking-tight text-ink">{rupees(pkg.customer_paise)}</p>
+                    <p className="mt-3 text-[24px] font-extrabold tracking-tight text-ink">{Number(pkg.customer_paise) > 0 ? rupees(pkg.customer_paise) : 'Price on request'}</p>
                     {!!inclusions.length && (
                       <div className="mt-3 space-y-1.5">
                         {inclusions.map((inc, i) => (
@@ -201,8 +201,8 @@ export default function TradeListingCard({ listing, tradeName, onPick, showBooki
 
       {catalogue.length > 0 && (
         <Section icon={Boxes} title="What you can order">
-          {catalogue.map(c => (
-            <Row key={c.item_key} k={c.name} v={c.customer_paise ? rupees(c.customer_paise) : 'On request'}
+          {catalogue.map((c, i) => (
+            <Row key={c.item_key ?? c.id ?? i} k={c.name ?? c.label ?? c.item_key ?? 'Service item'} v={Number(c.customer_paise) > 0 ? rupees(c.customer_paise) : 'On request'}
               sub={[unitOf(c.unit), c.lead_days && `${c.lead_days} days notice`].filter(Boolean).join(' · ')} />
           ))}
 
