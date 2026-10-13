@@ -12,23 +12,24 @@ function PreviewSection({ children }) {
 }
 
 export default function PartnerMediaLinks({ vendor, profile = {}, visibility = 'partner' }) {
-  const [media, setMedia] = useState({ loading: true, rows: [], urls: {}, unavailable: false })
+  const [media, setMedia] = useState({ loading: true, rows: [], urls: {}, unavailable: false, pendingCount: 0 })
 
   useEffect(() => {
     let alive = true
     async function load() {
       if (!vendor?.id) {
-        setMedia({ loading: false, rows: [], urls: {}, unavailable: false })
+        setMedia({ loading: false, rows: [], urls: {}, unavailable: false, pendingCount: 0 })
         return
       }
       try {
         const result = await fetchWork(vendor.id)
-        const rows = (result.rows ?? []).filter(row => ['photo', 'document', 'video', 'audio'].includes(row.kind)
-          && (visibility !== 'customer' || row.review_status === 'live'))
+        const allRows = (result.rows ?? []).filter(row => ['photo', 'document', 'video', 'audio'].includes(row.kind))
+        const pendingCount = allRows.filter(row => row.review_status !== 'live').length
+        const rows = visibility === 'customer' ? allRows.filter(row => row.review_status === 'live') : allRows
         const urls = await signedUrlsFor(rows.map(row => row.storage_path), 600)
-        if (alive) setMedia({ loading: false, rows, urls, unavailable: !!result.unavailable })
+        if (alive) setMedia({ loading: false, rows, urls, unavailable: !!result.unavailable, pendingCount })
       } catch {
-        if (alive) setMedia({ loading: false, rows: [], urls: {}, unavailable: false })
+        if (alive) setMedia({ loading: false, rows: [], urls: {}, unavailable: false, pendingCount: 0 })
       }
     }
     load()
@@ -90,7 +91,7 @@ export default function PartnerMediaLinks({ vendor, profile = {}, visibility = '
               )
             })}
           </div>
-          : <div className="rounded-2xl bg-[#faf9fd] p-4 text-[12px] text-ink/55">{media.unavailable ? 'Media library is not enabled in this environment yet.' : 'No uploaded portfolio media is available for this listing yet.'}</div>}
+           : <div className="rounded-2xl bg-[#faf9fd] p-4 text-[12px] text-ink/55">{media.unavailable ? 'Media library is not enabled in this environment yet.' : visibility === 'customer' ? 'Portfolio highlights will appear here as approved work is published.' : media.pendingCount > 0 ? 'Your portfolio is waiting for review. Customers will see approved items once our team approves them.' : 'No uploaded portfolio media is available for this listing yet.'}</div>}
       <p className="mt-3 text-[11px] leading-relaxed text-ink/50">{visibility === 'customer' ? 'Only approved media is shown in this live customer listing.' : 'Only approved media is customer-visible. Files awaiting review are marked above and should not be treated as published.'}</p>
     </PreviewSection>
   )
