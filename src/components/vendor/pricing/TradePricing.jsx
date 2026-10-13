@@ -111,11 +111,13 @@ export default function TradePricing({ service, vendor, onEdit, onOpenPayout }) 
   const [previewError, setPreviewError] = useState('')
   const [previewMedia, setPreviewMedia] = useState({ loading: false, rows: [], unavailable: false })
   const [selectedPreviewPackage, setSelectedPreviewPackage] = useState(null)
+  const [previewActionNote, setPreviewActionNote] = useState('')
   useEffect(() => {
     if (!preview) return
     let alive = true
     setPreviewData(null)
     setPreviewError('')
+    setPreviewActionNote('')
     ;(async () => {
       try {
         let { data, error } = await supabase.rpc('listing_preview', { p_vendor_service_id: service.id })
@@ -364,10 +366,18 @@ export default function TradePricing({ service, vendor, onEdit, onOpenPayout }) 
                   )}
                   <StorefrontReadiness vendor={vendor} draft={previewData} packages={previewData.packages ?? []} media={previewMedia.rows}
                     onEditStep={() => { setPreview(false); onEdit?.() }} onManageMedia={() => { setPreview(false); onEdit?.() }} />
-                  <TradeListingCard listing={previewData} tradeName={config.name} onPick={setSelectedPreviewPackage} showBookingCtaPreview
+                  <TradeListingCard listing={previewData} tradeName={config.name} onPick={setSelectedPreviewPackage}
                     media={previewMedia.rows}
                     avatarSlot={<PartnerAvatarInput vendor={vendor} draft={{ profile: previewData.profile ?? {} }} businessName={previewData.profile?.business_name ?? previewData.profile?.stage_name ?? vendor?.business_name ?? 'Your business'} editable />} />
                   <div className="mt-4"><PartnerMediaLinks vendor={vendor} profile={previewData.profile ?? {}} visibility={previewData.is_live === true ? 'customer' : 'partner'} /></div>
+                  <div className="sppc-booking-cta-wrap">
+                    <button type="button" className="sppc-booking-cta" onClick={() => setPreviewActionNote('Preview only. The live booking flow checks the event date, availability and final payable amount before payment.')}>
+                      <span className="sppc-booking-bolt">✦</span>
+                      <span><b>{previewData.terms?.instant === true || previewData.terms?.instant === 'true' ? 'Instant Book & Pay' : 'Check availability & request quote'}</b><small>Availability and final total confirmed at checkout</small></span>
+                      <ArrowRight size={19} />
+                    </button>
+                    {previewActionNote ? <p className="sppc-booking-note" role="status">{previewActionNote}</p> : <p className="sppc-booking-note">Preview only · no booking or payment starts from this screen.</p>}
+                  </div>
                 </>
               )}
       </Sheet>
