@@ -28,7 +28,8 @@ export default function PartnerAvatarInput({ vendor, draft, businessName, editab
       const value = String(candidate)
       if (value.startsWith('https://') || value.startsWith('http://')) { if (alive) setUrl(value); return }
       try {
-        const { data, error: signedError } = await supabase.storage.from('partner-uploads').createSignedUrl(value, 900)
+        let { data, error: signedError } = await supabase.storage.from('partner-avatars').createSignedUrl(value, 900)
+        if (signedError) ({ data, error: signedError } = await supabase.storage.from('partner-uploads').createSignedUrl(value, 900))
         if (alive) setUrl(signedError ? '' : data?.signedUrl || '')
       } catch { if (alive) setUrl('') }
     }
@@ -46,16 +47,16 @@ export default function PartnerAvatarInput({ vendor, draft, businessName, editab
       const { data: { user }, error: authError } = await supabase.auth.getUser()
       if (authError || !user) throw new Error('Sign in again before uploading a profile photo.')
       const prepared = await prepareImage(file, { mode: 'balanced' })
-      path = user.id + '/profile/' + Date.now() + '-' + Math.random().toString(36).slice(2, 7) + '.jpg'
-      const { error: uploadError } = await supabase.storage.from('partner-uploads').upload(path, prepared.blob, { contentType: 'image/jpeg', upsert: false })
+      path = vendor.id + '/profile-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7) + '.jpg'
+      const { error: uploadError } = await supabase.storage.from('partner-avatars').upload(path, prepared.blob, { contentType: 'image/jpeg', upsert: false })
       if (uploadError) throw uploadError
       const { error: saveError } = await supabase.from('vendors').update({ avatar_url: path }).eq('id', vendor.id)
       if (saveError) {
-        await supabase.storage.from('partner-uploads').remove([path])
+        await supabase.storage.from('partner-avatars').remove([path])
         path = ''
         throw saveError
       }
-      const { data, error: urlError } = await supabase.storage.from('partner-uploads').createSignedUrl(path, 900)
+      const { data, error: urlError } = await supabase.storage.from('partner-avatars').createSignedUrl(path, 900)
       if (urlError || !data?.signedUrl) throw new Error('The photo was saved, but the preview link could not be created. Reopen this preview to refresh it.')
       setUrl(data.signedUrl)
     } catch (e) {
