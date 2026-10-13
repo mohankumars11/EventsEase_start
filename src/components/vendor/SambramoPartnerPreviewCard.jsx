@@ -91,14 +91,14 @@ export default function SambramoPartnerPreviewCard({vendor,service,config,draft=
   const activePackages=useMemo(()=>{
     const loaded=(packages??[]).filter(p=>p&&!['ARCHIVED','PAUSED'].includes(p.status))
     const current=draft?.id||draft?.name||draft?.base_price?[{id:draft.id||'current',name:draft.name||'Featured Package',description:draft.description||'',status:draft.status||'DRAFT',price:draft.base_price?Number(draft.base_price):null,unit:draft.pricing_unit||'',minimum:draft.minimum_order||null,duration:draft.included_duration||null,addons:draft.addons||[]}]:[]
-    return Array.from(new Map([...current,...loaded].map(p=>[String(p.id)+'|'+String(p.name),p])).values()).slice(0,5)
+    return Array.from(new Map([...current,...loaded].map(p=>[String(p.id)+'|'+String(p.name),p])).values())
   },[packages,draft])
   const current=activePackages[0]||null
   const exactPrice=packagePrice(current)
-  const specs=(Array.isArray(config?.fields)?config.fields:[]).map(f=>[f.label,draft?.trade_inputs?.[f.key]]).filter(([,v])=>v!==''&&v!=null&&!Array.isArray(v)).slice(0,7)
+  const specs=(Array.isArray(config?.fields)?config.fields:[]).map(f=>[f.label,draft?.trade_inputs?.[f.key]]).filter(([,v])=>v!==''&&v!=null&&!Array.isArray(v))
   const finalSpecs=specs
-  const inclusionItems=Array.from(new Set((Array.isArray(draft?.commercial_inputs?.inclusions)?draft.commercial_inputs.inclusions:[]).filter(Boolean))).slice(0,8)
-  const activeAddons=(addons?.length?addons:(current?.addons??draft?.addons??[])).filter(a=>a?.active!==false&&a?.name).slice(0,3)
+  const inclusionItems=Array.from(new Set((Array.isArray(current?.commercial_inputs?.inclusions) && current.commercial_inputs.inclusions.length ? current.commercial_inputs.inclusions : Array.isArray(draft?.commercial_inputs?.inclusions) ? draft.commercial_inputs.inclusions : []).filter(Boolean)))
+  const activeAddons=(addons?.length?addons:(current?.addons??draft?.addons??[])).filter(a=>a?.active!==false&&a?.name)
   const rating=vendor?.rating??vendor?.average_rating
   const reviewCount=vendor?.review_count??vendor?.reviews_count
   const completedEvents=vendor?.events_completed??vendor?.completed_events
@@ -137,12 +137,42 @@ export default function SambramoPartnerPreviewCard({vendor,service,config,draft=
           {!thumbs.length?<button type="button" className="sppc-thumb-placeholder" onClick={()=>onManageMedia?.('media')}><Images size={19}/><span>Add work</span></button>:null}
         </div>
       </section>
+      {activePackages.length > 0 && (
+        <section className="sppc-section">
+          <div className="sppc-section-heading">
+            <div><h3>Packages & pricing</h3><p>Swipe to compare every saved package and inclusion.</p></div>
+          </div>
+          <div className="-mx-1 mt-3 overflow-x-auto px-1 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="flex snap-x snap-mandatory items-stretch gap-3">
+              {activePackages.map((pkg,i) => {
+                const price = packagePrice(pkg)
+                const items = Array.from(new Set([
+                  ...(Array.isArray(pkg?.commercial_inputs?.inclusions) ? pkg.commercial_inputs.inclusions : []),
+                  ...(Array.isArray(pkg?.inclusions) ? pkg.inclusions : []),
+                ].filter(Boolean)))
+                const popular = String(pkg?.tier ?? pkg?.commercial_inputs?.tier ?? pkg?.name ?? '').toLowerCase().includes('signature')
+                const duration = pkg?.duration ?? pkg?.included_duration ?? pkg?.trade_inputs?.duration_hours
+                return (
+                  <div key={pkg.id || pkg.name || i}
+                    className={"relative flex w-[78%] max-w-[290px] shrink-0 snap-center flex-col rounded-[22px] p-4 ring-1 " + (popular ? "bg-gradient-to-b from-plum-50 to-white ring-plum-400" : "bg-white ring-ink/[0.08]")}>
+                    {popular && <span className="absolute right-3 top-3 rounded-full bg-plum-700 px-2.5 py-1 text-[9px] font-extrabold uppercase text-white">★ Popular</span>}
+                    <p className="pr-14 text-[14px] font-extrabold text-[#211735]">{pkg.name || pkg.title || 'Package'}</p>
+                    {duration ? <p className="mt-1 text-[11px] text-ink/55">{duration} {typeof duration === 'number' ? 'hours' : ''}</p> : null}
+                    <p className="mt-3 text-[23px] font-extrabold tracking-tight text-[#211735]">{price != null ? formatINR(price) : 'Price not set'}</p>
+                    {!!items.length && <div className="mt-3 space-y-1.5">{items.map((item,j) => <p key={j} className="flex items-start gap-1.5 text-[11px] leading-snug text-ink/70"><Check size={12} className="mt-0.5 shrink-0 text-emerald-700"/><span>{typeof item === 'string' ? item : item?.label ?? item?.name ?? item?.id ?? String(item)}</span></p>)}</div>}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </section>
+      )}
       <section className="sppc-package-hero"><button type="button" className="sppc-edit-button" onClick={()=>onEdit?.('package')}>Edit</button>
         <div className="sppc-package-copy"><span className="sppc-popular-pill">{activePackages.length>1?'MOST POPULAR':'FEATURED PACKAGE'}</span><h3>{current?.name||draft?.name||'Featured Package'}</h3><p>{current?.description||draft?.description||'Premium event service, thoughtfully configured for your celebration.'}</p></div>
         <div className="sppc-price"><strong>{exactPrice!=null?formatINR(exactPrice):'Price not set'}</strong><span>{unitLabel(current?.unit||draft.pricing_unit)}</span></div>
       </section>
       <section className="sppc-detail-grid"><button type="button" className="sppc-floating-edit" onClick={()=>onEdit?.('details')}>Edit</button>
-        <button type="button" className="sppc-detail-card tone-0" onClick={()=>onManageMedia?.('events')}><span className="sppc-detail-icon"><CalendarDays/></span><span><small>Event Type</small><b>{visibleEvents.slice(0,3).join(', ')}{visibleEvents.length>3?' +'+(visibleEvents.length-3)+' more':''}</b></span><ChevronRight size={16}/></button>
+        <button type="button" className="sppc-detail-card tone-0" onClick={()=>onManageMedia?.('events')}><span className="sppc-detail-icon"><CalendarDays/></span><span><small>Event Type</small><b>{visibleEvents.join(', ')}</b></span><ChevronRight size={16}/></button>
         {finalSpecs.map(([label,value],i)=><div key={label+i} className={'sppc-detail-card tone-'+((i+1)%5)}><span className="sppc-detail-icon">{iconFor(label,i)}</span><span><small>{label}</small><b>{String(value)}</b></span></div>)}
       </section>
       <section className="sppc-section"><div className="sppc-section-heading"><div><h3>What’s included</h3><p>Everything your customer can understand at a glance.</p></div><button type="button" className="sppc-view-details sppc-edit-link" onClick={()=>onEdit?.('details')}>Edit <ChevronRight size={16}/></button></div><div className="sppc-inclusions">{inclusionItems.map((item,i)=><div key={i}><Check size={15}/><span>{typeof item==='string'?item:item?.label??item?.name??String(item)}</span></div>)}</div></section>
