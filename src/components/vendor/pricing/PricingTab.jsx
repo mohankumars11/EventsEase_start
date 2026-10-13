@@ -12,7 +12,7 @@ import PricingControlCenter, { SeasonalUpdate } from './PricingControlCenter'
 import TradePricing from './TradePricing'
 import { useEngineReady, onEngine } from '../../../lib/tradeEngine'
 import SambramoPricingStudio from '../SambramoPricingStudio'
-import AnchorProfileCard from '../../customer/AnchorProfileCard'
+import AnchorCustomerPreviewScreen from './AnchorCustomerPreviewScreen'
 import { Sheet } from '../anchor/ui'
 import { hasProfileFor } from '../../../data/tradePricingProfiles'
 import { useAnchorPricing } from '../../../hooks/useAnchorPricing'
@@ -639,30 +639,27 @@ function AnchorPricing({ service, vendor, onEdit, onOpenPayout }) {
         onSeasonal={() => setSheet('seasonal')} onPreview={() => setSheet('preview')}
         onViewPackage={tier => setSheet({ tier })} />
 
-      <Sheet open={sheet === 'preview'} onOpenChange={o => !o && setSheet(null)} title="Customer preview">
-        <div className="space-y-4">
-          <AnchorProfileCard profile={d.current.profile} city={view.listing.city}
-            packages={view.packages.map(p => ({ tier: p.tier, name: p.name, hours: p.hours, customer_paise: p.price_paise, inclusions: p.inclusions }))}
-            onPick={pkg => setSheet({ tier: pkg.tier })} showBookingCtaPreview
-            instantBookEnabled={d.current.booking_rules?.instant !== false && d.current.booking_rules?.instant !== 'false'} />
-          <PartnerMediaLinks vendor={vendor} profile={d.current.profile} />
-          <PreviewSection title="What you can order" icon={Package}>
-            {view.models.length ? view.models.map(m => {
-              const [name, Icon] = MODEL[m.id] ?? [m.id, Package]
-              return <Row key={m.id} k={<span className="inline-flex items-center gap-1.5"><Icon size={13} />{name} · {m.rules}</span>} v={`${rupees(m.customer_paise)} ${m.unit}`} />
-            }) : <p className="text-[12.5px] text-ink/55">No separate pricing models are configured.</p>}
-            {view.addons.length > 0 && <p className="pt-2 text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">Optional extras</p>}
-            {view.addons.map(a => <Row key={a.name} k={a.name} v={`${rupees(a.paise)} ${a.unit}`} />)}
-          </PreviewSection>
-          <PreviewSection title="Other booking charges" icon={IndianRupee}>
-            {view.charges.length ? view.charges.map(c => <Row key={c.k} k={c.k} v={c.v} />) : <p className="text-[12.5px] text-ink/55">No additional booking charges are configured.</p>}
-          </PreviewSection>
-          <PreviewSection title="Booking & payment rules" icon={CalendarClock}>
-            {view.rules.map(c => <Row key={c.k} k={c.k} v={c.v} />)}
-          </PreviewSection>
-          <p className="rounded-2xl bg-plum-50 p-3 text-[11.5px] leading-relaxed text-plum-900">This preview is generated from your saved listing data. Media waiting for approval is marked and should not be treated as published customer content.</p>
-        </div>
-      </Sheet>
+      {sheet === 'preview' && (
+        <AnchorCustomerPreviewScreen
+          vendor={vendor}
+          profile={d.current.profile}
+          city={view.listing.city}
+          rating={vendor?.rating_avg}
+          reviewCount={vendor?.review_count ?? 0}
+          verified={vendor?.is_verified === true}
+          packages={view.packages.map(p => ({ tier: p.tier, name: p.name, hours: p.hours, customer_paise: p.price_paise, inclusions: p.inclusions }))}
+          pricingModels={view.models.map(m => ({ name: MODEL_LABEL[m.id] ?? m.id, rules: m.rules, price: `${rupees(m.customer_paise)} ${m.unit}` }))}
+          extras={view.addons.map(a => ({ name: a.name, price: `${rupees(a.paise)} ${a.unit}` }))}
+          bookingDetails={[
+            ...view.charges.map(c => ({ label: c.k, value: c.v })),
+            ...view.rules.map(c => ({ label: c.k, value: c.v })),
+          ]}
+          isLive={d.current?.status === 'LIVE'}
+          instantBookEnabled={d.current.booking_rules?.instant !== false && d.current.booking_rules?.instant !== 'false'}
+          onClose={() => setSheet(null)}
+          onPick={picked => setSheet({ tier: picked.tier })}
+        />
+      )}
 
       <Sheet open={sheet === 'seasonal'} onOpenChange={o => !o && setSheet(null)} title="Update seasonal prices">
         {d.window && (
