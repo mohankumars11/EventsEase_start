@@ -20,7 +20,7 @@
       "feature/partner-anchor-pricing-engine-20261010": false,
       "feature/partner-34-trade-onboarding-ready-20261010": false,
       "feature/partner-app-production-ready-procurement": false,
-      "feature/admin-control-center": false
+      "feature/admin-control-center": true
     }
   }
 }
