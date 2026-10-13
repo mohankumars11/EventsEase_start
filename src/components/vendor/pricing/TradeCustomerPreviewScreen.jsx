@@ -4,6 +4,7 @@ import TradeListingCard from '../../customer/TradeListingCard'
 import PartnerAvatarInput from '../PartnerAvatarInput'
 import { fetchWork, signedUrlsFor } from '../../../lib/partnerWork'
 
+const EMPTY_MEDIA = []
 const safeNumber = value => {
   if (value == null || value === '') return null
   const number = Number(value)
@@ -14,11 +15,13 @@ const valueLabel = value => typeof value === 'string' || typeof value === 'numbe
 const toList = value => Array.isArray(value) ? value : typeof value === 'string' ? value.split(',').map(x => x.trim()).filter(Boolean) : []
 
 function packageRatePaise(pkg) {
-  const raw = pkg?.customer_paise ?? pkg?.price?.customer_paise ?? pkg?.price?.rate_paise ??
-    pkg?.commercial_inputs?.customer_paise ?? pkg?.trade_inputs?.customer_paise
-  if (raw != null && Number(raw) > 0) return Math.round(Number(raw))
-  if (pkg?.base_price != null && pkg.base_price !== '') return rupeesToPaise(pkg.base_price)
-  if (pkg?.rate != null && pkg.rate !== '') return rupeesToPaise(pkg.rate)
+  const paise = pkg?.customer_paise ?? pkg?.customer_price_paise ?? pkg?.public_price_paise ??
+    pkg?.price?.customer_paise ?? pkg?.price?.customer_price_paise ??
+    pkg?.calculation_snapshot?.customer_paise ?? pkg?.commercial_inputs?.customer_paise ??
+    pkg?.trade_inputs?.customer_paise
+  if (paise != null && Number(paise) > 0) return Math.round(Number(paise))
+  const rupees = pkg?.customer_price ?? pkg?.public_price ?? pkg?.customer_rate
+  if (rupees != null && rupees !== '') return rupeesToPaise(rupees)
   return null
 }
 
@@ -174,13 +177,19 @@ export function buildCateringTradeListing({ vendor, service, config, draft = {},
   const dishById = new Map((dishes || []).map(item => [item.id, item]))
   const selectedDishes = (draft.items || []).map(item => dishById.get(item.id) || item)
   const dishNames = selectedDishes.map(item => item.name || dishById.get(item.dish_id)?.name || item.dish_id).filter(Boolean)
-  const rateBands = Array.isArray(draft.rateBands) ? draft.rateBands : []
-  const normalizedBands = rateBands.map(band => ({
-    min: Number(band.minGuests) || 0,
-    max: Number(band.maxGuests) || null,
-    rate: safeNumber(band.rate),
-  })).filter(band => band.rate)
-  const baseRate = normalizedBands.length ? Math.min(...normalizedBands.map(band => band.rate)) : safeNumber(draft.rate)
+  // Catering editor rates are partner supply/take-home rates. Only use an
+  // explicit customer-facing rate supplied by the backend/public payload.
+  const customerPaise = safeNumber(draft.customer_paise ?? draft.customer_price_paise) ??
+    rupeesToPaise(draft.customer_price ?? draft.public_price)
+  const customerBandsRaw = Array.isArray(draft.customer_rate_bands) ? draft.customer_rate_bands
+    : Array.isArray(draft.customerRateBands) ? draft.customerRateBands : []
+  const normalizedBands = customerBandsRaw.map(band => ({
+    min: Number(band.minGuests ?? band.min_guests) || 0,
+    max: Number(band.maxGuests ?? band.max_guests) || null,
+    customerPaise: safeNumber(band.customer_paise ?? band.customer_price_paise) ??
+      rupeesToPaise(band.customer_price ?? band.rate),
+  })).filter(band => band.customerPaise)
+  const baseRate = customerPaise || (normalizedBands.length ? Math.min(...normalizedBands.map(band => band.customerPaise)) : null)
   const status = String(draft.status || 'DRAFT').toUpperCase()
   const serviceProfile = service?.specs?.trade_v1 ?? service?.specs?.catering_v1 ?? {}
   const businessName = vendor?.business_name || vendor?.name || service?.name || config?.name || 'Catering partner'
@@ -188,7 +197,7 @@ export function buildCateringTradeListing({ vendor, service, config, draft = {},
     id: draft.id || 'catering-preview-package',
     name: draft.name || 'Menu package',
     status,
-    customer_paise: baseRate ? Math.round(baseRate * 100) : null,
+    customer_paise: baseRate || null,
     unit: 'per_guest',
     hours: draft.serviceHours || undefined,
     min_guests: draft.minGuests || undefined,
@@ -198,7 +207,7 @@ export function buildCateringTradeListing({ vendor, service, config, draft = {},
   }
   const addonRows = (draft.addons || []).filter(addon => addon && addon.active !== false).map(addon => ({
     id: addon.id, label: addon.name || 'Optional extra',
-    customer_paise: safeNumber(addon.rate) ? Math.round(Number(addon.rate) * 100) : null,
+    customer_paise: safeNumber(addon.customer_paise ?? addon.customer_price_paise) ?? rupeesToPaise(addon.customer_price),
     unit: addon.unit || 'per_guest',
   }))
   return {
@@ -223,7 +232,7 @@ export function buildCateringTradeListing({ vendor, service, config, draft = {},
     packages: [packageItem],
     rules: normalizedBands.map(band => ({
       label: band.max ? band.min + '–' + band.max + ' guests' : band.min + '+ guests',
-      customer_paise: Math.round(band.rate * 100),
+      customer_paise: band.customerPaise,
       unit: 'per_guest',
       min_qty: band.min,
     })),
@@ -257,11 +266,12 @@ const PREVIEW_NOTE = {
 }
 
 export default function TradeCustomerPreviewScreen({
-  vendor, service, config, listing, tradeName, media: suppliedMedia = [], avatarSlot,
-  onClose, onPick, isLive, previewError, onRetry, previewState,
+  vendor, service, config, listing, tradeName, media: suppliedMedia = EMPTY_MEDIA, avatarSlot,
+  onClose, onPick, isLive, previewError, onRetry, previewState, previewLoading = false, onAction,
 }) {
   const [favorite, setFavorite] = useState(false)
   const [actionNote, setActionNote] = useState('')
+  const [selectedPackage, setSelectedPackage] = useState(null)
   const [mediaState, setMediaState] = useState({ loading: false, rows: [] })
   useEffect(() => {
     let alive = true
@@ -306,6 +316,7 @@ export default function TradeCustomerPreviewScreen({
       review_count: listing.review_count ?? vendor?.review_count,
       is_verified: listing.is_verified ?? vendor?.is_verified,
       is_live: finalLive,
+      terms: listing.terms || (listing.booking_rules ? { ...listing.booking_rules } : {}),
     }
   }, [listing, vendor, finalLive])
 
@@ -321,9 +332,10 @@ export default function TradeCustomerPreviewScreen({
     }
   }
 
-  const instant = !!(cardListing?.terms?.instant === true || cardListing?.terms?.instant === 'true' || cardListing?.terms?.availability_policy === 'instant' || cardListing?.terms?.booking_mode === 'instant')
-  const isNone = !listing || listing.state === 'NONE'
-  const isError = listing?.state === 'ERROR'
+  const instant = !!(cardListing?.terms?.instant === true || ['true', 'instant', 'on'].includes(String(cardListing?.terms?.instant ?? '').toLowerCase()) || cardListing?.terms?.availability_policy === 'instant' || cardListing?.terms?.booking_mode === 'instant')
+  const isLoading = previewLoading || (!listing && !previewError)
+  const isNone = !!listing && listing.state === 'NONE'
+  const isError = listing?.state === 'ERROR' || !!previewError
   return (
     <div className="fixed inset-0 z-[240] flex flex-col bg-[#f7fbff] text-[#102250]"
       style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
@@ -340,18 +352,36 @@ export default function TradeCustomerPreviewScreen({
       <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-4">
         {notice ? <div className="mx-3 mt-2 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-[10.5px] font-semibold leading-snug text-amber-900"><ShieldCheck size={13} className="mt-0.5 shrink-0"/><span>{notice}</span></div> : null}
         {mediaState.loading ? <div className="mx-3 mt-2 h-1 overflow-hidden rounded-full bg-[#e5effb]"><div className="h-full w-1/2 animate-pulse rounded-full bg-[#2586ef]"/></div> : null}
-        {isNone ? <div className="mx-4 mt-5 rounded-2xl bg-white p-5 text-center text-[13px] font-bold text-[#536787]">Finish your listing once and its saved details will appear here.</div>
+        {isLoading ? <div className="flex h-40 items-center justify-center"><Loader2 size={22} className="animate-spin text-[#6b31df]"/></div>
           : isError ? <div className="space-y-3 py-8 text-center"><CircleAlert size={28} className="mx-auto text-rose-600"/><p className="text-[14px] font-extrabold text-[#172752]">Your preview could not load</p><p className="px-5 text-[12px] leading-relaxed text-[#667693]">{previewError || 'Check your connection and try again.'}</p><button type="button" onClick={onRetry} className="rounded-full bg-[#5f2bdf] px-4 py-2.5 text-[12px] font-extrabold text-white">Retry</button></div>
+          : isNone ? <div className="mx-4 mt-5 rounded-2xl bg-white p-5 text-center text-[13px] font-bold text-[#536787]">Finish your listing once and its saved details will appear here.</div>
           : <TradeListingCard
               listing={cardListing}
               tradeName={tradeName || config?.name || service?.name}
               media={media}
               avatarSlot={avatarSlot || <PartnerAvatarInput vendor={vendor} draft={{ profile: cardListing?.profile ?? {} }} businessName={profileName} editable variant="marketplace"/>}
-              onPick={onPick}
+              onPick={pkg => { setSelectedPackage(pkg); onPick?.(pkg) }}
             />}
       </main>
+
+      {selectedPackage ? (
+        <div className="fixed inset-0 z-[260] flex items-end justify-center bg-[#101833]/45 p-0 sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-label="Package details">
+          <button type="button" aria-label="Close package details" onClick={() => setSelectedPackage(null)} className="absolute inset-0"/>
+          <section className="relative max-h-[82dvh] w-full max-w-lg overflow-y-auto rounded-t-[26px] bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-2xl sm:rounded-[26px]">
+            <div className="mb-3 flex items-start gap-3">
+              <div className="min-w-0 flex-1"><p className="text-[10px] font-extrabold uppercase tracking-wide text-[#6b31df]">Package details</p><h2 className="mt-1 break-words text-[18px] font-black text-[#152552]">{selectedPackage.name || 'Package'}</h2></div>
+              <button type="button" onClick={() => setSelectedPackage(null)} className="rounded-full bg-[#f1f5ff] px-3 py-2 text-[11px] font-extrabold text-[#465b80]">Close</button>
+            </div>
+            <p className="text-[25px] font-black text-[#152552]">{Number(selectedPackage.customer_paise) > 0 ? '₹' + (Number(selectedPackage.customer_paise) / 100).toLocaleString('en-IN') : 'Price on request'}</p>
+            {selectedPackage.description ? <p className="mt-2 text-[12px] leading-relaxed text-[#5d6d8b]">{selectedPackage.description}</p> : null}
+            {Array.isArray(selectedPackage.inclusions) && selectedPackage.inclusions.length ? <div className="mt-4"><p className="mb-2 text-[10px] font-extrabold uppercase tracking-wide text-[#7b879d]">Included</p><div className="space-y-2">{selectedPackage.inclusions.map((item,i)=><p key={i} className="flex items-start gap-2 text-[12px] font-semibold text-[#24365d]"><span className="text-emerald-700">✓</span><span>{valueLabel(item)}</span></p>)}</div></div> : null}
+            {(selectedPackage.addons || []).length ? <div className="mt-4"><p className="mb-2 text-[10px] font-extrabold uppercase tracking-wide text-[#7b879d]">Optional extras</p>{selectedPackage.addons.map((item,i)=><div key={item.id || item.name || i} className="flex justify-between gap-3 border-b border-[#eef2f8] py-2 text-[12px]"><span>{item.label || item.name || 'Extra'}</span><span className="font-bold">{Number(item.customer_paise)>0 ? '₹'+(Number(item.customer_paise)/100).toLocaleString('en-IN') : 'As listed'}</span></div>)}</div> : null}
+          </section>
+        </div>
+      ) : null}
+
       <footer className="z-20 shrink-0 border-t border-[#e4ecfa] bg-white/95 px-3 pb-2 pt-2 shadow-[0_-5px_20px_rgba(26,75,140,.08)] backdrop-blur">
-        <button type="button" onClick={() => setActionNote('Preview only. The live booking flow checks the service date, availability and final payable amount before payment.')}
+        <button type="button" onClick={() => { const message = 'Preview only. The live booking flow checks the service date, availability and final payable amount before payment.'; setActionNote(message); onAction?.(message) }}
           className={'flex min-h-[50px] w-full items-center justify-center gap-2 rounded-[17px] px-4 text-center text-[13px] font-black text-white shadow-lg ' + (instant ? 'bg-gradient-to-r from-[#4935dc] to-[#7134ed]' : 'bg-gradient-to-r from-[#287be9] to-[#1557cc]')}>
           <span>{instant ? 'Instant Book & Pay' : 'Check availability & request quote'}</span><span aria-hidden="true">→</span>
         </button>
