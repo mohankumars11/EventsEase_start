@@ -48,7 +48,7 @@ function Row({ k, v, sub }) {
   return (
     <div className="flex items-start justify-between gap-3 py-1.5">
       <div className="min-w-0">
-        <p className="truncate text-[13.5px] font-bold text-ink">{k}</p>
+        <p className="whitespace-normal break-words text-[13.5px] font-bold text-ink">{k}</p>
         {sub && <p className="text-[11.5px] text-ink/50">{sub}</p>}
       </div>
       <p className="shrink-0 text-[13.5px] font-extrabold text-ink">{v}</p>
@@ -102,29 +102,37 @@ export default function TradeListingCard({ listing, tradeName, onPick }) {
       </div>
 
       {packages.length > 0 && (
-        <Section icon={Package} title="Packages">
-          {packages.map(pkg => (
-            <button key={pkg.key ?? pkg.name} type="button" onClick={() => onPick?.(pkg)}
-              className="block w-full border-b border-ink/[0.05] py-2.5 text-left last:border-0">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-[14.5px] font-extrabold text-ink">{pkg.name}</p>
-                  {pkg.hours && <p className="text-[11.5px] text-ink/50">{pkg.hours} hours</p>}
-                </div>
-                <p className="shrink-0 text-[15px] font-extrabold text-ink">{rupees(pkg.customer_paise)}</p>
-              </div>
-              {!!(pkg.inclusions ?? []).length && (
-                <div className="mt-1.5 space-y-1">
-                  {(pkg.inclusions ?? []).slice(0, 4).map((inc, i) => (
-                    <p key={i} className="flex items-center gap-1.5 text-[12px] text-ink/70">
-                      <Check size={11} className="shrink-0 text-forest-600" strokeWidth={3} />
-                      {typeof inc === 'string' ? inc : inc.label ?? inc.id}
-                    </p>
-                  ))}
-                </div>
-              )}
-            </button>
-          ))}
+        <Section icon={Package} title="Packages & pricing">
+          <div className="-mx-5 overflow-x-auto px-5 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="flex snap-x snap-mandatory items-stretch gap-3">
+              {packages.map(pkg => {
+                const PackageSurface = onPick ? "button" : "div"
+                return (
+                  <PackageSurface key={pkg.key ?? pkg.name} type={onPick ? "button" : undefined}
+                    onClick={onPick ? () => onPick(pkg) : undefined}
+                    className={"relative flex w-[78%] max-w-[300px] shrink-0 snap-center flex-col rounded-[22px] bg-gradient-to-b from-plum-50 to-white p-4 text-left ring-1 ring-plum-100 " + (onPick ? "active:scale-[0.99]" : "")}>
+                    {String(pkg.tier ?? pkg.key ?? "").toUpperCase() === "SIGNATURE" && (
+                      <span className="absolute right-3 top-3 rounded-full bg-plum-700 px-2.5 py-1 text-[9px] font-extrabold uppercase text-white">★ Popular</span>
+                    )}
+                    <p className="pr-16 text-[14.5px] font-extrabold text-ink">{pkg.name}</p>
+                    {pkg.hours && <p className="mt-0.5 text-[11.5px] font-bold text-ink/50">{pkg.hours} hours</p>}
+                    <p className="mt-3 text-[24px] font-extrabold tracking-tight text-ink">{rupees(pkg.customer_paise)}</p>
+                    {!!(pkg.inclusions ?? []).length && (
+                      <div className="mt-3 space-y-1.5">
+                        {(pkg.inclusions ?? []).map((inc, i) => (
+                          <p key={i} className="flex items-start gap-1.5 text-[11.5px] leading-snug text-ink/70">
+                            <Check size={12} className="mt-0.5 shrink-0 text-forest-600" strokeWidth={3} />
+                            <span>{typeof inc === "string" ? inc : inc.label ?? inc.id}</span>
+                          </p>
+                        ))}
+                      </div>
+                    )}
+                    {onPick && <span className="mt-auto flex items-center gap-1 pt-4 text-[12px] font-extrabold text-plum-700">View details ›</span>}
+                  </PackageSurface>
+                )
+              })}
+            </div>
+          </div>
         </Section>
       )}
 
@@ -140,7 +148,7 @@ export default function TradeListingCard({ listing, tradeName, onPick }) {
 
       {catalogue.length > 0 && (
         <Section icon={Boxes} title="What you can order">
-          {catalogue.slice(0, 12).map(c => (
+          {catalogue.map(c => (
             <Row key={c.item_key} k={c.name} v={c.customer_paise ? rupees(c.customer_paise) : 'On request'}
               sub={[unitOf(c.unit), c.lead_days && `${c.lead_days} days notice`].filter(Boolean).join(' · ')} />
           ))}
