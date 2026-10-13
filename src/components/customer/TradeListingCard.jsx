@@ -165,13 +165,19 @@ export default function TradeListingCard({ listing, tradeName, onPick, showBooki
       )}
 
       <Section icon={Info} title="Booking & payment terms">
+        {terms.instant != null && <Row k="Booking mode" v={terms.instant === true || terms.instant === 'true' ? 'Instant Book & Pay' : 'Booking request'} />}
+        {(terms.advance_pct ?? terms.advance_percent) != null && (
+          <Row k="Advance payment" v={String(terms.advance_pct ?? terms.advance_percent) + '% at booking'} />
+        )}
+        {terms.payment_policy && <Row k="Payment terms" v={String(terms.payment_policy).replace(/_/g, ' ')} />}
         {terms.min_notice_days != null && (
-          <Row k="Book at least" v={`${terms.min_notice_days} day${Number(terms.min_notice_days) === 1 ? '' : 's'} ahead`} />
+          <Row k="Book at least" v={String(terms.min_notice_days) + ' day' + (Number(terms.min_notice_days) === 1 ? '' : 's') + ' ahead'} />
         )}
         {terms.cancellation && (
           <Row k="Cancellation" v={String(terms.cancellation).replace(/^./, c => c.toUpperCase())}
             sub={terms.cancellation_policy ?? terms.cancellation_details ?? CANCELLATION_COPY[terms.cancellation] ?? 'Check the booking terms for the policy that applies to this listing.'} />
         )}
+        {terms.reschedule_policy && <Row k="Rescheduling" v={String(terms.reschedule_policy).replace(/_/g, ' ')} />}
         {(terms.charges ?? []).map((c, i) => (
           <Row key={i} k={c.label} v={rupees(c.customer_paise)} sub={c.role} />
         ))}
