@@ -123,7 +123,7 @@ export default function TradePricing({ service, vendor, onEdit, onOpenPayout }) 
         let { data, error } = await supabase.rpc('listing_preview', { p_vendor_service_id: service.id })
         if (error?.code === 'PGRST202') {
           const fallback = await supabase.rpc('listing_public', { p_vendor_service_id: service.id })
-          data = fallback.data
+          data = fallback.data ? { ...fallback.data, is_live: true } : fallback.data
           error = fallback.error
         }
         if (error) throw error
@@ -373,7 +373,7 @@ export default function TradePricing({ service, vendor, onEdit, onOpenPayout }) 
                   <div className="sppc-booking-cta-wrap">
                     <button type="button" className="sppc-booking-cta" onClick={() => setPreviewActionNote('Preview only. The live booking flow checks the event date, availability and final payable amount before payment.')}>
                       <span className="sppc-booking-bolt">✦</span>
-                      <span><b>{previewData.terms?.instant === true || previewData.terms?.instant === 'true' ? 'Instant Book & Pay' : 'Check availability & request quote'}</b><small>Availability and final total confirmed at checkout</small></span>
+                      <span><b>{(previewData.terms?.instant ?? previewData.booking_rules?.instant) === true || (previewData.terms?.instant ?? previewData.booking_rules?.instant) === 'true' ? 'Instant Book & Pay' : 'Check availability & request quote'}</b><small>Availability and final total confirmed at checkout</small></span>
                       <ArrowRight size={19} />
                     </button>
                     {previewActionNote ? <p className="sppc-booking-note" role="status">{previewActionNote}</p> : <p className="sppc-booking-note">Preview only · no booking or payment starts from this screen.</p>}
