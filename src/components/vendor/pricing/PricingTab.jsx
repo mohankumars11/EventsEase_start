@@ -708,6 +708,7 @@ const fmt = d => d ? new Date(d).toLocaleDateString('en-IN', { day: 'numeric', m
 function toView(d, service) {
   const v = d.current, prof = v.profile ?? {}, br = v.booking_rules ?? {}, tr = v.travel_rules ?? {}
   const loc = service.specs?.anchor_v3?.location ?? {}
+  const asArray = value => Array.isArray(value) ? value : typeof value === 'string' ? value.split(',').map(item => item.trim()).filter(Boolean) : []
   const byModel = Object.fromEntries(d.rules.map(r => [r.model, r]))
   const hourRule = byModel.hour
   const order = { ESSENTIAL: 0, SIGNATURE: 1, VIP: 2 }
@@ -754,10 +755,10 @@ function toView(d, service) {
       role: prof.role === 'other' ? prof.role_other : ROLE[prof.role] ?? 'Anchor & MC', years: prof.years, tagline: prof.tagline ?? '',
       city: [loc.locality, loc.city].filter(Boolean).join(', ') || '—',
       travel: tr.scope ? (/^\d+$/.test(tr.scope) ? `up to ${tr.scope} km` : tr.scope) : '—',
-      languages: (prof.languages ?? []).map(l => `${l.name} (${l.level})`).join(' · '),
+      languages: asArray(prof.languages).map(l => typeof l === 'string' ? l : [l?.name, l?.level ? `(${l.level})` : ''].filter(Boolean).join(' ')).filter(Boolean).join(' · '),
       audience: prof.max_audience ? Number(prof.max_audience).toLocaleString('en-IN') : '—',
-      formats: (prof.formats ?? []).join(', '),
-      events: (prof.events ?? []).map(e => EVENT_LABEL[e] ?? e),
+      formats: asArray(prof.formats).map(x => typeof x === 'string' ? x : x?.label ?? x?.name ?? x?.id).filter(Boolean).join(', '),
+      events: asArray(prof.events).map(e => typeof e === 'string' ? EVENT_LABEL[e] ?? e : EVENT_LABEL[e?.id] ?? e?.label ?? e?.name ?? e?.id).filter(Boolean),
     },
     models: d.rules.map(r => ({
       id: r.model, customer_paise: r.customer_paise, unit: MODEL_UNIT[r.model] ?? '',
