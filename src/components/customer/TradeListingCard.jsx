@@ -84,8 +84,8 @@ export default function TradeListingCard({ listing, tradeName, onPick, showBooki
           {tradeName ?? listing.trade_id}
         </p>
         <div className="mt-2.5 flex min-w-0 items-center gap-3">
-          <span className="grid h-[68px] w-[68px] shrink-0 place-items-center overflow-hidden rounded-full border-2 border-white/70 bg-white/15 shadow-[0_4px_14px_rgba(20,0,40,0.22)]">
-            <span className="tlc-avatar-fallback">
+          <span className="relative grid h-[68px] w-[68px] shrink-0 place-items-center overflow-hidden rounded-full border-2 border-white/70 bg-white/15 shadow-[0_4px_14px_rgba(20,0,40,0.22)]">
+            <span className="absolute inset-0 flex h-full w-full flex-col items-center justify-center gap-0.5 bg-gradient-to-br from-violet-100 to-fuchsia-200 text-plum-900">
               {String(tradeName ?? listing.trade_id ?? '').toLowerCase().includes('anchor') || String(tradeName ?? '').toLowerCase().includes('mc') ? <Mic2 size={24} /> : String(tradeName ?? '').toLowerCase().includes('photo') ? <Camera size={24} /> : <UserRound size={24} />}
               <b>{String(displayName).split(/\s+/).map(x => x[0]).join('').slice(0,2).toUpperCase()}</b>
             </span>
@@ -224,5 +224,5 @@ function PartnerAvatarPhoto({ src, alt }) {
     resolve()
     return () => { alive = false }
   }, [src])
-  return resolved ? <img src={resolved} alt={alt} className="tlc-avatar-photo" onError={() => setResolved('')} /> : null
+  return resolved ? <img src={resolved} alt={alt} className="absolute inset-0 h-full w-full object-cover" onError={() => setResolved('')} /> : null
 }
