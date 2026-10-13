@@ -17,11 +17,12 @@ export default function StorefrontReadiness({ vendor, draft = {}, packages = [],
   const price = Number(draft?.base_price ?? draft?.price ?? draft?.rate ?? 0) > 0
     || packages.some(pkg => Number(pkg?.base_price ?? pkg?.price?.rate_paise ?? pkg?.trade_inputs?.customer_paise ?? 0) > 0)
   const namedPackage = Boolean(String(draft?.name || '').trim() || packages.some(pkg => String(pkg?.name || '').trim()))
+  const packagePending = String(draft?.status || '').toUpperCase() === 'UNDER_REVIEW' || packages.some(pkg => ['UNDER_REVIEW', 'ACTION_REQUIRED'].includes(String(pkg?.status || '').toUpperCase()))
   const terms = Boolean(draft?.availability_policy || draft?.commercial_inputs?.availability_policy || draft?.payment_policy || draft?.commercial_inputs?.payment_policy || draft?.cancellation_policy)
   const checks = [
     { key: 'profile', title: 'Partner profile photo', note: avatar ? 'A profile image is saved' : 'Add a real partner or business photo', state: itemState(Boolean(avatar), false), icon: Camera, action: () => onEditStep?.('details') },
     { key: 'portfolio', title: 'Portfolio gallery', note: approvedMedia.length ? approvedMedia.length + ' approved item(s) ready' : pendingMedia.length ? pendingMedia.length + ' item(s) waiting for review' : 'Add photos or videos from your own work', state: itemState(approvedMedia.length > 0, pendingMedia.length > 0), icon: ShieldCheck, action: () => onManageMedia?.() },
-    { key: 'package', title: 'Packages and prices', note: namedPackage && price ? 'Package name and a price are present' : 'Add a package name, price and inclusions', state: itemState(namedPackage && price, false), icon: PackageCheck, action: () => onEditStep?.('package') },
+    { key: 'package', title: 'Packages and prices', note: namedPackage && price ? 'Package name and a price are present' : 'Add a package name, price and inclusions', state: itemState(namedPackage && price, packagePending), icon: PackageCheck, action: () => onEditStep?.('package') },
     { key: 'terms', title: 'Booking terms', note: terms ? 'Booking or payment rules are configured' : 'Confirm booking mode, payment and cancellation', state: itemState(terms, false), icon: ShieldCheck, action: () => onEditStep?.('pricing') },
   ]
   const ready = checks.filter(check => check.state.label === 'Ready').length
