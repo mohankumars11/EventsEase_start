@@ -89,7 +89,7 @@ export default function TradeListingCard({ listing, tradeName, onPick, showBooki
           {Number(listing.rating) > 0 && (
             <span className="flex items-center gap-1.5"><Star size={14} className="fill-current" />{Number(listing.rating).toFixed(1)}</span>
           )}
-          {terms.instant === 'true' && (
+          {(terms.instant === true || terms.instant === 'true') && (
             <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-[11px] font-extrabold">Instant booking</span>
           )}
         </div>
