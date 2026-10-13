@@ -51,7 +51,7 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
   const [helpOpen, setHelpOpen] = useState(false)
   const [selectedServiceId, setSelectedServiceId] = useState(null)
   const [filterStatus, setFilterStatus] = useState('all')
-  const [listingMeta, setListingMeta] = useState({ byId: {}, packagesById: {}, priceById: {}, nextPriceDate: null, nextPriceServiceId: null, loading: true })
+  const [listingMeta, setListingMeta] = useState({ byId: {}, packagesById: {}, priceById: {}, priceUnitById: {}, nextPriceDate: null, nextPriceServiceId: null, loading: true })
   const engineReady = useEngineReady()
   const anchors = services.filter(s => hasProfileFor(s.category))
   const engine = engineReady ? services.filter(s => onEngine(s.category)) : []
