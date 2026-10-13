@@ -17,16 +17,24 @@ export default function PartnerAvatarInput({ vendor, draft, businessName, editab
   useEffect(() => {
     let alive = true
     async function resolve() {
-      if (!source) { setUrl(''); return }
-      if (/^https?:\/\//i.test(String(source))) { setUrl(source); return }
+      let candidate = source
+      if (vendor?.id) {
+        try {
+          const { data } = await supabase.from('vendors').select('avatar_url').eq('id', vendor.id).maybeSingle()
+          if (data?.avatar_url) candidate = data.avatar_url
+        } catch {}
+      }
+      if (!candidate) { if (alive) setUrl(''); return }
+      const value = String(candidate)
+      if (value.startsWith('https://') || value.startsWith('http://')) { if (alive) setUrl(value); return }
       try {
-        const { data, error: signedError } = await supabase.storage.from('partner-uploads').createSignedUrl(String(source), 900)
+        const { data, error: signedError } = await supabase.storage.from('partner-uploads').createSignedUrl(value, 900)
         if (alive) setUrl(signedError ? '' : data?.signedUrl || '')
       } catch { if (alive) setUrl('') }
     }
     resolve()
     return () => { alive = false }
-  }, [source])
+  }, [source, vendor?.id])
 
   async function upload(file) {
     if (!file || !vendor?.id) return
