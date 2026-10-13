@@ -11,7 +11,7 @@ function PreviewSection({ children }) {
   </section>
 }
 
-export default function PartnerMediaLinks({ vendor, profile = {} }) {
+export default function PartnerMediaLinks({ vendor, profile = {}, visibility = 'partner' }) {
   const [media, setMedia] = useState({ loading: true, rows: [], urls: {}, unavailable: false })
 
   useEffect(() => {
@@ -23,7 +23,8 @@ export default function PartnerMediaLinks({ vendor, profile = {} }) {
       }
       try {
         const result = await fetchWork(vendor.id)
-        const rows = (result.rows ?? []).filter(row => ['photo', 'document', 'video', 'audio'].includes(row.kind))
+        const rows = (result.rows ?? []).filter(row => ['photo', 'document', 'video', 'audio'].includes(row.kind)
+          && (visibility !== 'customer' || row.review_status === 'live'))
         const urls = await signedUrlsFor(rows.map(row => row.storage_path), 600)
         if (alive) setMedia({ loading: false, rows, urls, unavailable: !!result.unavailable })
       } catch {
@@ -32,7 +33,7 @@ export default function PartnerMediaLinks({ vendor, profile = {} }) {
     }
     load()
     return () => { alive = false }
-  }, [vendor?.id])
+  }, [vendor?.id, visibility])
 
   const photos = media.rows.filter(row => row.kind === 'photo')
   const documents = media.rows.filter(row => row.kind === 'document')
@@ -90,7 +91,7 @@ export default function PartnerMediaLinks({ vendor, profile = {} }) {
             })}
           </div>
           : <div className="rounded-2xl bg-[#faf9fd] p-4 text-[12px] text-ink/55">{media.unavailable ? 'Media library is not enabled in this environment yet.' : 'No uploaded portfolio media is available for this listing yet.'}</div>}
-      <p className="mt-3 text-[11px] leading-relaxed text-ink/50">Only approved media is customer-visible. Files awaiting review are marked above and should not be treated as published.</p>
+      <p className="mt-3 text-[11px] leading-relaxed text-ink/50">{visibility === 'customer' ? 'Only approved media is shown in this live customer listing.' : 'Only approved media is customer-visible. Files awaiting review are marked above and should not be treated as published.'}</p>
     </PreviewSection>
   )
 }
