@@ -7,7 +7,7 @@
  * works today changes for them.
  */
 import { useMemo, useState } from 'react'
-import { Loader2, Sparkles, ArrowRight, CircleAlert, Hourglass } from 'lucide-react'
+import { Loader2, Sparkles, ArrowRight, CircleAlert, Hourglass, CircleHelp, CheckCircle2, ChevronRight, X } from 'lucide-react'
 import PricingControlCenter, { SeasonalUpdate } from './PricingControlCenter'
 import TradePricing from './TradePricing'
 import { useEngineReady, onEngine } from '../../../lib/tradeEngine'
@@ -32,6 +32,7 @@ const label = id => ADDONS_V3.find(a => a.id === id)?.label ?? id
 const title = t => t.charAt(0) + t.slice(1).toLowerCase()
 
 export default function PricingTab({ vendor, services = [], onOpenListings, onEditListing, onOpenPayout }) {
+  const [helpOpen, setHelpOpen] = useState(false)
   const engineReady = useEngineReady()
   const anchors = services.filter(s => hasProfileFor(s.category))
   const engine = engineReady ? services.filter(s => onEngine(s.category)) : []
@@ -40,6 +41,52 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
   if (!anchors.length && !engine.length) return <SambramoPricingStudio vendor={vendor} services={services} onOpenListings={onOpenListings} />
   return (
     <div className="space-y-6">
+      <div className="flex items-start justify-between gap-3 rounded-[22px] bg-gradient-to-br from-plum-50 to-white p-4 ring-1 ring-plum-100">
+        <div className="min-w-0">
+          <h1 className="text-[clamp(1.35rem,6vw,1.6rem)] font-extrabold leading-tight tracking-tight text-plum-950">Pricing & Listings</h1>
+          <p className="mt-1 text-[13px] text-ink/60">Manage your services, packages and rates.</p>
+        </div>
+        <button type="button" onClick={() => setHelpOpen(true)} aria-label="Pricing setup help"
+          className="flex h-11 shrink-0 items-center gap-2 rounded-full border border-plum-200 bg-white px-3.5 text-[13px] font-extrabold text-plum-700 shadow-sm">
+          <CircleHelp size={19} /> Help
+        </button>
+      </div>
+      {helpOpen && (
+        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-ink/45 p-0 sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="pricing-help-title">
+          <button type="button" aria-label="Close help" onClick={() => setHelpOpen(false)} className="absolute inset-0 cursor-default" />
+          <section className="relative max-h-[88dvh] w-full max-w-lg overflow-y-auto rounded-t-[28px] bg-white p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-2xl sm:rounded-[28px]">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-plum-600">Partner setup assistant</p>
+                <h2 id="pricing-help-title" className="mt-1 text-xl font-extrabold text-plum-950">Let’s get your listing ready</h2>
+                <p className="mt-1 text-[13px] leading-relaxed text-ink/65">Use this checklist to finish your listing. Your saved details and review status remain the source of truth.</p>
+              </div>
+              <button type="button" onClick={() => setHelpOpen(false)} aria-label="Close help" className="rounded-full p-2 text-ink/60 hover:bg-plum-50"><X size={20} /></button>
+            </div>
+            <div className="mt-4 space-y-2">
+              {[
+                ['Profile & service area', 'Confirm your display name, location, travel radius, languages and event preferences.'],
+                ['Packages & pricing', 'Add package names, durations, inclusions and rates that match the service you provide.'],
+                ['Media & portfolio', 'Upload relevant photos, audio samples or performance videos where your trade supports them.'],
+                ['Booking rules', 'Review advance payment, cancellation, rescheduling, extra hours, travel and other charges.'],
+                ['Customer preview', 'Check the customer-facing listing and make sure every displayed detail is accurate.'],
+              ].map(([title, description], i) => (
+                <div key={title} className="flex items-start gap-3 rounded-2xl border border-ink/[0.08] p-3.5">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-plum-50 text-plum-700"><CheckCircle2 size={17} /></span>
+                  <div className="min-w-0 flex-1"><p className="text-[13.5px] font-extrabold text-ink">{i + 1}. {title}</p><p className="mt-0.5 text-[12px] leading-relaxed text-ink/60">{description}</p></div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 rounded-2xl bg-amber-50 p-3.5 text-[12px] leading-relaxed text-amber-950">
+              <b>Blocked or unable to continue?</b> Open your listing editor and check for required fields, upload errors or review feedback. Some price changes may remain locked during the 15-day pricing window.
+            </div>
+            <button type="button" onClick={() => { setHelpOpen(false); onOpenListings?.() }}
+              className="mt-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-plum-700 to-plum-500 px-5 text-[14px] font-extrabold text-white">
+              Open my listing <ChevronRight size={18} />
+            </button>
+          </section>
+        </div>
+      )}
       {anchors.map(s => <AnchorPricing key={s.id} service={s} onEdit={() => onEditListing?.(s)} onOpenPayout={onOpenPayout} />)}
       {engine.map(s => <TradePricing key={s.id} service={s} onEdit={() => onEditListing?.(s)} onOpenPayout={onOpenPayout} />)}
       {others.length > 0 && (
