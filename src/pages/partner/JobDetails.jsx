@@ -154,7 +154,7 @@ export default function JobDetails() {
             Renders nothing at all when the engine says NO_MATERIALS, so
             a DJ never sees a materials card. Sits above the trip panel
             because buying happens before travelling. */}
-        <MaterialsCard lineId={lineId} />
+        <MaterialsCard lineId={lineId} vendorId={job?.vendor_id} />
 
         {['accepted', 'paid', 'in_progress'].includes(job.status) && (
           travel.open ? (

@@ -49,7 +49,6 @@ const InstantBooking     = lazy(() => import('./pages/book/InstantBooking'))
 const AnchorBrowse       = lazy(() => import('./pages/book/AnchorBrowse'))
 const AnchorBook         = lazy(() => import('./pages/book/AnchorBook'))
 const TradeBrowse        = lazy(() => import('./pages/book/TradeBrowse'))
-const MaterialsApproval  = lazy(() => import('./pages/book/MaterialsApproval'))
 const TradeBook          = lazy(() => import('./pages/book/TradeBook'))
 const ChooseLane         = lazy(() => import('./pages/book/ChooseLane'))
 const WhenStep           = lazy(() => import('./pages/book/WhenStep'))
@@ -435,10 +434,6 @@ function AppRoutes() {
       <Route path="/book/anchor/:serviceId" element={<BareShell><AnchorBook /></BareShell>} />
       <Route path="/book/s/:trade" element={<BareShell><TradeBrowse /></BareShell>} />
       <Route path="/book/s/:trade/:serviceId" element={<BareShell><TradeBook /></BareShell>} />
-      {/* The customer approves -- or declines -- an itemised materials
-          list for a booking they have already paid for. Its own route
-          because it arrives as a link in a notification. */}
-      <Route path="/materials/:quoteId" element={<BareShell><MaterialsApproval /></BareShell>} />
 
       {/* The two doors, for a date that could honestly take either lane. */}
       <Route path="/book/choose" element={<BareShell><ChooseLane /></BareShell>} />

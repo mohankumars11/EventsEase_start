@@ -6,6 +6,8 @@ import { supabase } from '../../lib/supabase'
 import { pendingTrades } from '../../lib/tradeQueue'
 import { usePayoutStatus, ACCOUNT_LINKS } from '../vendor/anchor/stages/PayoutReviewStages'
 import RazorpayBadge from './payout/RazorpayBadge'
+import { Package } from 'lucide-react'
+import { configFor } from '../../data/trades'
 import { onboardPath } from '../../lib/tradeRoutes'
 
 /**
@@ -35,12 +37,24 @@ export default function SubmittedCard({ vendorId, services = [] }) {
   const versionId = params.get('version')
   const [version, setVersion] = useState(null)
   const payout = usePayoutStatus(trade !== null ? vendorId : null)
+  /* Is this trade one that can claim a materials advance? Asked of the
+     server, because the list is 34 config rows an operator can move,
+     not a constant in a bundle. A trade that is not eligible shows
+     nothing at all -- an advance a DJ cannot use is noise. */
+  const [advanceOk, setAdvanceOk] = useState(false)
 
   useEffect(() => {
     if (!versionId) return
     supabase.from('sambramo_listing_versions').select('status, vendor_service_id').eq('id', versionId).maybeSingle()
       .then(({ data }) => setVersion(data ?? null))
   }, [versionId])
+
+  useEffect(() => {
+    const id = trade ? configFor(trade)?.id : null
+    if (!id) return
+    supabase.rpc('advance_eligible', { p_trade_id: id })
+      .then(({ data, error }) => { if (!error) setAdvanceOk(data === true) })
+  }, [trade])
 
   if (trade === null) return null
   const service = services.find(s => s.id === version?.vendor_service_id)
@@ -67,6 +81,22 @@ export default function SubmittedCard({ vendorId, services = [] }) {
           </p>
         </div>
       </div>
+
+      {/* Said here because this is the one moment a partner is looking
+          at the consequences of the trade they just listed. Only the
+          eligible trades see it, and it promises a window -- not money. */}
+      {advanceOk && (
+        <div data-testid="submitted-advance" className="mt-3 rounded-2xl bg-plum-50 p-3 ring-1 ring-plum-200">
+          <p className="flex items-center gap-1.5 text-[12.5px] font-extrabold text-plum-900">
+            <Package size={14} /> This trade can claim a materials advance
+          </p>
+          <p className="mt-1 text-[12px] leading-snug text-plum-900/80">
+            On a confirmed booking you can send us the supplier&rsquo;s bill and photos of what you
+            bought, and we pay you back. If you have to order before the event and cannot fund it,
+            ask us and we will open the advance first.
+          </p>
+        </div>
+      )}
 
       {!payout.loading && !payout.active && (
         <div data-testid="submitted-payout" className="mt-3 rounded-2xl bg-amber-50 p-3 ring-1 ring-amber-200">
