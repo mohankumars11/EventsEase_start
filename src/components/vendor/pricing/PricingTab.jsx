@@ -62,7 +62,7 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
     let alive = true
     const ids = services.map(s => s.id).filter(Boolean)
     if (!ids.length) {
-      setListingMeta({ byId: {}, packagesById: {}, priceById: {}, nextPriceDate: null, nextPriceServiceId: null, loading: false })
+      setListingMeta({ byId: {}, packagesById: {}, priceById: {}, priceUnitById: {}, nextPriceDate: null, nextPriceServiceId: null, loading: false })
       return () => { alive = false }
     }
     setListingMeta(s => ({ ...s, loading: true }))
@@ -71,10 +71,10 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
         .select('vendor_service_id,version,status,seasonal_window_id,price_locked_until,published_at')
         .in('vendor_service_id', ids).order('version', { ascending: false }),
       supabase.from('sambramo_trade_packages')
-        .select('id,vendor_service_id,status,trade_inputs,commercial_inputs,calculation_snapshot')
+        .select('id,vendor_service_id,status,trade_inputs,commercial_inputs,calculation_snapshot,price_locked_until')
         .in('vendor_service_id', ids),
       supabase.from('sambramo_catering_packages')
-        .select('id,vendor_service_id,status')
+        .select('id,vendor_service_id,status,rate_bands')
         .in('vendor_service_id', ids),
     ]).then(([versionsRes, packagesRes, cateringRes]) => {
       if (!alive) return
@@ -93,17 +93,31 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
       }
       const packagesById = {}
       const priceById = {}
-      for (const p of [...packages, ...catering]) {
+      const priceUnitById = {}
+      for (const p of packages) {
         if (!p.vendor_service_id) continue
         packagesById[p.vendor_service_id] = (packagesById[p.vendor_service_id] ?? 0) + (p.status === 'ARCHIVED' ? 0 : 1)
         const partnerRate = Number(p.trade_inputs?.take_home_paise ?? p.take_home_paise ?? 0)
         if (partnerRate > 0 && p.status !== 'ARCHIVED') priceById[p.vendor_service_id] = Math.min(priceById[p.vendor_service_id] ?? partnerRate, partnerRate)
       }
-      const futureLocks = ids.map(id => versions.find(v => v.vendor_service_id === id && !v.seasonal_window_id && v.status === 'LIVE'))
-        .filter(v => v?.price_locked_until && new Date(v.price_locked_until) > new Date())
-        .map(v => ({ date: v.price_locked_until, serviceId: v.vendor_service_id }))
-        .sort((a, b) => new Date(a.date) - new Date(b.date))
-      setListingMeta({ byId, packagesById, priceById, nextPriceDate: futureLocks[0]?.date ?? null, nextPriceServiceId: futureLocks[0]?.serviceId ?? null, loading: false })
+      for (const p of catering) {
+        if (!p.vendor_service_id || p.status === 'ARCHIVED') continue
+        const bands = Array.isArray(p.rate_bands) ? p.rate_bands : []
+        const rates = bands.map(b => Number(b?.rate)).filter(rate => Number.isFinite(rate) && rate > 0)
+        const ratePerGuestPaise = rates.length ? Math.min(...rates) * 100 : 0
+        if (ratePerGuestPaise > 0 && !(priceById[p.vendor_service_id] > 0)) {
+          priceById[p.vendor_service_id] = ratePerGuestPaise
+          priceUnitById[p.vendor_service_id] = 'per guest'
+        }
+      }
+      const futureLocks = [
+        ...ids.map(id => versions.find(v => v.vendor_service_id === id && !v.seasonal_window_id && v.status === 'LIVE'))
+          .filter(v => v?.price_locked_until && new Date(v.price_locked_until) > new Date())
+          .map(v => ({ date: v.price_locked_until, serviceId: v.vendor_service_id })),
+        ...packages.filter(p => p.status === 'LIVE' && p.price_locked_until && new Date(p.price_locked_until) > new Date())
+          .map(p => ({ date: p.price_locked_until, serviceId: p.vendor_service_id })),
+      ].sort((a, b) => new Date(a.date) - new Date(b.date))
+      setListingMeta({ byId, packagesById, priceById, priceUnitById, nextPriceDate: futureLocks[0]?.date ?? null, nextPriceServiceId: futureLocks[0]?.serviceId ?? null, loading: false })
     }).catch(() => {
       if (alive) setListingMeta(s => ({ ...s, loading: false }))
     })
@@ -221,7 +235,7 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
                       </span>
                       <span className="mt-1.5 flex items-center gap-1.5 text-[11.5px] text-ink/55"><MapPin size={13} className="shrink-0 text-plum-600" />{service.city || service.location || vendor?.city || 'Service location not set'}</span>
                       <span className="mt-2 inline-flex items-center gap-1.5 rounded-xl bg-plum-50 px-2.5 py-1.5 text-[11.5px] font-bold text-plum-800">
-                        <Package size={14} />{listingMeta.loading ? 'Checking packages…' : packCount ? `${packCount} package${packCount === 1 ? '' : 's'}${listingMeta.priceById[service.id] ? ` · from ${rupees(listingMeta.priceById[service.id])}` : ''}` : 'Finish package setup'}
+                        <Package size={14} />{listingMeta.loading ? 'Checking packages…' : packCount ? `${packCount} package${packCount === 1 ? '' : 's'}${listingMeta.priceById[service.id] ? ` · from ${rupees(listingMeta.priceById[service.id])}${listingMeta.priceUnitById[service.id] ? ` / ${listingMeta.priceUnitById[service.id]}` : ''}` : ''}` : 'Finish package setup'}
                         <ChevronRight size={14} className="ml-1" />
                       </span>
                     </span>
