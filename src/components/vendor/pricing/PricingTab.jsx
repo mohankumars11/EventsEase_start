@@ -7,7 +7,7 @@
  * works today changes for them.
  */
 import { useEffect, useMemo, useState } from 'react'
-import { Loader2, Sparkles, ArrowRight, CircleAlert, Hourglass, CircleHelp, CheckCircle2, ChevronRight, X, ArrowLeft, MapPin, Package, CalendarClock, SlidersHorizontal } from 'lucide-react'
+import { Loader2, Sparkles, ArrowRight, CircleAlert, Hourglass, CircleHelp, CheckCircle2, ChevronRight, X, ArrowLeft, MapPin, Package, CalendarClock, SlidersHorizontal, IndianRupee, Image as ImageIcon, PlayCircle, FileText, Music2, ExternalLink } from 'lucide-react'
 import PricingControlCenter, { SeasonalUpdate } from './PricingControlCenter'
 import TradePricing from './TradePricing'
 import { useEngineReady, onEngine } from '../../../lib/tradeEngine'
@@ -22,6 +22,7 @@ import { rupees } from '../../../lib/tierPackages'
 import { supabase } from '../../../lib/supabase'
 import { useToast, friendlyError } from '../../../context/ToastContext'
 import SambramoTradePictogram from '../SambramoTradePictogram'
+import { fetchWork, signedUrlsFor } from '../../../lib/partnerWork'
 
 const MODEL_UNIT = { hour: '/hr', multi_day: '/day' }
 const MODEL_LABEL = { hour: 'Per hour', session: 'Per session', event: 'Per event', half_day: 'Half-day', full_day: 'Full-day', multi_day: 'Multi-day' }
@@ -363,9 +364,27 @@ function AnchorPricing({ service, vendor, onEdit, onOpenPayout }) {
         onSeasonal={() => setSheet('seasonal')} onPreview={() => setSheet('preview')}
         onViewPackage={tier => setSheet({ tier })} />
 
-      <Sheet open={sheet === 'preview'} onOpenChange={o => !o && setSheet(null)} title="What customers see">
-        <AnchorProfileCard profile={d.current.profile} city={view.listing.city}
-          packages={view.packages.map(p => ({ tier: p.tier, name: p.name, hours: p.hours, customer_paise: p.price_paise, inclusions: p.inclusions }))} />
+      <Sheet open={sheet === 'preview'} onOpenChange={o => !o && setSheet(null)} title="Customer preview">
+        <div className="space-y-4">
+          <AnchorProfileCard profile={d.current.profile} city={view.listing.city}
+            packages={view.packages.map(p => ({ tier: p.tier, name: p.name, hours: p.hours, customer_paise: p.price_paise, inclusions: p.inclusions }))} />
+          <PartnerMediaPreview vendor={vendor} profile={d.current.profile} />
+          <PreviewSection title="What you can order" icon={Package}>
+            {view.models.length ? view.models.map(m => {
+              const [name, Icon] = MODEL[m.id] ?? [m.id, Package]
+              return <Row key={m.id} k={<span className="inline-flex items-center gap-1.5"><Icon size={13} />{name} · {m.rules}</span>} v={`${rupees(m.customer_paise)} ${m.unit}`} />
+            }) : <p className="text-[12.5px] text-ink/55">No separate pricing models are configured.</p>}
+            {view.addons.length > 0 && <p className="pt-2 text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">Optional extras</p>}
+            {view.addons.map(a => <Row key={a.name} k={a.name} v={`${rupees(a.paise)} ${a.unit}`} />)}
+          </PreviewSection>
+          <PreviewSection title="Other booking charges" icon={IndianRupee}>
+            {view.charges.length ? view.charges.map(c => <Row key={c.k} k={c.k} v={c.v} />) : <p className="text-[12.5px] text-ink/55">No additional booking charges are configured.</p>}
+          </PreviewSection>
+          <PreviewSection title="Booking & payment rules" icon={CalendarClock}>
+            {view.rules.map(c => <Row key={c.k} k={c.k} v={c.v} />)}
+          </PreviewSection>
+          <p className="rounded-2xl bg-plum-50 p-3 text-[11.5px] leading-relaxed text-plum-900">This preview is generated from your saved listing data. Media waiting for approval is marked and should not be treated as published customer content.</p>
+        </div>
       </Sheet>
 
       <Sheet open={sheet === 'seasonal'} onOpenChange={o => !o && setSheet(null)} title="Update seasonal prices">
@@ -397,8 +416,85 @@ function AnchorPricing({ service, vendor, onEdit, onOpenPayout }) {
 }
 
 const Row = ({ k, v }) => (
-  <div className="flex justify-between gap-3 border-b border-ink/[0.05] py-2 text-[13px]"><span className="text-ink/55">{k}</span><span className="text-right font-bold">{v}</span></div>
+  <div className="flex justify-between gap-3 border-b border-ink/[0.05] py-2 text-[13px]"><span className="min-w-0 text-ink/55">{k}</span><span className="shrink-0 text-right font-bold">{v}</span></div>
 )
+
+function PreviewSection({ title, icon: Icon, children }) {
+  return <section className="overflow-hidden rounded-[20px] bg-white p-4 ring-1 ring-ink/[0.07]">
+    <h3 className="mb-2 flex items-center gap-2 text-[13.5px] font-extrabold text-plum-950"><Icon size={16} className="text-plum-700" />{title}</h3>
+    {children}
+  </section>
+}
+
+function PartnerMediaPreview({ vendor, profile = {} }) {
+  const [media, setMedia] = useState({ loading: true, rows: [], urls: {}, unavailable: false })
+  useEffect(() => {
+    let alive = true
+    async function load() {
+      if (!vendor?.id) { setMedia({ loading: false, rows: [], urls: {}, unavailable: false }); return }
+      try {
+        const result = await fetchWork(vendor.id)
+        const rows = (result.rows ?? []).filter(row => ['photo', 'document', 'video'].includes(row.kind))
+        const urls = await signedUrlsFor(rows.map(row => row.storage_path), 600)
+        if (alive) setMedia({ loading: false, rows, urls, unavailable: !!result.unavailable })
+      } catch {
+        if (alive) setMedia({ loading: false, rows: [], urls: {}, unavailable: false })
+      }
+    }
+    load()
+    return () => { alive = false }
+  }, [vendor?.id])
+
+  const photos = media.rows.filter(row => row.kind === 'photo')
+  const documents = media.rows.filter(row => row.kind === 'document')
+  const videos = media.rows.filter(row => row.kind === 'video')
+  const audioUrl = profile.audio_url || profile.audio_sample_url || profile.voice_sample_url || null
+  const catalogUrl = profile.catalog_url || profile.catalogue_url || profile.portfolio_url || null
+  const groups = [
+    { key: 'catalog', title: 'View photo catalog & portfolio', description: `${photos.length} photos · ${documents.length} catalog/document files`, icon: ImageIcon, rows: [...photos, ...documents] },
+    { key: 'audio', title: 'Listen to audio samples', description: 'Partner-provided audio sample', icon: Music2, direct: audioUrl },
+    { key: 'video', title: 'Watch performance video', description: `${videos.length} uploaded video${videos.length === 1 ? '' : 's'}`, icon: PlayCircle, rows: videos },
+    { key: 'catalog-link', title: 'Open external catalog', description: 'Catalog link saved in the listing profile', icon: ExternalLink, direct: catalogUrl },
+  ].filter(group => group.direct || group.rows?.some(row => media.urls[row.storage_path]))
+
+  return (
+    <PreviewSection title="Explore partner media" icon={ImageIcon}>
+      {media.loading
+        ? <div className="py-4 text-center text-[12px] text-ink/55"><Loader2 size={16} className="mr-2 inline animate-spin" />Loading uploaded media…</div>
+        : groups.length
+          ? <div className="space-y-2">
+            {groups.map(group => (
+              <div key={group.key} className="rounded-2xl bg-[#faf9fd] p-3 ring-1 ring-ink/[0.06]">
+                <div className="flex items-center gap-2.5">
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-plum-50 text-plum-700"><group.icon size={17} /></span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[12.5px] font-extrabold text-ink">{group.title}</p>
+                    <p className="text-[11px] text-ink/55">{group.description}</p>
+                  </div>
+                  {group.direct
+                    ? <a href={group.direct} target="_blank" rel="noreferrer" className="shrink-0 rounded-full bg-white px-3 py-2 text-[11px] font-extrabold text-plum-700 ring-1 ring-plum-200">Open</a>
+                    : <span className="shrink-0 text-[10.5px] font-bold text-ink/45">{group.rows.filter(row => media.urls[row.storage_path] && row.review_status === 'live').length} live</span>}
+                </div>
+                {!!group.rows?.length && (
+                  <div className="mt-2 space-y-1.5">
+                    {group.rows.filter(row => media.urls[row.storage_path]).map(row => (
+                      <a key={row.id} href={media.urls[row.storage_path]} target="_blank" rel="noreferrer"
+                        className="flex min-h-10 items-center gap-2 rounded-xl bg-white px-2.5 py-2 text-[11.5px] font-bold text-plum-800 ring-1 ring-ink/[0.05]">
+                        {row.kind === 'video' ? <PlayCircle size={14} /> : row.kind === 'document' ? <FileText size={14} /> : <ImageIcon size={14} />}
+                        <span className="min-w-0 flex-1 truncate">{row.caption || (row.kind === 'video' ? 'Performance video' : row.kind === 'document' ? 'Catalog document' : 'Portfolio photograph')}</span>
+                        <span className={`rounded-full px-2 py-0.5 text-[9px] font-extrabold ${row.review_status === 'live' ? 'bg-emerald-50 text-emerald-800' : 'bg-amber-50 text-amber-800'}`}>{row.review_status === 'live' ? 'Live' : 'In review'}</span>
+                        <ExternalLink size={13} className="shrink-0" />
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          : <div className="rounded-2xl bg-[#faf9fd] p-4 text-[12px] text-ink/55">{media.unavailable ? 'Media library is not enabled in this environment yet.' : 'No uploaded portfolio media is available for this listing yet.'}</div>}
+    </PreviewSection>
+  )
+}
 const fmt = d => d ? new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : ''
 
 function toView(d, service) {
