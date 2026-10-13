@@ -1070,7 +1070,7 @@ function PreviewStep({ vendor, service, config, packages = [], draft, fields, ad
           {draft?.payment_policy || draft?.commercial_inputs?.payment_policy ? (
             <div className="flex items-start justify-between gap-3 py-2 text-[12.5px]">
               <span className="text-ink/55">Payment terms</span>
-              <span className="text-right font-bold">{String(draft.payment_policy ?? draft.commercial_inputs.payment_policy).replace(/_/g, ' ')}</span>
+              <span className="text-right font-bold">{({ full: 'Pay in full at booking', advance: 'Advance payment', partial: 'Partial payment', milestone: 'Milestone payments' })[String(draft.payment_policy ?? draft.commercial_inputs.payment_policy)] ?? String(draft.payment_policy ?? draft.commercial_inputs.payment_policy).replace(/_/g, ' ')}</span>
             </div>
           ) : null}
           {draft?.lead_time !== '' && draft?.lead_time != null ? (
@@ -1088,13 +1088,33 @@ function PreviewStep({ vendor, service, config, packages = [], draft, fields, ad
           {draft?.travel_policy ? (
             <div className="flex items-start justify-between gap-3 py-2 text-[12.5px]">
               <span className="text-ink/55">Travel</span>
-              <span className="text-right font-bold">{String(draft.travel_policy).replace(/_/g, ' ')}</span>
+              <span className="text-right font-bold">{({ included: 'Travel included', flat: 'Flat outstation fee', per_km: 'Per km beyond included area', customer_arranged: 'Customer arranges travel & stay', custom: 'Custom travel terms' })[String(draft.travel_policy)] ?? String(draft.travel_policy).replace(/_/g, ' ')}</span>
             </div>
           ) : null}
           {draft?.cancellation_policy ? (
             <div className="flex items-start justify-between gap-3 py-2 text-[12.5px]">
               <span className="text-ink/55">Cancellation policy</span>
-              <span className="text-right font-bold">{String(draft.cancellation_policy).replace(/_/g, ' ')}</span>
+              <span className="text-right font-bold">{({ flexible: 'Flexible cancellation', standard: '48-hour notice', strict: '7-day notice', non_refundable: 'Non-refundable', custom: 'Custom cancellation policy' })[String(draft.cancellation_policy)] ?? String(draft.cancellation_policy).replace(/_/g, ' ')}</span>
+            </div>
+          ) : null}
+          {Number(draft?.setup_fee) > 0 ? (
+            <div className="flex items-start justify-between gap-3 py-2 text-[12.5px]">
+              <span className="text-ink/55">Setup fee</span><span className="text-right font-bold">{formatINR(draft.setup_fee)}</span>
+            </div>
+          ) : null}
+          {Number(draft?.teardown_fee) > 0 ? (
+            <div className="flex items-start justify-between gap-3 py-2 text-[12.5px]">
+              <span className="text-ink/55">Pack-down / teardown</span><span className="text-right font-bold">{formatINR(draft.teardown_fee)}</span>
+            </div>
+          ) : null}
+          {Number(draft?.additional_unit_rate) > 0 ? (
+            <div className="flex items-start justify-between gap-3 py-2 text-[12.5px]">
+              <span className="text-ink/55">Additional unit</span><span className="text-right font-bold">{formatINR(draft.additional_unit_rate)} / {draft.pricing_unit || 'unit'}</span>
+            </div>
+          ) : null}
+          {Number(draft?.additional_duration_rate) > 0 ? (
+            <div className="flex items-start justify-between gap-3 py-2 text-[12.5px]">
+              <span className="text-ink/55">Additional duration</span><span className="text-right font-bold">{formatINR(draft.additional_duration_rate)} / time unit</span>
             </div>
           ) : null}
         </div>
