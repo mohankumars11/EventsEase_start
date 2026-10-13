@@ -10,8 +10,8 @@ import { transactionLaneFor, transactionLaneCopy } from '../../lib/sambramoTrans
 
 const CATERING = 'Catering & Food'
 
-export default function SambramoPricingStudio({ vendor, services = [], onOpenListings = null, onExit = null, onboarding = false }) {
-  const [selectedServiceId, setSelectedServiceId] = useState(null)
+export default function SambramoPricingStudio({ vendor, services = [], onOpenListings = null, onExit = null, onboarding = false, initialServiceId = null, onReturnToPricing = null }) {
+  const [selectedServiceId, setSelectedServiceId] = useState(initialServiceId)
   const [statusByService, setStatusByService] = useState({})
   const [revisionByService, setRevisionByService] = useState({})
   const [packageSummary, setPackageSummary] = useState({ live: 0, draft: 0, review: 0, revisions: 0 })
@@ -62,7 +62,7 @@ export default function SambramoPricingStudio({ vendor, services = [], onOpenLis
   if (selected) {
     const config = normalizeTrade(selected.category, selected.trade_id)
     if (selected.category === CATERING) {
-      return <CateringPricingStudio vendor={vendor} service={selected} onboarding={onboarding} onBack={() => (onboarding && onExit ? onExit() : setSelectedServiceId(null))} onOpenListings={onOpenListings} />
+      return <CateringPricingStudio vendor={vendor} service={selected} onboarding={onboarding} onBack={() => (onReturnToPricing ? onReturnToPricing() : onboarding && onExit ? onExit() : setSelectedServiceId(null))} onOpenListings={onOpenListings} />
     }
     return <TradePricingStudio vendor={vendor} service={selected} config={config} onBack={() => (onboarding && onExit ? onExit() : setSelectedServiceId(null))} onOpenListings={onOpenListings} onboarding={onboarding} />
   }
