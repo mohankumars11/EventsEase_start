@@ -209,7 +209,7 @@ function inferTier(name) {
   return 'standard'
 }
 
-export default function TradePricingStudio({ vendor, service, config, onBack, onOpenListings, onboarding = false, startPreview = false }) {
+export default function TradePricingStudio({ vendor, service, config, onBack, onOpenListings, onboarding = false, startPreview = false, priceLockedUntil = null }) {
   const [packages, setPackages] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -311,6 +311,7 @@ export default function TradePricingStudio({ vendor, service, config, onBack, on
         setDraft={setEditor}
         readOnly={false}
         previewOnly={launchEditorInPreview}
+        priceLockedUntil={priceLockedUntil}
         initialStep={launchEditorInPreview ? 'preview' : 'package'}
         onBack={() => { setEditor(null); setLaunchEditorInPreview(false); if (launchEditorInPreview) onBack?.() }}
         onboarding={onboarding}
@@ -405,7 +406,7 @@ export default function TradePricingStudio({ vendor, service, config, onBack, on
   )
 }
 
-function TradePackageEditor({ vendor, service, config, packages = [], draft, setDraft, readOnly, onBack, onSaved, onOpenListings, onboarding = false, initialStep = 'package', previewOnly = false }) {
+function TradePackageEditor({ vendor, service, config, packages = [], draft, setDraft, readOnly, onBack, onSaved, onOpenListings, onboarding = false, initialStep = 'package', previewOnly = false, priceLockedUntil = null }) {
   const [activeStep, setActiveStep] = useState(initialStep)
   const [saving, setSaving] = useState(false)
   const [localError, setLocalError] = useState('')
@@ -415,6 +416,8 @@ function TradePackageEditor({ vendor, service, config, packages = [], draft, set
   const [mediaOpen, setMediaOpen] = useState(false)
   const [mediaRefresh, setMediaRefresh] = useState(0)
   const [previewAction, setPreviewAction] = useState('')
+  const pricingLocked = !!priceLockedUntil && new Date(priceLockedUntil) > new Date()
+  const priceLockDays = pricingLocked ? Math.max(0, Math.ceil((new Date(priceLockedUntil).getTime() - Date.now()) / 86400000)) : 0
 
   const fields = useMemo(() => getTradePricingFields(config), [config])
   const units = unitsFor(config)
@@ -677,6 +680,15 @@ function TradePackageEditor({ vendor, service, config, packages = [], draft, set
 
       {!previewOnly ? <StepRail activeStep={activeStep} ready={ready} onSelect={goTo} /> : null}
 
+      {pricingLocked && !previewOnly && (
+        <section className="flex items-start gap-2.5 rounded-2xl bg-plum-50 p-3.5 ring-1 ring-plum-100">
+          <Lock size={16} className="mt-0.5 shrink-0 text-plum-700" />
+          <div>
+            <p className="text-[12.5px] font-extrabold text-plum-950">Price editing is temporarily locked</p>
+            <p className="mt-0.5 text-[11.5px] leading-relaxed text-ink/60">Regular price changes reopen in {priceLockDays} day{priceLockDays === 1 ? '' : 's'}. Profile details, descriptions and booking terms can still be updated now.</p>
+          </div>
+        </section>
+      )}
       {localError ? <section className="trade-pricing-error">{localError}</section> : null}
       {saveNotice ? <section role="status" aria-live="polite" className="trade-pricing-save-success"><Check size={16} /><span>{saveNotice}</span></section> : null}
       {localError ? <section role="alert" aria-live="assertive" className="trade-pricing-save-error"><Info size={16} /><span>{localError}</span></section> : null}
@@ -701,11 +713,11 @@ function TradePackageEditor({ vendor, service, config, packages = [], draft, set
       ) : null}
 
       {activeStep === 'pricing' ? (
-        <PricingStep config={config} units={units} draft={draft} readOnly={readOnly} onUpdate={update} />
+        <PricingStep config={config} units={units} draft={draft} readOnly={readOnly || pricingLocked} onUpdate={update} />
       ) : null}
 
       {activeStep === 'addons' ? (
-        <AddonsStep config={config} addons={addons} suggestions={addonSuggestions} readOnly={readOnly} onAdd={addAddon} onUpdate={updateAddon} onRemove={removeAddon} />
+        <AddonsStep config={config} addons={addons} suggestions={addonSuggestions} readOnly={readOnly || pricingLocked} onAdd={addAddon} onUpdate={updateAddon} onRemove={removeAddon} />
       ) : null}
 
       {activeStep === 'preview' ? (
