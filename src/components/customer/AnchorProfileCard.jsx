@@ -6,7 +6,7 @@
  * not in that data at all, so they cannot leak through this card. Used by
  * the partner's "Preview my customer profile" and by the customer page.
  */
-import { Languages, MapPin, Users, Star, Youtube, Check, Crown } from 'lucide-react'
+import { Languages, MapPin, Users, Star, Youtube, Check, Crown, Mic2 } from 'lucide-react'
 import { rupees } from '../../lib/tierPackages'
 import { EVENT_GROUPS_V3 } from '../vendor/anchor/options'
 
@@ -14,15 +14,22 @@ const EVENT_LABEL = Object.fromEntries(EVENT_GROUPS_V3.flatMap(g => g.items.map(
 const ROLE = { anchor: 'Anchor', mc: 'MC', both: 'Anchor & MC' }
 
 export default function AnchorProfileCard({ profile = {}, packages = [], city, rating, onPick, selectedTier, showBookingCtaPreview = false, instantBookEnabled = true }) {
-  const p = profile
+  const p = profile && typeof profile === 'object' ? profile : {}
+  const avatar = p.avatar_url || p.profile_photo_url || p.photo_url || p.avatar || ''
+  const languageItems = Array.isArray(p.languages) ? p.languages : typeof p.languages === 'string' ? p.languages.split(',').map(name => name.trim()).filter(Boolean) : []
+  const eventItems = Array.isArray(p.events) ? p.events : typeof p.events === 'string' ? p.events.split(',').map(name => name.trim()).filter(Boolean) : []
+  const name = p.stage_name || p.name || 'Anchor & MC'
   return (
     <div className="overflow-hidden rounded-[26px] bg-white ring-1 ring-ink/[0.07]">
       <div className="bg-gradient-to-br from-plum-700 to-plum-950 p-5 text-white">
         <div className="flex items-center gap-3.5">
           <span className="h-16 w-16 shrink-0 overflow-hidden rounded-full bg-white/15 ring-2 ring-white/40">
-            {p.avatar_url
-              ? <img src={p.avatar_url} alt="" className="h-full w-full object-cover" />
-              : <span className="flex h-full w-full items-center justify-center text-[20px] font-extrabold">{(p.stage_name ?? '?').slice(0, 2).toUpperCase()}</span>}
+            {avatar
+              ? <img src={avatar} alt={`${name} profile`} className="h-full w-full object-cover" onError={e => { e.currentTarget.style.display = 'none' }} />
+              : <span className="flex h-full w-full flex-col items-center justify-center gap-0.5 bg-gradient-to-br from-violet-200 to-plum-300 text-plum-900">
+                  <Mic2 size={24} strokeWidth={2.2} />
+                  <span className="text-[9px] font-extrabold tracking-wide">ANCHOR</span>
+                </span>}
           </span>
           <div className="min-w-0">
             <p className="truncate text-[18px] font-extrabold">{p.stage_name}</p>
@@ -36,12 +43,12 @@ export default function AnchorProfileCard({ profile = {}, packages = [], city, r
       <div className="space-y-2 p-4 text-[12.5px] text-ink/75">
         {p.bio && <p className="leading-relaxed text-ink/70">{p.bio}</p>}
         {city && <p className="flex items-center gap-2"><MapPin size={14} className="text-plum-600" />{city}</p>}
-        {p.languages?.length > 0 && <p className="flex items-center gap-2"><Languages size={14} className="text-plum-600" />{p.languages.map(l => l.name).join(' · ')}</p>}
+        {languageItems.length > 0 && <p className="flex items-center gap-2"><Languages size={14} className="text-plum-600" />{languageItems.map(l => typeof l === 'string' ? l : [l?.name, l?.level].filter(Boolean).join(' ')).filter(Boolean).join(' · ')}</p>}
         {p.max_audience && <p className="flex items-center gap-2"><Users size={14} className="text-plum-600" />Up to {Number(p.max_audience).toLocaleString('en-IN')} guests</p>}
         {p.video_url && <a href={p.video_url} target="_blank" rel="noreferrer" className="flex items-center gap-2 font-bold text-plum-700"><Youtube size={14} />Watch performance video</a>}
-        {p.events?.length > 0 && (
+        {eventItems.length > 0 && (
           <div className="flex flex-wrap gap-1.5 pt-1">
-            {p.events.slice(0, 8).map(e => <span key={e} className="rounded-full bg-plum-50 px-2.5 py-1 text-[11px] font-bold text-plum-800">{EVENT_LABEL[e] ?? e}</span>)}
+            {eventItems.slice(0, 8).map(e => <span key={typeof e === 'string' ? e : e?.id ?? e?.label} className="rounded-full bg-plum-50 px-2.5 py-1 text-[11px] font-bold text-plum-800">{EVENT_LABEL[typeof e === 'string' ? e : e?.id] ?? (typeof e === 'string' ? e : e?.label ?? e?.id)}</span>)}
           </div>
         )}
       </div>
