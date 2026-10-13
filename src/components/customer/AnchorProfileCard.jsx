@@ -13,7 +13,7 @@ import { EVENT_GROUPS_V3 } from '../vendor/anchor/options'
 const EVENT_LABEL = Object.fromEntries(EVENT_GROUPS_V3.flatMap(g => g.items.map(i => [i.id, i.label])))
 const ROLE = { anchor: 'Anchor', mc: 'MC', both: 'Anchor & MC' }
 
-export default function AnchorProfileCard({ profile = {}, packages = [], city, rating, onPick, selectedTier }) {
+export default function AnchorProfileCard({ profile = {}, packages = [], city, rating, onPick, selectedTier, showBookingCtaPreview = false, instantBookEnabled = true }) {
   const p = profile
   return (
     <div className="overflow-hidden rounded-[26px] bg-white ring-1 ring-ink/[0.07]">
@@ -74,6 +74,15 @@ export default function AnchorProfileCard({ profile = {}, packages = [], city, r
               })}
             </div>
           </div>
+        </div>
+      )}
+
+      {showBookingCtaPreview && (
+        <div className="border-t border-ink/[0.06] p-4">
+          <div aria-label="Customer action preview" className={`flex min-h-[52px] items-center justify-center gap-2 rounded-full px-5 text-center text-[14px] font-extrabold text-white ${instantBookEnabled ? 'bg-gradient-to-r from-plum-700 to-violet-600 shadow-lg shadow-plum-700/15' : 'bg-slate-400'}`}>
+            {instantBookEnabled ? 'Instant Book & Pay' : 'Instant booking is not enabled'} <span aria-hidden="true">→</span>
+          </div>
+          <p className="mt-2 text-center text-[10.5px] text-ink/45">Customer action preview · live booking checks availability and the final payable amount.</p>
         </div>
       )}
     </div>
