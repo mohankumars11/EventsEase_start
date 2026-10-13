@@ -60,7 +60,7 @@ export default function AnchorProfileCard({ profile = {}, packages = [], city, r
             <p className="mt-0.5 text-[11.5px] text-ink/55">Swipe horizontally to compare packages.</p>
           </div>
           <div className="-mx-1 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <div className="flex snap-x snap-mandatory items-stretch gap-3">
+            <div className="flex snap-x snap-mandatory items-start gap-3">
               {packages.map(k => {
                 const sel = selectedTier === k.tier
                 return (
