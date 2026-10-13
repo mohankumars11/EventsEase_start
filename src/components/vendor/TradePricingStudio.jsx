@@ -26,7 +26,8 @@ import {
   getTradePricingFields,
 } from '../../data/sambramoPricingCatalog'
 import WorkLibrary from './WorkLibrary'
-import SambramoPartnerPreviewCard, { SAMBRAMO_EVENT_OPTIONS, readSupportedEvents } from './SambramoPartnerPreviewCard'
+import { SAMBRAMO_EVENT_OPTIONS, readSupportedEvents } from './SambramoPartnerPreviewCard'
+import { buildLegacyTradeListing, default as TradeCustomerPreviewScreen } from './pricing/TradeCustomerPreviewScreen'
 import PartnerMediaLinks from './pricing/PartnerMediaLinks'
 import StorefrontReadiness from './pricing/StorefrontReadiness'
 import './pricing/StorefrontReadiness.css'
@@ -723,7 +724,7 @@ function TradePackageEditor({ vendor, service, config, packages = [], draft, set
       ) : null}
 
       {activeStep === 'preview' ? (
-        <PreviewStep vendor={vendor} service={service} packages={packages} config={config} draft={draft} fields={fields} addons={addons} media={media} onOpenListings={onOpenListings} onManageMedia={previewOnly ? undefined : () => setMediaOpen(true)} onPreviewAction={message => setPreviewAction(message)} onEditStep={previewOnly ? undefined : goTo} fullScreen={previewOnly} onClosePreview={onBack} />
+        <PreviewStep vendor={vendor} service={service} packages={packages} config={config} draft={draft} fields={fields} addons={addons} media={media} onPreviewAction={message => setPreviewAction(message)} onEditStep={previewOnly ? undefined : goTo} onClosePreview={previewOnly ? onBack : () => setActiveStep('package')} />
       ) : null}
 
       {!readOnly && !previewOnly && isPreview ? (
@@ -1059,115 +1060,22 @@ function AddonsStep({ config, addons, suggestions, readOnly, onAdd, onUpdate, on
   )
 }
 
-function PreviewStep({ vendor, service, config, packages = [], draft, fields, addons, media, onManageMedia, onPreviewAction, onEditStep, fullScreen = false, onClosePreview }) {
-  const action = message => onPreviewAction?.(message)
+function PreviewStep({ vendor, service, config, packages = [], draft, fields, addons, media, onPreviewAction, onClosePreview }) {
+  const listing = useMemo(
+    () => buildLegacyTradeListing({ vendor, service, config, draft, packages, addons, fields }),
+    [vendor, service, config, draft, packages, addons, fields],
+  )
   return (
-    <section className={"trade-pricing-panel trade-step-preview sambramo-preview-page " + (fullScreen ? "sambramo-preview-fullscreen" : "")} style={fullScreen ? {position:"fixed",inset:0,zIndex:230,overflowY:"auto",background:"#f7fbff",paddingTop:"env(safe-area-inset-top)",paddingBottom:"env(safe-area-inset-bottom)"} : undefined}>
-      {fullScreen ? <header className="sticky top-0 z-30 flex h-[54px] items-center gap-2 border-b border-[#e4edf9] bg-white/95 px-3 backdrop-blur"><button type="button" onClick={onClosePreview} aria-label="Close customer preview" className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#eff6ff] text-[#16356b]"><ArrowLeft size={19}/></button><div className="min-w-0 flex-1"><p className="truncate text-[12px] font-black text-[#102250]">Customer preview</p><p className="truncate text-[9px] font-semibold text-[#657897]">{config?.name || service?.name} · mobile storefront</p></div></header> : null}
-      {!fullScreen ? <div className="sambramo-preview-toolbar">
-        <div className="min-w-0">
-          <p className="trade-pricing-overline">Partner preview · customer storefront</p>
-          <h2>Preview your customer-facing catalog</h2>
-          <p>The card below is generated from the package, event types, pricing, inclusions, add-ons and approved portfolio media you have entered.</p>
-        </div>
-        <button type="button" onClick={onManageMedia} className="sambramo-preview-manage">
-          <Images size={16} /> Manage media
-        </button>
-      </div> : null}
-      {!fullScreen ? <StorefrontReadiness vendor={vendor} draft={draft} packages={packages} media={media}
-        onEditStep={onEditStep} onManageMedia={onManageMedia} /> : null}
-      <SambramoPartnerPreviewCard
-        vendor={vendor}
-        service={service}
-        config={config}
-        draft={draft}
-        packages={packages}
-        addons={addons}
-        media={media}
-        onEdit={step => onEditStep?.(step)}
-        onBookingPreview={() => action('Customer action preview only. Live availability and the final payable total are checked in Sambramo’s existing booking flow.')}
-        onManageMedia={value => {
-          if (value === 'back') action('Preview stays on this pricing step.')
-          else if (value === 'events') onEditStep?.('details')
-          else if (String(value || '').startsWith('addon:')) onEditStep?.('addons')
-          else onManageMedia?.()
-        }}
-      />
-      <section className="mt-4 rounded-[22px] bg-white p-4 ring-1 ring-ink/[0.07]">
-        <h3 className="text-[14px] font-extrabold text-plum-950">Booking & payment terms</h3>
-        <div className="mt-2 divide-y divide-ink/[0.06]">
-          <div className="flex items-start justify-between gap-3 py-2 text-[12.5px]">
-            <span className="text-ink/55">Booking mode</span>
-            <span className="text-right font-bold">{String(draft?.availability_policy ?? draft?.commercial_inputs?.availability_policy ?? 'instant').toLowerCase() === 'instant' ? 'Instant Book & Pay' : 'Booking availability confirmed at checkout'}</span>
-          </div>
-          {draft?.payment_policy || draft?.commercial_inputs?.payment_policy ? (
-            <div className="flex items-start justify-between gap-3 py-2 text-[12.5px]">
-              <span className="text-ink/55">Payment terms</span>
-              <span className="text-right font-bold">{({ full: 'Pay in full at booking', advance: 'Advance payment', partial: 'Partial payment', milestone: 'Milestone payments' })[String(draft.payment_policy ?? draft.commercial_inputs.payment_policy)] ?? String(draft.payment_policy ?? draft.commercial_inputs.payment_policy).replace(/_/g, ' ')}</span>
-            </div>
-          ) : null}
-          {draft?.lead_time !== '' && draft?.lead_time != null ? (
-            <div className="flex items-start justify-between gap-3 py-2 text-[12.5px]">
-              <span className="text-ink/55">Minimum notice</span>
-              <span className="text-right font-bold">{draft.lead_time} day(s)</span>
-            </div>
-          ) : null}
-          {draft?.minimum_order !== '' && draft?.minimum_order != null ? (
-            <div className="flex items-start justify-between gap-3 py-2 text-[12.5px]">
-              <span className="text-ink/55">Minimum order</span>
-              <span className="text-right font-bold">{draft.minimum_order} {draft.pricing_unit || 'units'}</span>
-            </div>
-          ) : null}
-          {draft?.travel_policy ? (
-            <div className="flex items-start justify-between gap-3 py-2 text-[12.5px]">
-              <span className="text-ink/55">Travel</span>
-              <span className="text-right font-bold">{({ included: 'Travel included', flat: 'Flat outstation fee', per_km: 'Per km beyond included area', customer_arranged: 'Customer arranges travel & stay', custom: 'Custom travel terms' })[String(draft.travel_policy)] ?? String(draft.travel_policy).replace(/_/g, ' ')}</span>
-            </div>
-          ) : null}
-          {draft?.cancellation_policy ? (
-            <div className="flex items-start justify-between gap-3 py-2 text-[12.5px]">
-              <span className="text-ink/55">Cancellation policy</span>
-              <span className="text-right font-bold">{({ flexible: 'Flexible cancellation', standard: '48-hour notice', strict: '7-day notice', non_refundable: 'Non-refundable', custom: 'Custom cancellation policy' })[String(draft.cancellation_policy)] ?? String(draft.cancellation_policy).replace(/_/g, ' ')}</span>
-            </div>
-          ) : null}
-          {Number(draft?.setup_fee) > 0 ? (
-            <div className="flex items-start justify-between gap-3 py-2 text-[12.5px]">
-              <span className="text-ink/55">Setup fee</span><span className="text-right font-bold">{formatINR(draft.setup_fee)}</span>
-            </div>
-          ) : null}
-          {Number(draft?.teardown_fee) > 0 ? (
-            <div className="flex items-start justify-between gap-3 py-2 text-[12.5px]">
-              <span className="text-ink/55">Pack-down / teardown</span><span className="text-right font-bold">{formatINR(draft.teardown_fee)}</span>
-            </div>
-          ) : null}
-          {Number(draft?.additional_unit_rate) > 0 ? (
-            <div className="flex items-start justify-between gap-3 py-2 text-[12.5px]">
-              <span className="text-ink/55">Additional unit</span><span className="text-right font-bold">{formatINR(draft.additional_unit_rate)} / {draft.pricing_unit || 'unit'}</span>
-            </div>
-          ) : null}
-          {Number(draft?.additional_duration_rate) > 0 ? (
-            <div className="flex items-start justify-between gap-3 py-2 text-[12.5px]">
-              <span className="text-ink/55">Additional duration</span><span className="text-right font-bold">{formatINR(draft.additional_duration_rate)} / time unit</span>
-            </div>
-          ) : null}
-        </div>
-        <div className="mt-3 rounded-full bg-gradient-to-r from-plum-700 to-violet-600 px-4 py-3 text-center text-[13.5px] font-extrabold text-white">
-          {String(draft?.availability_policy ?? draft?.commercial_inputs?.availability_policy ?? 'instant').toLowerCase() === 'instant' ? 'Instant Book & Pay' : 'Continue to secure booking'} <span aria-hidden="true">→</span>
-        </div>
-        <p className="mt-2 text-center text-[10.5px] leading-relaxed text-ink/45">Preview only. Availability and the final payable total are validated in the existing Sambramo booking flow.</p>
-      </section>
-      <div className="mt-4">
-        <PartnerMediaLinks vendor={vendor} profile={draft?.trade_inputs ?? {}} />
-      </div>
-      <div className="sppc-booking-cta-wrap">
-        <button type="button" className="sppc-booking-cta" onClick={() => action('Customer action preview only. Live availability and the final payable total are checked in Sambramo’s existing booking flow.')}>
-          <span className="sppc-booking-bolt">✦</span>
-          <span><b>{String(draft?.availability_policy ?? draft?.commercial_inputs?.availability_policy ?? 'instant').toLowerCase() === 'instant' ? 'Instant Book & Pay' : 'Check availability & request quote'}</b><small>Availability and final total confirmed at checkout</small></span>
-          <ChevronRight size={20} />
-        </button>
-        <p className="sppc-booking-note">Preview only · no booking or payment starts from this screen.</p>
-      </div>
-    </section>
+    <TradeCustomerPreviewScreen
+      vendor={vendor}
+      service={service}
+      config={config}
+      tradeName={config?.name || service?.category || service?.name}
+      listing={listing}
+      media={media}
+      onClose={onClosePreview}
+      onAction={onPreviewAction}
+    />
   )
 }
 

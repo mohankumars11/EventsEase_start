@@ -15,6 +15,7 @@ import {
 import { CUISINE_BY_ID } from '../../data/cuisineMenus'
 import { SOURCING_MODES } from '../../data/cateringModel'
 import PartnerMediaLinks from './pricing/PartnerMediaLinks'
+import TradeCustomerPreviewScreen, { buildCateringTradeListing } from './pricing/TradeCustomerPreviewScreen'
 
 const sectionForCourse = courseId => ({
   welcome: 'welcome',
@@ -950,13 +951,39 @@ function CateringPackageEditor({ vendor, service, capability, catalogueDishes = 
           )}
         </div>
         {preview ? (
-          <>
-            <CustomerPreview draft={draft} dishes={dishes} previewGuests={previewGuests} setPreviewGuests={setPreviewGuests}
-              terms={service?.specs?.trade_v1 ?? service?.specs?.catering_v1 ?? {}} />
-            <div className="mt-3">
-              <PartnerMediaLinks vendor={vendor} profile={service?.specs?.trade_v1 ?? vendor ?? {}} />
-            </div>
-          </>
+          previewOnly ? (
+            <TradeCustomerPreviewScreen
+              vendor={vendor}
+              service={service}
+              config={{ trade_id: 'E01', name: service?.category || service?.name || 'Catering & Food' }}
+              tradeName={service?.category || service?.name || 'Catering & Food'}
+              listing={buildCateringTradeListing({
+                vendor,
+                service,
+                config: { trade_id: 'E01', name: service?.category || service?.name || 'Catering & Food' },
+                draft,
+                dishes,
+                terms: service?.specs?.trade_v1 ?? service?.specs?.catering_v1 ?? {},
+              })}
+              onClose={() => { setPreview(false); onBack?.() }}
+            />
+          ) : (
+            <TradeCustomerPreviewScreen
+              vendor={vendor}
+              service={service}
+              config={{ trade_id: 'E01', name: service?.category || service?.name || 'Catering & Food' }}
+              tradeName={service?.category || service?.name || 'Catering & Food'}
+              listing={buildCateringTradeListing({
+                vendor,
+                service,
+                config: { trade_id: 'E01', name: service?.category || service?.name || 'Catering & Food' },
+                draft,
+                dishes,
+                terms: service?.specs?.trade_v1 ?? service?.specs?.catering_v1 ?? {},
+              })}
+              onClose={() => setPreview(false)}
+            />
+          )
         ) : (
           <div className="mt-3 grid grid-cols-2 gap-2">
             <InfoMetric label="Dishes" value={String(draft.items.length)} icon={UtensilsCrossed} />
