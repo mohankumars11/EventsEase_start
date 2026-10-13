@@ -75,7 +75,7 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
         .select('id,vendor_service_id,name,description,status,trade_inputs,commercial_inputs,calculation_snapshot,price_locked_until,published_at')
         .in('vendor_service_id', ids),
       supabase.from('sambramo_catering_packages')
-        .select('id,vendor_service_id,name,status,rate_bands,min_guests,max_guests,service_hours,notes,price_locked_until')
+        .select('id,vendor_service_id,name,status,rate_bands,min_guests,max_guests,service_hours,notes')
         .in('vendor_service_id', ids),
       supabase.from('sambramo_partner_price_books')
         .select('vendor_service_id,offering_id,component_id,status,effective_from,rate_paise,unit,minimum_quantity,included_quantity,quantity_formula,version,created_at')
