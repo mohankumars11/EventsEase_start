@@ -33,7 +33,7 @@ const sectionForCourse = courseId => ({
 const iid = () => crypto?.randomUUID?.() ?? ('tmp-' + Date.now() + Math.random())
 const normDishName = value => String(value ?? '').toLowerCase().replace(/[^a-z0-9]+/g, '')
 
-export default function CateringPricingStudio({ vendor, service, onBack, onOpenListings, onboarding = false, startPreview = false }) {
+export default function CateringPricingStudio({ vendor, service, onBack, onOpenListings, onboarding = false, startPreview = false, priceLockedUntil = null }) {
   const capability = useMemo(() => cateringCapabilityFromListing(service), [service])
   const [packages, setPackages] = useState([])
   const [loading, setLoading] = useState(true)
@@ -207,6 +207,7 @@ export default function CateringPricingStudio({ vendor, service, onBack, onOpenL
         preview={preview}
         setPreview={setPreview}
         previewOnly={startPreview}
+        priceLockedUntil={priceLockedUntil}
         onBack={() => { setEditing(null); if (startPreview) onBack?.() }}
         onSaved={async status => { setEditing(null); await load(); if (onboarding) onBack?.() }}
       />
@@ -363,12 +364,14 @@ export default function CateringPricingStudio({ vendor, service, onBack, onOpenL
   )
 }
 
-function CateringPackageEditor({ vendor, service, capability, catalogueDishes = [], draft, setDraft, preview, setPreview, previewOnly = false, onBack, onSaved }) {
+function CateringPackageEditor({ vendor, service, capability, catalogueDishes = [], draft, setDraft, preview, setPreview, previewOnly = false, priceLockedUntil = null, onBack, onSaved }) {
   const [dishSearch, setDishSearch] = useState('')
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
   const [savedMessage, setSavedMessage] = useState('')
   const [step, setStep] = useState('package')
+  const pricingLocked = !!priceLockedUntil && new Date(priceLockedUntil) > new Date()
+  const priceLockDays = pricingLocked ? Math.max(0, Math.ceil((new Date(priceLockedUntil).getTime() - Date.now()) / 86400000)) : 0
   const [dishCuisineFilter, setDishCuisineFilter] = useState('all')
   const [dishCourseFilter, setDishCourseFilter] = useState('all')
   const [dishDietFilter, setDishDietFilter] = useState('all')
@@ -654,6 +657,18 @@ function CateringPackageEditor({ vendor, service, capability, catalogueDishes = 
         ))}
       </div>}
 
+      {!previewOnly && pricingLocked && (step === 'price' || step === 'addons') && (
+        <section className="rounded-[22px] bg-plum-50 p-4 ring-1 ring-plum-100">
+          <div className="flex items-start gap-3">
+            <Lock size={19} className="mt-0.5 shrink-0 text-plum-700" />
+            <div>
+              <h3 className="text-[14px] font-extrabold text-plum-950">{step === 'price' ? 'Catering prices are locked' : 'Extra-service rates are locked'}</h3>
+              <p className="mt-1 text-[12px] leading-relaxed text-ink/65">Price bands, add-on rates, units and quantity pricing can be updated again in {priceLockDays} day{priceLockDays === 1 ? '' : 's'}. You can still update non-price profile and menu details.</p>
+            </div>
+          </div>
+        </section>
+      )}
+
       {!previewOnly && step === 'package' && (
         <section className="space-y-3 rounded-[26px] bg-white p-4 ring-1 ring-ink/[0.06]">
           <SectionHeading icon={Sparkles} title="Name and shape" helper="You choose the package name. Sambramo does not force generic tiers." />
@@ -820,7 +835,7 @@ function CateringPackageEditor({ vendor, service, capability, catalogueDishes = 
         </section>
       )}
 
-      {!previewOnly && step === 'price' && (
+      {!previewOnly && !pricingLocked && step === 'price' && (
         <section className="space-y-3 rounded-[26px] bg-white p-4 ring-1 ring-ink/[0.06]">
           <SectionHeading icon={WalletCards} title="Set guest-volume pricing" helper="Catering is always priced per guest. Add bands when your per-guest supply rate changes with event size." />
 
@@ -868,7 +883,7 @@ function CateringPackageEditor({ vendor, service, capability, catalogueDishes = 
         </section>
       )}
 
-      {!previewOnly && step === 'addons' && (
+      {!previewOnly && !pricingLocked && step === 'addons' && (
         <section className="space-y-3 rounded-[26px] bg-white p-4 ring-1 ring-ink/[0.06]">
           <SectionHeading icon={CirclePlus} title="Add optional extras" helper="Each extra has its own controlled unit and quantity rules." />
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
