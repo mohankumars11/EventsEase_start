@@ -482,7 +482,7 @@ function LegacyListingDetails({
                     <p className="mt-3 text-[23px] font-extrabold text-plum-950">{price ? rupees(price) : 'Price not set'}</p>
                     {pkg.minGuests ? <p className="mt-1 text-[10.5px] text-ink/55">{pkg.minGuests}{pkg.maxGuests ? `–${pkg.maxGuests}` : '+'} guests</p> : null}
                     {!!pkg.inclusions?.length && <div className="mt-3 space-y-1.5">{pkg.inclusions.map((item, i) => <p key={i} className="flex items-start gap-1.5 text-[11px] leading-snug text-ink/70"><CheckCircle2 size={12} className="mt-0.5 shrink-0 text-emerald-700"/><span>{typeof item === 'string' ? item : item?.label ?? item?.name ?? item?.id ?? String(item)}</span></p>)}</div>}
-                    <div className="mt-auto pt-4"><span className="inline-flex rounded-full bg-white px-2.5 py-1 text-[9.5px] font-extrabold text-ink/60 ring-1 ring-ink/[0.08]">{statusCopy[pkg.status] ? statusCopy[pkg.status].label : String(pkg.status ?? 'Saved').replace(/_/g, ' ')}</span></div>
+                    <div className="mt-auto pt-4"><span className="inline-flex rounded-full bg-white px-2.5 py-1 text-[9.5px] font-extrabold text-ink/60 ring-1 ring-ink/[0.08]">{statusCopy[['ACTIVE', 'LIVE'].includes(String(pkg.status ?? '').toUpperCase()) ? 'LIVE' : String(pkg.status ?? '').toUpperCase()]?.label ?? String(pkg.status ?? 'Saved').replace(/_/g, ' ')}</span></div>
                   </article>
                 )
               })}
