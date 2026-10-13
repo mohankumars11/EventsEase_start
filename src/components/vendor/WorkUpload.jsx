@@ -123,11 +123,24 @@ export default function WorkUpload({
           : (await prepareImage(file, { mode: 'balanced' })).blob
         const ext = (isVideo || isAudio) ? (file.name.split('.').pop() || (isVideo ? 'mp4' : 'mp3'))
           : isPdf ? 'pdf' : 'jpg'
+        const extension = ext.toLowerCase()
+        const fallbackAudioType = ({
+          mp3: 'audio/mpeg', m4a: 'audio/mp4', mp4: 'audio/mp4', aac: 'audio/aac',
+          wav: 'audio/wav', ogg: 'audio/ogg', oga: 'audio/ogg', webm: 'audio/webm',
+          flac: 'audio/flac',
+        })[extension] ?? 'audio/mpeg'
+        const fallbackVideoType = ({ mov: 'video/quicktime', webm: 'video/webm' })[extension] ?? 'video/mp4'
+        const contentType = isAudio
+          ? (file.type.startsWith('audio/') ? file.type : fallbackAudioType)
+          : isVideo
+            ? (file.type.startsWith('video/') ? file.type : fallbackVideoType)
+            : isPdf ? 'application/pdf'
+            : (file.type.startsWith('image/') ? file.type : 'image/jpeg')
         const path = `${user.id}/work/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
 
         const { error } = await supabase.storage
           .from('partner-uploads')
-          .upload(path, body, { contentType: file.type || (isVideo ? 'video/mp4' : isAudio ? 'audio/mpeg' : isPdf ? 'application/pdf' : 'image/jpeg') })
+          .upload(path, body, { contentType })
         if (error) throw error
 
         added.push({
