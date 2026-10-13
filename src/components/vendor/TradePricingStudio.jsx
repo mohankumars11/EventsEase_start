@@ -209,11 +209,13 @@ function inferTier(name) {
   return 'standard'
 }
 
-export default function TradePricingStudio({ vendor, service, config, onBack, onOpenListings, onboarding = false }) {
+export default function TradePricingStudio({ vendor, service, config, onBack, onOpenListings, onboarding = false, startPreview = false }) {
   const [packages, setPackages] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [editor, setEditor] = useState(null)
+  const [previewLaunchHandled, setPreviewLaunchHandled] = useState(false)
+  const [launchEditorInPreview, setLaunchEditorInPreview] = useState(false)
 
   const load = useCallback(async () => {
     if (!service?.id) {
@@ -266,11 +268,23 @@ export default function TradePricingStudio({ vendor, service, config, onBack, on
 
   useEffect(() => { load() }, [load])
 
+  useEffect(() => {
+    if (!startPreview || previewLaunchHandled || loading) return
+    setPreviewLaunchHandled(true)
+    const pkg = packages.find(item => item.status === 'LIVE') ?? packages[0]
+    if (pkg) {
+      setLaunchEditorInPreview(true)
+      setEditor(normalizeLoaded(pkg, pkg.price, service, config))
+    }
+  }, [startPreview, previewLaunchHandled, loading, packages, service, config])
+
   function openNew(seed = null) {
+    setLaunchEditorInPreview(false)
     setEditor(seed ? { ...blankPackage(config, service), ...seed } : blankPackage(config, service))
   }
 
   function openTemplate(template) {
+    setLaunchEditorInPreview(false)
     const base = blankPackage(config, service)
     setEditor({
       ...base,
@@ -282,6 +296,7 @@ export default function TradePricingStudio({ vendor, service, config, onBack, on
   }
 
   function openExisting(pkg) {
+    setLaunchEditorInPreview(false)
     setEditor(normalizeLoaded(pkg, pkg.price, service, config))
   }
 
@@ -295,7 +310,8 @@ export default function TradePricingStudio({ vendor, service, config, onBack, on
         draft={editor}
         setDraft={setEditor}
         readOnly={false}
-        onBack={() => setEditor(null)}
+        initialStep={launchEditorInPreview ? 'preview' : 'package'}
+        onBack={() => { setEditor(null); setLaunchEditorInPreview(false) }}
         onboarding={onboarding}
         onSaved={async (result, status) => {
           await load()
@@ -388,8 +404,8 @@ export default function TradePricingStudio({ vendor, service, config, onBack, on
   )
 }
 
-function TradePackageEditor({ vendor, service, config, packages = [], draft, setDraft, readOnly, onBack, onSaved, onOpenListings, onboarding = false }) {
-  const [activeStep, setActiveStep] = useState('package')
+function TradePackageEditor({ vendor, service, config, packages = [], draft, setDraft, readOnly, onBack, onSaved, onOpenListings, onboarding = false, initialStep = 'package' }) {
+  const [activeStep, setActiveStep] = useState(initialStep)
   const [saving, setSaving] = useState(false)
   const [localError, setLocalError] = useState('')
   const [saveNotice, setSaveNotice] = useState('')
