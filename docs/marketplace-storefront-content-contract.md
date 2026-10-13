@@ -43,4 +43,4 @@ The partner preview and customer listing must use saved partner data. Visual fal
 These counts are a point-in-time audit, not application constants. The preview must query live data and update automatically as partner content is approved or edited.
 
 ## Current input-collection behavior
-The partner preview includes a compact readiness checklist and an avatar-upload control. Uploads are stored in `partner-uploads`, and the private object path is saved as the vendor avatar source; the UI resolves a short-lived signed URL for rendering. Portfolio uploads retain their existing review workflow.
+The partner preview includes a compact readiness checklist and an avatar-upload control. Profile photos are stored in the `partner-avatars` bucket under the partner's own vendor ID path, and `vendors.avatar_url` stores the object path; the UI resolves a short-lived signed URL for rendering. Portfolio uploads remain in `partner-uploads` and retain their existing review workflow.
