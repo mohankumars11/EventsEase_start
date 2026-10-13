@@ -117,6 +117,16 @@ export async function addWork(vendorId, items, startAt = 0) {
   if (!rows.length) return { added: 0, error: null }
 
   const { error } = await supabase.from('partner_work').insert(rows)
+  if (error) {
+    // WorkUpload stores files before the review row. If the row write is
+    // rejected (for example while a required media migration is pending),
+    // remove only the newly uploaded objects so a failed save cannot leak
+    // orphaned portfolio files.
+    const uploadedPaths = rows.map(row => row.storage_path).filter(Boolean)
+    if (uploadedPaths.length) {
+      await supabase.storage.from(BUCKET).remove(uploadedPaths).catch(() => {})
+    }
+  }
   return { added: error ? 0 : rows.length, error: error ?? null }
 }
 
