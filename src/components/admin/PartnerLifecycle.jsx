@@ -284,8 +284,22 @@ function LifecycleDetail({ vendor }) {
         supabase.from('partner_adjustments').select('kind, amount_paise').eq('vendor_id', vendor.id),
       ])
 
+      /* The server's own answer, per listing. listing_readiness() is what
+         DECIDES whether a partner can be booked, and it already exempts
+         an admin from its ownership check (20261010_08:370). Reading it
+         here rather than re-deriving the nine gates is what stops this
+         screen and the partner's phone disagreeing — they are now the
+         same function. A trade that is not on the engine answers
+         NOT_ON_ENGINE, which is a fact worth showing, not an error. */
+      const readiness = Object.fromEntries(await Promise.all(
+        (svc ?? []).map(async x => {
+          const { data } = await supabase.rpc('listing_readiness', { p_vendor_service_id: x.id })
+          return [x.id, data ?? null]
+        })))
+
       if (!live) return
       setP({
+        readiness,
         vendor,
         services: svc ?? [],
         documents: documents.data ?? [],
@@ -338,6 +352,12 @@ function LifecycleDetail({ vendor }) {
         )}
       </div>
 
+      {/* Per listing, the server's nine gates — the ones that actually
+          decide whether a customer can book them. */}
+      {p.services.map(svc => (
+        <ListingReadiness key={svc.id} service={svc} readiness={p.readiness?.[svc.id]} />
+      ))}
+
       <div className="rounded-[18px] bg-white p-5 ring-1 ring-ink/[0.07]">
         <SectionHead title="The journey" sub="The same eleven steps their own app shows them, in the same order." />
         <ol className="mt-3">
@@ -346,6 +366,90 @@ function LifecycleDetail({ vendor }) {
           ))}
         </ol>
       </div>
+    </div>
+  )
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   One listing, as listing_readiness() sees it
+   ═══════════════════════════════════════════════════════════════════ */
+
+const STATE_COPY = {
+  READY_FOR_INSTANT_BOOKING: ['Bookable now', 'bg-forest-50 text-forest-700 ring-forest-200'],
+  READY_FOR_CUSTOM_QUOTES: ['Quotes only', 'bg-plum-50 text-plum-800 ring-plum-200'],
+  PRICING_UNDER_REVIEW: ['Pricing with us', 'bg-saffron-50 text-saffron-800 ring-saffron-200'],
+  PRICING_INCOMPLETE: ['No prices', 'bg-chilli-50 text-chilli-700 ring-chilli-200'],
+  PROFILE_INCOMPLETE: ['Identity unfinished', 'bg-chilli-50 text-chilli-700 ring-chilli-200'],
+  VERIFICATION_PENDING: ['Documents pending', 'bg-saffron-50 text-saffron-800 ring-saffron-200'],
+  PAYOUT_SETUP_PENDING: ['Payouts not ready', 'bg-saffron-50 text-saffron-800 ring-saffron-200'],
+  AVAILABILITY_INCOMPLETE: ['No availability', 'bg-chilli-50 text-chilli-700 ring-chilli-200'],
+  ACTION_REQUIRED: ['Needs the partner', 'bg-chilli-50 text-chilli-700 ring-chilli-200'],
+  RELIST_REQUIRED: ['Must re-list', 'bg-chilli-50 text-chilli-700 ring-chilli-200'],
+  NOT_ON_ENGINE: ['Not on the engine', 'bg-ink/[0.05] text-ink/55 ring-ink/10'],
+}
+
+const GATE = {
+  pass: ['bg-forest-600 text-white', Check],
+  pending: ['bg-saffron-400 text-saffron-950', Clock],
+  fail: ['bg-chilli-500 text-white', X],
+}
+
+function ListingReadiness({ service, readiness }) {
+  if (!readiness) {
+    return (
+      <div className="rounded-[18px] bg-white p-4 ring-1 ring-ink/[0.07]">
+        <p className="text-[13.5px] font-extrabold text-ink">{service.category}</p>
+        <p className="mt-0.5 text-[12.5px] text-ink/50">
+          The server did not answer for this listing. It may predate the trades engine.
+        </p>
+      </div>
+    )
+  }
+
+  const [label, look] = STATE_COPY[readiness.state] ?? [readiness.state, 'bg-ink/[0.05] text-ink/55 ring-ink/10']
+  const items = readiness.items ?? []
+  const failing = items.filter(i => i.status !== 'pass')
+
+  return (
+    <div className="rounded-[18px] bg-white p-5 ring-1 ring-ink/[0.07]">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate text-[15px] font-extrabold text-ink">{service.category}</p>
+          <p className="text-[12px] text-ink/45">
+            {readiness.live_version ? `v${readiness.live_version} live` : 'Nothing published'}
+            {readiness.published_at ? ` · since ${day(readiness.published_at)}` : ''}
+          </p>
+        </div>
+        <span className={`shrink-0 rounded-full px-3 py-1.5 text-[11.5px] font-extrabold ring-1 ${look}`}>{label}</span>
+      </div>
+
+      {items.length > 0 && (
+        <div className="mt-3 grid gap-1.5 sm:grid-cols-3">
+          {items.map(i => {
+            const [dot, Icon] = GATE[i.status] ?? GATE.fail
+            return (
+              <div key={i.id} className="flex items-center gap-1.5">
+                <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full ${dot}`}>
+                  <Icon size={9} strokeWidth={3.5} />
+                </span>
+                <span className={`truncate text-[12.5px] font-semibold ${i.status === 'pass' ? 'text-ink/45' : 'text-ink'}`}>
+                  {i.label}
+                </span>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* The sentence the partner is shown for the first thing blocking
+          them, verbatim. Paraphrasing it here would mean telling a
+          founder one thing and the partner another. */}
+      {!!failing.length && (
+        <p className="mt-3 rounded-[12px] bg-ink/[0.03] px-3 py-2 text-[12.5px] leading-snug text-ink/65">
+          <b>{failing[0].label}:</b> {failing[0].next}
+          {failing.length > 1 && <span className="text-ink/40"> · and {failing.length - 1} more</span>}
+        </p>
+      )}
     </div>
   )
 }

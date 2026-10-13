@@ -70,6 +70,18 @@ export const NAV = [
   },
 
   {
+    id: 'events',
+    label: 'Events',
+    hint: 'What was booked, and what happened to it',
+    items: [
+      {
+        id: 'bookings', label: 'Bookings', emoji: '📅',
+        description: 'Every event with every partner on it, the money on each line, and which ones nobody has taken yet.',
+      },
+    ],
+  },
+
+  {
     id: 'money',
     label: 'Money',
     hint: 'What came in, what is owed, what went out',

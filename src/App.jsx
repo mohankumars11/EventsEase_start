@@ -748,7 +748,22 @@ function AppRoutes() {
         </ProtectedRoute>
       } />
 
-      {/* ── Admin ──────────────────────────────────── */}
+      {/* ── Admin ────────────────────────────────────
+          NARROWER THAN THE DATABASE, ON PURPOSE.
+
+          caller_is_operator() (075:48) accepts BOTH 'admin' and
+          'event_coordinator', and about a hundred RLS policies are
+          written against it. This console is admin-only, which means a
+          coordinator has operator rights at the API and no door here.
+
+          That asymmetry is deliberate: the console is the founder's
+          view of the whole business, including money nobody else needs
+          to see, and the safe direction for a gate is tighter than the
+          thing behind it. Widening this to ['admin','event_coordinator']
+          is a product decision, not a bug fix — if you make it, the
+          money screens need a second look first, and note that
+          listing_readiness (20261010_08:370) exempts 'admin' alone, so
+          a coordinator would see that panel fail. */}
       <Route path="/dashboard/admin" element={
         <ProtectedRoute allowedRoles={['admin']}>
           <DashboardShell><AdminDashboard /></DashboardShell>

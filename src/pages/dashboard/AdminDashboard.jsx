@@ -11,6 +11,7 @@ import LiveOperations from '../../components/admin/LiveOperations'
 import PricingReviewQueue from '../../components/admin/PricingReviewQueue'
 import AnchorListingAdmin from '../../components/admin/AnchorListingAdmin'
 import MaterialsAdvances from '../../components/admin/MaterialsAdvances'
+import Bookings from '../../components/admin/Bookings'
 import PartnerLifecycle from '../../components/admin/PartnerLifecycle'
 import MoneyConsole from '../../components/admin/MoneyConsole'
 import AuditTrail from '../../components/admin/AuditTrail'
@@ -59,6 +60,7 @@ const SCREENS = {
   'pricing-review': PricingReviewQueue,
   'listing-review': AnchorListingAdmin,
   'verification': VerificationQueue,
+  'bookings': Bookings,
   'advances': MaterialsAdvances,
   'money': MoneyConsole,
   'audit': AuditTrail,
