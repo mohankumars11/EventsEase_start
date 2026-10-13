@@ -62,7 +62,7 @@ export default function TradeListingCard({ listing, tradeName, onPick, showBooki
   if (!listing) return null
   const p = listing.profile && typeof listing.profile === 'object' ? listing.profile : {}
   const profileAvatar = p.avatar_url || p.profile_photo_url || p.photo_url || p.avatar || p.logo_url || p.business_logo_url || listing.avatar_url || listing.vendor_avatar_url || listing.profile_photo_url || ''
-  const displayName = p.business_name ?? listing.business_name ?? p.stage_name ?? p.name ?? listing.vendor_name ?? 'This partner'
+  const displayName = [p.business_name, listing.business_name, p.stage_name, p.display_name, p.name, listing.vendor_name].find(value => value && !['this partner', 'partner business', 'your business'].includes(String(value).trim().toLowerCase())) || 'Partner profile'
   const terms = listing.terms && typeof listing.terms === 'object' ? listing.terms : {}
   const packages = Array.isArray(listing.packages) ? listing.packages : []
   const catalogue = Array.isArray(listing.catalogue) ? listing.catalogue : []
