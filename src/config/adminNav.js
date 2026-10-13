@@ -62,6 +62,31 @@ export const NAV = [
         id: 'verification', label: 'Verification queue', emoji: '🪪',
         description: 'Applications waiting on a decision, oldest deadline first, with what was entered beside what was read off the document.',
       },
+      {
+        id: 'lifecycle', label: 'Partner lifecycle', emoji: '🧭',
+        description: 'One partner, end to end: the day they signed up, every trade they listed, what each document and payout and listing is doing, and where they are stuck right now.',
+      },
+    ],
+  },
+
+  {
+    id: 'money',
+    label: 'Money',
+    hint: 'What came in, what is owed, what went out',
+    items: [
+      {
+        id: 'advances', label: 'Materials advances', emoji: '🧾',
+        badge: 'advances',
+        description: 'Partners asking to be funded before an event, and bills waiting to be checked against the photographs of what arrived.',
+      },
+      {
+        id: 'money', label: 'Payouts & adjustments', emoji: '🏦',
+        description: 'What each partner is owed, the claims and batches that pay it, and every bonus, penalty, reimbursement and recovery on the account.',
+      },
+      {
+        id: 'audit', label: 'Audit trail', emoji: '🔎',
+        description: 'Every movement of money and every verification decision, with who did it and when. Read-only by design.',
+      },
     ],
   },
 
@@ -85,6 +110,18 @@ export const NAV = [
       {
         id: 'city-interest', label: 'City interest', emoji: '🗺️',
         description: 'Partners waiting in cities we have not opened, and which trades they are — the figure a launch decision is made on.',
+      },
+    ],
+  },
+
+  {
+    id: 'people',
+    label: 'Customers',
+    hint: 'The other half, when it exists',
+    items: [
+      {
+        id: 'customers', label: 'Customers', emoji: '👤',
+        description: 'Who booked what, and everything that happened to their event. The customer app is not built yet, so this says so rather than showing an empty table.',
       },
     ],
   },
@@ -114,7 +151,6 @@ export const NAV_ALIASES = {
   catalogue: 'partners',
   content: 'partners',
   brand: 'partners',
-  customers: 'partners',
   complaints: 'partners',
   reviews: 'partners',
   geography: 'partners',
