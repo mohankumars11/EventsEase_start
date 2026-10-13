@@ -1084,6 +1084,7 @@ function PreviewStep({ vendor, service, config, packages = [], draft, fields, ad
         addons={addons}
         media={media}
         onEdit={step => onEditStep?.(step)}
+        onBookingPreview={() => action('Customer action preview only. Live availability and the final payable total are checked in Sambramo’s existing booking flow.')}
         onManageMedia={value => {
           if (value === 'back') action('Preview stays on this pricing step.')
           else if (value === 'events') onEditStep?.('details')
