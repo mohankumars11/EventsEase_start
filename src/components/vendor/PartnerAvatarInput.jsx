@@ -7,7 +7,7 @@ import { prepareImage } from '../../lib/imageUpload'
  * The partner's real storefront avatar. Stores a path in vendors.avatar_url;
  * signed URLs are short-lived and are never persisted as the source of truth.
  */
-export default function PartnerAvatarInput({ vendor, draft, businessName, editable = false, compact = false }) {
+export default function PartnerAvatarInput({ vendor, draft, businessName, editable = false, compact = false, variant = 'default' }) {
   const source = vendor?.avatar_url || draft?.trade_inputs?.avatar_url || draft?.trade_inputs?.profile_photo_url || draft?.profile?.avatar_url || ''
   const input = useRef(null)
   const [url, setUrl] = useState('')
@@ -68,7 +68,7 @@ export default function PartnerAvatarInput({ vendor, draft, businessName, editab
 
   const initials = String(businessName || 'Partner').trim().split(/\s+/).map(part => part[0]).join('').slice(0, 2).toUpperCase()
   return (
-    <div className="sppc-avatar-wrap">
+    <div className={"sppc-avatar-wrap" + (variant === "marketplace" ? " is-marketplace-avatar" : "")}>
       <div className="sppc-avatar">
         {url
           ? <img src={url} alt={businessName + ' profile'} onError={() => setUrl('')} />
