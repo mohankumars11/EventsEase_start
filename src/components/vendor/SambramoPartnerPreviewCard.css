@@ -12,3 +12,10 @@
 .sppc-review-chip{position:absolute;left:10px;right:10px;bottom:10px;width:max-content;max-width:calc(100% - 20px);padding:6px 9px;border:1px solid rgba(255,255,255,.45);border-radius:999px;background:rgba(255,247,220,.96);color:#87520b;font:800 8.5px/1.1 Manrope,Inter,sans-serif;box-shadow:0 4px 12px rgba(20,8,40,.15)}
 .sppc-thumb-review{position:absolute;left:5px;right:5px;top:5px;padding:5px 4px;border-radius:999px;background:rgba(255,247,220,.96);color:#87520b;text-align:center;font:800 7px/1.1 Manrope,Inter,sans-serif}
 @media(max-width:640px){.sppc-avatar-wrap{width:58px;min-width:58px}.sppc-avatar-upload{font-size:7.5px;padding:5px 6px}.sppc-review-chip{left:7px;bottom:7px;font-size:7.5px}}
+
+.sppc-package-status{position:absolute;right:10px;top:10px;padding:5px 7px;border-radius:999px;background:#fff5d9;color:#8e5a08;font:800 7.5px/1 Manrope,Inter,sans-serif;text-transform:uppercase;letter-spacing:.04em;max-width:105px;white-space:nowrap}
+.sppc-package-status.status-live{background:#e7f8ef;color:#16734b}
+.sppc-package-status.status-under_review,.sppc-package-status.status-action_required{background:#fff5d9;color:#8e5a08}
+.sppc-package-status.status-draft{background:#f0e8ff;color:#5b21b6}
+.sppc-package-status.status-rejected{background:#fff0f1;color:#a32642}
+.sppc-package-status+.sppc-popular-pill{margin-top:20px}
