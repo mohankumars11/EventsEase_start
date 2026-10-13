@@ -20,8 +20,6 @@ import { rupees } from '../../../lib/tierPackages'
 import PackageCarousel from '../packages/PackageCarousel'
 import TradeListingCard from '../../customer/TradeListingCard'
 import PartnerMediaLinks from './PartnerMediaLinks'
-import StorefrontReadiness from './StorefrontReadiness'
-import './StorefrontReadiness.css'
 import { fetchWork, signedUrlsFor } from '../../../lib/partnerWork'
 import PartnerAvatarInput from '../PartnerAvatarInput'
 import { configFor } from '../../../data/trades'
@@ -374,15 +372,9 @@ export default function TradePricing({ service, vendor, onEdit, onOpenPayout }) 
                       <h2 className="mt-3 max-w-[280px] text-[24px] font-black leading-[1.02] tracking-tight">{previewData.profile?.tagline || 'Make Your Service Unforgettable'}</h2>
                       <p className="mt-2 text-[11px] font-semibold text-[#173c73]">{previewData.description || 'Trusted professionals · tailored services · memorable experiences'}</p>
                     </div>
-                    <StorefrontReadiness vendor={vendor} draft={previewData} packages={previewData.packages ?? []} media={previewMedia.rows}
-                      onEditStep={() => {setPreview(false);onEdit?.()}} onManageMedia={() => {setPreview(false);onEdit?.()}}/>
                     <TradeListingCard listing={{...previewData,business_name:previewData.business_name??vendor?.business_name,avatar_url:previewData.avatar_url??vendor?.avatar_url,city:previewData.city??[vendor?.area,vendor?.city].filter(Boolean).join(', '),rating:previewData.rating??vendor?.rating_avg,is_verified:previewData.is_verified??vendor?.is_verified}} tradeName={config.name} onPick={setSelectedPreviewPackage}
                       media={previewMedia.rows}
                       avatarSlot={<PartnerAvatarInput vendor={vendor} draft={{profile:previewData.profile??{}}} businessName={previewData.profile?.business_name??previewData.profile?.stage_name??vendor?.business_name??'Your business'} editable variant="marketplace"/>}/>
-                    <div className="mx-3 mt-3 rounded-[20px] border border-[#e5eef9] bg-white p-3.5 shadow-sm">
-                      <h3 className="text-[12px] font-black text-[#102453]">How they charge · booking terms</h3>
-                      <p className="mt-1 text-[10.5px] leading-relaxed text-[#596b8b]">Review the package inclusions, optional extras, service charges, availability and payment terms shown in the listing below.</p>
-                    </div>
                   </>}
           </main>
           <footer className="z-20 shrink-0 border-t border-[#e4ecfa] bg-white/95 px-3 pb-2 pt-2 shadow-[0_-5px_20px_rgba(26,75,140,.08)] backdrop-blur">

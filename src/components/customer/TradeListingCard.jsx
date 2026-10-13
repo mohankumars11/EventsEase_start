@@ -18,7 +18,7 @@
  * own (role, languages, event groups) that the engine trades do not.
  */
 import { useEffect, useState } from 'react'
-import { MapPin, Star, Check, Clock, Package, Boxes, Plus, Info, UserRound, Camera, Mic2, ShieldCheck, CreditCard, BadgeCheck } from 'lucide-react'
+import { MapPin, Star, Check, Clock, Package, Boxes, Plus, Info, UserRound, Camera, Mic2, ShieldCheck, CreditCard, BadgeCheck, Gift, Image as ImageIcon, UserRound as AboutIcon } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { rupees } from '../../lib/tierPackages'
 
@@ -35,14 +35,14 @@ const CANCELLATION_COPY = {
   strict: 'Part refund — see the full policy at checkout.',
 }
 
-function Section({ icon: Icon, title, children }) {
+function Section({ icon: Icon, title, children, id }) {
   return (
-    <div className="border-t border-ink/[0.06] px-5 py-4">
+    <section id={id} className="scroll-mt-3 border-t border-ink/[0.06] px-5 py-4">
       <p className="mb-2.5 flex items-center gap-1.5 text-[12px] font-extrabold uppercase tracking-[0.1em] text-ink/45">
         {Icon && <Icon size={13} />}{title}
       </p>
       {children}
-    </div>
+    </section>
   )
 }
 
@@ -131,6 +131,9 @@ export default function TradeListingCard({ listing, tradeName, onPick, showBooki
           {listing.description && <p className="mt-2 max-w-xl text-[11.5px] leading-relaxed text-[#173c73]">{listing.description}</p>}
         </div>
       </div>
+      <nav aria-label="Storefront sections" className="sticky top-0 z-10 flex items-center justify-between gap-1 border-b border-[#e6edf8] bg-white/95 px-2 py-2 backdrop-blur">
+        {[['Packages','trade-preview-packages',Package],['Photos','trade-preview-gallery',ImageIcon],['About','trade-preview-about',AboutIcon],['Reviews','trade-preview-reviews',Star]].map(([label,id,Icon])=><button key={id} type="button" onClick={()=>document.getElementById(id)?.scrollIntoView({behavior:'smooth',block:'start'})} className="flex min-w-0 flex-1 flex-col items-center gap-1 px-1 py-1 text-[9px] font-extrabold text-[#465b80]"><Icon size={18}/><span>{label}</span></button>)}
+      </nav>
       {portfolio.length > 0 && (
         <section className="border-b border-ink/[0.06] bg-white px-4 py-3">
           <div className="mb-2 flex items-center justify-between gap-2">
@@ -150,7 +153,7 @@ export default function TradeListingCard({ listing, tradeName, onPick, showBooki
         </section>
       )}
       {packages.length > 0 && (
-        <Section icon={Package} title="Popular Packages">
+        <Section id="trade-preview-packages" icon={Gift} title="Popular Packages">
           <div className="space-y-2.5">
             {packages.map((pkg, index) => {
               const PackageSurface = onPick ? "button" : "div"
@@ -189,7 +192,7 @@ export default function TradeListingCard({ listing, tradeName, onPick, showBooki
       )}
 
       {rules.length > 0 && (
-        <Section icon={Clock} title="How they charge">
+        <Section id="trade-preview-pricing" icon={Clock} title="How they charge">
           {rules.map((r, i) => (
             <Row key={i} k={r.label ?? r.kind} v={rupees(r.customer_paise)}
               sub={[unitOf(r.unit), r.included_hours && `${r.included_hours} hrs included`,
@@ -199,7 +202,7 @@ export default function TradeListingCard({ listing, tradeName, onPick, showBooki
       )}
 
       {catalogue.length > 0 && (
-        <Section icon={Boxes} title="What you can order">
+        <Section id="trade-preview-catalogue" icon={Boxes} title="What you can order">
           {catalogue.map((c, i) => (
             <Row key={c.item_key ?? c.id ?? i} k={c.name ?? c.label ?? c.item_key ?? 'Service item'} v={Number(c.customer_paise) > 0 ? rupees(c.customer_paise) : 'On request'}
               sub={[unitOf(c.unit), c.lead_days && `${c.lead_days} days notice`].filter(Boolean).join(' · ')} />
@@ -209,14 +212,14 @@ export default function TradeListingCard({ listing, tradeName, onPick, showBooki
       )}
 
       {addons.length > 0 && (
-        <Section icon={Plus} title="Optional extras">
+        <Section id="trade-preview-extras" icon={Plus} title="Optional extras">
           {addons.map(a => (
             <Row key={a.addon_id} k={a.label} v={rupees(a.customer_paise)} sub={unitOf(a.unit)} />
           ))}
         </Section>
       )}
 
-      <Section icon={Info} title="Booking & payment terms">
+      <Section id="trade-preview-terms" icon={Info} title="Booking & payment terms">
         {terms.instant != null && <Row k="Booking mode" v={terms.instant === true || terms.instant === 'true' ? 'Instant Book & Pay' : 'Booking request'} />}
         {(terms.advance_pct ?? terms.advance_percent) != null && (
           <Row k="Advance payment" v={String(terms.advance_pct ?? terms.advance_percent) + '% at booking'} />
@@ -235,7 +238,16 @@ export default function TradeListingCard({ listing, tradeName, onPick, showBooki
         ))}
       </Section>
 
-      <section className="grid grid-cols-3 gap-2 border-t border-ink/[0.06] bg-gradient-to-r from-plum-50 via-white to-violet-50 px-3 py-3">
+      <section id="trade-preview-reviews" className="scroll-mt-3 border-t border-[#e6eefb] bg-white px-5 py-4">
+        <div className="flex items-center gap-2.5"><span className="grid h-9 w-9 place-items-center rounded-full bg-[#fff2ce] text-[#a86e0b]"><Star size={17} className="fill-current"/></span>
+          <div className="min-w-0 flex-1"><p className="text-[12px] font-extrabold text-[#152552]">Customer reviews</p>
+            {Number(listing.rating)>0 ? <p className="mt-0.5 text-[10.5px] text-[#586b8c]">{Number(listing.rating).toFixed(1)} average rating{Number(listing.review_count)>0? ` from ${listing.review_count} review${Number(listing.review_count)===1?'':'s'}` : ''}</p> : <p className="mt-0.5 text-[10.5px] text-[#586b8c]">Ratings appear here as customers share their experience.</p>}
+          </div>
+        </div>
+        {Array.isArray(listing.reviews) && listing.reviews.length>0 ? <div className="mt-3 space-y-2">{listing.reviews.slice(0,3).map((review,i)=><div key={review.id||i} className="rounded-xl bg-[#f7faff] p-3"><p className="text-[11px] font-bold text-[#24365d]">{review.title||review.customer_name||'Customer review'}</p><p className="mt-1 text-[11px] leading-relaxed text-[#536582]">{review.comment||review.body||review.text||''}</p></div>)}</div>:null}
+      </section>
+
+      <section id="trade-preview-about" className="scroll-mt-3 grid grid-cols-3 gap-2 border-t border-ink/[0.06] bg-gradient-to-r from-plum-50 via-white to-violet-50 px-3 py-3">
         <div className="flex min-w-0 flex-col items-center gap-1 text-center">
           <ShieldCheck size={20} className="text-plum-700" />
           <b className="text-[9.5px] font-extrabold text-plum-950">Clear pricing</b>
