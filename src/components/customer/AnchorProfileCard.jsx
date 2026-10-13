@@ -47,24 +47,33 @@ export default function AnchorProfileCard({ profile = {}, packages = [], city, r
       </div>
 
       {packages.length > 0 && (
-        <div className="space-y-2 border-t border-ink/[0.06] p-4">
-          {packages.map(k => {
-            const sel = selectedTier === k.tier
-            return (
-              <button key={k.tier} type="button" disabled={!onPick} onClick={() => onPick?.(k)}
-                className={`relative w-full rounded-2xl p-3.5 text-left transition ${sel ? 'bg-plum-50 ring-2 ring-plum-600' : 'bg-[#faf9fd] ring-1 ring-ink/[0.06]'}`}>
-                {k.tier === 'SIGNATURE' && <span className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-plum-700 px-2 py-0.5 text-[10px] font-extrabold uppercase text-white"><Crown size={10} />Popular</span>}
-                <p className="text-[14px] font-extrabold text-ink">{k.name}</p>
-                <p className="text-[11.5px] font-bold text-ink/50">{k.hours} hours</p>
-                <p className="mt-1.5 text-[20px] font-extrabold text-ink">{rupees(k.customer_paise)}</p>
-                {k.inclusions?.length > 0 && (
-                  <div className="mt-1.5 space-y-0.5">
-                    {k.inclusions.map(i => <p key={i} className="flex items-center gap-1.5 text-[11.5px] font-semibold text-ink/70"><Check size={11} className="text-forest-600" strokeWidth={3} />{i}</p>)}
-                  </div>
-                )}
-              </button>
-            )
-          })}
+        <div className="border-t border-ink/[0.06] py-4">
+          <div className="px-4 pb-2">
+            <p className="text-[12px] font-extrabold uppercase tracking-[0.12em] text-ink/45">Packages & pricing</p>
+            <p className="mt-0.5 text-[11.5px] text-ink/55">Swipe horizontally to compare packages.</p>
+          </div>
+          <div className="-mx-1 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="flex snap-x snap-mandatory items-stretch gap-3">
+              {packages.map(k => {
+                const sel = selectedTier === k.tier
+                return (
+                  <button key={k.tier} type="button" disabled={!onPick} onClick={() => onPick?.(k)}
+                    className={`relative flex w-[78%] max-w-[300px] shrink-0 snap-center flex-col rounded-[22px] p-4 text-left transition ${sel ? 'bg-plum-50 ring-2 ring-plum-600' : 'bg-[#faf9fd] ring-1 ring-ink/[0.08]'}`}>
+                    {k.tier === 'SIGNATURE' && <span className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-plum-700 px-2 py-0.5 text-[10px] font-extrabold uppercase text-white"><Crown size={10} />Popular</span>}
+                    <p className="pr-16 text-[14px] font-extrabold text-ink">{k.name}</p>
+                    <p className="mt-0.5 text-[11.5px] font-bold text-ink/50">{k.hours} hours</p>
+                    <p className="mt-3 text-[23px] font-extrabold tracking-tight text-ink">{rupees(k.customer_paise)}</p>
+                    {k.inclusions?.length > 0 && (
+                      <div className="mt-3 space-y-1.5">
+                        {k.inclusions.map(i => <p key={i} className="flex items-start gap-1.5 text-[11.5px] font-semibold leading-snug text-ink/70"><Check size={12} className="mt-0.5 shrink-0 text-forest-600" strokeWidth={3} /><span>{i}</span></p>)}
+                      </div>
+                    )}
+                    <span className="mt-auto flex items-center gap-1 pt-4 text-[12px] font-extrabold text-plum-700">View details <span aria-hidden="true">›</span></span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
         </div>
       )}
     </div>
