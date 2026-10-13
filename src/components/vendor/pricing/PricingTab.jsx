@@ -392,7 +392,8 @@ function AnchorPricing({ service, vendor, onEdit, onOpenPayout }) {
         <div className="space-y-4">
           <AnchorProfileCard profile={d.current.profile} city={view.listing.city}
             packages={view.packages.map(p => ({ tier: p.tier, name: p.name, hours: p.hours, customer_paise: p.price_paise, inclusions: p.inclusions }))}
-            onPick={pkg => setSheet({ tier: pkg.tier })} />
+            onPick={pkg => setSheet({ tier: pkg.tier })} showBookingCtaPreview
+            instantBookEnabled={d.current.booking_rules?.instant !== false} />
           <PartnerMediaLinks vendor={vendor} profile={d.current.profile} />
           <PreviewSection title="What you can order" icon={Package}>
             {view.models.length ? view.models.map(m => {
