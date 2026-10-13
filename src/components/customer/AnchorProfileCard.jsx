@@ -57,7 +57,7 @@ export default function AnchorProfileCard({
   const audience = Number(p.max_audience ?? p.max_guests ?? p.audience)
   const photos = media.filter(item => item?.url && item.kind === 'photo')
   const videos = media.filter(item => item?.url && item.kind === 'video')
-  const cover = photos[0]?.url || p.cover_photo_url || p.banner_url || p.hero_image_url || ''
+  const cover = photos[0]?.url || p.cover_photo_url || p.banner_url || p.hero_image_url || '/onboarding/anchor-mc-hero.jpg'
   const bookingSummary = bookingDetails.length
     ? bookingDetails.slice(0, 2).map(x => x.label ?? x.k ?? x.name).filter(Boolean).join(' · ')
     : 'Availability and final booking terms confirmed before payment'
@@ -151,38 +151,41 @@ export default function AnchorProfileCard({
         ))}
       </nav>
 
-      {/* Horizontally swipeable package cards. They never stack vertically. */}
+      {/* Horizontal package row cards, stacked vertically like the approved reference. */}
       <section id="anchor-preview-packages" className="mt-3 scroll-mt-3">
         <div className="mb-2 flex items-center justify-between px-4">
           <h3 className="text-[15px] font-black tracking-tight text-[#12214f]">Popular Packages</h3>
-          <span className="text-[10.5px] font-semibold text-[#54658a]">Swipe to explore <ChevronRight size={12} className="inline" /></span>
+          <span className="text-[10.5px] font-semibold text-[#54658a]">Compare packages</span>
         </div>
         {packages.length > 0 ? (
-          <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto px-3 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="space-y-2.5 px-3 pb-3">
             {packages.map((k, index) => {
               const sel = selectedTier === k.tier
               const inclusions = (Array.isArray(k.inclusions) ? k.inclusions : []).map(labelOf).filter(Boolean)
               const thumb = photos[index % Math.max(photos.length, 1)]?.url || cover
               const popular = k.is_popular === true || k.is_featured === true
+              const rowTone = ['bg-gradient-to-r from-[#eaf4ff] to-[#f8fbff] ring-[#dceaff]', 'bg-gradient-to-r from-[#f0e7ff] to-[#fcf9ff] ring-[#e5d7ff]', 'bg-gradient-to-r from-[#fff4dc] to-[#fffbf2] ring-[#f5e2ba]'][index % 3]
+              const accent = index === 1 ? 'text-[#6b2bdf]' : index === 2 ? 'text-[#a46808]' : 'text-[#1761cb]'
+              const checkTone = index === 1 ? 'text-[#7537e8]' : index === 2 ? 'text-[#b4760e]' : 'text-[#176de1]'
               return (
                 <button key={k.tier ?? k.name} type="button" disabled={!onPick} onClick={() => onPick?.(k)}
-                  className={`relative w-[90vw] max-w-[560px] shrink-0 snap-start rounded-[22px] bg-gradient-to-br ${packagesTone[index % packagesTone.length]} p-2.5 text-left ring-1 transition active:scale-[.995] ${sel ? 'ring-2 ring-[#6737ed]' : ''}`}>
-                  {popular && <span className="absolute left-3 top-2 z-10 flex items-center gap-1 rounded-full bg-[#6d35e9] px-2 py-1 text-[8px] font-extrabold text-white"><Crown size={10} /> Most Popular</span>}
-                  <div className={`grid grid-cols-[66px_minmax(78px,1fr)_minmax(78px,.9fr)_18px] items-center gap-2 ${popular ? 'pt-5' : ''}`}>
-                    <div className="h-[78px] w-[66px] overflow-hidden rounded-[13px] bg-white/80 ring-1 ring-white">
-                      {thumb ? <img src={thumb} alt="" className="h-full w-full object-cover" /> : <span className="flex h-full w-full items-center justify-center text-[#327ee3]"><Mic2 size={25} /></span>}
+                  className={`relative block w-full overflow-hidden rounded-[21px] ${rowTone} p-2.5 text-left ring-1 transition active:scale-[.995] ${sel ? 'outline outline-2 outline-[#6737ed]' : ''}`}>
+                  {popular && <span className="absolute left-2.5 top-1.5 z-10 flex items-center gap-1 rounded-full bg-[#6d35e9] px-2 py-1 text-[8px] font-extrabold text-white"><Crown size={10} /> Most Popular</span>}
+                  <div className={`grid grid-cols-[56px_minmax(84px,1fr)_minmax(82px,1fr)_18px] items-center gap-2.5 max-[380px]:grid-cols-[48px_minmax(76px,1fr)_minmax(70px,.9fr)_16px] max-[380px]:gap-1.5 ${popular ? 'pt-5' : ''}`}>
+                    <div className="h-[76px] w-[56px] overflow-hidden rounded-[13px] bg-white/80 ring-1 ring-white max-[380px]:h-[66px] max-[380px]:w-[48px]">
+                      {thumb ? <img src={thumb} alt="" className="h-full w-full object-cover" /> : <span className="flex h-full w-full items-center justify-center text-[#327ee3]"><Mic2 size={23} /></span>}
                     </div>
                     <div className="min-w-0">
-                      <p className={`break-words text-[12px] font-black leading-tight ${index === 1 ? 'text-[#6326d9]' : index === 2 ? 'text-[#98600d]' : 'text-[#1253b6]'}`}>{k.name}</p>
-                      <p className="mt-1 break-words text-[18px] font-black leading-tight tracking-tight text-[#101f50]">{Number(k.customer_paise) > 0 ? rupees(k.customer_paise) : 'Price on request'}</p>
-                      <p className="mt-1 flex items-center gap-1 text-[9.5px] font-semibold text-[#556586]"><Clock3 size={11} />{k.hours ? `${k.hours} Hours` : 'Duration as agreed'}</p>
+                      <p className={`break-words text-[12px] font-black leading-tight max-[380px]:text-[10.5px] ${accent}`}>{k.name}</p>
+                      <p className="mt-1 break-words text-[17px] font-black leading-tight tracking-tight text-[#101f50] max-[380px]:text-[14px]">{Number(k.customer_paise) > 0 ? rupees(k.customer_paise) : 'Price on request'}</p>
+                      <p className="mt-1 flex items-center gap-1 text-[9px] font-semibold leading-tight text-[#556586] max-[380px]:text-[8px]"><Clock3 size={10} className="shrink-0" />{k.hours ? `${k.hours} Hours` : 'Duration as agreed'}</p>
                     </div>
                     <div className="min-w-0 space-y-1">
                       {(inclusions.length ? inclusions.slice(0, 3) : ['Package details', 'Booking terms']).map((inc, i) => (
-                        <p key={i} className="flex items-start gap-1 text-[9px] font-semibold leading-tight text-[#2f426d]"><Check size={11} strokeWidth={3} className={`mt-0.5 shrink-0 ${index === 2 ? 'text-[#b5740a]' : index === 1 ? 'text-[#7436e9]' : 'text-[#176de1]'}`} /><span className="line-clamp-2">{inc}</span></p>
+                        <p key={i} className="flex min-w-0 items-start gap-1 text-[9px] font-semibold leading-tight text-[#2f426d] max-[380px]:text-[8px]"><Check size={10} strokeWidth={3} className={`mt-0.5 shrink-0 ${checkTone}`} /><span className="line-clamp-2 break-words">{inc}</span></p>
                       ))}
                     </div>
-                    <span className="grid h-7 w-[18px] place-items-center rounded-full bg-white/90 text-[#6933e9] shadow-sm"><ChevronRight size={17} /></span>
+                    <span className="grid h-7 w-[18px] place-items-center rounded-full bg-white/90 text-[#6933e9] shadow-sm max-[380px]:h-6 max-[380px]:w-4"><ChevronRight size={16} /></span>
                   </div>
                   <span className="mt-2 flex items-center justify-end gap-1 text-[9.5px] font-extrabold text-[#5f2be4]">View details <ChevronRight size={12} /></span>
                 </button>
