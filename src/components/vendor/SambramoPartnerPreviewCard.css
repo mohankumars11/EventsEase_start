@@ -38,3 +38,9 @@
 @media(max-width:640px){.sppc-booking-cta-wrap{padding:9px 12px calc(10px + env(safe-area-inset-bottom,0px))}.sppc-booking-cta{min-height:54px;padding:10px 13px}.sppc-booking-cta b{font-size:12px}.sppc-booking-cta small{font-size:8.5px}}
 @media(max-width:380px){.sppc-booking-cta-wrap{padding-left:9px;padding-right:9px}.sppc-booking-cta{gap:7px;padding:9px 10px}}
 .sppc-package-status+.sppc-popular-pill{top:32px;margin-top:0}
+
+.sppc-avatar-wrap.is-marketplace-avatar{width:72px;min-width:72px;flex:0 0 72px}
+.sppc-avatar-wrap.is-marketplace-avatar .sppc-avatar{width:72px;height:72px;flex:0 0 72px;border-radius:999px;border:2px solid rgba(255,255,255,.82);box-shadow:0 5px 18px rgba(15,5,30,.25)}
+.sppc-avatar-wrap.is-marketplace-avatar .sppc-avatar-upload{background:rgba(255,255,255,.96);border-color:#e7d9f8}
+.sppc-avatar-wrap.is-marketplace-avatar .sppc-avatar-error{position:absolute;top:100%;left:0;width:160px;z-index:5}
+@media(max-width:640px){.sppc-avatar-wrap.is-marketplace-avatar{width:72px;min-width:72px;flex-basis:72px}.sppc-avatar-wrap.is-marketplace-avatar .sppc-avatar{width:72px;height:72px;flex-basis:72px}}
