@@ -16,7 +16,7 @@ import {
   ChevronDown, Lock, Sparkles, Eye, Award, Crown, Gem, Check, Pencil, MapPin, Languages, Users,
   Clock, Mic2, CalendarCheck, Sun, SunMedium, CalendarRange, ArrowRight,
 } from 'lucide-react'
-import { rupees, takeHomeOf } from '../../../lib/tierPackages'
+import { rupees } from '../../../lib/tierPackages'
 import PackageCarousel from '../packages/PackageCarousel'
 
 const MODEL = {
@@ -24,6 +24,7 @@ const MODEL = {
   half_day: ['Half-day', SunMedium], full_day: ['Full-day', Sun], multi_day: ['Multi-day', CalendarRange],
 }
 const TIER = { ESSENTIAL: [Award, 'text-amber-700', 'from-amber-50'], SIGNATURE: [Crown, 'text-plum-700', 'from-plum-50'], VIP: [Gem, 'text-sky-700', 'from-sky-50'] }
+const humanize = value => String(value || 'Pricing model').replace(/[_-]+/g, ' ').replace(/\\b\\w/g, char => char.toUpperCase())
 const STATUS_LOOK = {
   LIVE: ['Live', 'bg-forest-600 text-white'], UNDER_REVIEW: ['Submitted for review', 'bg-amber-100 text-amber-900'],
   ACTION_REQUIRED: ['Changes requested', 'bg-rose-100 text-rose-800'], DRAFT: ['Draft', 'bg-ink/10 text-ink/70'],
@@ -71,7 +72,7 @@ export default function PricingControlCenter({ data, onEdit, onSeasonal, onPayou
       <div className="rounded-[22px] bg-gradient-to-br from-plum-800 to-plum-950 p-4 text-white">
         <div className="flex items-center justify-between">
           <span className={`rounded-full px-2.5 py-1 text-[11px] font-extrabold ${statusClass}`}>● {statusLabel}</span>
-          <span className="text-[11.5px] font-bold text-plum-200">Version {d.version}{d.published_at ? ` · since ${fmtDate(d.published_at)}` : ''}</span>
+          <span className="text-[11.5px] font-bold text-plum-200">Version {d.version ?? '—'}{d.published_at ? ` · since ${fmtDate(d.published_at)}` : ''}</span>
         </div>
         {locked && (
           <div className="mt-3 flex items-start gap-2.5 rounded-2xl bg-white/10 p-3">
@@ -131,68 +132,78 @@ export default function PricingControlCenter({ data, onEdit, onSeasonal, onPayou
           derived from the platform fee. */}
       <div>
         <p className="mb-2 px-1 text-[12px] font-extrabold uppercase tracking-[0.12em] text-ink/45">Your packages</p>
-        <PackageCarousel
-          packages={d.packages.map(p => ({
-            key: p.tier,
-            name: p.name,
-            ratePaise: takeHomeOf(p.price_paise),
-            unit: 'per event',
-            meta: `${p.hours} hrs${p.sessions ? ` · ${p.sessions} function${p.sessions > 1 ? 's' : ''}` : ''}`,
-            status: (STATUS_LOOK[p.status] ?? [])[0] ?? 'In review',
-            base: `${p.hours} hours of hosting`,
-            inclusions: p.inclusions.map(i => ({ id: i, label: i, included: true })),
-          }))}
-          onViewDetails={p => onViewPackage?.(p.key)}
-        />
+        {d.packages.length ? (
+          <PackageCarousel
+            packages={d.packages.map(p => ({
+              key: p.tier ?? p.key ?? p.name,
+              name: p.name,
+              ratePaise: Number(p.rate_paise ?? p.take_home_paise) > 0 ? Number(p.rate_paise ?? p.take_home_paise) : null,
+              unit: p.unit || 'per event',
+              meta: p.hours ? String(p.hours) + ' hrs' + (p.sessions ? ' · ' + p.sessions + ' functions' : '') : p.sessions ? String(p.sessions) + ' functions' : null,
+              status: (STATUS_LOOK[p.status] ?? [])[0] ?? p.status,
+              base: p.base || (p.hours ? String(p.hours) + ' hours included' : p.name || 'Core service'),
+              inclusions: (Array.isArray(p.inclusions) ? p.inclusions : []).map((item, index) => ({ id: String(item?.id ?? item?.label ?? item?.name ?? item) + '-' + index, label: typeof item === 'string' ? item : item?.label ?? item?.name ?? item?.id ?? '', included: item?.included !== false })),
+              badge: p.badge,
+              edited: p.edited,
+            }))}
+            onViewDetails={p => onViewPackage?.(p.key)}
+          />
+        ) : <p className="rounded-[18px] bg-white p-4 text-[12px] text-ink/55 ring-1 ring-ink/[0.07]">No packages have been saved for this listing yet. The other sections will show any rates and rules that are available.</p>}
+
       </div>
 
       <Section title="My listing">
         <div className="flex items-center gap-3">
-          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-plum-100 to-plum-200 text-[18px] font-extrabold text-plum-700">{d.listing.initials}</span>
-          <div className="min-w-0"><p className="text-[15px] font-extrabold">{d.listing.stage_name}</p><p className="text-[12px] text-ink/55">{d.listing.role} · {d.listing.years} yrs · {d.listing.tagline}</p></div>
+          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-plum-100 to-plum-200 text-[18px] font-extrabold text-plum-700">{d.listing?.initials || String(d.listing?.stage_name || d.listing?.business_name || 'S').slice(0, 2).toUpperCase()}</span>
+          <div className="min-w-0 flex-1">
+            <p className="break-words text-[15px] font-extrabold">{d.listing?.stage_name || d.listing?.business_name || d.listing?.name || 'Your listing'}</p>
+            <p className="mt-0.5 text-[12px] text-ink/55">{[d.listing?.role, d.listing?.years ? String(d.listing.years) + ' yrs' : null, d.listing?.tagline].filter(Boolean).join(' · ') || 'Your saved partner profile'}</p>
+          </div>
         </div>
         <div className="mt-3 space-y-2 text-[12.5px]">
-          <p className="flex items-center gap-2"><MapPin size={14} className="text-plum-600" />{d.listing.city} · travels {d.listing.travel}</p>
-          <p className="flex items-center gap-2"><Languages size={14} className="text-plum-600" />{d.listing.languages}</p>
-          <p className="flex items-center gap-2"><Users size={14} className="text-plum-600" />Up to {d.listing.audience} guests · {d.listing.formats}</p>
+          {(d.listing?.city || d.listing?.travel) ? <p className="flex items-center gap-2"><MapPin size={14} className="shrink-0 text-plum-600" />{[d.listing?.city, d.listing?.travel ? 'travels ' + d.listing.travel : null].filter(Boolean).join(' · ')}</p> : null}
+          {d.listing?.languages ? <p className="flex items-center gap-2"><Languages size={14} className="shrink-0 text-plum-600" />{d.listing.languages}</p> : null}
+          {(d.listing?.audience || d.listing?.formats) ? <p className="flex items-center gap-2"><Users size={14} className="shrink-0 text-plum-600" />{[d.listing?.audience ? 'Up to ' + d.listing.audience + ' guests' : null, d.listing?.formats].filter(Boolean).join(' · ')}</p> : null}
         </div>
-        <div className="mt-3 flex flex-wrap gap-1.5">{d.listing.events.map(e => <span key={e} className="rounded-full bg-plum-50 px-2.5 py-1 text-[11.5px] font-bold text-plum-800">{e}</span>)}</div>
+        {(Array.isArray(d.listing?.events) && d.listing.events.length > 0) ? <div className="mt-3 flex flex-wrap gap-1.5">{d.listing.events.map((event, index) => <span key={String(event) + index} className="rounded-full bg-plum-50 px-2.5 py-1 text-[11.5px] font-bold text-plum-800">{event}</span>)}</div> : null}
         <button type="button" onClick={onPreview} className="mt-4 flex h-11 w-full items-center justify-center gap-1.5 rounded-full text-[13px] font-extrabold text-plum-700 ring-2 ring-plum-200"><Eye size={15} /> Preview my customer profile</button>
       </Section>
 
       <Section title="My pricing models" count={d.models.length}>
-        <div className="space-y-2">
-          {d.models.map(m => {
-            const [label, Icon] = MODEL[m.id]
-            return (
-              <div key={m.id} className="rounded-2xl bg-[#faf9fd] p-3 ring-1 ring-ink/[0.05]">
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-2 text-[13.5px] font-extrabold"><Icon size={15} className="text-plum-600" />{label}</span>
-                  <span className="text-[14px] font-extrabold">{rupees(m.customer_paise)}<span className="text-[11px] font-bold text-ink/45">{m.unit}</span></span>
+        {d.models.length ? (
+          <div className="space-y-2">
+            {d.models.map((model, index) => {
+              const [modelLabel, Icon] = MODEL[model.id] ?? [model.label || humanize(model.id), Clock]
+              return (
+                <div key={model.id || modelLabel || index} className="rounded-2xl bg-[#faf9fd] p-3 ring-1 ring-ink/[0.05]">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="flex min-w-0 items-center gap-2 text-[13.5px] font-extrabold"><Icon size={15} className="shrink-0 text-plum-600" />{modelLabel}</span>
+                    <span className="shrink-0 text-[14px] font-extrabold">{Number(model.customer_paise) > 0 ? rupees(model.customer_paise) : 'Price on request'}<span className="text-[11px] font-bold text-ink/45">{model.unit}</span></span>
+                  </div>
+                  {model.rules ? <p className="mt-1 text-[11.5px] text-ink/55">{model.rules}</p> : null}
                 </div>
-                <p className="mt-1 text-[11.5px] text-ink/55">{m.rules}</p>
-              </div>
-            )
-          })}
-        </div>
+              )
+            })}
+          </div>
+        ) : <p className="text-[12px] leading-relaxed text-ink/55">No separate pricing models are configured for this listing. Saved package and catalogue rates appear in their sections.</p>}
         <EditButton locked={locked && !d.editable} until={d.price_locked_until} onClick={() => onEdit?.('pricing')} />
       </Section>
 
       <Section title="Extra services" count={d.addons.length}>
-        {d.addons.map(a => (
-          <div key={a.name} className="flex items-center justify-between border-b border-ink/[0.05] py-2 last:border-0">
-            <div><p className="text-[13px] font-bold">{a.name}</p><p className="text-[11px] text-ink/50">{a.in.length ? `Included in ${a.in.join(', ')}` : 'Available separately'}</p></div>
-            <span className="text-[13px] font-extrabold">{rupees(a.paise)}<span className="text-[10.5px] text-ink/45"> {a.unit}</span></span>
+        {d.addons.length ? d.addons.map((addon, index) => (
+          <div key={addon.id || addon.name || index} className="flex items-center justify-between gap-3 border-b border-ink/[0.05] py-2 last:border-0">
+            <div className="min-w-0"><p className="break-words text-[13px] font-bold">{addon.name}</p><p className="text-[11px] text-ink/50">{addon.in?.length ? 'Included in ' + addon.in.join(', ') : 'Available separately'}</p></div>
+            <span className="shrink-0 text-[13px] font-extrabold">{Number(addon.paise) > 0 ? rupees(addon.paise) : 'Price on request'}<span className="text-[10.5px] text-ink/45"> {addon.unit}</span></span>
           </div>
-        ))}
+        )) : <p className="text-[12px] text-ink/55">No optional extras are saved for this listing.</p>}
       </Section>
 
       <Section title="Other booking charges">
-        {d.charges.map(c => <Row key={c.k} k={c.k} v={c.v} />)}
+        {d.charges?.length ? d.charges.map((charge, index) => <Row key={charge.k || charge.label || index} k={charge.k || charge.label || 'Additional charge'} v={charge.v || charge.value || 'As listed'} />) : <p className="text-[12px] text-ink/55">No additional booking charges are saved.</p>}
       </Section>
 
       <Section title="Booking & payment rules">
-        {d.rules.map(c => <Row key={c.k} k={c.k} v={c.v} />)}
+        {d.rules?.length ? d.rules.map((rule, index) => <Row key={rule.k || rule.label || index} k={rule.k || rule.label || 'Booking rule'} v={rule.v || rule.value || 'As listed'} />) : <p className="text-[12px] text-ink/55">Booking rules have not been configured for this listing yet.</p>}
       </Section>
 
       <div className="grid grid-cols-2 gap-2 pt-1">

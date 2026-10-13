@@ -95,9 +95,9 @@ export function PackageCard({ pkg, active = true, editable, onEdit, onViewDetail
       </div>
 
       {/* The partner's rate, named as theirs. Never a customer total. */}
-      <p className="mt-4 text-[32px] font-extrabold leading-none tracking-tight text-ink">{rupees(pkg.ratePaise)}</p>
+      <p className="mt-4 break-words text-[30px] font-extrabold leading-none tracking-tight text-ink">{Number(pkg.ratePaise) > 0 ? rupees(pkg.ratePaise) : 'Price on request'}</p>
       <p className="mt-1 text-[12px] font-bold text-ink/50">
-        Your rate{pkg.unit ? ` · ${pkg.unit}` : ''}
+        {Number(pkg.ratePaise) > 0 ? 'Your rate' : 'Saved rate not available'}{Number(pkg.ratePaise) > 0 && pkg.unit ? ' · ' + pkg.unit : ''}
       </p>
 
       {pkg.meta && (
