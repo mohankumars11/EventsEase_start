@@ -31,7 +31,7 @@ function cleanDetails(fields, values) {
     const key = field.key ?? field.id ?? field.field
     const label = field.label ?? field.name ?? key
     if (!key || !label || field.customer_visible === false || field.private === true) continue
-    if (/(aadhaar|aadhar|pan number|bank|account number|password|private|internal|take.?home|platform fee|commission|payout|review note|license number|licence number|government id|otp)/i.test(String(label)) continue
+    if (/(aadhaar|aadhar|pan number|bank|account number|password|private|internal|take.?home|platform fee|commission|payout|review note|license number|licence number|government id|otp)/i.test(String(label))) continue
     const raw = values?.[key] ?? values?.[String(key).replace(/-/g, '_')]
     if (raw == null || raw === '' || (Array.isArray(raw) && !raw.length)) continue
     if (field.type === 'file' || field.type === 'document' || typeof raw === 'object' && !Array.isArray(raw)) continue
