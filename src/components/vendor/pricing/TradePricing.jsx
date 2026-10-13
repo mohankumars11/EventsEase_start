@@ -20,6 +20,10 @@ import { rupees } from '../../../lib/tierPackages'
 import PackageCarousel from '../packages/PackageCarousel'
 import TradeListingCard from '../../customer/TradeListingCard'
 import PartnerMediaLinks from './PartnerMediaLinks'
+import StorefrontReadiness from './StorefrontReadiness'
+import './StorefrontReadiness.css'
+import { fetchWork, signedUrlsFor } from '../../../lib/partnerWork'
+import PartnerAvatarInput from '../PartnerAvatarInput'
 import { configFor } from '../../../data/trades'
 import { RULE_KINDS } from '../../../data/trades/schema'
 import { buildTradePayload } from '../listing/payload'
@@ -104,20 +108,60 @@ export default function TradePricing({ service, vendor, onEdit, onOpenPayout }) 
      before the migration and no better, which is the honest failure. */
   const [preview, setPreview] = useState(false)
   const [previewData, setPreviewData] = useState(null)
+  const [previewError, setPreviewError] = useState('')
+  const [previewMedia, setPreviewMedia] = useState({ loading: false, rows: [], unavailable: false })
   const [selectedPreviewPackage, setSelectedPreviewPackage] = useState(null)
   useEffect(() => {
     if (!preview) return
-    let live = true
+    let alive = true
     setPreviewData(null)
+    setPreviewError('')
     ;(async () => {
-      let { data, error } = await supabase.rpc('listing_preview', { p_vendor_service_id: service.id })
-      if (error?.code === 'PGRST202') {
-        ({ data } = await supabase.rpc('listing_public', { p_vendor_service_id: service.id }))
+      try {
+        let { data, error } = await supabase.rpc('listing_preview', { p_vendor_service_id: service.id })
+        if (error?.code === 'PGRST202') {
+          const fallback = await supabase.rpc('listing_public', { p_vendor_service_id: service.id })
+          data = fallback.data
+          error = fallback.error
+        }
+        if (error) throw error
+        if (alive) setPreviewData(data ?? { state: 'NONE' })
+      } catch (error) {
+        if (alive) {
+          setPreviewError(error?.message || 'Could not load this listing preview.')
+          setPreviewData({ state: 'ERROR' })
+        }
       }
-      if (live) setPreviewData(data ?? { state: 'NONE' })
     })()
-    return () => { live = false }
+    return () => { alive = false }
   }, [preview, service.id])
+
+  useEffect(() => {
+    if (!preview || !vendor?.id) {
+      setPreviewMedia({ loading: false, rows: [], unavailable: false })
+      return
+    }
+    let alive = true
+    setPreviewMedia({ loading: true, rows: [], unavailable: false })
+    ;(async () => {
+      try {
+        const result = await fetchWork(vendor.id)
+        const sourceRows = (result.rows ?? []).filter(row => ['photo', 'video'].includes(row.kind))
+        const visibleRows = previewData?.is_live === true
+          ? sourceRows.filter(row => row.review_status === 'live')
+          : sourceRows
+        const urls = await signedUrlsFor(visibleRows.map(row => row.storage_path), 600)
+        if (alive) setPreviewMedia({
+          loading: false,
+          unavailable: !!result.unavailable,
+          rows: visibleRows.map(row => ({ ...row, url: urls[row.storage_path] || '' })).filter(row => row.url),
+        })
+      } catch {
+        if (alive) setPreviewMedia({ loading: false, rows: [], unavailable: false })
+      }
+    })()
+    return () => { alive = false }
+  }, [preview, vendor?.id, previewData?.is_live])
   const [proposed, setProposed] = useState({})
   const [busy, setBusy] = useState(false)
   const answers = service.specs?.trade_v1 ?? null
@@ -307,23 +351,25 @@ export default function TradePricing({ service, vendor, onEdit, onOpenPayout }) 
       <Sheet open={preview} onOpenChange={o => !o && setPreview(false)} title="What customers see">
         {!previewData
           ? <div className="flex h-40 items-center justify-center"><Loader2 size={22} className="animate-spin text-plum-700" /></div>
-          : previewData.state === 'NONE'
-            ? <p className="py-6 text-center text-[13px] font-bold text-ink/55">
-                Finish your listing once and your customer page appears here.
-              </p>
-            : (
-              <>
-                {/* Which version this is. A preview that does not say it is
-                    showing a draft is a preview that implies you are live. */}
-                {previewData.is_live === false && (
-                  <p className="mb-3 rounded-2xl bg-saffron-50 px-3.5 py-2.5 text-[12.5px] font-bold text-saffron-900 ring-1 ring-saffron-200">
-                    {PREVIEW_NOTE[previewData.state] ?? 'This is a preview. It is not live yet.'}
-                  </p>
-                )}
-                <TradeListingCard listing={previewData} tradeName={config.name} onPick={setSelectedPreviewPackage} showBookingCtaPreview />
-                <div className="mt-4"><PartnerMediaLinks vendor={vendor} profile={previewData.profile ?? {}} /></div>
-              </>
-            )}
+          : previewData.state === 'ERROR'
+            ? <div className="space-y-3 py-5 text-center"><CircleAlert size={28} className="mx-auto text-rose-600" /><p className="text-[14px] font-extrabold text-plum-950">Your preview could not load</p><p className="px-4 text-[12px] leading-relaxed text-ink/60">{previewError || 'Check your connection and try again.'}</p><button type="button" onClick={() => { setPreviewData(null); setPreviewError(''); setPreview(false); setTimeout(() => setPreview(true), 0) }} className="rounded-full bg-plum-700 px-4 py-2.5 text-[12px] font-extrabold text-white">Try again</button></div>
+            : previewData.state === 'NONE'
+              ? <p className="py-6 text-center text-[13px] font-bold text-ink/55">Finish your listing once and your customer page appears here.</p>
+              : (
+                <>
+                  {previewData.is_live === false && (
+                    <p className="mb-3 rounded-2xl bg-saffron-50 px-3.5 py-2.5 text-[12.5px] font-bold text-saffron-900 ring-1 ring-saffron-200">
+                      {PREVIEW_NOTE[previewData.state] ?? 'This is a preview. It is not live yet.'}
+                    </p>
+                  )}
+                  <StorefrontReadiness vendor={vendor} draft={previewData} packages={previewData.packages ?? []} media={previewMedia.rows}
+                    onEditStep={() => { setPreview(false); onEdit?.() }} onManageMedia={() => { setPreview(false); onEdit?.() }} />
+                  <TradeListingCard listing={previewData} tradeName={config.name} onPick={setSelectedPreviewPackage} showBookingCtaPreview
+                    media={previewMedia.rows}
+                    avatarSlot={<PartnerAvatarInput vendor={vendor} draft={{ profile: previewData.profile ?? {} }} businessName={previewData.profile?.business_name ?? previewData.profile?.stage_name ?? vendor?.business_name ?? 'Your business'} editable />} />
+                  <div className="mt-4"><PartnerMediaLinks vendor={vendor} profile={previewData.profile ?? {}} visibility={previewData.is_live === true ? 'customer' : 'partner'} /></div>
+                </>
+              )}
       </Sheet>
 
       <Sheet open={!!selectedPreviewPackage} onOpenChange={o => !o && setSelectedPreviewPackage(null)} title={selectedPreviewPackage?.name ?? 'Package details'}>
