@@ -17,7 +17,9 @@
  * Anchor & MC keeps AnchorProfileCard -- it has a profile shape of its
  * own (role, languages, event groups) that the engine trades do not.
  */
+import { useEffect, useState } from 'react'
 import { MapPin, Star, Check, Clock, Package, Boxes, Plus, Info, UserRound, Camera, Mic2 } from 'lucide-react'
+import { supabase } from '../../lib/supabase'
 import { rupees } from '../../lib/tierPackages'
 
 const UNIT_LABEL = {
@@ -83,12 +85,11 @@ export default function TradeListingCard({ listing, tradeName, onPick, showBooki
         </p>
         <div className="mt-2.5 flex min-w-0 items-center gap-3">
           <span className="grid h-[68px] w-[68px] shrink-0 place-items-center overflow-hidden rounded-full border-2 border-white/70 bg-white/15 shadow-[0_4px_14px_rgba(20,0,40,0.22)]">
-            {profileAvatar
-              ? <img src={profileAvatar} alt={`${displayName} profile`} className="h-full w-full object-cover" onError={e => { e.currentTarget.style.display = 'none' }} />
-              : <span className="flex h-full w-full flex-col items-center justify-center gap-0.5 bg-gradient-to-br from-violet-100 to-fuchsia-200 text-plum-900">
-                  {String(tradeName ?? listing.trade_id ?? '').toLowerCase().includes('anchor') || String(tradeName ?? '').toLowerCase().includes('mc') ? <Mic2 size={24} /> : String(tradeName ?? '').toLowerCase().includes('photo') ? <Camera size={24} /> : <UserRound size={24} />}
-                  <span className="text-[9px] font-black">{String(displayName).split(/\s+/).map(x => x[0]).join('').slice(0,2).toUpperCase()}</span>
-                </span>}
+            <span className="tlc-avatar-fallback">
+              {String(tradeName ?? listing.trade_id ?? '').toLowerCase().includes('anchor') || String(tradeName ?? '').toLowerCase().includes('mc') ? <Mic2 size={24} /> : String(tradeName ?? '').toLowerCase().includes('photo') ? <Camera size={24} /> : <UserRound size={24} />}
+              <b>{String(displayName).split(/\s+/).map(x => x[0]).join('').slice(0,2).toUpperCase()}</b>
+            </span>
+            {profileAvatar ? <PartnerAvatarPhoto src={profileAvatar} alt={`${displayName} profile`} /> : null}
           </span>
           <div className="min-w-0 flex-1">
             <h2 className="break-words text-[20px] font-extrabold leading-tight">{displayName}</h2>
@@ -205,4 +206,23 @@ export default function TradeListingCard({ listing, tradeName, onPick, showBooki
       )}
     </div>
   )
+}
+
+
+function PartnerAvatarPhoto({ src, alt }) {
+  const [resolved, setResolved] = useState('')
+  useEffect(() => {
+    let alive = true
+    async function resolve() {
+      if (!src) { setResolved(''); return }
+      if (/^https?:\/\//i.test(String(src))) { setResolved(src); return }
+      try {
+        const { data, error } = await supabase.storage.from('partner-uploads').createSignedUrl(String(src), 600)
+        if (alive) setResolved(error ? '' : data?.signedUrl || '')
+      } catch { if (alive) setResolved('') }
+    }
+    resolve()
+    return () => { alive = false }
+  }, [src])
+  return resolved ? <img src={resolved} alt={alt} className="tlc-avatar-photo" onError={() => setResolved('')} /> : null
 }
