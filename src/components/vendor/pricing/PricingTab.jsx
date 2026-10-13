@@ -72,16 +72,38 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
         .select('vendor_service_id,version,status,seasonal_window_id,price_locked_until,published_at')
         .in('vendor_service_id', ids).order('version', { ascending: false }),
       supabase.from('sambramo_trade_packages')
-        .select('id,vendor_service_id,name,description,status,trade_inputs,commercial_inputs,calculation_snapshot,price_locked_until')
+        .select('id,vendor_service_id,name,description,status,trade_inputs,commercial_inputs,calculation_snapshot,price_locked_until,published_at')
         .in('vendor_service_id', ids),
       supabase.from('sambramo_catering_packages')
         .select('id,vendor_service_id,name,status,rate_bands,min_guests,max_guests,service_hours,notes,price_locked_until')
         .in('vendor_service_id', ids),
-    ]).then(([versionsRes, packagesRes, cateringRes]) => {
+      supabase.from('sambramo_partner_price_books')
+        .select('vendor_service_id,offering_id,component_id,status,effective_from,rate_paise,unit')
+        .in('vendor_service_id', ids).eq('component_id', 'base').eq('status', 'active'),
+      supabase.from('sambramo_pricing_config').select('price_lock_days').limit(1).maybeSingle(),
+    ]).then(async ([versionsRes, packagesRes, cateringRes, priceBooksRes, pricingConfigRes]) => {
       if (!alive) return
       const versions = versionsRes.data ?? []
       const packages = packagesRes.data ?? []
       const catering = cateringRes.data ?? []
+      const priceBooks = priceBooksRes.data ?? []
+      const priceLockDays = Math.max(1, Number(pricingConfigRes.data?.price_lock_days ?? 15))
+      const cateringIds = catering.map(p => p.id).filter(Boolean)
+      let cateringPrices = []
+      if (cateringIds.length) {
+        try {
+          const response = await supabase.from('sambramo_catering_price_versions')
+            .select('package_id,effective_from,status')
+            .in('package_id', cateringIds).eq('status', 'ACTIVE')
+          cateringPrices = response.data ?? []
+        } catch { cateringPrices = [] }
+      }
+      const lockUntilFrom = (value, days = priceLockDays) => {
+        if (!value) return null
+        const date = new Date(value)
+        if (Number.isNaN(date.getTime())) return null
+        return new Date(date.getTime() + days * 86400000).toISOString()
+      }
       const byId = {}
       for (const id of ids) {
         const regular = versions.filter(v => v.vendor_service_id === id && !v.seasonal_window_id)
@@ -124,20 +146,26 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
           priceUnitById[p.vendor_service_id] = 'per guest'
         }
       }
-      const futureLocks = [
-        ...ids.map(id => versions.find(v => v.vendor_service_id === id && !v.seasonal_window_id && v.status === 'LIVE'))
-          .filter(v => v?.price_locked_until && new Date(v.price_locked_until) > new Date())
-          .map(v => ({ date: v.price_locked_until, serviceId: v.vendor_service_id })),
-        ...packages.filter(p => p.status === 'LIVE' && p.price_locked_until && new Date(p.price_locked_until) > new Date())
-          .map(p => ({ date: p.price_locked_until, serviceId: p.vendor_service_id })),
-      ].sort((a, b) => new Date(a.date) - new Date(b.date))
       for (const id of ids) {
-        const listingLock = versions.find(v => v.vendor_service_id === id && !v.seasonal_window_id && v.status === 'LIVE')?.price_locked_until
-        const packageLock = packages.filter(p => p.vendor_service_id === id && p.status === 'LIVE' && p.price_locked_until)
-          .map(p => p.price_locked_until).sort((a, b) => new Date(a) - new Date(b))[0]
-        const lock = [listingLock, packageLock].filter(value => value && new Date(value) > new Date()).sort((a, b) => new Date(a) - new Date(b))[0]
-        if (lock) priceLockById[id] = lock
+        const listing = versions.find(v => v.vendor_service_id === id && !v.seasonal_window_id && v.status === 'LIVE')
+        const candidates = []
+        if (listing?.price_locked_until) candidates.push(listing.price_locked_until)
+        for (const pkg of packages.filter(p => p.vendor_service_id === id && p.status === 'LIVE')) {
+          if (pkg.price_locked_until) candidates.push(pkg.price_locked_until)
+          else if (pkg.published_at) candidates.push(lockUntilFrom(pkg.published_at))
+          const book = priceBooks.find(row => row.offering_id === String(pkg.id) && row.vendor_service_id === id)
+          if (!pkg.price_locked_until && !pkg.published_at && book?.effective_from) candidates.push(lockUntilFrom(book.effective_from))
+        }
+        const activeCateringPackages = catering.filter(p => p.vendor_service_id === id && ['ACTIVE', 'LIVE'].includes(String(p.status).toUpperCase()))
+        for (const pkg of activeCateringPackages) {
+          const currentPrice = cateringPrices.filter(row => row.package_id === pkg.id).sort((a, b) => new Date(b.effective_from) - new Date(a.effective_from))[0]
+          if (currentPrice?.effective_from) candidates.push(lockUntilFrom(currentPrice.effective_from))
+        }
+        const activeLocks = candidates.filter(value => value && new Date(value) > new Date())
+        if (activeLocks.length) priceLockById[id] = activeLocks.sort((a, b) => new Date(b) - new Date(a))[0]
       }
+      const futureLocks = ids.map(id => priceLockById[id] ? ({ date: priceLockById[id], serviceId: id }) : null)
+        .filter(Boolean).sort((a, b) => new Date(a.date) - new Date(b.date))
       setListingMeta({ byId, packagesById, priceById, priceUnitById, packageDetailsById, priceLockById, nextPriceDate: futureLocks[0]?.date ?? null, nextPriceServiceId: futureLocks[0]?.serviceId ?? null, loading: false })
     }).catch(() => {
       if (alive) setListingMeta(s => ({ ...s, loading: false }))
