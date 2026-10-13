@@ -1158,6 +1158,14 @@ function PreviewStep({ vendor, service, config, packages = [], draft, fields, ad
       <div className="mt-4">
         <PartnerMediaLinks vendor={vendor} profile={draft?.trade_inputs ?? {}} />
       </div>
+      <div className="sppc-booking-cta-wrap">
+        <button type="button" className="sppc-booking-cta" onClick={() => action('Customer action preview only. Live availability and the final payable total are checked in Sambramo’s existing booking flow.')}>
+          <span className="sppc-booking-bolt">✦</span>
+          <span><b>{String(draft?.availability_policy ?? draft?.commercial_inputs?.availability_policy ?? 'instant').toLowerCase() === 'instant' ? 'Instant Book & Pay' : 'Check availability & request quote'}</b><small>Availability and final total confirmed at checkout</small></span>
+          <ChevronRight size={20} />
+        </button>
+        <p className="sppc-booking-note">Preview only · no booking or payment starts from this screen.</p>
+      </div>
     </section>
   )
 }
