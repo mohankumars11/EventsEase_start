@@ -52,8 +52,9 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
   const [manageOpen, setManageOpen] = useState(false)
   const [selectedServiceId, setSelectedServiceId] = useState(null)
   const [legacyScreen, setLegacyScreen] = useState('details')
+  const [legacySelectedPackage, setLegacySelectedPackage] = useState(null)
   const [filterStatus, setFilterStatus] = useState('all')
-  const [listingMeta, setListingMeta] = useState({ byId: {}, packagesById: {}, priceById: {}, priceUnitById: {}, packageDetailsById: {}, priceLockById: {}, nextPriceDate: null, nextPriceServiceId: null, loading: true })
+  const [listingMeta, setListingMeta] = useState({ byId: {}, versionById: {}, publishedAtById: {}, packagesById: {}, priceById: {}, priceUnitById: {}, packageDetailsById: {}, priceLockById: {}, nextPriceDate: null, nextPriceServiceId: null, loading: true })
   const engineReady = useEngineReady()
   const anchors = services.filter(s => hasProfileFor(s.category))
   const engine = engineReady ? services.filter(s => onEngine(s.category)) : []
@@ -64,7 +65,7 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
     let alive = true
     const ids = services.map(s => s.id).filter(Boolean)
     if (!ids.length) {
-      setListingMeta({ byId: {}, packagesById: {}, priceById: {}, priceUnitById: {}, packageDetailsById: {}, priceLockById: {}, nextPriceDate: null, nextPriceServiceId: null, loading: false })
+      setListingMeta({ byId: {}, versionById: {}, publishedAtById: {}, packagesById: {}, priceById: {}, priceUnitById: {}, packageDetailsById: {}, priceLockById: {}, nextPriceDate: null, nextPriceServiceId: null, loading: false })
       return () => { alive = false }
     }
     setListingMeta(s => ({ ...s, loading: true }))
@@ -106,6 +107,8 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
         return new Date(date.getTime() + days * 86400000).toISOString()
       }
       const byId = {}
+      const versionById = {}
+      const publishedAtById = {}
       for (const id of ids) {
         const regular = versions.filter(v => v.vendor_service_id === id && !v.seasonal_window_id)
         const latest = regular[0] ?? null
@@ -114,6 +117,8 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
           : ownPackages.some(p => ['UNDER_REVIEW', 'ACTION_REQUIRED', 'REJECTED'].includes(String(p.status).toUpperCase())) ? 'UNDER_REVIEW'
           : ownPackages.length ? 'DRAFT' : 'NOT_CONFIGURED'
         byId[id] = latest?.status ?? fallback
+        versionById[id] = latest?.version ?? null
+        publishedAtById[id] = versions.find(v => v.vendor_service_id === id && v.status === 'LIVE' && !v.seasonal_window_id)?.published_at ?? null
       }
       const packagesById = {}
       const priceById = {}
@@ -182,7 +187,7 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
 
       const futureLocks = ids.map(id => priceLockById[id] ? ({ date: priceLockById[id], serviceId: id }) : null)
         .filter(Boolean).sort((a, b) => new Date(a.date) - new Date(b.date))
-      setListingMeta({ byId, packagesById, priceById, priceUnitById, packageDetailsById, priceLockById, nextPriceDate: futureLocks[0]?.date ?? null, nextPriceServiceId: futureLocks[0]?.serviceId ?? null, loading: false })
+      setListingMeta({ byId, versionById, publishedAtById, packagesById, priceById, priceUnitById, packageDetailsById, priceLockById, nextPriceDate: futureLocks[0]?.date ?? null, nextPriceServiceId: futureLocks[0]?.serviceId ?? null, loading: false })
     }).catch(() => {
       if (alive) setListingMeta(s => ({ ...s, loading: false }))
     })
@@ -336,9 +341,12 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
               startingPricePaise={listingMeta.priceById[selectedService.id] ?? null}
               priceUnit={listingMeta.priceUnitById[selectedService.id] ?? null}
               priceLockedUntil={listingMeta.priceLockById[selectedService.id] ?? null}
+              version={listingMeta.versionById[selectedService.id] ?? null}
+              publishedAt={listingMeta.publishedAtById[selectedService.id] ?? null}
               packages={listingMeta.packageDetailsById[selectedService.id] ?? []}
               onPreview={() => setLegacyScreen('preview')}
               onEdit={() => setLegacyScreen('edit')}
+              onViewPackage={setLegacySelectedPackage}
             />
           ) : (
             <SambramoPricingStudio vendor={vendor} services={[selectedService]} initialServiceId={selectedService.id}
@@ -348,6 +356,23 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
           )}
         </>
       )}
+
+      <Sheet open={!!legacySelectedPackage} onOpenChange={open => !open && setLegacySelectedPackage(null)} title={legacySelectedPackage?.name || 'Package details'}>
+        {legacySelectedPackage ? (
+          <div className="space-y-3">
+            <div className="rounded-[22px] bg-gradient-to-br from-plum-50 to-white p-4 ring-1 ring-plum-100">
+              <p className="text-[25px] font-extrabold tracking-tight text-plum-950">{Number(legacySelectedPackage.rate_paise ?? legacySelectedPackage.take_home_paise) > 0 ? rupees(legacySelectedPackage.rate_paise ?? legacySelectedPackage.take_home_paise) : 'Price on request'}</p>
+              <p className="mt-1 text-[11.5px] font-bold text-ink/55">Your rate</p>
+              {legacySelectedPackage.hours ? <p className="mt-2 text-[12px] font-bold text-ink/55">{legacySelectedPackage.hours} hours included</p> : null}
+              {legacySelectedPackage.description ? <p className="mt-2 text-[12.5px] leading-relaxed text-ink/70">{legacySelectedPackage.description}</p> : null}
+            </div>
+            {(legacySelectedPackage.inclusions || []).length ? (
+              <><p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">Included in this package</p>
+                {legacySelectedPackage.inclusions.map((item,index) => <p key={index} className="flex items-start gap-2 text-[12.5px] font-semibold text-ink/75"><span className="text-emerald-700">✓</span><span>{item}</span></p>)}</>
+            ) : <p className="text-[12.5px] text-ink/55">No inclusions were saved for this package.</p>}
+          </div>
+        ) : null}
+      </Sheet>
 
       {manageOpen && (
         <div className="fixed inset-0 z-[100] flex items-end justify-center bg-ink/45 p-0 sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="manage-pricing-title">
@@ -428,123 +453,167 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
 
 function LegacyListingDetails({
   service, vendor, status, packageCount, startingPricePaise, priceUnit, priceLockedUntil,
-  packages = [], onPreview, onEdit,
+  version, publishedAt, packages = [], onPreview, onEdit, onViewPackage,
 }) {
-  const category = service?.category || service?.trade || service?.name || 'Service'
   const specs = service?.specs && typeof service.specs === 'object' ? service.specs : {}
   const profile = specs.trade_v1 ?? specs.trade_inputs ?? specs.profile ?? specs
-  const lockDays = priceLockedUntil ? Math.max(0, Math.ceil((new Date(priceLockedUntil).getTime() - Date.now()) / 86400000)) : null
-  const look = statusCopy[status] ?? statusCopy.NOT_CONFIGURED
-  const details = [
-    ['Location', service?.city ?? service?.location ?? vendor?.city ?? profile?.city],
-    ['Service area', profile?.travel_policy ?? profile?.service_area ?? profile?.travel_radius_km ?? profile?.travel_radius],
-    ['Languages', profile?.languages ?? profile?.language],
-    ['Events / services', profile?.supported_events ?? profile?.event_types ?? profile?.events ?? profile?.service_types],
-    ['Capacity', profile?.guest_capacity ?? profile?.max_guests ?? profile?.capacity],
-    ['Minimum notice', profile?.lead_time_days ?? profile?.min_notice_days],
-    ['Booking mode', profile?.availability_policy ?? profile?.booking_mode],
-    ['Payment terms', profile?.payment_policy ?? profile?.payment_terms],
-    ['Cancellation policy', profile?.cancellation_policy ?? profile?.cancellation],
-    ['Rescheduling policy', profile?.reschedule_policy ?? profile?.rescheduling_policy],
-  ].filter(([, value]) => value !== undefined && value !== null && value !== '' && !(Array.isArray(value) && !value.length))
-    .map(([label, value]) => [label, Array.isArray(value) ? value.map(v => typeof v === 'object' ? (v.label ?? v.name ?? v.value ?? '') : String(v)).filter(Boolean).join(', ') : typeof value === 'object' ? (value.label ?? value.name ?? value.value ?? '') : String(value)])
-    .filter(([, value]) => value !== '')
-  const shownPackages = packages.filter(pkg => pkg.status !== 'ARCHIVED').sort((a, b) => {
-    const aa = String(a.name ?? '').toLowerCase(), bb = String(b.name ?? '').toLowerCase()
-    const rank = name => name.includes('essential') || name.includes('basic') ? 0 : name.includes('signature') || name.includes('premium') ? 1 : name.includes('vip') ? 2 : 3
-    return rank(aa) - rank(bb) || aa.localeCompare(bb)
+  const booking = profile.booking_rules && typeof profile.booking_rules === 'object' ? profile.booking_rules : profile.terms && typeof profile.terms === 'object' ? profile.terms : profile
+  const travel = profile.travel_rules && typeof profile.travel_rules === 'object' ? profile.travel_rules : {}
+  const asList = value => Array.isArray(value) ? value : typeof value === 'string' ? value.split(',').map(item => item.trim()).filter(Boolean) : []
+  const valueText = value => typeof value === 'string' || typeof value === 'number' ? String(value) : value?.label ?? value?.name ?? value?.value ?? value?.id ?? ''
+  const humanize = value => String(value || '').replace(/[_-]+/g, ' ').replace(/\b\w/g, char => char.toUpperCase())
+  const numberPositive = value => value !== undefined && value !== null && value !== '' && Number.isFinite(Number(value)) && Number(value) > 0 ? Number(value) : null
+  const displayName = profile.stage_name || profile.display_name || profile.business_name || profile.name || vendor?.business_name || vendor?.name || service?.name || service?.category || 'Your listing'
+  const city = [profile.locality, profile.city, service?.city, service?.location, vendor?.area, vendor?.city, vendor?.state].filter(Boolean).map(valueText).filter(Boolean).filter((value, index, rows) => rows.indexOf(value) === index).join(', ')
+  const languages = asList(profile.languages ?? profile.language).map(valueText).filter(Boolean)
+  const events = asList(profile.events ?? profile.event_types ?? profile.supported_events ?? profile.service_types ?? profile.specialties).map(valueText).filter(Boolean)
+  const formats = asList(profile.formats ?? profile.service_formats ?? profile.work_modes).map(valueText).filter(Boolean)
+  const years = profile.years ?? profile.years_experience ?? profile.years_active
+  const audience = profile.max_audience ?? profile.max_guests ?? profile.capacity ?? profile.guest_capacity
+  const statusForUi = status === 'REJECTED' ? 'ACTION_REQUIRED' : status === 'NOT_CONFIGURED' ? 'DRAFT' : status
+
+  const visiblePackages = packages.filter(pkg => String(pkg.status || '').toUpperCase() !== 'ARCHIVED').map((pkg, index) => {
+    const rate = numberPositive(pkg.ratePaise ?? pkg.pricePaise ?? pkg.rate_paise ?? pkg.take_home_paise)
+    const duration = numberPositive(pkg.duration ?? pkg.hours ?? pkg.duration_hours ?? pkg.serviceHours)
+    const inclusions = asList(pkg.inclusions).map(valueText).filter(Boolean)
+    const bandPrices = asList(pkg.rateBands).map(band => numberPositive(band?.rate_paise) || (numberPositive(band?.rate) ? Math.round(Number(band.rate) * 100) : null)).filter(Boolean)
+    const price = rate || (bandPrices.length ? Math.min(...bandPrices) : null)
+    return {
+      key: pkg.id || pkg.name || String(index),
+      tier: pkg.name || pkg.tier || String(index),
+      name: pkg.name || pkg.title || 'Package',
+      status: pkg.status || statusForUi,
+      rate_paise: price,
+      take_home_paise: price,
+      price_paise: null,
+      hours: duration,
+      sessions: numberPositive(pkg.sessions ?? pkg.included_sessions),
+      inclusions,
+      description: pkg.description || pkg.notes || '',
+      base: pkg.description || (duration ? String(duration) + ' included' : pkg.name || 'Core service'),
+    }
   })
 
-  function priceOf(pkg) {
-    if (Number(pkg.pricePaise) > 0) return Number(pkg.pricePaise)
-    const bands = Array.isArray(pkg.rateBands) ? pkg.rateBands : []
-    const bandPaise = bands.map(band => {
-      if (Number(band?.rate_paise) > 0) return Number(band.rate_paise)
-      const rate = Number(band?.rate)
-      return Number.isFinite(rate) && rate > 0 ? Math.round(rate * 100) : 0
-    }).filter(value => value > 0)
-    return bandPaise.length ? Math.min(...bandPaise) : null
+  const rawModels = profile.pricing_models ?? profile.pricingModels ?? profile.models ?? profile.rates ?? profile.rules ?? specs.pricing_models ?? specs.pricingModels ?? null
+  let modelEntries = []
+  if (Array.isArray(rawModels)) modelEntries = rawModels.map((model, index) => [model.model || model.id || model.key || model.name || ('model_' + index), model])
+  else if (rawModels && typeof rawModels === 'object') modelEntries = Object.entries(rawModels)
+  const models = modelEntries.filter(([, model]) => model && model.on !== false && model.enabled !== false).map(([key, model]) => {
+    const source = model && typeof model === 'object' ? model : { rate: model }
+    const label = source.label || source.name || humanize(key)
+    let rate = numberPositive(source.customer_paise ?? source.rate_paise ?? source.take_home_paise ?? source.amount_paise)
+    if (!rate && numberPositive(source.rate ?? source.amount ?? source.price)) rate = Math.round(Number(source.rate ?? source.amount ?? source.price) * 100)
+    const includedHours = numberPositive(source.included_hours ?? source.included_duration_hours)
+    const minHours = numberPositive(source.min_hours)
+    const maxHours = numberPositive(source.max_hours)
+    const rules = [
+      includedHours ? String(includedHours) + ' hrs included' : null,
+      minHours ? 'min ' + minHours + ' hrs' : null,
+      maxHours ? 'max ' + maxHours + ' hrs' : null,
+      source.minimum_quantity ? 'minimum ' + source.minimum_quantity + ' ' + humanize(source.unit || '') : null,
+    ].filter(Boolean).join(' · ')
+    return { id: key, label, customer_paise: rate, unit: source.unit ? '/' + humanize(source.unit).replace(/^Per /, '') : '', rules }
+  })
+  if (!models.length && !visiblePackages.length && numberPositive(startingPricePaise)) {
+    models.push({ id: 'base_rate', label: priceUnit ? 'Base rate · ' + humanize(priceUnit) : 'Base rate', customer_paise: numberPositive(startingPricePaise), unit: '', rules: 'Saved base rate' })
   }
 
+  const rawAddons = profile.addons ?? profile.extras ?? profile.extra_services ?? profile.optional_extras ?? specs.addons ?? []
+  const addons = asList(rawAddons).map((addon, index) => {
+    const item = addon && typeof addon === 'object' ? addon : { name: addon }
+    let paise = numberPositive(item.take_home_paise ?? item.rate_paise ?? item.customer_paise)
+    if (!paise && numberPositive(item.rate ?? item.price ?? item.amount)) paise = Math.round(Number(item.rate ?? item.price ?? item.amount) * 100)
+    return {
+      id: item.id || item.addon_id || item.name || String(index),
+      name: item.label || item.name || item.title || 'Optional extra',
+      paise,
+      unit: humanize(item.unit || item.pricing_unit || 'per event'),
+      in: asList(item.included_in ?? item.includedIn).map(humanize),
+    }
+  })
+
+  const charges = []
+  for (const item of asList(profile.charges ?? profile.booking_charges ?? booking.charges)) {
+    if (item && typeof item === 'object') {
+      const rate = numberPositive(item.take_home_paise ?? item.rate_paise ?? item.customer_paise)
+      const value = rate ? '₹' + Math.round(rate / 100).toLocaleString('en-IN') : valueText(item.value ?? item.description ?? item.amount)
+      if (item.label || item.name) charges.push({ k: item.label || item.name, v: value || 'As listed' })
+    }
+  }
+  const travelModel = travel.model || travel.scope || travel.policy || profile.travel_policy || profile.service_area || profile.travel_radius_km
+  const travelLabels = { included_radius: 'Included within your area', included: 'Included within your area', flat: 'Flat outstation fee', per_km: 'Per km beyond your area', customer_arranged: 'Customer arranges travel and stay', custom: 'Custom quote' }
+  if (travelModel) charges.push({ k: 'Travel', v: travelLabels[travelModel] || humanize(travelModel) })
+  const flatTravel = numberPositive(travel.flat_take_home_paise ?? profile.travel_fee_paise)
+  if (flatTravel) charges.push({ k: 'Travel fee', v: '₹' + Math.round(flatTravel / 100).toLocaleString('en-IN') })
+
+  const rules = []
+  const addRule = (label, value) => { if (value !== undefined && value !== null && value !== '') rules.push({ k: label, v: value }) }
+  const instant = booking.availability_policy ?? booking.instant ?? booking.instant_booking ?? profile.availability_policy ?? profile.booking_mode
+  if (instant !== undefined && instant !== null && instant !== '') addRule('Instant booking', ['instant', 'true', 'on'].includes(String(instant).toLowerCase()) || instant === true ? 'On' : 'Off')
+  if (booking.custom_quotes !== undefined && booking.custom_quotes !== null) addRule('Custom quotes', booking.custom_quotes === false ? 'Off' : 'On')
+  if (booking.advance_pct != null || booking.advance_percent != null) addRule('Advance payment', String(booking.advance_pct ?? booking.advance_percent) + '% at booking')
+  const payment = booking.payment_policy ?? booking.payment_terms ?? profile.payment_policy ?? profile.payment_terms
+  if (payment) addRule('Payment terms', humanize(payment))
+  const notice = booking.min_notice_days ?? booking.lead_time_days ?? profile.min_notice_days ?? profile.lead_time_days
+  if (notice != null && notice !== '') addRule('Minimum notice', String(notice) + ' day' + (Number(notice) === 1 ? '' : 's'))
+  const cancellation = booking.cancellation_policy ?? booking.cancellation ?? profile.cancellation_policy ?? profile.cancellation
+  if (cancellation) addRule('Cancellation', humanize(cancellation))
+  const reschedule = booking.reschedule_policy ?? booking.rescheduling_policy ?? profile.reschedule_policy
+  if (reschedule) addRule('Rescheduling', humanize(reschedule))
+  if (booking.quote_hours) addRule('Quote response time', String(booking.quote_hours) + ' hours')
+  if (profile.minimum_order != null) addRule('Minimum order', String(profile.minimum_order))
+
+  const statusBanner = ['ACTION_REQUIRED', 'REJECTED'].includes(String(status || '').toUpperCase()) ? (
+    <div className="flex gap-2.5 rounded-[20px] bg-rose-50 p-4 ring-1 ring-rose-200">
+      <span className="text-[16px] text-rose-700">!</span>
+      <div><p className="text-[13.5px] font-extrabold text-rose-900">Sambramo asked for changes</p><p className="mt-0.5 text-[12.5px] text-rose-900/80">{profile.review_note || service?.review_note || 'Open your listing to see what needs updating.'}</p></div>
+    </div>
+  ) : null
+
+  const controlData = {
+    status: statusForUi,
+    version: version ?? null,
+    published_at: publishedAt ?? null,
+    price_locked_until: priceLockedUntil || null,
+    now: new Date().toISOString(),
+    editable: false,
+    seasonal: null,
+    packages: visiblePackages,
+    listing: {
+      initials: String(displayName || 'S').slice(0, 2).toUpperCase(),
+      stage_name: displayName,
+      role: profile.role ? humanize(profile.role) : (service?.category || service?.trade || 'Service'),
+      years,
+      tagline: profile.tagline || profile.bio || profile.description || '',
+      city,
+      travel: travelModel ? (String(travelModel).match(/^\d+$/) ? 'up to ' + travelModel + ' km' : travelLabels[travelModel] || humanize(travelModel)) : '',
+      languages: languages.join(' · '),
+      audience: audience != null && audience !== '' ? (Number.isFinite(Number(audience)) ? Number(audience).toLocaleString('en-IN') : String(audience)) : '',
+      formats: formats.join(', '),
+      events,
+    },
+    models,
+    addons,
+    charges,
+    rules,
+  }
   return (
-    <div className="space-y-4 pb-5">
-      <section className="overflow-hidden rounded-[26px] bg-white ring-1 ring-ink/[0.07] shadow-[0_10px_28px_rgba(40,15,70,0.05)]">
-        <div className="bg-gradient-to-br from-plum-800 via-plum-700 to-[#321067] p-4 text-white">
-          <div className="flex items-start gap-3">
-            <span className="flex shrink-0 flex-col items-center gap-1.5">
-              <span className="grid h-[76px] w-[76px] place-items-center rounded-[22px] bg-white/10 ring-1 ring-white/20">
-                <SambramoTradePictogram trade={category} size="sm" showSparkle={false} title={false} />
-              </span>
-              <span className="max-w-[90px] text-center text-[10px] font-bold leading-tight text-white/80">{category}</span>
-            </span>
-            <div className="min-w-0 flex-1">
-              <span className={`inline-flex rounded-full px-2.5 py-1 text-[10.5px] font-extrabold ring-1 ${look.tone}`}>{look.label}</span>
-              <h2 className="mt-2 text-[19px] font-extrabold leading-tight">{service?.name || category}</h2>
-              <p className="mt-1 text-[12px] leading-relaxed text-white/70">{service?.description || 'Your saved trade-specific profile, packages and booking rules.'}</p>
-              <p className="mt-2 flex items-center gap-1.5 text-[11.5px] text-white/85"><MapPin size={14} />{service?.city || service?.location || vendor?.city || 'Location not set'}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-3 divide-x divide-ink/[0.06] p-3">
-          <div className="px-2"><p className="text-[9px] font-extrabold uppercase tracking-wide text-ink/45">Packages</p><p className="mt-1 text-[20px] font-black text-plum-950">{packageCount}</p></div>
-          <div className="px-2"><p className="text-[9px] font-extrabold uppercase tracking-wide text-ink/45">Starting price</p><p className="mt-1 text-[15px] font-black text-plum-800">{startingPricePaise ? rupees(startingPricePaise) : '—'}</p>{priceUnit ? <p className="text-[9.5px] text-ink/50">{priceUnit}</p> : null}</div>
-          <div className="px-2"><p className="text-[9px] font-extrabold uppercase tracking-wide text-ink/45">Availability</p><p className="mt-1 text-[12px] font-extrabold text-ink">{String(profile?.availability_policy ?? profile?.booking_mode ?? 'Check at booking').replace(/_/g, ' ')}</p></div>
-        </div>
-      </section>
-
-      {priceLockedUntil && lockDays !== null && (
-        <section className="flex items-start gap-3 rounded-[22px] bg-gradient-to-r from-plum-50 to-white p-4 ring-1 ring-plum-100">
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-plum-100 text-plum-700"><CalendarClock size={20} /></span>
-          <div className="min-w-0">
-            <p className="text-[13px] font-extrabold text-plum-950">{lockDays > 0 ? `Next eligible price change in ${lockDays} day${lockDays === 1 ? '' : 's'}` : 'Regular price editing is available'}</p>
-            <p className="mt-0.5 text-[11.5px] leading-relaxed text-ink/60">The 15-day price policy applies to published rates. You can still update your profile, media and booking terms while prices are locked.</p>
-          </div>
-        </section>
-      )}
-
-      {shownPackages.length > 0 && (
-        <section className="rounded-[24px] bg-white p-4 ring-1 ring-ink/[0.07]">
-          <div className="mb-3 flex items-end justify-between gap-3">
-            <div><h3 className="text-[16px] font-extrabold text-plum-950">Packages & pricing</h3><p className="mt-0.5 text-[11px] text-ink/55">Swipe horizontally to review each saved package.</p></div>
-            <span className="text-[10px] font-bold text-ink/45">{shownPackages.length} saved</span>
-          </div>
-          <div className="-mx-1 overflow-x-auto px-1 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <div className="flex snap-x snap-mandatory items-stretch gap-3">
-              {shownPackages.map((pkg, index) => {
-                const price = priceOf(pkg)
-                return (
-                  <article key={pkg.id ?? pkg.name ?? index} className="flex w-[78%] max-w-[280px] shrink-0 snap-center flex-col rounded-[22px] bg-gradient-to-b from-plum-50 to-white p-4 ring-1 ring-plum-100">
-                    <p className="text-[14px] font-extrabold text-plum-950">{pkg.name || 'Package'}</p>
-                    {pkg.duration ? <p className="mt-1 text-[11px] text-ink/55">{pkg.duration} hours</p> : pkg.serviceHours ? <p className="mt-1 text-[11px] text-ink/55">{pkg.serviceHours} service hours</p> : null}
-                    <p className="mt-3 text-[23px] font-extrabold text-plum-950">{price ? rupees(price) : 'Price not set'}</p>
-                    {pkg.minGuests ? <p className="mt-1 text-[10.5px] text-ink/55">{pkg.minGuests}{pkg.maxGuests ? `–${pkg.maxGuests}` : '+'} guests</p> : null}
-                    {!!pkg.inclusions?.length && <div className="mt-3 space-y-1.5">{pkg.inclusions.map((item, i) => <p key={i} className="flex items-start gap-1.5 text-[11px] leading-snug text-ink/70"><CheckCircle2 size={12} className="mt-0.5 shrink-0 text-emerald-700"/><span>{typeof item === 'string' ? item : item?.label ?? item?.name ?? item?.id ?? String(item)}</span></p>)}</div>}
-                    <div className="mt-auto pt-4"><span className="inline-flex rounded-full bg-white px-2.5 py-1 text-[9.5px] font-extrabold text-ink/60 ring-1 ring-ink/[0.08]">{statusCopy[['ACTIVE', 'LIVE'].includes(String(pkg.status ?? '').toUpperCase()) ? 'LIVE' : String(pkg.status ?? '').toUpperCase()]?.label ?? String(pkg.status ?? 'Saved').replace(/_/g, ' ')}</span></div>
-                  </article>
-                )
-              })}
-            </div>
-          </div>
-        </section>
-      )}
-
-      <PartnerMediaLinks vendor={vendor} profile={profile ?? vendor ?? {}} />
-
-      {details.length > 0 && (
-        <section className="rounded-[22px] bg-white p-4 ring-1 ring-ink/[0.07]">
-          <h3 className="mb-2 text-[13px] font-extrabold text-plum-950">Booking & listing details</h3>
-          <div className="divide-y divide-ink/[0.05]">{details.map(([label, value]) => <Row key={label} k={label} v={value} />)}</div>
-        </section>
-      )}
-
-      <div className="grid grid-cols-2 gap-2">
-        <button type="button" onClick={onPreview} className="flex min-h-12 items-center justify-center gap-2 rounded-full bg-white px-3 text-[12.5px] font-extrabold text-plum-700 ring-1 ring-plum-300"><Eye size={16}/>Customer preview</button>
-        <button type="button" onClick={onEdit} className="flex min-h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-plum-700 to-violet-600 px-3 text-[12.5px] font-extrabold text-white shadow-sm"><Pencil size={16}/>Edit listing</button>
-      </div>
+    <div className="space-y-3 pb-5">
+      <PricingControlCenter
+        data={controlData}
+        banner={statusBanner}
+        onEdit={() => onEdit?.()}
+        onPreview={onPreview}
+        onViewPackage={key => {
+          const pkg = visiblePackages.find(item => String(item.tier) === String(key) || String(item.name) === String(key))
+          setLegacySelectedPackage(pkg || null)
+          onViewPackage?.(pkg || null)
+        }}
+      />
     </div>
   )
 }
+
 
 function StatusMetric({ label, count, glyph, tone }) {
   return (
