@@ -1,4 +1,4 @@
-import { BadgeCheck, Camera, CheckCircle2, CircleAlert, Clock3, PackageCheck, ShieldCheck } from 'lucide-react'
+import { Camera, CheckCircle2, CircleAlert, Clock3, PackageCheck, ShieldCheck } from 'lucide-react'
 
 function itemState(ok, pending) {
   if (ok) return { label: 'Ready', icon: CheckCircle2, tone: 'text-emerald-700 bg-emerald-50' }
@@ -19,12 +19,12 @@ export default function StorefrontReadiness({ vendor, draft = {}, packages = [],
   const namedPackage = Boolean(String(draft?.name || '').trim() || packages.some(pkg => String(pkg?.name || '').trim()))
   const terms = Boolean(draft?.availability_policy || draft?.commercial_inputs?.availability_policy || draft?.payment_policy || draft?.commercial_inputs?.payment_policy || draft?.cancellation_policy)
   const checks = [
-    { key: 'profile', title: 'Partner profile photo', note: avatar ? 'A profile image is saved' : 'Add a real partner or business photo', ...itemState(Boolean(avatar), false), icon: Camera, action: () => onEditStep?.('details') },
-    { key: 'portfolio', title: 'Portfolio gallery', note: approvedMedia.length ? approvedMedia.length + ' approved item(s) ready' : pendingMedia.length ? pendingMedia.length + ' item(s) waiting for review' : 'Add photos or videos from your own work', ...itemState(approvedMedia.length > 0, pendingMedia.length > 0), icon: BadgeCheck, action: () => onManageMedia?.() },
-    { key: 'package', title: 'Packages and prices', note: namedPackage && price ? 'Package name and a price are present' : 'Add a package name, price and inclusions', ...itemState(namedPackage && price, false), icon: PackageCheck, action: () => onEditStep?.('package') },
-    { key: 'terms', title: 'Booking terms', note: terms ? 'Booking or payment rules are configured' : 'Confirm booking mode, payment and cancellation', ...itemState(terms, false), icon: ShieldCheck, action: () => onEditStep?.('pricing') },
+    { key: 'profile', title: 'Partner profile photo', note: avatar ? 'A profile image is saved' : 'Add a real partner or business photo', state: itemState(Boolean(avatar), false), icon: Camera, action: () => onEditStep?.('details') },
+    { key: 'portfolio', title: 'Portfolio gallery', note: approvedMedia.length ? approvedMedia.length + ' approved item(s) ready' : pendingMedia.length ? pendingMedia.length + ' item(s) waiting for review' : 'Add photos or videos from your own work', state: itemState(approvedMedia.length > 0, pendingMedia.length > 0), icon: ShieldCheck, action: () => onManageMedia?.() },
+    { key: 'package', title: 'Packages and prices', note: namedPackage && price ? 'Package name and a price are present' : 'Add a package name, price and inclusions', state: itemState(namedPackage && price, false), icon: PackageCheck, action: () => onEditStep?.('package') },
+    { key: 'terms', title: 'Booking terms', note: terms ? 'Booking or payment rules are configured' : 'Confirm booking mode, payment and cancellation', state: itemState(terms, false), icon: ShieldCheck, action: () => onEditStep?.('pricing') },
   ]
-  const ready = checks.filter(check => check.label === 'Ready').length
+  const ready = checks.filter(check => check.state.label === 'Ready').length
   return (
     <section className="sfr-card" aria-label="Storefront content readiness">
       <div className="sfr-head">
@@ -39,11 +39,12 @@ export default function StorefrontReadiness({ vendor, draft = {}, packages = [],
       <div className="sfr-list">
         {checks.map(check => {
           const Icon = check.icon
+          const StateIcon = check.state.icon
           return (
             <button type="button" className="sfr-row" key={check.key} onClick={check.action}>
               <span className="sfr-icon"><Icon size={17} /></span>
               <span className="sfr-copy"><strong>{check.title}</strong><small>{check.note}</small></span>
-              <span className={'sfr-status ' + (check.tone || '')}>{check.label}</span>
+              <span className={'sfr-status ' + (check.state.tone || '')}><StateIcon size={11} /> {check.state.label}</span>
             </button>
           )
         })}
