@@ -104,6 +104,7 @@ export default function TradePricing({ service, vendor, onEdit, onOpenPayout }) 
      before the migration and no better, which is the honest failure. */
   const [preview, setPreview] = useState(false)
   const [previewData, setPreviewData] = useState(null)
+  const [selectedPreviewPackage, setSelectedPreviewPackage] = useState(null)
   useEffect(() => {
     if (!preview) return
     let live = true
@@ -319,10 +320,32 @@ export default function TradePricing({ service, vendor, onEdit, onOpenPayout }) 
                     {PREVIEW_NOTE[previewData.state] ?? 'This is a preview. It is not live yet.'}
                   </p>
                 )}
-                <TradeListingCard listing={previewData} tradeName={config.name} />
+                <TradeListingCard listing={previewData} tradeName={config.name} onPick={setSelectedPreviewPackage} />
                 <div className="mt-4"><PartnerMediaLinks vendor={vendor} profile={previewData.profile ?? {}} /></div>
               </>
             )}
+      </Sheet>
+
+      <Sheet open={!!selectedPreviewPackage} onOpenChange={o => !o && setSelectedPreviewPackage(null)} title={selectedPreviewPackage?.name ?? 'Package details'}>
+        {selectedPreviewPackage && (
+          <div className="space-y-3">
+            <div className="rounded-[22px] bg-gradient-to-br from-plum-50 to-white p-4 ring-1 ring-plum-100">
+              <p className="text-[25px] font-extrabold tracking-tight text-plum-950">{rupees(selectedPreviewPackage.customer_paise)}</p>
+              {selectedPreviewPackage.hours && <p className="mt-1 text-[12px] font-bold text-ink/55">{selectedPreviewPackage.hours} hours included</p>}
+              {selectedPreviewPackage.description && <p className="mt-2 text-[12.5px] leading-relaxed text-ink/70">{selectedPreviewPackage.description}</p>}
+            </div>
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">Included in this package</p>
+            {(selectedPreviewPackage.inclusions ?? []).length
+              ? selectedPreviewPackage.inclusions.map((item, i) => <p key={i} className="flex items-start gap-2 text-[12.5px] font-semibold text-ink/75"><span className="text-emerald-700">✓</span><span>{typeof item === 'string' ? item : item.label ?? item.id}</span></p>)
+              : <p className="text-[12.5px] text-ink/55">The saved listing does not provide a separate inclusions list for this package.</p>}
+            {(selectedPreviewPackage.addons ?? []).length > 0 && (
+              <>
+                <p className="pt-2 text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">Available extras</p>
+                {selectedPreviewPackage.addons.map((item, i) => <Line key={item.addon_id ?? item.id ?? i} k={item.label ?? item.name} v={item.customer_paise ? rupees(item.customer_paise) : 'As listed'} sub={item.unit} />)}
+              </>
+            )}
+          </div>
+        )}
       </Sheet>
 
       <Sheet open={sheet === 'seasonal'} onOpenChange={o => !o && setSheet(null)} title="Update seasonal prices">
