@@ -30,7 +30,7 @@ const unitOf = value => UNIT_LABEL[value] ?? String(value ?? '').replace(/^per_/
 const asArray = value => Array.isArray(value) ? value : typeof value === 'string' ? value.split(',').map(x => x.trim()).filter(Boolean) : []
 const valueLabel = value => typeof value === 'string' || typeof value === 'number' ? String(value) : value?.label ?? value?.name ?? value?.value ?? value?.id ?? ''
 const nonEmpty = value => value !== undefined && value !== null && value !== '' && !(Array.isArray(value) && !value.length)
-const isInstant = terms => terms?.instant === true || terms?.instant === 'true' || terms?.availability_policy === 'instant' || terms?.booking_mode === 'instant'
+const isInstant = terms => terms?.instant === true || ['true', 'instant', 'on'].includes(String(terms?.instant ?? '').toLowerCase()) || terms?.availability_policy === 'instant' || terms?.booking_mode === 'instant'
 const statusText = status => ({
   DRAFT: 'Draft preview · customers cannot see this version yet.',
   UNDER_REVIEW: 'This version is with our team. Customers continue to see your live listing, if you have one.',
@@ -157,6 +157,7 @@ export default function TradeListingCard({ listing, tradeName, onPick, showBooki
         <div className="relative flex min-h-[226px] flex-col justify-between p-4">
           <div className="max-w-[77%]">
             <p className="text-[9px] font-black uppercase tracking-[.18em] text-[#13549c]">SAMBRAMO · {tradeName || listing.trade_name || listing.trade_id || 'EVENT SERVICE'}</p>
+            {hasPendingMedia ? <p className="mt-2 inline-flex rounded-full border border-amber-200 bg-amber-50/95 px-2.5 py-1 text-[9px] font-extrabold text-amber-900">Portfolio awaiting review</p> : null}
             <h2 className="mt-4 max-w-[340px] text-[25px] font-black leading-[1.02] tracking-[-.04em] text-[#071b58]">{profile.hero_title || listing.hero_title || 'Make Your Service Unforgettable'}</h2>
             <p className="mt-2 max-w-[340px] text-[11px] font-semibold leading-snug text-[#123a79]">{description || 'Trusted professionals · tailored services · memorable experiences'}</p>
           </div>

@@ -251,10 +251,16 @@ jobs:
           # contributes variables, but the generated Gradle script still includes it.
           mkdir -p android/capacitor-cordova-android-plugins
           touch android/capacitor-cordova-android-plugins/cordova.variables.gradle
+          test -f android/capacitor-cordova-android-plugins/cordova.variables.gradle
 
       - name: Build
         working-directory: android
         run: |
+          # Recreate it in Gradle's own working directory as well. Capacitor
+          # plugin sync can omit it when there are no Cordova variables.
+          mkdir -p capacitor-cordova-android-plugins
+          touch capacitor-cordova-android-plugins/cordova.variables.gradle
+          test -f capacitor-cordova-android-plugins/cordova.variables.gradle
           chmod +x gradlew
           ./gradlew \
             assemble${{ matrix.flavour == 'customer' && 'Customer' || 'Partner' }}Debug \
