@@ -724,7 +724,7 @@ function toView(d, service) {
         tier: t, name: p.name, status: p.status,
         price_paise: Number(ti.customer_paise) || 0, take_home_paise: Number(ti.take_home_paise) || 0,
         hours: Number(ti.duration_hours) || 0, sessions: rule?.included_sessions ?? null,
-        inclusions: (p.commercial_inputs.inclusions ?? []).map(label),
+        inclusions: (Array.isArray(p.commercial_inputs?.inclusions) ? p.commercial_inputs.inclusions : typeof p.commercial_inputs?.inclusions === 'string' ? p.commercial_inputs.inclusions.split(',').map(x => x.trim()).filter(Boolean) : []).map(label),
         edited: !!ti.edited_by_partner, basis: snap.basis,
         extra_hour_paise: rule?.extra_hour_take_home_paise ? Math.round(rule.extra_hour_take_home_paise / (1 - (snap.platform_fee_rate ?? 0.08)) / 10) * 10 : null,
       }
@@ -766,7 +766,7 @@ function toView(d, service) {
         r.included_sessions && `${r.included_sessions} function${r.included_sessions > 1 ? 's' : ''}`,
         r.multi_day?.max_days && `up to ${r.multi_day.max_days} days`].filter(Boolean).join(' · ') || 'Fixed price',
     })),
-    addons: d.addons.map(a => ({ name: a.label, paise: a.customer_paise, unit: UNIT_LABEL[a.unit] ?? '', in: (a.included_in ?? []).map(title) })),
+    addons: d.addons.map(a => ({ name: a.label, paise: a.customer_paise, unit: UNIT_LABEL[a.unit] ?? '', in: (Array.isArray(a.included_in) ? a.included_in : typeof a.included_in === 'string' ? a.included_in.split(',').map(x => x.trim()).filter(Boolean) : []).map(title) })),
     charges,
     rules: [
       { k: 'Instant booking', v: br.instant === false ? 'Off' : 'On' },
