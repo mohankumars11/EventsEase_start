@@ -18,7 +18,7 @@
  * own (role, languages, event groups) that the engine trades do not.
  */
 import { useEffect, useState } from 'react'
-import { MapPin, Star, Check, Clock, Package, Boxes, Plus, Info, UserRound, Camera, Mic2 } from 'lucide-react'
+import { MapPin, Star, Check, Clock, Package, Boxes, Plus, Info, UserRound, Camera, Mic2, ShieldCheck, CreditCard, BadgeCheck } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { rupees } from '../../lib/tierPackages'
 
@@ -235,6 +235,24 @@ export default function TradeListingCard({ listing, tradeName, onPick, showBooki
           <Row key={i} k={c.label} v={rupees(c.customer_paise)} sub={c.role} />
         ))}
       </Section>
+
+      <section className="grid grid-cols-3 gap-2 border-t border-ink/[0.06] bg-gradient-to-r from-plum-50 via-white to-violet-50 px-3 py-3">
+        <div className="flex min-w-0 flex-col items-center gap-1 text-center">
+          <ShieldCheck size={20} className="text-plum-700" />
+          <b className="text-[9.5px] font-extrabold text-plum-950">Clear pricing</b>
+          <span className="text-[8px] leading-tight text-ink/50">Rates shown upfront</span>
+        </div>
+        <div className="flex min-w-0 flex-col items-center gap-1 text-center">
+          <CreditCard size={20} className="text-plum-700" />
+          <b className="text-[9.5px] font-extrabold text-plum-950">Secure checkout</b>
+          <span className="text-[8px] leading-tight text-ink/50">Total confirmed before payment</span>
+        </div>
+        <div className="flex min-w-0 flex-col items-center gap-1 text-center">
+          <BadgeCheck size={20} className={verified ? "text-emerald-700" : "text-plum-700"} />
+          <b className="text-[9.5px] font-extrabold text-plum-950">{verified ? "Verified partner" : "Partner status"}</b>
+          <span className="text-[8px] leading-tight text-ink/50">{verified ? "Verification complete" : "Status shown transparently"}</span>
+        </div>
+      </section>
 
       {showBookingCtaPreview && (
         <div className="border-t border-ink/[0.06] p-4">
