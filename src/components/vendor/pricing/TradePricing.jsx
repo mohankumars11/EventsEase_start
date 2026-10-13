@@ -366,7 +366,7 @@ export default function TradePricing({ service, vendor, onEdit, onOpenPayout }) 
                   )}
                   <StorefrontReadiness vendor={vendor} draft={previewData} packages={previewData.packages ?? []} media={previewMedia.rows}
                     onEditStep={() => { setPreview(false); onEdit?.() }} onManageMedia={() => { setPreview(false); onEdit?.() }} />
-                  <TradeListingCard listing={previewData} tradeName={config.name} onPick={setSelectedPreviewPackage}
+                  <TradeListingCard listing={{ ...previewData, business_name: previewData.business_name ?? vendor?.business_name, avatar_url: previewData.avatar_url ?? vendor?.avatar_url, city: previewData.city ?? [vendor?.area, vendor?.city].filter(Boolean).join(', '), rating: previewData.rating ?? vendor?.rating_avg, is_verified: previewData.is_verified ?? vendor?.is_verified }} tradeName={config.name} onPick={setSelectedPreviewPackage
                     media={previewMedia.rows}
                     avatarSlot={<PartnerAvatarInput vendor={vendor} draft={{ profile: previewData.profile ?? {} }} businessName={previewData.profile?.business_name ?? previewData.profile?.stage_name ?? vendor?.business_name ?? 'Your business'} editable variant="marketplace" />} />
                   <div className="mt-4"><PartnerMediaLinks vendor={vendor} profile={previewData.profile ?? {}} visibility={previewData.is_live === true ? 'customer' : 'partner'} /></div>
