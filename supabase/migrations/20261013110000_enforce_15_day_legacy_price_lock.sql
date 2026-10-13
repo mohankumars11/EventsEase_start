@@ -236,9 +236,9 @@ begin
    order by r.version desc
    limit 1;
 
-  v_locked_until := greatest(
-    coalesce(v_parent.price_locked_until, '-infinity'::timestamptz),
-    coalesce(coalesce(v_current_rate.effective_from, v_current_rate.created_at) + make_interval(days => v_lock_days), '-infinity'::timestamptz)
+  v_locked_until := coalesce(
+    coalesce(v_current_rate.effective_from, v_current_rate.created_at, v_parent.updated_at) + make_interval(days => v_lock_days),
+    '-infinity'::timestamptz
   );
 
   if v_locked_until > now() then
