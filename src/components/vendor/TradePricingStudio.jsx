@@ -310,6 +310,7 @@ export default function TradePricingStudio({ vendor, service, config, onBack, on
         draft={editor}
         setDraft={setEditor}
         readOnly={false}
+        previewOnly={launchEditorInPreview}
         initialStep={launchEditorInPreview ? 'preview' : 'package'}
         onBack={() => { setEditor(null); setLaunchEditorInPreview(false) }}
         onboarding={onboarding}
@@ -404,7 +405,7 @@ export default function TradePricingStudio({ vendor, service, config, onBack, on
   )
 }
 
-function TradePackageEditor({ vendor, service, config, packages = [], draft, setDraft, readOnly, onBack, onSaved, onOpenListings, onboarding = false, initialStep = 'package' }) {
+function TradePackageEditor({ vendor, service, config, packages = [], draft, setDraft, readOnly, onBack, onSaved, onOpenListings, onboarding = false, initialStep = 'package', previewOnly = false }) {
   const [activeStep, setActiveStep] = useState(initialStep)
   const [saving, setSaving] = useState(false)
   const [localError, setLocalError] = useState('')
@@ -664,19 +665,17 @@ function TradePackageEditor({ vendor, service, config, packages = [], draft, set
   return (
     <div className="trade-pricing-screen w-full min-w-0 pb-[calc(9rem+env(safe-area-inset-bottom))]">
       <header className="trade-pricing-editor-header">
-        <button type="button" onClick={goPrevious} aria-label={activeStep === 'package' ? 'Back to pricing list' : 'Previous step'} className="trade-pricing-back">
+        <button type="button" onClick={previewOnly ? onBack : goPrevious} aria-label={previewOnly ? 'Back to listing details' : activeStep === 'package' ? 'Back to pricing list' : 'Previous step'} className="trade-pricing-back">
           <ChevronLeft size={21} />
         </button>
         <div className="min-w-0 flex-1">
           <p className="trade-pricing-overline">Pricing · {config.name}</p>
           <h1>{draft.name || service?.name || 'New package'}</h1>
         </div>
-        <button type="button" onClick={() => setActiveStep('preview')} aria-label="Customer preview" className="trade-pricing-eye">
-          <Eye size={20} />
-        </button>
+        {!previewOnly ? <button type="button" onClick={() => setActiveStep('preview')} aria-label="Customer preview" className="trade-pricing-eye"><Eye size={20} /></button> : null}
       </header>
 
-      <StepRail activeStep={activeStep} ready={ready} onSelect={goTo} />
+      {!previewOnly ? <StepRail activeStep={activeStep} ready={ready} onSelect={goTo} /> : null}
 
       {localError ? <section className="trade-pricing-error">{localError}</section> : null}
       {saveNotice ? <section role="status" aria-live="polite" className="trade-pricing-save-success"><Check size={16} /><span>{saveNotice}</span></section> : null}
@@ -710,17 +709,17 @@ function TradePackageEditor({ vendor, service, config, packages = [], draft, set
       ) : null}
 
       {activeStep === 'preview' ? (
-        <PreviewStep vendor={vendor} service={service} packages={packages} config={config} draft={draft} fields={fields} addons={addons} media={media} onOpenListings={onOpenListings} onManageMedia={() => setMediaOpen(true)} onPreviewAction={message => setPreviewAction(message)} onEditStep={goTo} />
+        <PreviewStep vendor={vendor} service={service} packages={packages} config={config} draft={draft} fields={fields} addons={addons} media={media} onOpenListings={onOpenListings} onManageMedia={previewOnly ? undefined : () => setMediaOpen(true)} onPreviewAction={message => setPreviewAction(message)} onEditStep={previewOnly ? undefined : goTo} />
       ) : null}
 
-      {!readOnly && isPreview ? (
+      {!readOnly && !previewOnly && isPreview ? (
         <div className="trade-pricing-review-summary">
           <strong>{validation.length ? validation.length + ' required ' + (validation.length === 1 ? 'item' : 'items') + ' remaining' : 'Ready for Sambramo review'}</strong>
           <span>{validation.length ? 'Tap Submit to see exactly what needs to be completed.' : 'All mandatory pricing inputs are complete.'}</span>
         </div>
       ) : null}
 
-      {!readOnly ? (
+      {!readOnly && !previewOnly ? (
         <div className="trade-pricing-bottom">
           <button type="button" data-pricing-action="save-draft" onClick={() => save('DRAFT')} disabled={saving} aria-disabled={saving} className="trade-pricing-secondary-action">
             {saving ? 'Saving…' : 'Save draft'}
