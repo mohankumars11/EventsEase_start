@@ -116,13 +116,15 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
       }
       const packagesById = {}
       const priceById = {}
+      const draftPriceById = {}
       const priceUnitById = {}
       const packageDetailsById = {}
       const priceLockById = {}
       for (const p of packages) {
         if (!p.vendor_service_id) continue
         packagesById[p.vendor_service_id] = (packagesById[p.vendor_service_id] ?? 0) + (p.status === 'ARCHIVED' ? 0 : 1)
-        const priceBook = priceBooks.find(row => row.offering_id === String(p.id) && row.vendor_service_id === p.vendor_service_id && row.component_id === 'base') ?? null
+        const packageBooks = priceBooks.filter(row => row.offering_id === String(p.id) && row.vendor_service_id === p.vendor_service_id && row.component_id === 'base')
+        const priceBook = packageBooks.find(row => row.status === 'active') ?? packageBooks.find(row => row.status === 'draft') ?? packageBooks[0] ?? null
         const savedRatePaise = Number(priceBook?.rate_paise ?? p.trade_inputs?.take_home_paise ?? p.take_home_paise ?? 0)
         if (p.status !== 'ARCHIVED') (packageDetailsById[p.vendor_service_id] ??= []).push({
           id: p.id, name: p.name, description: p.description, status: p.status,
@@ -130,7 +132,10 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
           duration: p.trade_inputs?.duration_hours ?? p.trade_inputs?.duration ?? priceBook?.quantity_formula?.included_duration ?? null,
           inclusions: Array.isArray(p.commercial_inputs?.inclusions) ? p.commercial_inputs.inclusions : [],
         })
-        if (savedRatePaise > 0 && p.status !== 'ARCHIVED') priceById[p.vendor_service_id] = Math.min(priceById[p.vendor_service_id] ?? savedRatePaise, savedRatePaise)
+        if (savedRatePaise > 0 && p.status !== 'ARCHIVED') {
+          const target = p.status === 'LIVE' ? priceById : draftPriceById
+          target[p.vendor_service_id] = Math.min(target[p.vendor_service_id] ?? savedRatePaise, savedRatePaise)
+        }
       }
       for (const p of catering) {
         if (!p.vendor_service_id || p.status === 'ARCHIVED') continue
@@ -147,9 +152,11 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
           return Number.isFinite(rupeesValue) && rupeesValue > 0 ? Math.round(rupeesValue * 100) : 0
         }).filter(rate => rate > 0)
         const ratePerGuestPaise = rates.length ? Math.min(...rates) : 0
-        if (ratePerGuestPaise > 0 && !(priceById[p.vendor_service_id] > 0)) {
-          priceById[p.vendor_service_id] = ratePerGuestPaise
-          priceUnitById[p.vendor_service_id] = 'per guest'
+        if (ratePerGuestPaise > 0) {
+          const isPublished = ['ACTIVE', 'LIVE'].includes(String(p.status).toUpperCase())
+          const target = isPublished ? priceById : draftPriceById
+          if (!(target[p.vendor_service_id] > 0)) target[p.vendor_service_id] = ratePerGuestPaise
+          if (isPublished) priceUnitById[p.vendor_service_id] = 'per guest'
         }
       }
       for (const id of ids) {
@@ -170,6 +177,8 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
         const activeLocks = candidates.filter(value => value && new Date(value) > new Date())
         if (activeLocks.length) priceLockById[id] = activeLocks.sort((a, b) => new Date(b) - new Date(a))[0]
       }
+      for (const id of ids) if (!(priceById[id] > 0) && draftPriceById[id] > 0) priceById[id] = draftPriceById[id]
+
       const futureLocks = ids.map(id => priceLockById[id] ? ({ date: priceLockById[id], serviceId: id }) : null)
         .filter(Boolean).sort((a, b) => new Date(a.date) - new Date(b.date))
       setListingMeta({ byId, packagesById, priceById, priceUnitById, packageDetailsById, priceLockById, nextPriceDate: futureLocks[0]?.date ?? null, nextPriceServiceId: futureLocks[0]?.serviceId ?? null, loading: false })
