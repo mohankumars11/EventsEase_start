@@ -130,8 +130,13 @@ export default function WorkUpload({
           flac: 'audio/flac',
         })[extension] ?? 'audio/mpeg'
         const fallbackVideoType = ({ mov: 'video/quicktime', webm: 'video/webm' })[extension] ?? 'video/mp4'
+        const allowedAudioTypes = new Set([
+          'audio/mpeg', 'audio/mp4', 'audio/aac', 'audio/wav', 'audio/x-wav',
+          'audio/ogg', 'audio/webm', 'audio/flac', 'audio/x-m4a',
+        ])
+        const detectedAudioType = String(file.type || '').toLowerCase()
         const contentType = isAudio
-          ? (file.type.startsWith('audio/') ? file.type : fallbackAudioType)
+          ? (allowedAudioTypes.has(detectedAudioType) ? detectedAudioType : fallbackAudioType)
           : isVideo
             ? (file.type.startsWith('video/') ? file.type : fallbackVideoType)
             : isPdf ? 'application/pdf'
