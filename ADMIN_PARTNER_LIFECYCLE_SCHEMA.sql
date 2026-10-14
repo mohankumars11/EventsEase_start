@@ -1,5 +1,9 @@
 -- Sambramo Partner Lifecycle Control Centre
 -- Additive PostgreSQL schema for partner-specific internal notes and state-change history.
+-- Remove customer-console audit scaffolding from the earlier draft; this control centre is partner-only.
+drop trigger if exists trg_admin_audit_customer_role_lifecycle on public.profiles;
+drop function if exists public.audit_customer_role_lifecycle_update();
+
 -- Source of truth remains vendors, vendor_services, partner_listings, vendor_documents,
 -- partner_work, vendor_payout_details and the existing pricing tables.
 -- This file is a consolidated reference for Supabase SQL tooling; it does not seed demo data.
