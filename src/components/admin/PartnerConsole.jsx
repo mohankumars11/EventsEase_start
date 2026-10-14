@@ -959,7 +959,7 @@ function ClosureQueue({ data, byVendor, onOpen }) {
    per-vendor and this drawer already holds every row it reads, so a
    round trip would buy nothing and add a spinner to a sheet that is
    otherwise instant. */
-function PartnerDrawer({ vendor: v, services, tradeListings = [], docs, payout, payoutAccount = null, payoutsReadable = true, work = [], pricing = { trade: [], catering: [] }, audit = [], notes = [], activityEvents = [], verificationEvents = [], bookingLines = [], dispatchOffers = [], payoutClaims = [], payoutAccount = null, adjustments = [], subscriptions = [], referrals = [], referralInvites = [], actorId, onClose, onChanged }) {
+function PartnerDrawer({ vendor: v, services, tradeListings = [], docs, payout, payoutAccount = null, payoutsReadable = true, work = [], pricing = { trade: [], catering: [] }, audit = [], notes = [], activityEvents = [], verificationEvents = [], bookingLines = [], dispatchOffers = [], payoutClaims = [], adjustments = [], subscriptions = [], referrals = [], referralInvites = [], actorId, onClose, onChanged }) {
   const toast = useToast()
   const [busy, setBusy] = useState(null)
   const [noteText, setNoteText] = useState('')
