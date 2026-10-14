@@ -3,6 +3,8 @@ import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { resolveNav } from '../../config/adminNav'
 import AdminShell from '../../components/admin/AdminShell'
+import ExecutiveOverview from '../../components/admin/ExecutiveOverview'
+import CustomerConsole from '../../components/admin/CustomerConsole'
 import PartnerConsole from '../../components/admin/PartnerConsole'
 import VerificationQueue from '../../components/admin/VerificationQueue'
 import MarketInterest from '../../components/admin/MarketInterest'
@@ -10,48 +12,13 @@ import LiveOperations from '../../components/admin/LiveOperations'
 import PricingReviewQueue from '../../components/admin/PricingReviewQueue'
 import AnchorListingAdmin from '../../components/admin/AnchorListingAdmin'
 
-/**
- * The admin console: a frame and one screen.
- *
- * ══════════════════════════════════════════════════════════════════════
- * WHY THIS FILE IS NINETY LINES INSTEAD OF A HUNDRED AND FIFTY
- * ══════════════════════════════════════════════════════════════════════
- *
- * It used to lazy-import nine screens and switch between fourteen nav
- * ids. All of them are gone — deleted, not hidden — because the console
- * covered five subjects adequately and the one subject with a live
- * defect had nowhere to fix it. See the note in config/adminNav.
- *
- * What is left is what genuinely belongs to a page component: work out
- * the badge, remember which screen is showing, and render the shell.
- *
- * ══════════════════════════════════════════════════════════════════════
- * THE TEN-TABLE LOAD IS GONE TOO
- * ══════════════════════════════════════════════════════════════════════
- *
- * `useAdminData` fetched events, proposals, payments, profiles, vendors,
- * enquiries, reviews, complaints, interest and services on every mount,
- * to feed screens that no longer exist. It has been deleted, and with it
- * a real bug: its cleanup called `clearInterval(floor)` where `floor`
- * was never declared, so every unmount threw a ReferenceError BEFORE
- * `supabase.removeChannel()` ran and the realtime channel leaked.
- *
- * PartnerConsole loads exactly what it needs, itself. The only thing
- * this page still reads is the count for the rail badge — one head
- * query, no rows — because a queue should announce itself before it is
- * opened.
- */
 export default function AdminDashboard() {
   const { profile } = useAuth()
-  const [activeNav, setActiveNav] = useState('partners')
+  const [activeNav, setActiveNav] = useState('overview')
   const [waiting, setWaiting] = useState(0)
   const [pricingWaiting, setPricingWaiting] = useState(0)
   const [refreshing, setRefreshing] = useState(false)
 
-  /* Two counts, no rows: businesses waiting to be approved, and listings
-     waiting to be read. They are summed because the rail has one badge
-     and both mean the same thing to the person looking at it — there is
-     something here for you. */
   const loadBadge = useCallback(async () => {
     setRefreshing(true)
     try {
@@ -61,16 +28,15 @@ export default function AdminDashboard() {
         supabase.from('vendor_services').select('id', { count: 'exact', head: true })
           .eq('review_status', 'under_review'),
         supabase.from('sambramo_trade_packages').select('id', { count: 'exact', head: true })
-          .in('status', ['UNDER_REVIEW','ACTION_REQUIRED']),
+          .in('status', ['UNDER_REVIEW', 'ACTION_REQUIRED']),
         supabase.from('sambramo_catering_packages').select('id', { count: 'exact', head: true })
-          .in('status', ['UNDER_REVIEW','ACTION_REQUIRED']),
+          .in('status', ['UNDER_REVIEW', 'ACTION_REQUIRED']),
       ])
       setWaiting((v.count ?? 0) + (s.count ?? 0))
       setPricingWaiting((tp.count ?? 0) + (cp.count ?? 0))
     } catch {
-      /* A badge is an ornament. It must never be the reason the console
-         fails to open. */
       setWaiting(0)
+      setPricingWaiting(0)
     } finally {
       setRefreshing(false)
     }
@@ -83,6 +49,15 @@ export default function AdminDashboard() {
     window.scrollTo({ top: 0, behavior: 'instant' })
   }
 
+  const screen = activeNav === 'overview' ? <ExecutiveOverview onNavigate={go} />
+    : activeNav === 'customers' ? <CustomerConsole />
+    : activeNav === 'city-interest' ? <MarketInterest />
+    : activeNav === 'live-ops' ? <LiveOperations />
+    : activeNav === 'verification' ? <VerificationQueue />
+    : activeNav === 'pricing-review' ? <PricingReviewQueue />
+    : activeNav === 'listing-review' ? <AnchorListingAdmin />
+    : <PartnerConsole />
+
   return (
     <AdminShell
       activeNav={activeNav}
@@ -92,18 +67,7 @@ export default function AdminDashboard() {
       onRefresh={loadBadge}
       refreshing={refreshing}
     >
-      {/* Two screens now, and the registry in config/adminNav decides
-          which. The console is still the default and still the one with
-          a badge — a queue announces itself; a map does not. */}
-      {/* Three screens now, so this is a switch rather than a
-          ternary -- a second nested ternary is where the wrong screen
-          starts rendering for the wrong nav id. */}
-      {activeNav === 'city-interest' ? <MarketInterest />
-        : activeNav === 'live-ops' ? <LiveOperations />
-        : activeNav === 'verification' ? <VerificationQueue />
-        : activeNav === 'pricing-review' ? <PricingReviewQueue />
-        : activeNav === 'listing-review' ? <AnchorListingAdmin />
-        : <PartnerConsole />}
+      {screen}
     </AdminShell>
   )
 }
