@@ -70,8 +70,13 @@ export default function ExecutiveOverview({ onNavigate }) {
     const suspended = vendors.filter(v => v.verification_status === 'suspended' || v.suspended_at)
     const stranded = approved.filter(v => !live.some(s => s.vendor_id === v.id))
     const revised = services.filter(s => s.is_active && s.review_status === 'live' && s.revised_at && (!s.reviewed_at || new Date(s.revised_at) > new Date(s.reviewed_at)))
-    const pendingDocs = data.docs.filter(d => ['pending','submitted','under_review','needs_review'].includes(String(d.status || '').toLowerCase()) || ['pending','submitted','under_review'].includes(String(d.provider_status || '').toLowerCase()))
-    const pendingPricing = [...data.tradePrices, ...data.cateringPrices].filter(x => ['UNDER_REVIEW','ACTION_REQUIRED'].includes(x.status))
+    const documents = data.docs.filter(d => partnerIds.has(d.vendor_id))
+    const pendingDocs = documents.filter(d => ['pending','submitted','under_review','needs_review'].includes(String(d.status || '').toLowerCase()) || ['pending','submitted','under_review'].includes(String(d.provider_status || '').toLowerCase()))
+    const tradePrices = data.tradePrices.filter(p => partnerIds.has(p.vendor_id))
+    const cateringPrices = data.cateringPrices.filter(p => partnerIds.has(p.vendor_id))
+    const allPricingPackages = [...tradePrices, ...cateringPrices]
+    const pendingPricing = allPricingPackages.filter(x => ['UNDER_REVIEW','ACTION_REQUIRED'].includes(x.status))
+    const livePricingPackages = allPricingPackages.filter(x => ['LIVE','PUBLISHED','ACTIVE'].includes(String(x.status || '').toUpperCase()))
     const dispatchOffers = data.dispatchOffers.filter(o => partnerIds.has(o.vendor_id))
     const linkedLineIds = new Set(dispatchOffers.map(o => o.line_id))
     const bookingLines = data.bookingLines.filter(l => linkedLineIds.has(l.id))
@@ -124,8 +129,13 @@ export default function ExecutiveOverview({ onNavigate }) {
       vendors, services, live, dispatchable, waiting, approved, suspended, stranded, revised, pendingDocs, pendingPricing,
       lifecycle, timeline, leaders, topCards, alerts, tradeListings: data.trades.filter(t => partnerIds.has(t.vendor_id)),
       tradeCount: new Set(data.trades.filter(t => partnerIds.has(t.vendor_id)).map(t => t.trade_id || t.trade)).size,
-      liveWork: data.work.filter(w => w.review_status === 'live').length,
-      payoutReady: data.payouts.filter(p => !!p.verified_at).length,
+      liveWork: data.work.filter(w => partnerIds.has(w.vendor_id) && w.review_status === 'live').length,
+      documentCount: documents.length,
+      livePricingPackages: livePricingPackages.length,
+      payoutReady: new Set([
+        ...data.payouts.filter(p => partnerIds.has(p.vendor_id) && !!p.verified_at).map(p => p.vendor_id),
+        ...data.payoutAccounts.filter(p => partnerIds.has(p.vendor_id) && !!p.kyc_verified_at).map(p => p.vendor_id),
+      ]).size,
       dispatchOffers, bookingLines, payoutClaims, openPayoutClaims, acceptedOffers, expiredOffers, referrals,
       activePartners30d: activeIds.size,
       partnerEvents30d: recentPartnerEvents.filter(e => (e.vendor_id && partnerIds.has(e.vendor_id)) || vendors.some(v => v.profile_id && v.profile_id === e.profile_id)).length,
