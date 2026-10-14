@@ -17,8 +17,7 @@
   ],
   "git": {
     "deploymentEnabled": {
-      "feature/partner-anchor-pricing-engine-20261010": false,
-      "feature/admin-partner-customer-lifecycle": false
+      "feature/partner-anchor-pricing-engine-20261010": false
     }
   }
 }
