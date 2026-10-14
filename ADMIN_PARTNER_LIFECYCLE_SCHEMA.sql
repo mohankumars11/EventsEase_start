@@ -14,6 +14,7 @@ create table if not exists public.admin_lifecycle_notes (
   created_by uuid references public.profiles(id) on delete set null,
   created_at timestamptz not null default now()
 );
+drop index if exists public.admin_lifecycle_notes_customer_time_idx;
 alter table public.admin_lifecycle_notes drop constraint if exists admin_lifecycle_notes_exactly_one_target;
 alter table public.admin_lifecycle_notes drop constraint if exists admin_lifecycle_notes_target_type_check;
 alter table public.admin_lifecycle_notes drop column if exists customer_id;
@@ -45,6 +46,7 @@ create table if not exists public.admin_lifecycle_audit (
   note text,
   created_at timestamptz not null default now()
 );
+drop index if exists public.admin_lifecycle_audit_customer_time_idx;
 alter table public.admin_lifecycle_audit drop constraint if exists admin_lifecycle_audit_entity_type_check;
 alter table public.admin_lifecycle_audit drop column if exists customer_id;
 alter table public.admin_lifecycle_audit add constraint admin_lifecycle_audit_entity_type_check
