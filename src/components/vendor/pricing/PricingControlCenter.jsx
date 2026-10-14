@@ -26,9 +26,13 @@ const MODEL = {
 const TIER = { ESSENTIAL: [Award, 'text-amber-700', 'from-amber-50'], SIGNATURE: [Crown, 'text-plum-700', 'from-plum-50'], VIP: [Gem, 'text-sky-700', 'from-sky-50'] }
 const humanize = value => String(value || 'Pricing model').replace(/[_-]+/g, ' ').replace(/\\b\\w/g, char => char.toUpperCase())
 const STATUS_LOOK = {
-  LIVE: ['Live', 'bg-forest-600 text-white'], UNDER_REVIEW: ['Submitted for review', 'bg-amber-100 text-amber-900'],
-  ACTION_REQUIRED: ['Changes requested', 'bg-rose-100 text-rose-800'], DRAFT: ['Draft', 'bg-ink/10 text-ink/70'],
-  APPROVED: ['Approved', 'bg-forest-100 text-forest-800'], SUSPENDED: ['Suspended', 'bg-rose-600 text-white'],
+  LIVE: ['Live', 'bg-forest-50 text-forest-700 ring-forest-200'],
+  UNDER_REVIEW: ['Review in progress', 'bg-amber-50 text-amber-800 ring-amber-200'],
+  ACTION_REQUIRED: ['Action needed', 'bg-rose-50 text-rose-800 ring-rose-200'],
+  REJECTED: ['Review in progress', 'bg-amber-50 text-amber-800 ring-amber-200'],
+  DRAFT: ['Draft', 'bg-ink/5 text-ink/65 ring-ink/10'],
+  APPROVED: ['Live', 'bg-forest-50 text-forest-700 ring-forest-200'],
+  SUSPENDED: ['Suspended', 'bg-rose-50 text-rose-800 ring-rose-200'],
 }
 const fmtDate = d => new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
 
@@ -63,63 +67,53 @@ export default function PricingControlCenter({ data, onEdit, onSeasonal, onPayou
   const [statusLabel, statusClass] = STATUS_LOOK[d.status] ?? STATUS_LOOK.DRAFT
   return (
     <div className="space-y-3">
-      <div>
-        <h1 className="text-[clamp(1.35rem,6vw,1.6rem)] font-extrabold leading-tight tracking-tight text-plum-950">Pricing Control Center</h1>
-        <p className="mt-1 text-[13px] text-ink/60">Manage your services, packages, prices and booking rules in one place.</p>
+      {/* Compact moderation status. The service heading lives just above this component. */}
+      <div className="flex min-w-0 items-center justify-between gap-2">
+        <span className={`inline-flex min-h-8 items-center gap-2 rounded-full px-3 py-1 text-[12px] font-extrabold ring-1 ${statusClass}`}>
+          <span className="h-2 w-2 rounded-full bg-current opacity-75" />
+          {statusLabel}
+        </span>
+        {d.published_at ? <span className="truncate text-[11px] font-semibold text-ink/45">Live since {fmtDate(d.published_at)}</span> : null}
       </div>
 
-      {/* G · status first: it answers "can I change anything, and can people book me" */}
-      <div className="rounded-[22px] bg-gradient-to-br from-plum-800 to-plum-950 p-4 text-white">
-        <div className="flex items-center justify-between">
-          <span className={`rounded-full px-2.5 py-1 text-[11px] font-extrabold ${statusClass}`}>● {statusLabel}</span>
-          <span className="text-[11.5px] font-bold text-plum-200">Version {d.version ?? '—'}{d.published_at ? ` · since ${fmtDate(d.published_at)}` : ''}</span>
-        </div>
-        {locked && (
-          <div className="mt-3 flex items-start gap-2.5 rounded-2xl bg-white/10 p-3">
-            <Lock size={16} className="mt-0.5 shrink-0 text-plum-200" />
-            <p className="text-[12.5px] leading-snug text-plum-50">
-              <b className="text-white">Regular prices are protected for 15 days after publication.</b> Your next eligible update is <b className="text-white">{fmtDate(d.price_locked_until)}</b>. Your other listing details remain editable through the listing editor.
-            </p>
-          </div>
-        )}
+      {/* The two main actions are available before the package carousel. */}
+      <div className="grid grid-cols-2 gap-2">
+        <button type="button" onClick={onPreview}
+          className="flex min-h-11 items-center justify-center gap-1.5 rounded-full border border-plum-300 bg-white px-2.5 text-[12px] font-extrabold text-plum-700 active:scale-[0.99]">
+          <Eye size={15} /> Customer preview
+        </button>
+        <button type="button" onClick={() => onEdit?.('listing')}
+          className="flex min-h-11 items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-plum-700 to-violet-600 px-2.5 text-[12px] font-extrabold text-white shadow-sm active:scale-[0.99]">
+          <Pencil size={15} /> Edit listing
+        </button>
       </div>
 
       {banner}
 
       {d.seasonal && (
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-          className="rounded-[22px] bg-gradient-to-r from-amber-50 to-rose-50 p-4 ring-1 ring-amber-200">
-          <p className="flex items-center gap-1.5 text-[12px] font-extrabold uppercase tracking-[0.1em] text-amber-800"><Sparkles size={14} /> Seasonal price update available</p>
-          <p className="mt-1.5 text-[13px] leading-snug text-ink/75">{d.seasonal.name}: Sambramo has opened a price-update window. Submit by <b>{fmtDate(d.seasonal.deadline)}</b>.</p>
-          <button type="button" onClick={onSeasonal} className="mt-3 flex h-11 w-full items-center justify-center gap-1.5 rounded-full bg-ink text-[13.5px] font-extrabold text-white">
-            Update seasonal prices <ArrowRight size={15} />
+        <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}
+          className="flex items-center justify-between gap-2 rounded-2xl bg-amber-50 px-3 py-2 ring-1 ring-amber-200">
+          <span className="flex min-w-0 items-center gap-2 text-[11.5px] font-bold text-amber-900">
+            <Sparkles size={15} className="shrink-0" />
+            <span className="truncate">Seasonal price window · until {fmtDate(d.seasonal.deadline)}</span>
+          </span>
+          <button type="button" onClick={onSeasonal} className="shrink-0 rounded-full bg-amber-800 px-3 py-2 text-[11px] font-extrabold text-white">
+            Edit prices
           </button>
         </motion.div>
       )}
 
-      <section className="rounded-[22px] bg-gradient-to-r from-plum-50 via-white to-violet-50 p-4 ring-1 ring-plum-100">
-        <div className="flex items-start gap-3">
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-plum-100 text-plum-700"><CalendarRange size={21} /></span>
-          <div className="min-w-0 flex-1">
-            <p className="text-[13.5px] font-extrabold text-plum-950">Price update window</p>
-            {locked
-              ? <p className="mt-1 text-[13px] font-extrabold text-plum-800">Next eligible price change · {fmtDate(d.price_locked_until)}</p>
-              : <p className="mt-1 text-[13px] font-extrabold text-plum-800">Regular price editing is available</p>}
-            <p className="mt-1 text-[11.5px] leading-relaxed text-ink/55">Published prices follow the 15-day change policy. Any new version is reviewed before replacing live prices; confirmed bookings keep their agreed rate.</p>
-            {d.seasonal && (
-              <p className="mt-2 rounded-xl bg-amber-50 px-3 py-2 text-[11.5px] font-bold text-amber-900 ring-1 ring-amber-200">
-                {d.seasonal.name} is open until {fmtDate(d.seasonal.deadline)}.
-              </p>
-            )}
-          </div>
-        </div>
-        <button type="button" onClick={d.seasonal ? onSeasonal : locked ? undefined : () => onEdit?.('pricing')}
-          disabled={locked && !d.seasonal}
-          className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-plum-700 to-violet-600 px-4 text-[13px] font-extrabold text-white shadow-sm disabled:bg-ink/10 disabled:text-ink/45 disabled:shadow-none">
-          {d.seasonal ? 'Edit prices in this update window' : locked ? `Price editing opens on ${fmtDate(d.price_locked_until)}` : 'Edit prices'}
-          <ArrowRight size={15} />
-        </button>
-      </section>
+      {/* A one-line policy message replaces the oversized price-update panel. */}
+      <div className="flex min-w-0 items-center gap-2 rounded-xl bg-plum-50/80 px-3 py-2 ring-1 ring-plum-100">
+        <CalendarRange size={16} className="shrink-0 text-plum-700" />
+        <p className="min-w-0 flex-1 text-[11.5px] font-semibold leading-snug text-ink/65">
+          {locked
+            ? `Price editing unlocks on ${fmtDate(d.price_locked_until)} · 15-day policy.`
+            : d.status === 'LIVE'
+              ? 'Price updates follow the 15-day policy.'
+              : 'Regular price updates unlock once your listing is live · 15-day policy.'}
+        </p>
+      </div>
 
       {/* C · the three packages, swipeable
           Was a fourth hand-rolled copy of the tier card -- a w-[72%]
@@ -134,6 +128,7 @@ export default function PricingControlCenter({ data, onEdit, onSeasonal, onPayou
         <p className="mb-2 px-1 text-[12px] font-extrabold uppercase tracking-[0.12em] text-ink/45">Your packages</p>
         {d.packages.length ? (
           <PackageCarousel
+            compact
             packages={d.packages.map(p => ({
               key: p.tier ?? p.key ?? p.name,
               name: p.name,
@@ -146,6 +141,10 @@ export default function PricingControlCenter({ data, onEdit, onSeasonal, onPayou
               badge: p.badge,
               edited: p.edited,
             }))}
+            onEditPrice={() => d.seasonal ? onSeasonal?.() : !locked ? onEdit?.('pricing') : undefined}
+            priceEditLocked={locked && !d.seasonal}
+            priceEditDate={d.price_locked_until ? fmtDate(d.price_locked_until) : null}
+            pricePolicyLabel={locked && !d.seasonal ? '15-day lock' : '15-day policy'}
             onViewDetails={p => onViewPackage?.(p.key)}
           />
         ) : <p className="rounded-[18px] bg-white p-4 text-[12px] text-ink/55 ring-1 ring-ink/[0.07]">No packages have been saved for this listing yet. The other sections will show any rates and rules that are available.</p>}
@@ -206,16 +205,7 @@ export default function PricingControlCenter({ data, onEdit, onSeasonal, onPayou
         {d.rules?.length ? d.rules.map((rule, index) => <Row key={rule.k || rule.label || index} k={rule.k || rule.label || 'Booking rule'} v={rule.v || rule.value || 'As listed'} />) : <p className="text-[12px] text-ink/55">Booking rules have not been configured for this listing yet.</p>}
       </Section>
 
-      <div className="grid grid-cols-2 gap-2 pt-1">
-        <button type="button" onClick={onPreview}
-          className="flex min-h-12 items-center justify-center gap-2 rounded-full bg-white px-3 text-[12.5px] font-extrabold text-plum-700 ring-1 ring-plum-300">
-          <Eye size={16} /> Customer preview
-        </button>
-        <button type="button" onClick={() => onEdit?.('listing')}
-          className="flex min-h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-plum-700 to-violet-600 px-3 text-[12.5px] font-extrabold text-white shadow-sm">
-          <Pencil size={16} /> Edit listing
-        </button>
-      </div>
+
     </div>
   )
 }
