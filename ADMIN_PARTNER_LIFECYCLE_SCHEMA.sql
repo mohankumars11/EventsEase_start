@@ -337,3 +337,236 @@ drop trigger if exists trg_admin_audit_partner_linked_profile on public.profiles
 create trigger trg_admin_audit_partner_linked_profile
   after update of full_name, email, phone, city, role on public.profiles
   for each row execute function public.audit_partner_linked_profile_update();
+
+
+-- Job dispatch, settlements, referral and plan audits. This extension intentionally
+-- retains only operational statuses, amounts and IDs; raw payout destinations stay out.
+alter table public.admin_lifecycle_audit drop constraint if exists admin_lifecycle_audit_entity_type_check;
+alter table public.admin_lifecycle_audit add constraint admin_lifecycle_audit_entity_type_check
+  check (entity_type = any (array[
+    'partner'::text, 'listing'::text, 'partner_trade'::text, 'document'::text, 'pricing'::text,
+    'dispatch_offer'::text, 'booking_line'::text, 'payout_claim'::text, 'adjustment'::text,
+    'subscription'::text, 'referral'::text, 'referral_invite'::text
+  ]));
+
+create or replace function public.audit_dispatch_offer_lifecycle()
+returns trigger language plpgsql security definer set search_path = public
+as $$
+declare before_data jsonb; after_data jsonb; changed_action text;
+begin
+  after_data := jsonb_build_object('line_id', new.line_id, 'status', new.status, 'wave', new.wave,
+    'partner_amount_paise', new.partner_amount_paise, 'distance_m', new.distance_m,
+    'offered_at', new.offered_at, 'expires_at', new.expires_at, 'responded_at', new.responded_at,
+    'accepted_at', new.accepted_at, 'hidden_at', new.hidden_at, 'decline_reason', new.decline_reason);
+  if tg_op = 'INSERT' then changed_action := 'dispatch.offer_created';
+  else
+    before_data := jsonb_build_object('line_id', old.line_id, 'status', old.status, 'wave', old.wave,
+      'partner_amount_paise', old.partner_amount_paise, 'distance_m', old.distance_m,
+      'offered_at', old.offered_at, 'expires_at', old.expires_at, 'responded_at', old.responded_at,
+      'accepted_at', old.accepted_at, 'hidden_at', old.hidden_at, 'decline_reason', old.decline_reason);
+    if before_data = after_data then return new; end if;
+    changed_action := case when old.status is distinct from new.status then 'dispatch.offer_status_changed' else 'dispatch.offer_changed' end;
+  end if;
+  insert into public.admin_lifecycle_audit (entity_type, entity_id, vendor_id, action, before_state, after_state, actor_id, actor_role)
+  values ('dispatch_offer', new.id, new.vendor_id, changed_action, before_data, after_data, auth.uid(), public.get_my_role());
+  return new;
+end;
+$$;
+drop trigger if exists trg_admin_audit_dispatch_offer_lifecycle on public.dispatch_offers;
+create trigger trg_admin_audit_dispatch_offer_lifecycle
+  after insert or update of status, wave, partner_amount_paise, distance_m, expires_at, responded_at, accepted_at, hidden_at, decline_reason
+  on public.dispatch_offers for each row execute function public.audit_dispatch_offer_lifecycle();
+
+create or replace function public.audit_booking_line_lifecycle()
+returns trigger language plpgsql security definer set search_path = public
+as $$
+declare before_data jsonb; after_data jsonb; changed_action text; linked record;
+begin
+  after_data := jsonb_build_object('status', new.status, 'partner_amount_paise', new.partner_amount_paise,
+    'accepted_offer_id', new.accepted_offer_id, 'dispatched_at', new.dispatched_at, 'accepted_at', new.accepted_at,
+    'paid_at', new.paid_at, 'delivered_at', new.delivered_at, 'settled_at', new.settled_at,
+    'cancelled_at', new.cancelled_at, 'cancellation_reason', new.cancellation_reason,
+    'pricing_state', new.pricing_state, 'pricing_version', new.pricing_version);
+  if tg_op = 'INSERT' then changed_action := 'booking_line.created';
+  else
+    before_data := jsonb_build_object('status', old.status, 'partner_amount_paise', old.partner_amount_paise,
+      'accepted_offer_id', old.accepted_offer_id, 'dispatched_at', old.dispatched_at, 'accepted_at', old.accepted_at,
+      'paid_at', old.paid_at, 'delivered_at', old.delivered_at, 'settled_at', old.settled_at,
+      'cancelled_at', old.cancelled_at, 'cancellation_reason', old.cancellation_reason,
+      'pricing_state', old.pricing_state, 'pricing_version', old.pricing_version);
+    if before_data = after_data then return new; end if;
+    changed_action := case when old.status is distinct from new.status then 'booking_line.status_changed'
+      when old.settled_at is distinct from new.settled_at then 'booking_line.settlement_changed'
+      when old.paid_at is distinct from new.paid_at then 'booking_line.payment_changed'
+      else 'booking_line.lifecycle_changed' end;
+  end if;
+  for linked in select distinct vendor_id from public.dispatch_offers where line_id = new.id loop
+    insert into public.admin_lifecycle_audit (entity_type, entity_id, vendor_id, action, before_state, after_state, actor_id, actor_role)
+    values ('booking_line', new.id, linked.vendor_id, changed_action, before_data, after_data, auth.uid(), public.get_my_role());
+  end loop;
+  return new;
+end;
+$$;
+drop trigger if exists trg_admin_audit_booking_line_lifecycle on public.booking_lines;
+create trigger trg_admin_audit_booking_line_lifecycle
+  after insert or update of status, partner_amount_paise, accepted_offer_id, dispatched_at, accepted_at, paid_at,
+    delivered_at, settled_at, cancelled_at, cancellation_reason, pricing_state, pricing_version
+  on public.booking_lines for each row execute function public.audit_booking_line_lifecycle();
+
+create or replace function public.audit_payout_claim_lifecycle()
+returns trigger language plpgsql security definer set search_path = public
+as $$
+declare before_data jsonb; after_data jsonb; changed_action text;
+begin
+  after_data := jsonb_build_object('line_id', new.line_id, 'amount_paise', new.amount_paise, 'method', new.method,
+    'status', new.status, 'requested_at', new.requested_at, 'settled_at', new.settled_at,
+    'failed_at', new.failed_at, 'failure_code', new.failure_code, 'failure_reason', new.failure_reason,
+    'attempt', new.attempt, 'batch_id', new.batch_id);
+  if tg_op = 'INSERT' then changed_action := 'payout.claim_created';
+  else
+    before_data := jsonb_build_object('line_id', old.line_id, 'amount_paise', old.amount_paise, 'method', old.method,
+      'status', old.status, 'requested_at', old.requested_at, 'settled_at', old.settled_at,
+      'failed_at', old.failed_at, 'failure_code', old.failure_code, 'failure_reason', old.failure_reason,
+      'attempt', old.attempt, 'batch_id', old.batch_id);
+    if before_data = after_data then return new; end if;
+    changed_action := case when old.status is distinct from new.status then 'payout.claim_status_changed' else 'payout.claim_changed' end;
+  end if;
+  insert into public.admin_lifecycle_audit (entity_type, entity_id, vendor_id, action, before_state, after_state, actor_id, actor_role)
+  values ('payout_claim', new.id, new.vendor_id, changed_action, before_data, after_data, auth.uid(), public.get_my_role());
+  return new;
+end;
+$$;
+drop trigger if exists trg_admin_audit_payout_claim_lifecycle on public.payout_claims;
+create trigger trg_admin_audit_payout_claim_lifecycle
+  after insert or update of amount_paise, method, status, settled_at, failed_at, failure_code, failure_reason, attempt, batch_id
+  on public.payout_claims for each row execute function public.audit_payout_claim_lifecycle();
+
+create or replace function public.audit_partner_adjustment_lifecycle()
+returns trigger language plpgsql security definer set search_path = public
+as $$
+declare before_data jsonb; after_data jsonb; changed_action text;
+begin
+  after_data := jsonb_build_object('line_id', new.line_id, 'kind', new.kind, 'amount_paise', new.amount_paise,
+    'reason', new.reason, 'effective_on', new.effective_on, 'settled_claim_id', new.settled_claim_id);
+  if tg_op = 'INSERT' then changed_action := 'partner.adjustment_created';
+  else
+    before_data := jsonb_build_object('line_id', old.line_id, 'kind', old.kind, 'amount_paise', old.amount_paise,
+      'reason', old.reason, 'effective_on', old.effective_on, 'settled_claim_id', old.settled_claim_id);
+    if before_data = after_data then return new; end if;
+    changed_action := 'partner.adjustment_changed';
+  end if;
+  insert into public.admin_lifecycle_audit (entity_type, entity_id, vendor_id, action, before_state, after_state, actor_id, actor_role)
+  values ('adjustment', new.id, new.vendor_id, changed_action, before_data, after_data, auth.uid(), public.get_my_role());
+  return new;
+end;
+$$;
+drop trigger if exists trg_admin_audit_partner_adjustment_lifecycle on public.partner_adjustments;
+create trigger trg_admin_audit_partner_adjustment_lifecycle
+  after insert or update of kind, amount_paise, reason, effective_on, settled_claim_id
+  on public.partner_adjustments for each row execute function public.audit_partner_adjustment_lifecycle();
+
+create or replace function public.audit_vendor_subscription_lifecycle()
+returns trigger language plpgsql security definer set search_path = public
+as $$
+declare before_data jsonb; after_data jsonb; changed_action text;
+begin
+  after_data := jsonb_build_object('tier', new.tier, 'status', new.status, 'started_at', new.started_at, 'expires_at', new.expires_at);
+  if tg_op = 'INSERT' then changed_action := 'partner.subscription_created';
+  else
+    before_data := jsonb_build_object('tier', old.tier, 'status', old.status, 'started_at', old.started_at, 'expires_at', old.expires_at);
+    if before_data = after_data then return new; end if;
+    changed_action := 'partner.subscription_changed';
+  end if;
+  insert into public.admin_lifecycle_audit (entity_type, entity_id, vendor_id, action, before_state, after_state, actor_id, actor_role)
+  values ('subscription', new.id, new.vendor_id, changed_action, before_data, after_data, auth.uid(), public.get_my_role());
+  return new;
+end;
+$$;
+drop trigger if exists trg_admin_audit_vendor_subscription_lifecycle on public.vendor_subscriptions;
+create trigger trg_admin_audit_vendor_subscription_lifecycle
+  after insert or update of tier, status, started_at, expires_at
+  on public.vendor_subscriptions for each row execute function public.audit_vendor_subscription_lifecycle();
+
+create or replace function public.audit_partner_referral_lifecycle()
+returns trigger language plpgsql security definer set search_path = public
+as $$
+declare before_data jsonb; after_data jsonb; changed_action text; linked record;
+begin
+  after_data := jsonb_build_object('referrer_id', new.referrer_id, 'referred_id', new.referred_id,
+    'state', new.state, 'reward_status', new.reward_status, 'claimed_at', new.claimed_at,
+    'onboarding_completed_at', new.onboarding_completed_at, 'verified_at', new.verified_at,
+    'live_at', new.live_at, 'first_event_at', new.first_event_at, 'qualified_at', new.qualified_at, 'paid_at', new.paid_at);
+  if tg_op = 'INSERT' then changed_action := 'partner.referral_created';
+  else
+    before_data := jsonb_build_object('referrer_id', old.referrer_id, 'referred_id', old.referred_id,
+      'state', old.state, 'reward_status', old.reward_status, 'claimed_at', old.claimed_at,
+      'onboarding_completed_at', old.onboarding_completed_at, 'verified_at', old.verified_at,
+      'live_at', old.live_at, 'first_event_at', old.first_event_at, 'qualified_at', old.qualified_at, 'paid_at', old.paid_at);
+    if before_data = after_data then return new; end if;
+    changed_action := case when old.state is distinct from new.state then 'partner.referral_state_changed' else 'partner.referral_milestone_changed' end;
+  end if;
+  for linked in select distinct unnest(array[new.referrer_id, new.referred_id]) as vendor_id where unnest is not null loop
+    insert into public.admin_lifecycle_audit (entity_type, entity_id, vendor_id, action, before_state, after_state, actor_id, actor_role)
+    values ('referral', new.id, linked.vendor_id, changed_action, before_data, after_data, auth.uid(), public.get_my_role());
+  end loop;
+  return new;
+end;
+$$;
+drop trigger if exists trg_admin_audit_partner_referral_lifecycle on public.partner_referrals;
+create trigger trg_admin_audit_partner_referral_lifecycle
+  after insert or update of state, reward_status, claimed_at, onboarding_completed_at, verified_at, live_at,
+    first_event_at, qualified_at, paid_at on public.partner_referrals
+  for each row execute function public.audit_partner_referral_lifecycle();
+
+create or replace function public.audit_partner_referral_invite_lifecycle()
+returns trigger language plpgsql security definer set search_path = public
+as $$
+declare before_data jsonb; after_data jsonb; changed_action text;
+begin
+  after_data := jsonb_build_object('trade_id', new.trade_id, 'campaign_id', new.campaign_id,
+    'created_at', new.created_at, 'expires_at', new.expires_at, 'claimed_at', new.claimed_at, 'claimed_by', new.claimed_by);
+  if tg_op = 'INSERT' then changed_action := 'partner.referral_invite_created';
+  else
+    before_data := jsonb_build_object('trade_id', old.trade_id, 'campaign_id', old.campaign_id,
+      'created_at', old.created_at, 'expires_at', old.expires_at, 'claimed_at', old.claimed_at, 'claimed_by', old.claimed_by);
+    if before_data = after_data then return new; end if;
+    changed_action := 'partner.referral_invite_changed';
+  end if;
+  insert into public.admin_lifecycle_audit (entity_type, entity_id, vendor_id, action, before_state, after_state, actor_id, actor_role)
+  values ('referral_invite', new.id, new.referrer_id, changed_action, before_data, after_data, auth.uid(), public.get_my_role());
+  return new;
+end;
+$$;
+drop trigger if exists trg_admin_audit_partner_referral_invite_lifecycle on public.partner_referral_invites;
+create trigger trg_admin_audit_partner_referral_invite_lifecycle
+  after insert or update of expires_at, claimed_at, claimed_by
+  on public.partner_referral_invites for each row execute function public.audit_partner_referral_invite_lifecycle();
+
+create or replace function public.audit_partner_payout_account_lifecycle()
+returns trigger language plpgsql security definer set search_path = public
+as $$
+declare before_data jsonb; after_data jsonb; changed_action text;
+begin
+  after_data := jsonb_build_object('kyc_status', new.kyc_status, 'kyc_verified', new.kyc_verified_at is not null,
+    'bank_name', new.bank_name, 'account_last4', new.account_last4, 'ifsc', new.ifsc,
+    'route_status', new.route_status, 'route_product_id', new.route_product_id,
+    'route_stakeholder_id', new.route_stakeholder_id, 'route_updated_at', new.route_updated_at);
+  if tg_op = 'INSERT' then changed_action := 'partner.payout_route_created';
+  else
+    before_data := jsonb_build_object('kyc_status', old.kyc_status, 'kyc_verified', old.kyc_verified_at is not null,
+      'bank_name', old.bank_name, 'account_last4', old.account_last4, 'ifsc', old.ifsc,
+      'route_status', old.route_status, 'route_product_id', old.route_product_id,
+      'route_stakeholder_id', old.route_stakeholder_id, 'route_updated_at', old.route_updated_at);
+    if before_data = after_data then return new; end if;
+    changed_action := 'partner.payout_route_changed';
+  end if;
+  insert into public.admin_lifecycle_audit (entity_type, entity_id, vendor_id, action, before_state, after_state, actor_id, actor_role)
+  values ('partner', new.vendor_id, new.vendor_id, changed_action, before_data, after_data, auth.uid(), public.get_my_role());
+  return new;
+end;
+$$;
+drop trigger if exists trg_admin_audit_partner_payout_account_lifecycle on public.partner_payout_accounts;
+create trigger trg_admin_audit_partner_payout_account_lifecycle
+  after insert or update of kyc_status, kyc_verified_at, bank_name, account_last4, ifsc, route_status,
+    route_product_id, route_stakeholder_id, route_updated_at
+  on public.partner_payout_accounts for each row execute function public.audit_partner_payout_account_lifecycle();
