@@ -62,14 +62,19 @@ function StatusChip({ status }) {
   )
 }
 
-export function PackageCard({ pkg, active = true, editable, onEdit, onViewDetails }) {
+export function PackageCard({
+  pkg, active = true, editable, onEdit, onViewDetails, compact = false,
+  onEditPrice, priceEditLocked = false, priceEditDate = null, pricePolicyLabel = '15-day policy',
+}) {
   const look = lookFor(pkg.key)
   const Icon = look.icon
+  const visibleInclusions = compact ? (pkg.inclusions ?? []).slice(0, 3) : (pkg.inclusions ?? [])
+  const hiddenInclusions = Math.max(0, (pkg.inclusions?.length ?? 0) - visibleInclusions.length)
   return (
     <motion.div
-      animate={{ scale: active ? 1 : 0.92, opacity: active ? 1 : 0.6 }}
+      animate={{ scale: active ? 1 : 0.96, opacity: active ? 1 : 0.72 }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-      className={`relative flex h-full flex-col rounded-[26px] bg-gradient-to-b ${look.from} to-white p-5 ring-1 ${isFeatured(pkg.key) ? 'ring-2' : ''} ${look.ring}`}
+      className={`relative flex h-full flex-col rounded-[24px] bg-gradient-to-b ${look.from} to-white ${compact ? 'p-4' : 'p-5'} ring-1 ${isFeatured(pkg.key) ? 'ring-2' : ''} ${look.ring}`}
     >
       {pkg.badge && (
         <span className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-gradient-to-r from-plum-600 to-fuchsia-500 px-3.5 py-1 text-[11px] font-extrabold uppercase tracking-wide text-white shadow-lg">
@@ -79,10 +84,10 @@ export function PackageCard({ pkg, active = true, editable, onEdit, onViewDetail
 
       <div className="flex items-start justify-between gap-2">
         <span className="flex min-w-0 items-center gap-2">
-          <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white ${look.tint} shadow-sm`}>
-            <Icon size={18} />
+          <span className={`flex ${compact ? 'h-8 w-8 rounded-lg' : 'h-9 w-9 rounded-xl'} shrink-0 items-center justify-center bg-white ${look.tint} shadow-sm`}>
+            <Icon size={compact ? 16 : 18} />
           </span>
-          <span className="truncate text-[17px] font-extrabold text-ink">{pkg.name}</span>
+          <span className={`truncate font-extrabold text-ink ${compact ? 'text-[15px]' : 'text-[17px]'}`}>{pkg.name}</span>
         </span>
         {editable
           ? (
@@ -95,13 +100,13 @@ export function PackageCard({ pkg, active = true, editable, onEdit, onViewDetail
       </div>
 
       {/* The partner's rate, named as theirs. Never a customer total. */}
-      <p className="mt-4 break-words text-[30px] font-extrabold leading-none tracking-tight text-ink">{Number(pkg.ratePaise) > 0 ? rupees(pkg.ratePaise) : 'Price on request'}</p>
+      <p className={`break-words font-extrabold leading-none tracking-tight text-ink ${compact ? 'mt-3 text-[27px]' : 'mt-4 text-[30px]'}`}>{Number(pkg.ratePaise) > 0 ? rupees(pkg.ratePaise) : 'Price on request'}</p>
       <p className="mt-1 text-[12px] font-bold text-ink/50">
         {Number(pkg.ratePaise) > 0 ? 'Your rate' : 'Saved rate not available'}{Number(pkg.ratePaise) > 0 && pkg.unit ? ' · ' + pkg.unit : ''}
       </p>
 
       {pkg.meta && (
-        <span className="mt-3 inline-flex self-start rounded-full bg-white px-3 py-1 text-[12px] font-extrabold text-ink/70 ring-1 ring-ink/[0.07]">
+        <span className={`inline-flex self-start rounded-full bg-white px-3 py-1 font-extrabold text-ink/70 ring-1 ring-ink/[0.07] ${compact ? 'mt-2 text-[11px]' : 'mt-3 text-[12px]'}`}>
           {pkg.meta}
         </span>
       )}
@@ -113,8 +118,8 @@ export function PackageCard({ pkg, active = true, editable, onEdit, onViewDetail
           the base tier actually buys is the difference between "no
           add-ons" and "nothing". */}
       {(pkg.base || !pkg.inclusions?.length) && (
-        <div className="mt-4">
-          <p className="flex items-center gap-2 text-[12.5px] font-bold text-ink">
+        <div className={compact ? 'mt-3' : 'mt-4'}>
+          <p className={`flex items-center gap-2 font-bold text-ink ${compact ? 'text-[12px]' : 'text-[12.5px]'}`}>
             <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-forest-600 text-white">
               <Check size={10} strokeWidth={3.5} />
             </span>
@@ -123,17 +128,18 @@ export function PackageCard({ pkg, active = true, editable, onEdit, onViewDetail
         </div>
       )}
 
-      {!!pkg.inclusions?.length && (
-        <div className="mt-2 space-y-1.5">
-          {pkg.inclusions.map(inc => (
+      {!!visibleInclusions.length && (
+        <div className={`space-y-1.5 ${compact ? 'mt-2' : 'mt-2'}`}>
+          {visibleInclusions.map(inc => (
             <p key={inc.id}
-              className={`flex items-center gap-2 text-[12.5px] ${inc.included ? 'font-bold text-ink' : 'text-ink/35 line-through'}`}>
+              className={`flex items-center gap-2 ${compact ? 'text-[12px]' : 'text-[12.5px]'} ${inc.included ? 'font-bold text-ink' : 'text-ink/35 line-through'}`}>
               <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full ${inc.included ? 'bg-forest-600 text-white' : 'bg-ink/10 text-ink/40'}`}>
                 {inc.included ? <Check size={10} strokeWidth={3.5} /> : <X size={10} strokeWidth={3} />}
               </span>
-              <span className="min-w-0">{inc.label}</span>
+              <span className="min-w-0 line-clamp-1">{inc.label}</span>
             </p>
           ))}
+          {hiddenInclusions > 0 && <p className="pl-6 text-[11px] font-semibold text-plum-700">+{hiddenInclusions} more inclusions</p>}
         </div>
       )}
 
@@ -141,12 +147,31 @@ export function PackageCard({ pkg, active = true, editable, onEdit, onViewDetail
         <p className="mt-3 text-[11px] font-extrabold uppercase tracking-wide text-plum-600">Edited by you</p>
       )}
 
-      {onViewDetails && (
+      {compact ? (
+        <div className="mt-auto flex items-end justify-between gap-2 pt-4">
+          {onViewDetails ? (
+            <button type="button" onClick={() => onViewDetails(pkg)}
+              className="inline-flex min-w-0 items-center gap-0.5 pb-1 text-[12px] font-extrabold text-plum-700">
+              View details <ChevronRight size={14} />
+            </button>
+          ) : <span />}
+          {onEditPrice ? (
+            <div className="flex shrink-0 flex-col items-end gap-1">
+              <button type="button" disabled={priceEditLocked} onClick={() => onEditPrice(pkg)}
+                aria-label={priceEditLocked ? `Price editing locked for ${pkg.name}` : `Edit price for ${pkg.name}`}
+                className="inline-flex min-h-8 items-center justify-center gap-1 rounded-full border border-plum-200 bg-white px-2.5 text-[11.5px] font-extrabold text-plum-700 shadow-sm transition active:scale-[0.98] disabled:cursor-not-allowed disabled:border-ink/10 disabled:bg-ink/[0.03] disabled:text-ink/45">
+                {priceEditLocked ? <Lock size={12} /> : <Pencil size={12} />} Edit price
+              </button>
+              <span className="text-[9.5px] font-semibold text-ink/45">{priceEditLocked && priceEditDate ? `Unlocks ${priceEditDate}` : pricePolicyLabel}</span>
+            </div>
+          ) : null}
+        </div>
+      ) : onViewDetails ? (
         <button type="button" onClick={() => onViewDetails(pkg)}
           className="mt-4 inline-flex items-center gap-1 self-start text-[13px] font-extrabold text-plum-700">
           View details <ChevronRight size={15} />
         </button>
-      )}
+      ) : null}
     </motion.div>
   )
 }
@@ -155,6 +180,11 @@ export default function PackageCarousel({
   packages = [],
   editable = false,
   onEdit,
+  onEditPrice,
+  priceEditLocked = false,
+  priceEditDate = null,
+  pricePolicyLabel = '15-day policy',
+  compact = false,
   onViewDetails,
   onReset,
   resetLabel = 'Reset to generated prices',
@@ -183,6 +213,8 @@ export default function PackageCarousel({
           {packages.map((p, i) => (
             <div key={p.key ?? p.name ?? i} className="min-w-0 shrink-0 grow-0 basis-[78%] px-1.5">
               <PackageCard pkg={p} active={i === sel} editable={editable}
+                compact={compact} onEditPrice={onEditPrice} priceEditLocked={priceEditLocked}
+                priceEditDate={priceEditDate} pricePolicyLabel={pricePolicyLabel}
                 onEdit={onEdit} onViewDetails={onViewDetails} />
             </div>
           ))}
