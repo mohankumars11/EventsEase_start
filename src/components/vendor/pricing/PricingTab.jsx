@@ -54,6 +54,7 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
   const [legacyScreen, setLegacyScreen] = useState('details')
   const [legacySelectedPackage, setLegacySelectedPackage] = useState(null)
   const [filterStatus, setFilterStatus] = useState('all')
+  const [priceWindowOpen, setPriceWindowOpen] = useState(false)
   const [listingMeta, setListingMeta] = useState({ byId: {}, versionById: {}, publishedAtById: {}, packagesById: {}, priceById: {}, priceUnitById: {}, packageDetailsById: {}, priceLockById: {}, nextPriceDate: null, nextPriceServiceId: null, loading: true })
   const engineReady = useEngineReady()
   const anchors = services.filter(s => hasProfileFor(s.category))
@@ -222,10 +223,10 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
   ) : null
 
   return (
-    <div className="space-y-3 pb-5 pt-1" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 4px)' }}>
+    <div className="space-y-3 pb-5 pt-1">
       {!selectedService ? (
         <>
-          <section className="relative -mx-4 overflow-hidden rounded-[26px] bg-gradient-to-br from-plum-800 via-plum-700 to-[#321067] px-5 pb-4 pt-4 text-white sm:-mx-6">
+          <section className="relative overflow-hidden rounded-[26px] bg-gradient-to-br from-plum-800 via-plum-700 to-[#321067] px-4 pb-4 pt-4 text-white sm:px-5">
             <div className="pointer-events-none absolute -right-12 -top-10 h-44 w-44 rounded-full border border-white/10 bg-white/[0.04]" />
             <div className="relative flex items-start justify-between gap-3">
               <div className="min-w-0">
@@ -238,16 +239,18 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
               </button>
             </div>
             <div className="relative mt-4 grid grid-cols-4 gap-1 rounded-[22px] bg-white p-2 text-plum-950 shadow-[0_12px_30px_rgba(20,0,50,0.18)]">
-              <StatusMetric label="Live" count={counts.live} glyph="✓" tone="text-emerald-700 bg-emerald-50" />
-              <StatusMetric label="In review" count={counts.review} glyph="◷" tone="text-amber-700 bg-amber-50" />
-              <StatusMetric label="Drafts" count={counts.draft} glyph="▤" tone="text-violet-700 bg-violet-50" />
-              <StatusMetric label="Total" count={services.length} glyph="▥" tone="text-slate-700 bg-slate-100" />
+              <StatusMetric label="Live" count={counts.live} glyph="✓" tone="text-emerald-700 bg-emerald-50" active={filterStatus === 'live'} onClick={() => setFilterStatus('live')} />
+              <StatusMetric label="In review" count={counts.review} glyph="◷" tone="text-amber-700 bg-amber-50" active={filterStatus === 'review'} onClick={() => setFilterStatus('review')} />
+              <StatusMetric label="Drafts" count={counts.draft} glyph="▤" tone="text-violet-700 bg-violet-50" active={filterStatus === 'draft'} onClick={() => setFilterStatus('draft')} />
+              <StatusMetric label="Total" count={services.length} glyph="▥" tone="text-slate-700 bg-slate-100" active={filterStatus === 'all'} onClick={() => setFilterStatus('all')} />
             </div>
           </section>
 
-          <button type="button" onClick={() => setSelectedServiceId(listingMeta.nextPriceServiceId ?? services[0]?.id ?? null)}
-            disabled={!listingMeta.nextPriceServiceId}
-            className="flex w-full items-center gap-2.5 rounded-[18px] bg-gradient-to-r from-plum-50 via-white to-violet-50 px-3 py-2.5 text-left ring-1 ring-plum-100 disabled:cursor-default">
+          <button type="button" onClick={() => {
+            if (listingMeta.nextPriceServiceId) setSelectedServiceId(listingMeta.nextPriceServiceId)
+            else setPriceWindowOpen(true)
+          }} aria-haspopup="dialog" aria-label="Price update window details"
+            className="flex w-full items-center gap-2.5 rounded-[18px] bg-gradient-to-r from-plum-50 via-white to-violet-50 px-3 py-2.5 text-left ring-1 ring-plum-100 transition active:scale-[0.995]">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-plum-100 text-plum-700"><CalendarClock size={20} /></span>
             <span className="min-w-0 flex-1">
               <span className="block text-[12.5px] font-extrabold text-plum-950">Price update window</span>
@@ -283,7 +286,13 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
 
           {services.length ? (
             <div className="space-y-3">
-              {services.filter(service => filterStatus === 'all' || statusGroup(listingMeta.byId[service.id] ?? 'NOT_CONFIGURED') === filterStatus).map(service => {
+              {services.filter(service => filterStatus === 'all' || statusGroup(listingMeta.byId[service.id] ?? 'NOT_CONFIGURED') === filterStatus).length === 0 ? (
+                <div className="rounded-[22px] border border-dashed border-plum-200 bg-white px-4 py-6 text-center">
+                  <p className="text-[15px] font-extrabold text-plum-950">No {filterStatus === 'review' ? 'listings in review' : filterStatus === 'live' ? 'live listings' : 'draft listings'} yet</p>
+                  <p className="mt-1 text-[12px] leading-relaxed text-ink/60">This count updates automatically when your listing status changes.</p>
+                  <button type="button" onClick={() => setFilterStatus('all')} className="mt-3 rounded-full bg-plum-700 px-4 py-2.5 text-[12px] font-extrabold text-white">Show all listings</button>
+                </div>
+              ) : services.filter(service => filterStatus === 'all' || statusGroup(listingMeta.byId[service.id] ?? 'NOT_CONFIGURED') === filterStatus).map(service => {
                 const status = listingMeta.byId[service.id] ?? 'NOT_CONFIGURED'
                 const look = statusCopy[status] ?? statusCopy.NOT_CONFIGURED
                 const packCount = listingMeta.packagesById[service.id] ?? 0
@@ -372,6 +381,30 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
           </div>
         ) : null}
       </Sheet>
+
+      {priceWindowOpen && (
+        <div className="fixed inset-0 z-[110] flex items-end justify-center bg-ink/45 p-0 sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="price-window-title">
+          <button type="button" aria-label="Close price update details" onClick={() => setPriceWindowOpen(false)} className="absolute inset-0 cursor-default" />
+          <section className="relative w-full max-w-lg rounded-t-[28px] bg-white p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-2xl sm:rounded-[28px]">
+            <div className="flex items-start gap-3">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-plum-50 text-plum-700"><CalendarClock size={22} /></span>
+              <div className="min-w-0 flex-1">
+                <h2 id="price-window-title" className="text-[18px] font-extrabold text-plum-950">Price update access</h2>
+                <p className="mt-1 text-[12.5px] leading-relaxed text-ink/65">Your price update window becomes available after a listing is published and live. Until then, you can review or edit the listing and its packages.</p>
+              </div>
+              <button type="button" onClick={() => setPriceWindowOpen(false)} aria-label="Close price update details" className="rounded-full p-2 text-ink/60 hover:bg-plum-50"><X size={19} /></button>
+            </div>
+            <div className="mt-4 rounded-2xl bg-plum-50 p-3.5">
+              <p className="text-[13px] font-extrabold text-plum-950">{counts.live > 0 ? 'Your live listings follow the 15-day pricing policy.' : 'Your listings are not live yet.'}</p>
+              <p className="mt-1 text-[12px] leading-relaxed text-ink/65">{counts.live > 0 ? 'The next eligible update date will appear here when it is available. Approved seasonal price windows will also be shown here.' : 'Once Sambramo approves and publishes a listing, this card will show when regular price updates are eligible. Approved seasonal windows will appear here too.'}</p>
+            </div>
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <button type="button" onClick={() => { setPriceWindowOpen(false); setFilterStatus('all') }} className="min-h-11 rounded-full border border-plum-200 px-3 text-[12px] font-extrabold text-plum-700">View listings</button>
+              <button type="button" onClick={() => { setPriceWindowOpen(false); onOpenListings?.() }} className="min-h-11 rounded-full bg-plum-700 px-3 text-[12px] font-extrabold text-white">Edit listing</button>
+            </div>
+          </section>
+        </div>
+      )}
 
       {manageOpen && (
         <div className="fixed inset-0 z-[100] flex items-end justify-center bg-ink/45 p-0 sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="manage-pricing-title">
@@ -614,13 +647,14 @@ function LegacyListingDetails({
 }
 
 
-function StatusMetric({ label, count, glyph, tone }) {
+function StatusMetric({ label, count, glyph, tone, active, onClick }) {
   return (
-    <div className="flex min-w-0 flex-col items-center justify-center gap-1 rounded-[14px] border border-plum-100 bg-gradient-to-b from-white to-plum-50 px-0.5 py-2 text-center shadow-[0_2px_8px_rgba(35,12,64,0.06)]">
+    <button type="button" onClick={onClick} aria-pressed={active}
+      className={`flex min-w-0 flex-col items-center justify-center gap-1 rounded-[14px] border px-0.5 py-2 text-center transition active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-plum-500 ${active ? 'border-plum-300 bg-plum-50 shadow-inner' : 'border-plum-100 bg-gradient-to-b from-white to-plum-50 shadow-[0_2px_8px_rgba(35,12,64,0.06)]'}`}>
       <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-full text-[15px] font-black ${tone}`}>{glyph}</span>
       <span className="block w-full truncate text-[10px] font-black uppercase tracking-[0.02em] text-plum-800">{label}</span>
       <span className="block text-[27px] font-black leading-none tabular-nums text-[#211035]">{count}</span>
-    </div>
+    </button>
   )
 }
 
