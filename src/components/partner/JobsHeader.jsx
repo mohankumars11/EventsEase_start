@@ -29,10 +29,9 @@ export default function JobsHeader({
     <header className="bg-white text-[#17152B]">
       <div className="px-0 pb-3 pt-2 sm:pb-4">
         <div className="flex items-center justify-between gap-2">
-          <div className="flex min-w-0 items-center gap-2">
-            <SambramoWordmark size={22} className="shrink-0" />
-            <span className="shrink-0 rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1.5 text-[9px] font-black uppercase tracking-[0.15em] text-violet-700">Partner</span>
-            <span aria-label={acceptingJobs ? 'Online' : 'Offline'} className={`h-2.5 w-2.5 shrink-0 rounded-full ring-4 ${acceptingJobs ? 'bg-emerald-500 ring-emerald-100' : 'bg-slate-300 ring-slate-100'}`} />
+          <div className="flex min-w-0 items-center gap-2 sm:gap-2.5">
+            <SambramoWordmark size={25} className="shrink-0" />
+            <span className="shrink-0 rounded-full border border-[#E3C9FF] bg-[#F7F0FF] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[#6D28D9]">Partner</span>
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <button type="button" onClick={onOpenAlerts} aria-label={unreadAlerts ? `Alerts and updates, ${unreadAlerts} unread` : 'Alerts and updates'} className="relative flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-[#17152B] shadow-[0_2px_8px_rgba(25,15,50,.06)] transition active:scale-95">
