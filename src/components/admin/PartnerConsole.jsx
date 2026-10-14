@@ -449,6 +449,9 @@ function PartnerTable({ data, byVendor, onOpen }) {
                 const live = cards.filter(s => s.review_status === 'live' && s.is_active).length
                 const docs = data.docs.filter(d => d.vendor_id === v.id)
                 const payout = data.payouts.find(p => p.vendor_id === v.id)
+                const payoutRoute = data.payoutAccounts.find(p => p.vendor_id === v.id)
+                const payoutVerified = !!payoutRoute?.kyc_verified_at || !!payout?.verified_at
+                const payoutExists = !!payoutRoute || !!payout
                 const st = VENDOR_STATE[v.verification_status] ?? VENDOR_STATE.draft
                 const dispatchable = v.is_verified && !!v.location && live > 0 && !v.suspended_at && v.accepting_jobs !== false
                 return (
@@ -481,7 +484,7 @@ function PartnerTable({ data, byVendor, onOpen }) {
                       <p className="mt-0.5 text-[9px] text-ink-mute">{docs.filter(d => ['approved','verified','accepted'].includes(String(d.status || '').toLowerCase())).length} accepted</p>
                     </td>
                     <td className="px-3 py-3">
-                      <span className={'rounded-full px-2 py-1 text-[9px] font-extrabold ' + (payout?.verified_at ? 'bg-forest-50 text-forest-800' : 'bg-amber-50 text-amber-800')}>{payout?.verified_at ? 'Verified' : payout ? 'Unverified' : 'Not set'}</span>
+                      <span title={payoutRoute ? 'Partner payout-route KYC' : 'Legacy payout details'} className={'rounded-full px-2 py-1 text-[9px] font-extrabold ' + (payoutVerified ? 'bg-forest-50 text-forest-800' : 'bg-amber-50 text-amber-800')}>{payoutVerified ? 'Verified' : payoutExists ? 'Unverified' : 'Not set'}</span>
                     </td>
                     <td className="px-3 py-3 whitespace-nowrap text-[10px] text-ink-mute">{v.created_at ? new Date(v.created_at).toLocaleDateString('en-IN') : '—'}</td>
                     <td className="px-3 py-3"><ChevronRight size={14} className="text-ink-mute"/></td>
