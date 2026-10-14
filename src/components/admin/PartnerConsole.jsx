@@ -979,6 +979,8 @@ function PartnerDrawer({ vendor: v, services, tradeListings = [], docs, payout, 
   const pricingPending = [...(pricing.trade ?? []), ...(pricing.catering ?? [])]
     .filter(p => ['UNDER_REVIEW','ACTION_REQUIRED'].includes(p.status))
   const pricingUnderReview = pricingPending.filter(p => p.status === 'UNDER_REVIEW')
+  const relatedLineIds = new Set(dispatchOffers.map(o => o.line_id))
+  const partnerLines = bookingLines.filter(l => relatedLineIds.has(l.id) || payoutClaims.some(p => p.line_id === l.id) || adjustments.some(a => a.line_id === l.id))
 
   async function saveLifecycleNote() {
     const body = noteText.trim()
@@ -1178,6 +1180,43 @@ function PartnerDrawer({ vendor: v, services, tradeListings = [], docs, payout, 
                 {t.review_note && <p className="mt-2 rounded-lg bg-amber-50 px-2.5 py-1.5 text-[10.5px] text-amber-900">Review note: {t.review_note}</p>}
               </article>
             )) : <p className="text-[12px] italic text-ink-mute">No partner trade rows are linked to this business.</p>}
+          </Section>
+
+          <Section title={'Dispatch & booking history (' + partnerLines.length + ' lines · ' + dispatchOffers.length + ' offers)'}>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="rounded-xl bg-ink/[0.025] p-2.5"><p className="text-[8px] font-extrabold uppercase text-ink-mute">Offers</p><p className="mt-1 text-[17px] font-black text-ink">{dispatchOffers.length}</p></div>
+              <div className="rounded-xl bg-ink/[0.025] p-2.5"><p className="text-[8px] font-extrabold uppercase text-ink-mute">Accepted</p><p className="mt-1 text-[17px] font-black text-ink">{dispatchOffers.filter(o => String(o.status).toLowerCase() === 'accepted').length}</p></div>
+              <div className="rounded-xl bg-ink/[0.025] p-2.5"><p className="text-[8px] font-extrabold uppercase text-ink-mute">Expired</p><p className="mt-1 text-[17px] font-black text-ink">{dispatchOffers.filter(o => String(o.status).toLowerCase() === 'expired').length}</p></div>
+            </div>
+            <p className="mt-3 text-[10.5px] leading-relaxed text-ink-mute">Partner offers and their linked booking lines. This section intentionally shows operational states and settlement milestones, not customer contact data.</p>
+            {dispatchOffers.length ? dispatchOffers.map(o => {
+              const line = partnerLines.find(l => l.id === o.line_id) || bookingLines.find(l => l.id === o.line_id)
+              return (
+                <article key={o.id} className="mt-2 rounded-xl bg-ink/[0.025] p-3 ring-1 ring-ink/[0.05]">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[11.5px] font-extrabold text-ink">{line?.service_name || line?.trade || 'Partner offer'}</p>
+                      <p className="mt-0.5 break-all font-mono text-[8.5px] text-ink-mute">Offer {o.id}</p>
+                      <p className="mt-0.5 break-all font-mono text-[8.5px] text-ink-mute">Line {o.line_id}</p>
+                    </div>
+                    <span className={'shrink-0 rounded-full px-2 py-1 text-[9px] font-extrabold ' + (String(o.status).toLowerCase() === 'accepted' ? 'bg-forest-50 text-forest-800' : String(o.status).toLowerCase() === 'declined' || String(o.status).toLowerCase() === 'cancelled' ? 'bg-rose-50 text-rose-800' : 'bg-amber-50 text-amber-800')}>{String(o.status || 'unknown').replace(/_/g,' ')}</span>
+                  </div>
+                  <div className="mt-2 grid grid-cols-2 gap-2 text-[9.5px] text-ink-mute">
+                    <p>Offer amount · {o.partner_amount_paise != null ? money(Number(o.partner_amount_paise) / 100) : '—'}</p>
+                    <p>Distance · {o.distance_m != null ? (Number(o.distance_m) / 1000).toFixed(1) + ' km' : '—'}</p>
+                    <p>Wave · {o.wave ?? '—'}</p><p>Line state · {String(line?.status || 'unknown').replace(/_/g,' ')}</p>
+                    <p>Offered · {o.offered_at ? new Date(o.offered_at).toLocaleString('en-IN') : '—'}</p>
+                    <p>Responded · {o.responded_at ? new Date(o.responded_at).toLocaleString('en-IN') : 'No response'}</p>
+                    <p>Accepted · {o.accepted_at ? new Date(o.accepted_at).toLocaleString('en-IN') : '—'}</p>
+                    <p>Line settled · {line?.settled_at ? new Date(line.settled_at).toLocaleString('en-IN') : '—'}</p>
+                  </div>
+                  {(o.decline_reason || line?.cancellation_reason) && <p className="mt-2 rounded-lg bg-amber-50 p-2 text-[10px] leading-relaxed text-amber-900">{o.decline_reason ? 'Offer note: ' + o.decline_reason : ''}{o.decline_reason && line?.cancellation_reason ? ' · ' : ''}{line?.cancellation_reason ? 'Line cancellation: ' + line.cancellation_reason : ''}</p>}
+                </article>
+              )
+            }) : <p className="mt-2 rounded-xl bg-ink/[0.025] p-3 text-[11px] text-ink-mute">No dispatch offers are linked to this partner yet.</p>}
+            {partnerLines.filter(l => !dispatchOffers.some(o => o.line_id === l.id)).map(l => (
+              <article key={l.id} className="mt-2 rounded-xl bg-ink/[0.025] p-3"><p className="text-[11px] font-extrabold">{l.service_name || l.trade || 'Booking line'} · {String(l.status || 'unknown').replace(/_/g,' ')}</p><p className="mt-1 break-all font-mono text-[8.5px] text-ink-mute">Line ID {l.id} · Request {l.request_id}</p><p className="mt-1 text-[10px] text-ink-mute">Partner amount · {l.partner_amount_paise != null ? money(Number(l.partner_amount_paise)/100) : '—'} · Settled {l.settled_at ? new Date(l.settled_at).toLocaleString('en-IN') : '—'}</p></article>
+            ))}
           </Section>
 
           <Section title={`What they list (${services.length})`}>
