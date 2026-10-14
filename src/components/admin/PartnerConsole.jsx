@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useAuth } from '../../context/AuthContext'
 import {
   Loader2, Search, ShieldCheck, ShieldAlert, Clock, Radio, EyeOff, Images,
   FileText, X, Check, AlertCircle, MapPin, Phone, Mail, Calendar,
@@ -123,13 +124,13 @@ const money = n =>
 function usePartnerData() {
   const [state, setState] = useState({
     loading: true, error: null, payoutsReadable: true,
-    vendors: [], services: [], docs: [], payouts: [], work: [], tradePackages: [], cateringPackages: [],
+    vendors: [], services: [], docs: [], payouts: [], work: [], tradePackages: [], cateringPackages: [], audit: [], notes: [],
   })
 
   const load = useCallback(async () => {
     setState(s => ({ ...s, loading: true, error: null }))
     try {
-      const [v, s, d, p, w, tp, cp] = await Promise.all([
+      const [v, s, d, p, w, tp, cp, a, n] = await Promise.all([
         supabase.from('vendors').select('*').eq('is_synthetic', false).order('created_at', { ascending: false }),
         supabase.from('vendor_services').select('*').order('created_at', { ascending: false }),
         supabase.from('vendor_documents').select('*'),
@@ -137,6 +138,8 @@ function usePartnerData() {
         supabase.from('partner_work').select('*').order('created_at', { ascending: false }),
         supabase.from('sambramo_trade_packages').select('id,vendor_id,vendor_service_id,parent_package_id,name,status,revision_round,commercial_inputs,submitted_at,review_note').in('status', ['UNDER_REVIEW','ACTION_REQUIRED','LIVE']),
         supabase.from('sambramo_catering_packages').select('id,vendor_id,vendor_service_id,parent_package_id,name,status,rate_bands').in('status', ['UNDER_REVIEW','ACTION_REQUIRED','LIVE']),
+        supabase.from('admin_lifecycle_audit').select('id,entity_type,entity_id,vendor_id,action,before_state,after_state,actor_id,actor_role,note,created_at').not('vendor_id', 'is', null).order('created_at', { ascending: false }),
+        supabase.from('admin_lifecycle_notes').select('id,target_type,vendor_id,note_kind,body,created_by,created_at').eq('target_type', 'partner').order('created_at', { ascending: false }),
       ])
       if (v.error) throw v.error
       setState({
@@ -161,6 +164,8 @@ function usePartnerData() {
         work: w.data ?? [],
         tradePackages: tp.error ? [] : (tp.data ?? []),
         cateringPackages: cp.error ? [] : (cp.data ?? []),
+        audit: a.error ? [] : (a.data ?? []),
+        notes: n.error ? [] : (n.data ?? []),
       })
     } catch (err) {
       setState(s => ({ ...s, loading: false, error: err }))
@@ -172,6 +177,7 @@ function usePartnerData() {
 }
 
 export default function PartnerConsole() {
+  const { user } = useAuth()
   const [tab, setTab] = useState('pipeline')
   const [open, setOpen] = useState(null)       // the partner in the drawer
   const data = usePartnerData()
@@ -254,6 +260,9 @@ export default function PartnerConsole() {
           payoutsReadable={data.payoutsReadable}
           work={data.work.filter(w => w.vendor_id === open.id)}
           pricing={{ trade: data.tradePackages.filter(p => p.vendor_id === open.id), catering: data.cateringPackages.filter(p => p.vendor_id === open.id) }}
+          audit={data.audit.filter(a => a.vendor_id === open.id)}
+          notes={data.notes.filter(n => n.vendor_id === open.id)}
+          actorId={user?.id}
           onClose={() => setOpen(null)}
           onChanged={data.refresh}
         />
@@ -876,9 +885,12 @@ function ClosureQueue({ data, byVendor, onOpen }) {
    per-vendor and this drawer already holds every row it reads, so a
    round trip would buy nothing and add a spinner to a sheet that is
    otherwise instant. */
-function PartnerDrawer({ vendor: v, services, docs, payout, payoutsReadable = true, work = [], pricing = { trade: [], catering: [] }, onClose, onChanged }) {
+function PartnerDrawer({ vendor: v, services, docs, payout, payoutsReadable = true, work = [], pricing = { trade: [], catering: [] }, audit = [], notes = [], actorId, onClose, onChanged }) {
   const toast = useToast()
   const [busy, setBusy] = useState(null)
+  const [noteText, setNoteText] = useState('')
+  const [noteKind, setNoteKind] = useState('internal')
+  const [noteBusy, setNoteBusy] = useState(false)
 
   const live = services.filter(s => s.review_status === 'live' && s.is_active)
   const readiness = {
@@ -896,6 +908,23 @@ function PartnerDrawer({ vendor: v, services, docs, payout, payoutsReadable = tr
   const pricingPending = [...(pricing.trade ?? []), ...(pricing.catering ?? [])]
     .filter(p => ['UNDER_REVIEW','ACTION_REQUIRED'].includes(p.status))
   const pricingUnderReview = pricingPending.filter(p => p.status === 'UNDER_REVIEW')
+
+  async function saveLifecycleNote() {
+    const body = noteText.trim()
+    if (!body || !actorId || noteBusy) return
+    setNoteBusy(true)
+    try {
+      const { error } = await supabase.from('admin_lifecycle_notes').insert({
+        target_type: 'partner', vendor_id: v.id, note_kind: noteKind, body, created_by: actorId,
+      })
+      if (error) throw error
+      setNoteText('')
+      toast.success('Partner lifecycle note saved.')
+      await onChanged()
+    } catch (err) {
+      toast.error(friendlyError(err, 'Could not save this lifecycle note.'))
+    } finally { setNoteBusy(false) }
+  }
 
   async function approveApplication() {
     setBusy('approve-application')
@@ -1128,6 +1157,30 @@ function PartnerDrawer({ vendor: v, services, docs, payout, payoutsReadable = tr
               `verification_status` by trigger, so writing a derived
               column shows a success toast over a no-op — that is exactly
               how this screen used to lie. */}
+          <Section title={`Lifecycle notes (${notes.length})`}>
+            <p className="text-[11.5px] leading-relaxed text-ink-mute">Internal operator notes are linked directly to this partner ID. Use these for follow-ups, support context, compliance concerns or operational handoffs.</p>
+            <div className="mt-2 grid gap-2">
+              <select value={noteKind} onChange={e => setNoteKind(e.target.value)} className="w-full rounded-xl bg-white px-3 py-2.5 text-[12px] font-semibold text-ink ring-1 ring-ink/[0.08]">
+                <option value="internal">Internal note</option><option value="follow_up">Follow-up</option><option value="risk">Risk</option><option value="support">Support</option><option value="compliance">Compliance</option>
+              </select>
+              <textarea value={noteText} onChange={e => setNoteText(e.target.value)} rows={3} maxLength={4000} placeholder="Record context or the next action… (operator-only)" className="w-full resize-y rounded-xl bg-white px-3 py-2.5 text-[12px] text-ink ring-1 ring-ink/[0.08] outline-none focus:ring-2 focus:ring-plum-300"/>
+              <div className="flex items-center justify-between gap-2"><span className="text-[10px] text-ink-mute">{noteText.length}/4000 characters</span><button type="button" onClick={saveLifecycleNote} disabled={noteBusy || !noteText.trim() || !actorId} className="rounded-xl bg-plum-700 px-3.5 py-2 text-[11px] font-extrabold text-white disabled:opacity-40">{noteBusy ? 'Saving…' : 'Save note'}</button></div>
+            </div>
+            <div className="mt-3 space-y-2">
+              {notes.map(n => <article key={n.id} className="rounded-xl bg-ink/[0.025] p-3 ring-1 ring-ink/[0.05]"><div className="flex items-center justify-between gap-2"><span className="rounded-full bg-plum-50 px-2 py-1 text-[9px] font-extrabold uppercase text-plum-700">{String(n.note_kind || 'internal').replace(/_/g, ' ')}</span><time className="text-[10px] text-ink-mute">{n.created_at ? new Date(n.created_at).toLocaleString('en-IN') : '—'}</time></div><p className="mt-2 whitespace-pre-wrap text-[11.5px] leading-relaxed text-ink-soft">{n.body}</p><p className="mt-2 font-mono text-[9px] text-ink-mute">Note ID · {n.id}</p></article>)}
+              {!notes.length && <p className="rounded-xl bg-ink/[0.025] p-3 text-[11.5px] text-ink-mute">No operator notes yet. Notes will remain attached to this partner record.</p>}
+            </div>
+          </Section>
+
+          <Section title={`Lifecycle audit (${audit.length})`}>
+            <p className="text-[11px] leading-relaxed text-ink-mute">State changes are recorded by database triggers when partner, listing, trade, document, pricing or account-role fields change. Sensitive document paths and raw payout details are intentionally excluded.</p>
+            <div className="mt-3 space-y-2">
+              {audit.slice(0, 35).map(a => <article key={a.id} className="flex gap-2.5 rounded-xl bg-ink/[0.025] p-3 ring-1 ring-ink/[0.05]"><span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-plum-500"/><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center justify-between gap-2"><p className="text-[11.5px] font-extrabold text-ink">{String(a.action || 'state changed').replace(/[._]/g, ' ')}</p><time className="text-[9.5px] text-ink-mute">{a.created_at ? new Date(a.created_at).toLocaleString('en-IN') : '—'}</time></div><p className="mt-1 text-[10px] text-ink-mute">{String(a.entity_type || 'record').replace(/_/g, ' ')} · {a.entity_id} · actor {a.actor_role || 'system'}</p>{a.note && <p className="mt-1 text-[10.5px] text-ink-soft">{a.note}</p>}<details className="mt-1.5"><summary className="cursor-pointer text-[10px] font-bold text-plum-700">Inspect before / after state</summary><pre className="mt-2 overflow-x-auto rounded-lg bg-white p-2 text-[9px] leading-relaxed text-ink-soft">{JSON.stringify({before: a.before_state, after: a.after_state}, null, 2)}</pre></details></div></article>)}
+              {!audit.length && <p className="rounded-xl bg-ink/[0.025] p-3 text-[11.5px] text-ink-mute">No trigger-generated state changes have been recorded yet. New operational changes will appear here automatically.</p>}
+              {audit.length > 35 && <p className="text-[10px] text-ink-mute">Showing the 35 most recent audit events for this partner.</p>}
+            </div>
+          </Section>
+
           <Section title="Verification">
             <p className="text-[12px] leading-snug text-ink-mute">
               Currently <span className="font-extrabold text-ink">
