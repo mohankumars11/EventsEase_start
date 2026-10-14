@@ -32,7 +32,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import useEmblaCarousel from 'embla-carousel-react'
 import { motion } from 'motion/react'
-import { Pencil, Check, X, RefreshCw, ChevronRight } from 'lucide-react'
+import { Pencil, Check, X, Lock, RefreshCw, ChevronRight } from 'lucide-react'
 import { lookFor, isFeatured } from './tierLook'
 import { rupees } from '../../../lib/tierPackages'
 
