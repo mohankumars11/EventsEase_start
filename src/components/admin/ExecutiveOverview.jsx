@@ -37,11 +37,15 @@ export default function ExecutiveOverview({ onNavigate }) {
         supabase.from('sambramo_trade_packages').select('id,vendor_id,name,status,created_at,updated_at'),
         supabase.from('sambramo_catering_packages').select('id,vendor_id,name,status,created_at,updated_at'),
         supabase.from('partner_events').select('id,vendor_id,profile_id,name,created_at').order('created_at', { ascending: false }),
+        supabase.from('booking_lines').select('id,request_id,service_name,trade,status,partner_amount_paise,accepted_at,paid_at,delivered_at,settled_at,created_at'),
+        supabase.from('dispatch_offers').select('id,line_id,vendor_id,status,partner_amount_paise,offered_at,responded_at,accepted_at'),
+        supabase.from('payout_claims').select('id,line_id,vendor_id,amount_paise,status,requested_at,settled_at,failed_at'),
+        supabase.from('partner_referrals').select('id,referrer_id,referred_id,state,reward_status,created_at,qualified_at,paid_at'),
       ])
-      const names = ['partner profiles', 'service cards', 'trade listings', 'documents', 'portfolio items', 'payout readiness', 'trade pricing', 'catering pricing', 'partner activity']
+      const names = ['partner profiles', 'service cards', 'trade listings', 'documents', 'portfolio items', 'payout readiness', 'trade pricing', 'catering pricing', 'partner activity', 'booking lines', 'dispatch offers', 'payout claims', 'partner referrals']
       const issues = results.map((r, i) => errOf(r) ? names[i] + ': ' + errOf(r) : '').filter(Boolean)
       const rows = results.map(rowsOf)
-      setData({ vendors: rows[0], services: rows[1], trades: rows[2], docs: rows[3], work: rows[4], payouts: rows[5], tradePrices: rows[6], cateringPrices: rows[7], activityEvents: rows[8] })
+      setData({ vendors: rows[0], services: rows[1], trades: rows[2], docs: rows[3], work: rows[4], payouts: rows[5], tradePrices: rows[6], cateringPrices: rows[7], activityEvents: rows[8], bookingLines: rows[9], dispatchOffers: rows[10], payoutClaims: rows[11], referrals: rows[12] })
       if (issues.length) setError('Some partner sources could not be read: ' + issues.join(' · ') + '. Figures may be incomplete.')
     } catch (e) {
       setError(e && e.message ? e.message : 'Could not load partner operations.')
@@ -67,6 +71,14 @@ export default function ExecutiveOverview({ onNavigate }) {
     const revised = services.filter(s => s.is_active && s.review_status === 'live' && s.revised_at && (!s.reviewed_at || new Date(s.revised_at) > new Date(s.reviewed_at)))
     const pendingDocs = data.docs.filter(d => ['pending','submitted','under_review','needs_review'].includes(String(d.status || '').toLowerCase()) || ['pending','submitted','under_review'].includes(String(d.provider_status || '').toLowerCase()))
     const pendingPricing = [...data.tradePrices, ...data.cateringPrices].filter(x => ['UNDER_REVIEW','ACTION_REQUIRED'].includes(x.status))
+    const dispatchOffers = data.dispatchOffers.filter(o => partnerIds.has(o.vendor_id))
+    const linkedLineIds = new Set(dispatchOffers.map(o => o.line_id))
+    const bookingLines = data.bookingLines.filter(l => linkedLineIds.has(l.id))
+    const payoutClaims = data.payoutClaims.filter(p => partnerIds.has(p.vendor_id))
+    const openPayoutClaims = payoutClaims.filter(p => !['settled','paid','completed','complete','failed','cancelled','rejected'].includes(String(p.status || '').toLowerCase()))
+    const acceptedOffers = dispatchOffers.filter(o => String(o.status || '').toLowerCase() === 'accepted')
+    const expiredOffers = dispatchOffers.filter(o => String(o.status || '').toLowerCase() === 'expired')
+    const referrals = data.referrals.filter(r => partnerIds.has(r.referrer_id) || partnerIds.has(r.referred_id))
     const cutoff30 = Date.now() - 30 * 86400000
     const recentPartnerEvents = data.activityEvents.filter(e => new Date(e.created_at || 0).getTime() >= cutoff30)
     const activeIds = new Set()
@@ -113,6 +125,7 @@ export default function ExecutiveOverview({ onNavigate }) {
       tradeCount: new Set(data.trades.filter(t => partnerIds.has(t.vendor_id)).map(t => t.trade_id || t.trade)).size,
       liveWork: data.work.filter(w => w.review_status === 'live').length,
       payoutReady: data.payouts.filter(p => !!p.verified_at).length,
+      dispatchOffers, bookingLines, payoutClaims, openPayoutClaims, acceptedOffers, expiredOffers, referrals,
       activePartners30d: activeIds.size,
       partnerEvents30d: recentPartnerEvents.filter(e => (e.vendor_id && partnerIds.has(e.vendor_id)) || vendors.some(v => v.profile_id && v.profile_id === e.profile_id)).length,
       cardReview: byStatus('under_review'), rejected: byStatus('rejected'), inactive: services.filter(s => !s.is_active).length,
@@ -158,6 +171,13 @@ export default function ExecutiveOverview({ onNavigate }) {
       <Metric icon={FileText} label="Cards to review" value={stats.cardReview} note="First-time service review" tone="purple" onClick={()=>onNavigate&&onNavigate('listing-review')}/>
       <Metric icon={AlertTriangle} label="Approved but invisible" value={stats.stranded.length} note="No active live service card" tone="rose" onClick={()=>onNavigate&&onNavigate('partners')}/>
       <Metric icon={CircleDollarSign} label="Pricing revisions" value={stats.pendingPricing.length} note="Packages awaiting an operator decision" tone="blue" onClick={()=>onNavigate&&onNavigate('pricing-review')}/>
+    </section>
+
+    <section className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+      <Metric icon={Radio} label="Partner dispatch offers" value={stats.dispatchOffers.length} note={stats.acceptedOffers.length + ' accepted · ' + stats.expiredOffers.length + ' expired'} tone="blue" onClick={()=>onNavigate&&onNavigate('live-ops')}/>
+      <Metric icon={Activity} label="Booking lines linked" value={stats.bookingLines.length} note="Partner job-request history available" tone="purple" onClick={()=>onNavigate&&onNavigate('live-ops')}/>
+      <Metric icon={CircleDollarSign} label="Payout claims to resolve" value={stats.openPayoutClaims.length} note={stats.payoutClaims.length + ' total recorded claims'} tone={stats.openPayoutClaims.length ? 'amber' : 'blue'} onClick={()=>onNavigate&&onNavigate('live-ops')}/>
+      <Metric icon={ShieldCheck} label="Referral records" value={stats.referrals.length} note="Referral lifecycle events linked to partners" tone="purple" onClick={()=>onNavigate&&onNavigate('partners')}/>
     </section>
 
     <section className="grid gap-4 xl:grid-cols-[1.35fr_1fr]">
