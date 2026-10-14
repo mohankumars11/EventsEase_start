@@ -1065,13 +1065,60 @@ function PartnerDrawer({ vendor: v, services, tradeListings = [], docs, payout, 
             </div>
           )}
 
-          <Section title="Who they are">
-            <Row icon={Mail}  label="Email"    value={v.profiles?.email ?? '—'} />
-            <Row icon={Phone} label="Phone"    value={v.profiles?.phone ?? v.phone ?? '—'} />
-            <Row icon={MapPin} label="Travels" value={v.service_radius_km ? `${v.service_radius_km} km` : '—'} />
-            <Row icon={Calendar} label="Joined" value={v.created_at?.slice(0, 10) ?? '—'} />
-            <Row icon={ShieldCheck} label="Terms"
-                 value={v.terms_accepted_at ? `Signed ${v.terms_version ?? ''}`.trim() : 'Not signed'} />
+          <Section title="Partner identifiers & contact">
+            <Row icon={FileText} label="Partner UUID" value={v.id} />
+            <Row icon={FileText} label="Login profile UUID" value={v.profile_id ?? 'No linked login profile'} />
+            <Row icon={ShieldCheck} label="Partner code" value={v.partner_code ?? 'Not assigned'} />
+            <Row icon={Mail} label="Account full name" value={v.profiles?.full_name ?? '—'} />
+            <Row icon={Mail} label="Account email" value={v.profiles?.email ?? '—'} />
+            <Row icon={Phone} label="Account phone" value={v.profiles?.phone ?? '—'} />
+            <Row icon={Phone} label="Business phone" value={v.contact_phone ?? '—'} />
+            <Row icon={Phone} label="WhatsApp" value={v.whatsapp_phone ?? '—'} />
+            <Row icon={Calendar} label="Created" value={v.created_at ? new Date(v.created_at).toLocaleString('en-IN') : '—'} />
+            <Row icon={Calendar} label="Last updated" value={v.updated_at ? new Date(v.updated_at).toLocaleString('en-IN') : '—'} />
+            <Row icon={ShieldCheck} label="Terms" value={v.terms_accepted_at ? 'Signed ' + (v.terms_version || '') + ' · ' + new Date(v.terms_accepted_at).toLocaleDateString('en-IN') : 'Not signed'} />
+            <Row icon={FileText} label="Profile role" value={v.profiles?.role ?? 'No linked profile'} />
+          </Section>
+
+          <Section title="Business profile & service coverage">
+            <Row icon={Layers} label="Business name" value={v.business_name} />
+            <Row icon={FileText} label="Business category" value={v.category ?? 'Not set'} />
+            <Row icon={FileText} label="Description" value={v.description ?? 'Not provided'} />
+            <Row icon={MapPin} label="Formatted address" value={(v.formatted_address || [v.area, v.city, v.state, v.pincode].filter(Boolean).join(', ')) || 'Not provided'} />
+            <Row icon={MapPin} label="Location capture" value={v.location_source ? v.location_source + (v.location_confirmed_at ? ' · confirmed ' + new Date(v.location_confirmed_at).toLocaleDateString('en-IN') : '') : 'Source not recorded'} />
+            <Row icon={MapPin} label="Service radius" value={v.service_radius_km ? String(v.service_radius_km) + ' km' : 'Not set'} />
+            <Row icon={MapPin} label="Travel scope" value={v.travel_scope ?? 'Not set'} />
+            <Row icon={MapPin} label="Service areas" value={Array.isArray(v.service_areas) && v.service_areas.length ? v.service_areas.join(', ') : 'Not listed'} />
+            <Row icon={FileText} label="Website" value={v.website_url ?? '—'} />
+            <Row icon={FileText} label="Instagram" value={v.instagram_url ?? '—'} />
+            <Row icon={Calendar} label="Years experience / active" value={String(v.years_experience ?? '—') + ' / ' + String(v.years_active ?? '—')} />
+            <Row icon={IndianRupee} label="Price guide" value={v.starting_price != null ? money(v.starting_price) : [v.price_range_min, v.price_range_max].some(x => x != null) ? String(v.price_range_min ?? '—') + ' – ' + String(v.price_range_max ?? '—') : 'Not provided'} />
+          </Section>
+
+          <Section title="Operations, availability & onboarding">
+            <Row icon={ShieldCheck} label="Verification state" value={v.verification_status ?? 'Unknown'} />
+            <Row icon={ShieldCheck} label="Legacy status" value={v.status ?? 'Unknown'} />
+            <Row icon={ShieldCheck} label="Subscription plan" value={v.subscription_plan ?? '—'} />
+            <Row icon={ShieldCheck} label="Featured" value={v.is_featured ? 'Yes' : 'No'} />
+            <Row icon={Calendar} label="Accepting bookings" value={v.accepting_bookings ? 'Yes' : 'No'} />
+            <Row icon={Calendar} label="Accepting jobs" value={v.accepting_jobs ? 'Yes' : 'No'} />
+            <Row icon={Calendar} label="Working hours" value={v.working_start && v.working_end ? String(v.working_start).slice(0, 5) + '–' + String(v.working_end).slice(0, 5) : 'Not set'} />
+            <Row icon={Calendar} label="Lead time / max events" value={String(v.lead_time_days ?? '—') + ' days / ' + String(v.max_events_per_day ?? '—') + ' per day'} />
+            <Row icon={Calendar} label="Daily capacity" value={v.daily_capacity ?? '—'} />
+            <Row icon={Calendar} label="Weekly days off" value={Array.isArray(v.weekly_days_off) && v.weekly_days_off.length ? v.weekly_days_off.join(', ') : 'Not set'} />
+            <Row icon={ShieldCheck} label="Onboarding state" value={v.onboarding_status ?? 'Not recorded'} />
+            <Row icon={ShieldCheck} label="Current setup step" value={v.current_onboarding_step ?? '—'} />
+            <Row icon={ShieldCheck} label="Completed setup steps" value={Array.isArray(v.completed_steps) && v.completed_steps.length ? v.completed_steps.join(', ') : 'None recorded'} />
+            <Row icon={Calendar} label="Calendar reviewed through" value={v.calendar_reviewed_through ?? '—'} />
+            <Row icon={FileText} label="Acquisition source" value={v.heard_from_detail || v.heard_from || 'Not recorded'} />
+            {(v.verification_note || v.review_note || v.rejection_reason || v.suspended_reason) && (
+              <div className="space-y-2 rounded-xl bg-amber-50 p-3 text-[11px] leading-relaxed text-amber-950">
+                {v.verification_note && <p><b>Verification note:</b> {v.verification_note}</p>}
+                {v.review_note && <p><b>Review note:</b> {v.review_note}</p>}
+                {v.rejection_reason && <p><b>Rejection reason:</b> {v.rejection_reason}</p>}
+                {v.suspended_reason && <p><b>Suspension reason:</b> {v.suspended_reason}</p>}
+              </div>
+            )}
           </Section>
 
           <Section title={`Trade listings (${tradeListings.length})`}>
@@ -1140,38 +1187,76 @@ function PartnerDrawer({ vendor: v, services, tradeListings = [], docs, payout, 
             )}
           </Section>
 
-          <Section title={`Identity documents (${docs.length})`}>
+          <Section title={\`Identity & compliance uploads (\${docs.length})\`}>
             {docs.length === 0 ? (
-              <p className="text-[12px] italic text-ink-mute">Nothing uploaded.</p>
-            ) : docs.map(d => (
-              <div key={d.id} className="flex items-center gap-2 rounded-xl bg-ink/[0.02] px-3 py-2">
-                <FileText size={14} className="shrink-0 text-ink-mute" />
-                <span className="min-w-0 flex-1">
-                  <span className="block text-[12.5px] font-extrabold text-ink">
-                    {KIND_LABEL[d.kind] ?? d.kind}
-                  </span>
-                  <span className="block text-[11px] text-ink-mute">
-                    {d.last4 ? `ends ${d.last4} · ` : ''}added {ago(d.created_at)}
-                  </span>
-                </span>
-                <DocLink path={d.storage_path} />
+              <p className="text-[12px] italic text-ink-mute">No partner documents are linked to this record yet.</p>
+            ) : (
+              <div className="overflow-x-auto rounded-xl ring-1 ring-ink/[0.07]">
+                <table className="w-full min-w-[750px] text-left">
+                  <thead><tr className="border-b border-ink/[0.07] bg-ink/[0.025] text-[9px] font-extrabold uppercase tracking-wide text-ink-mute">
+                    <th className="px-2.5 py-2">Upload / requirement</th><th className="px-2.5 py-2">Review & provider</th><th className="px-2.5 py-2">Evidence checks</th><th className="px-2.5 py-2">Dates</th><th className="px-2.5 py-2">File</th>
+                  </tr></thead>
+                  <tbody>{docs.map(d => (
+                    <tr key={d.id} className="border-b border-ink/[0.055] last:border-0 align-top">
+                      <td className="px-2.5 py-2.5">
+                        <p className="text-[11px] font-extrabold text-ink">{KIND_LABEL[d.kind] ?? d.kind}</p>
+                        <p className="mt-0.5 max-w-[180px] break-words text-[10px] text-ink-soft">{d.file_name || 'File name not recorded'}</p>
+                        <p className="mt-1 font-mono text-[8.5px] text-ink-mute" title={d.id}>Doc ID · {d.id}</p>
+                        <p className="mt-0.5 text-[9px] text-ink-mute">Requirement · {d.requirement_id || '—'}{d.listing_id ? ' · listing ' + d.listing_id : ''}</p>
+                        {d.number_last4 && <p className="mt-0.5 text-[9px] font-semibold text-ink-mute">Masked reference ends {d.number_last4}</p>}
+                        {d.holder_name && <p className="mt-0.5 text-[9px] text-ink-mute">Holder name · {d.holder_name}</p>}
+                      </td>
+                      <td className="px-2.5 py-2.5">
+                        <span className={'inline-flex rounded-full px-2 py-0.5 text-[9px] font-extrabold ' + (['approved','verified','accepted'].includes(String(d.status || '').toLowerCase()) ? 'bg-forest-50 text-forest-800' : ['rejected','failed'].includes(String(d.status || '').toLowerCase()) ? 'bg-rose-50 text-rose-800' : 'bg-amber-50 text-amber-800')}>{String(d.status || 'unknown').replace(/_/g,' ')}</span>
+                        <p className="mt-1 text-[9px] text-ink-mute">Provider · {String(d.provider_status || 'not recorded').replace(/_/g,' ')}</p>
+                        {d.provider_name && <p className="mt-0.5 text-[9px] text-ink-mute">{d.provider_name}{d.provider_ref ? ' · ref ' + d.provider_ref : ''}</p>}
+                        {d.review_note && <p className="mt-1 max-w-[180px] whitespace-normal text-[9px] leading-relaxed text-rose-700">Review note: {d.review_note}</p>}
+                        {d.expires_on && <p className="mt-1 text-[9px] text-ink-mute">Expires {d.expires_on}</p>}
+                      </td>
+                      <td className="px-2.5 py-2.5">
+                        <div className="space-y-1 text-[9px] text-ink-mute">
+                          <p>Checksum · {d.checksum_ok == null ? 'Unknown' : d.checksum_ok ? 'Pass' : 'Fail'}</p>
+                          <p>Name match · {d.name_match || 'Unknown'}</p><p>Face match · {d.face_match || 'Unknown'}</p>
+                          <p>Detected · {d.detected_type || 'Unknown'}{d.detected_confidence != null ? ' (' + Math.round(Number(d.detected_confidence) * (Number(d.detected_confidence) <= 1 ? 100 : 1)) + '%)' : ''}</p>
+                          {d.issuing_authority && <p>Issuer · {d.issuing_authority}</p>}
+                        </div>
+                      </td>
+                      <td className="whitespace-nowrap px-2.5 py-2.5 text-[9px] text-ink-mute">
+                        <p>Uploaded {d.uploaded_at ? new Date(d.uploaded_at).toLocaleString('en-IN') : 'Unknown'}</p>
+                        <p className="mt-1">Checked {d.checked_at ? new Date(d.checked_at).toLocaleString('en-IN') : 'Not checked'}</p>
+                        <p className="mt-1">Reviewed {d.reviewed_at ? new Date(d.reviewed_at).toLocaleString('en-IN') : 'Not reviewed'}</p>
+                        {d.issue_date && <p className="mt-1">Issued {d.issue_date}</p>}
+                      </td>
+                      <td className="px-2.5 py-2.5"><DocLink path={d.storage_path} /></td>
+                    </tr>
+                  ))}</tbody>
+                </table>
               </div>
-            ))}
+            )}
           </Section>
 
-          <Section title="Pricing submitted with this application">
-            {pricingPending.length === 0 ? (
-              <p className="text-[12px] italic text-ink-mute">No pricing package is waiting for review.</p>
-            ) : pricingPending.map(p => (
-              <div key={p.id} className="flex items-center gap-2 rounded-xl bg-ink/[0.02] px-3 py-2">
-                <IndianRupee size={14} className="shrink-0 text-ink-mute" />
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[12.5px] font-extrabold text-ink">{p.name}</span>
-                  <span className="block text-[11px] text-ink-mute">{p.parent_package_id ? "Revision v" + (p.revision_round || 1) : "Initial package"} · {p.status.replaceAll("_"," ")}</span>
-                </span>
-              </div>
+          <Section title={\`Pricing packages & version history (\${(pricing.trade ?? []).length + (pricing.catering ?? []).length})\`}>
+            {!(pricing.trade?.length || pricing.catering?.length) ? (
+              <p className="text-[12px] italic text-ink-mute">No trade or catering pricing packages are recorded for this partner.</p>
+            ) : [...(pricing.trade ?? []).map(p => ({ ...p, packageType: 'Trade', payload: { commercial_inputs: p.commercial_inputs, trade_inputs: p.trade_inputs } })), ...(pricing.catering ?? []).map(p => ({ ...p, packageType: 'Catering', payload: { rate_bands: p.rate_bands } }))].sort((a,b) => new Date(b.submitted_at || b.updated_at || b.created_at || 0) - new Date(a.submitted_at || a.updated_at || a.created_at || 0)).map(p => (
+              <article key={p.packageType + ':' + p.id} className="rounded-xl bg-ink/[0.025] p-3 ring-1 ring-ink/[0.05]">
+                <div className="flex items-start gap-2">
+                  <span className="mt-0.5 text-plum-700"><IndianRupee size={14}/></span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[12px] font-extrabold text-ink">{p.name}</p>
+                    <p className="mt-0.5 text-[10px] text-ink-mute">{p.packageType} · {p.parent_package_id ? 'Revision v' + (p.revision_round || '—') : 'Initial package'} · {String(p.status || 'unknown').replace(/_/g,' ')}</p>
+                    <p className="mt-1 break-all font-mono text-[8.5px] text-ink-mute">Package ID · {p.id}</p>
+                    <p className="mt-0.5 break-all font-mono text-[8.5px] text-ink-mute">Service ID · {p.vendor_service_id || '—'}</p>
+                    <p className="mt-1 text-[9.5px] text-ink-mute">Submitted {p.submitted_at ? new Date(p.submitted_at).toLocaleDateString('en-IN') : '—'} · Reviewed {p.reviewed_at ? new Date(p.reviewed_at).toLocaleDateString('en-IN') : '—'}</p>
+                    {p.review_note && <p className="mt-2 rounded-lg bg-amber-50 p-2 text-[10px] text-amber-900">Review note: {p.review_note}</p>}
+                    <details className="mt-2"><summary className="cursor-pointer text-[10px] font-bold text-plum-700">Inspect saved pricing inputs</summary><pre className="mt-2 max-h-56 overflow-auto rounded-lg bg-white p-2 text-[9px] leading-relaxed text-ink-soft">{JSON.stringify(p.payload, null, 2)}</pre></details>
+                  </div>
+                </div>
+              </article>
             ))}
+            {pricingPending.length > 0 && <p className="rounded-xl bg-amber-50 p-3 text-[10.5px] font-bold text-amber-900">{pricingPending.length} package revision(s) are awaiting review. Use the Pricing review tab to make the formal decision.</p>}
           </Section>
+
           <Section title="Getting paid">
             {!payoutsReadable ? (
               <p className="rounded-xl bg-amber-50 px-3 py-2 text-[12px] leading-snug text-amber-900">
