@@ -71,11 +71,15 @@ import { destinationShort } from '../../lib/documents/mask'
  */
 
 const TABS = [
-  { id: 'pipeline',  label: 'Pipeline',       icon: Layers },
-  { id: 'partners',  label: 'Partners',       icon: ShieldCheck },
+  { id: 'pipeline',  label: 'Overview',       icon: Layers },
+  { id: 'partners',  label: 'Partner registry', icon: ShieldCheck },
   { id: 'listings',  label: 'Listing review', icon: FileText },
-  { id: 'work',      label: 'Their work',     icon: Images },
-  { id: 'closures',  label: 'Leaving',         icon: EyeOff },
+  { id: 'documents', label: 'Documents',      icon: FileText },
+  { id: 'dispatch',  label: 'Dispatch & jobs', icon: Radio },
+  { id: 'payouts',   label: 'Payouts',         icon: IndianRupee },
+  { id: 'referrals', label: 'Referrals',      icon: ShieldAlert },
+  { id: 'work',      label: 'Portfolio',      icon: Images },
+  { id: 'closures',  label: 'Closure requests', icon: EyeOff },
 ]
 
 /* The partner-facing words, so the console and the app describe a row
@@ -227,7 +231,7 @@ export default function PartnerConsole() {
         </button>
       </header>
 
-      <nav className="flex gap-1 rounded-2xl bg-ink/[0.04] p-1">
+      <nav aria-label="Partner lifecycle views" className="flex gap-1 overflow-x-auto rounded-2xl bg-ink/[0.04] p-1">
         {TABS.map(t => {
           const Icon = t.icon
           const n =
@@ -237,11 +241,15 @@ export default function PartnerConsole() {
                     && (!s.reviewed_at || new Date(s.revised_at) > new Date(s.reviewed_at)))).length
             : t.id === 'work' ? data.work.filter(w => w.review_status === 'under_review').length
             : t.id === 'closures' ? data.vendors.filter(v => v.closure_requested_at).length
+            : t.id === 'documents' ? data.docs.length
+            : t.id === 'dispatch' ? data.dispatchOffers.length
+            : t.id === 'payouts' ? data.payoutClaims.filter(p => !['settled','paid','completed','complete','failed','cancelled','rejected'].includes(String(p.status || '').toLowerCase())).length
+            : t.id === 'referrals' ? data.referrals.filter(r => !['paid','rejected','cancelled','complete','completed'].includes(String(r.reward_status || r.state || '').toLowerCase())).length
             : 0
           return (
             <button
               key={t.id} type="button" onClick={() => setTab(t.id)}
-              className={`flex flex-1 items-center justify-center gap-1.5 rounded-[13px] py-2.5 text-[12.5px] font-extrabold transition ${
+              className={`flex shrink-0 items-center justify-center gap-1.5 rounded-[13px] px-3 py-2.5 text-[12px] font-extrabold transition ${
                 tab === t.id ? 'bg-white text-ink shadow-sm' : 'text-ink-mute'
               }`}
             >
@@ -268,6 +276,10 @@ export default function PartnerConsole() {
           {tab === 'pipeline' && <Pipeline data={data} byVendor={byVendor} onOpen={setOpen} onGo={setTab} />}
           {tab === 'partners' && <PartnerTable data={data} byVendor={byVendor} onOpen={setOpen} />}
           {tab === 'listings' && <ListingReview data={data} onOpen={setOpen} />}
+          {tab === 'documents' && <DocumentRegistry data={data} onOpen={setOpen} />}
+          {tab === 'dispatch' && <DispatchRegistry data={data} onOpen={setOpen} />}
+          {tab === 'payouts' && <PayoutRegistry data={data} onOpen={setOpen} />}
+          {tab === 'referrals' && <ReferralRegistry data={data} onOpen={setOpen} />}
           {tab === 'work' && <WorkQueue data={data} onOpen={setOpen} />}
           {tab === 'closures' && <ClosureQueue data={data} byVendor={byVendor} onOpen={setOpen} />}
         </>
@@ -302,6 +314,189 @@ export default function PartnerConsole() {
       )}
     </div>
   )
+}
+
+
+/* The following registry tabs are independent operational views but every row
+   opens the same Partner 360 record. They use existing normalized table IDs. */
+function usePartnerIndex(vendors) {
+  return useMemo(() => Object.fromEntries(vendors.map(v => [v.id, v])), [vendors])
+}
+
+function DocumentRegistry({ data, onOpen }) {
+  const [q, setQ] = useState('')
+  const [status, setStatus] = useState('')
+  const partnerById = usePartnerIndex(data.vendors)
+  const rows = data.docs.filter(d => {
+    const v = partnerById[d.vendor_id]
+    if (!v) return false
+    if (status && String(d.status || '').toLowerCase() !== status) return false
+    const t = q.trim().toLowerCase()
+    return !t || [v.partner_code,v.business_name,v.profiles?.email,d.id,d.kind,d.file_name,d.requirement_id,d.trade,d.provider_status,d.status]
+      .some(x => String(x || '').toLowerCase().includes(t))
+  }).sort((a,b) => new Date(b.uploaded_at || b.created_at || 0) - new Date(a.uploaded_at || a.created_at || 0))
+  const pending = rows.filter(d => !['approved','verified','accepted'].includes(String(d.status || '').toLowerCase()))
+  return (
+    <div className="space-y-3">
+      <section className="grid grid-cols-3 gap-2">
+        <Tile label="Uploads in registry" value={rows.length} sub="Documents linked to real partner IDs" />
+        <Tile label="Not cleared" value={pending.length} sub="Status is not approved / verified / accepted" />
+        <Tile label="Expiring / expired" value={rows.filter(d => d.expires_on && new Date(d.expires_on) <= new Date(Date.now()+30*86400000)).length} sub="Expiry within 30 days or earlier" />
+      </section>
+      <div className="flex flex-wrap gap-2">
+        <div className="min-w-[220px] flex-1"><Searchable value={q} onChange={setQ} placeholder="Search partner, document ID, file, requirement…"/></div>
+        <select value={status} onChange={e=>setStatus(e.target.value)} className="rounded-xl bg-white px-3 py-2.5 text-[12px] font-semibold text-ink ring-1 ring-ink/[0.08]">
+          <option value="">All document states</option><option value="pending">Pending</option><option value="submitted">Submitted</option><option value="under_review">Under review</option><option value="approved">Approved</option><option value="verified">Verified</option><option value="rejected">Rejected</option><option value="failed">Failed</option>
+        </select>
+      </div>
+      <DataTable minWidth="1100px" headers={['Partner / UUID','Document / ID','Requirement & trade','Review status','Provider','Evidence checks','Uploaded / expiry','Open']} rows={rows.map(d=>{
+        const v=partnerById[d.vendor_id]
+        return {
+          key:d.id,
+          cells:[
+            <button type="button" onClick={()=>onOpen(v)} className="text-left"><span className="block max-w-[170px] truncate text-[11px] font-extrabold">{v.business_name}</span><span className="block font-mono text-[8.5px] text-plum-700">{v.partner_code || v.id.slice(0,8)}</span><span className="block max-w-[165px] truncate font-mono text-[8px] text-ink-mute">{v.id}</span></button>,
+            <span><span className="block text-[10.5px] font-bold">{KIND_LABEL[d.kind] || d.kind}</span><span className="block max-w-[165px] break-words text-[9px] text-ink-mute">{d.file_name || 'Unnamed upload'}</span><span className="block font-mono text-[8px] text-ink-mute">{d.id}</span></span>,
+            <span><span className="block text-[10px]">{d.requirement_id || '—'}</span><span className="block text-[9px] text-ink-mute">{d.trade || '—'}{d.listing_id ? ' · ' + d.listing_id : ''}</span></span>,
+            <span><StatusPill value={d.status}/>{d.review_note ? <span className="mt-1 block max-w-[170px] text-[9px] text-rose-700">{d.review_note}</span> : null}</span>,
+            <span><StatusPill value={d.provider_status}/>{d.provider_name ? <span className="mt-1 block text-[9px] text-ink-mute">{d.provider_name}</span> : null}</span>,
+            <span className="space-y-0.5 text-[9px] text-ink-mute"><span className="block">Checksum · {d.checksum_ok == null ? 'unknown' : d.checksum_ok ? 'pass' : 'fail'}</span><span className="block">Name · {d.name_match || 'unknown'}</span><span className="block">Face · {d.face_match || 'unknown'}</span><span className="block">Type · {d.detected_type || 'unknown'}</span></span>,
+            <span className="whitespace-nowrap text-[9px] text-ink-mute"><span className="block">{d.uploaded_at ? new Date(d.uploaded_at).toLocaleDateString('en-IN') : '—'}</span><span className="mt-1 block">Expires {d.expires_on || '—'}</span><span className="mt-1 block">Checked {d.checked_at ? new Date(d.checked_at).toLocaleDateString('en-IN') : '—'}</span></span>,
+            <DocLink path={d.storage_path}/>
+          ]
+        }
+      })} empty="No partner document uploads match those filters." />
+    </div>
+  )
+}
+
+function DispatchRegistry({ data, onOpen }) {
+  const [q, setQ] = useState('')
+  const [status, setStatus] = useState('')
+  const partnerById = usePartnerIndex(data.vendors)
+  const lineById = useMemo(() => Object.fromEntries(data.bookingLines.map(l=>[l.id,l])),[data.bookingLines])
+  const rows = data.dispatchOffers.filter(o => {
+    if (!partnerById[o.vendor_id]) return false
+    if (status && String(o.status || '').toLowerCase() !== status) return false
+    const v=partnerById[o.vendor_id], line=lineById[o.line_id], t=q.trim().toLowerCase()
+    return !t || [v.business_name,v.partner_code,v.id,o.id,o.line_id,line?.service_name,line?.trade,o.status,o.decline_reason]
+      .some(x=>String(x || '').toLowerCase().includes(t))
+  }).sort((a,b)=>new Date(b.offered_at || 0)-new Date(a.offered_at || 0))
+  const accepted=rows.filter(o=>String(o.status||'').toLowerCase()==='accepted').length
+  const expired=rows.filter(o=>String(o.status||'').toLowerCase()==='expired').length
+  return (
+    <div className="space-y-3">
+      <section className="grid grid-cols-3 gap-2"><Tile label="Offers" value={rows.length} sub="Linked to real partners"/><Tile label="Accepted" value={accepted} sub="Partner accepted offer state"/><Tile label="Expired" value={expired} sub="Offers expired without remaining active"/></section>
+      <div className="flex flex-wrap gap-2"><div className="min-w-[220px] flex-1"><Searchable value={q} onChange={setQ} placeholder="Search partner, offer ID, line, service or status…"/></div><select value={status} onChange={e=>setStatus(e.target.value)} className="rounded-xl bg-white px-3 py-2.5 text-[12px] font-semibold text-ink ring-1 ring-ink/[0.08]"><option value="">All offer states</option>{['pending','offered','accepted','declined','expired','cancelled','hidden'].map(s=><option key={s} value={s}>{s}</option>)}</select></div>
+      <DataTable minWidth="1120px" headers={['Partner / UUID','Offer ID / wave','Booking line','Offer state','Partner amount','Distance','Offered','Responded / accepted','Open']} rows={rows.map(o=>{
+        const v=partnerById[o.vendor_id], line=lineById[o.line_id]
+        return {key:o.id,cells:[
+          <button type="button" onClick={()=>onOpen(v)} className="text-left"><span className="block max-w-[160px] truncate text-[11px] font-extrabold">{v.business_name}</span><span className="block font-mono text-[8px] text-plum-700">{v.partner_code || v.id.slice(0,8)}</span><span className="block font-mono text-[8px] text-ink-mute">{v.id}</span></button>,
+          <span><span className="block font-mono text-[9px]">{o.id}</span><span className="block text-[9px] text-ink-mute">Wave {o.wave ?? '—'}</span></span>,
+          <span><span className="block text-[10.5px] font-bold">{line?.service_name || line?.trade || 'Booking line'}</span><span className="block break-all font-mono text-[8px] text-ink-mute">{o.line_id}</span><span className="block text-[9px] text-ink-mute">Line status · {line?.status || '—'}</span></span>,
+          <span><StatusPill value={o.status}/>{o.decline_reason ? <span className="mt-1 block max-w-[130px] text-[9px] text-amber-800">{o.decline_reason}</span> : null}</span>,
+          <span className="text-[11px] font-extrabold">{o.partner_amount_paise == null ? '—' : money(Number(o.partner_amount_paise)/100)}</span>,
+          <span className="text-[10px]">{o.distance_m == null ? '—' : (Number(o.distance_m)/1000).toFixed(1)+' km'}</span>,
+          <span className="whitespace-nowrap text-[9px]">{o.offered_at ? new Date(o.offered_at).toLocaleString('en-IN') : '—'}</span>,
+          <span className="whitespace-nowrap text-[9px]"><span className="block">Response {o.responded_at ? new Date(o.responded_at).toLocaleString('en-IN') : '—'}</span><span className="mt-1 block">Accept {o.accepted_at ? new Date(o.accepted_at).toLocaleString('en-IN') : '—'}</span></span>,
+          <button type="button" onClick={()=>onOpen(v)} className="rounded-lg bg-plum-50 px-2.5 py-1.5 text-[10px] font-extrabold text-plum-700">Partner 360</button>
+        ]}
+      })} empty="No partner dispatch offers match those filters."/>
+    </div>
+  )
+}
+
+function PayoutRegistry({ data, onOpen }) {
+  const [q, setQ] = useState('')
+  const partnerById=usePartnerIndex(data.vendors)
+  const activeClaims=data.payoutClaims.filter(p=>partnerById[p.vendor_id])
+  const openClaims=activeClaims.filter(p=>!['settled','paid','completed','complete','failed','cancelled','rejected'].includes(String(p.status||'').toLowerCase()))
+  const verified=data.payoutAccounts.filter(p=>partnerById[p.vendor_id]&&!!p.kyc_verified_at).length
+  const rows=data.vendors.filter(v=>{
+    const t=q.trim().toLowerCase()
+    return !t||[v.business_name,v.partner_code,v.id,v.profiles?.email,v.city].some(x=>String(x||'').toLowerCase().includes(t))
+  })
+  return (
+    <div className="space-y-3">
+      <section className="grid grid-cols-3 gap-2"><Tile label="Partner KYC verified" value={verified} sub="New payout-route table"/><Tile label="Open payout claims" value={openClaims.length} sub="Awaiting final status"/><Tile label="Failed claims" value={activeClaims.filter(p=>String(p.status||'').toLowerCase()==='failed').length} sub="Needs reconciliation"/></section>
+      <div className="min-w-[220px]"><Searchable value={q} onChange={setQ} placeholder="Search partner ID, code, name, email…"/></div>
+      <DataTable minWidth="1070px" headers={['Partner / UUID','KYC / payout route','Legacy payout details','Open claims','Paid / settled claims','Latest claim status','Open']} rows={rows.map(v=>{
+        const account=data.payoutAccounts.find(p=>p.vendor_id===v.id)
+        const legacy=data.payouts.find(p=>p.vendor_id===v.id)
+        const claims=activeClaims.filter(p=>p.vendor_id===v.id).sort((a,b)=>new Date(b.requested_at||0)-new Date(a.requested_at||0))
+        const opened=claims.filter(p=>!['settled','paid','completed','complete','failed','cancelled','rejected'].includes(String(p.status||'').toLowerCase()))
+        const settled=claims.filter(p=>['settled','paid','completed','complete'].includes(String(p.status||'').toLowerCase()))
+        const latest=claims[0]
+        return {key:v.id,cells:[
+          <button type="button" onClick={()=>onOpen(v)} className="text-left"><span className="block max-w-[180px] truncate text-[11px] font-extrabold">{v.business_name}</span><span className="block font-mono text-[8px] text-plum-700">{v.partner_code||v.id.slice(0,8)}</span><span className="block font-mono text-[8px] text-ink-mute">{v.id}</span></button>,
+          <span><StatusPill value={account?.kyc_status || 'not set'}/><span className="mt-1 block text-[9px] text-ink-mute">Route · {account?.route_status || 'not provisioned'}</span>{account?.account_last4 ? <span className="block text-[9px] text-ink-mute">Account ending {account.account_last4}</span> : null}</span>,
+          <span><StatusPill value={legacy?.verified_at ? 'verified' : legacy ? 'unverified' : 'not set'}/><span className="mt-1 block text-[9px] text-ink-mute">{legacy?.method || 'No legacy payout method'}</span></span>,
+          <span className="text-[12px] font-black">{opened.length}{opened.length ? <span className="mt-1 block text-[9px] font-semibold text-amber-800">{money(opened.reduce((sum,p)=>sum+Number(p.amount_paise||0),0)/100)} outstanding</span> : null}</span>,
+          <span className="text-[12px] font-black">{settled.length}<span className="mt-1 block text-[9px] font-semibold text-ink-mute">{money(settled.reduce((sum,p)=>sum+Number(p.amount_paise||0),0)/100)} amount</span></span>,
+          latest ? <span><StatusPill value={latest.status}/><span className="mt-1 block text-[9px] text-ink-mute">{latest.requested_at?new Date(latest.requested_at).toLocaleDateString('en-IN'):'—'}</span></span> : <span className="text-[10px] text-ink-mute">No claim record</span>,
+          <button type="button" onClick={()=>onOpen(v)} className="rounded-lg bg-plum-50 px-2.5 py-1.5 text-[10px] font-extrabold text-plum-700">Partner 360</button>
+        ]}
+      })} empty="No partner records match those filters."/>
+      <p className="px-1 text-[10px] leading-relaxed text-ink-mute">Payout state is joined from partner_payout_accounts, vendor_payout_details and payout_claims. Outstanding claim total sums claim amounts for statuses not marked terminal; it is an operational queue, not an accounting ledger.</p>
+    </div>
+  )
+}
+
+function ReferralRegistry({ data, onOpen }) {
+  const [q, setQ] = useState('')
+  const [state, setState] = useState('')
+  const partnerById=usePartnerIndex(data.vendors)
+  const rows=data.referrals.filter(r=>{
+    if (!partnerById[r.referrer_id] && !partnerById[r.referred_id]) return false
+    if (state && String(r.state||'').toLowerCase()!==state) return false
+    const ref=partnerById[r.referrer_id], referred=partnerById[r.referred_id], t=q.trim().toLowerCase()
+    return !t||[ref?.business_name,ref?.partner_code,ref?.id,referred?.business_name,referred?.partner_code,referred?.id,r.id,r.code,r.state,r.reward_status].some(x=>String(x||'').toLowerCase().includes(t))
+  }).sort((a,b)=>new Date(b.updated_at||b.created_at||0)-new Date(a.updated_at||a.created_at||0))
+  return (
+    <div className="space-y-3">
+      <section className="grid grid-cols-3 gap-2"><Tile label="Referral records" value={rows.length} sub="Partner-to-partner links"/><Tile label="Qualified" value={rows.filter(r=>r.qualified_at).length} sub="Qualification milestone recorded"/><Tile label="Reward paid" value={rows.filter(r=>r.paid_at).length} sub="Payout milestone recorded"/></section>
+      <div className="flex flex-wrap gap-2"><div className="min-w-[220px] flex-1"><Searchable value={q} onChange={setQ} placeholder="Search referrer, referred partner, code or ID…"/></div><select value={state} onChange={e=>setState(e.target.value)} className="rounded-xl bg-white px-3 py-2.5 text-[12px] font-semibold ring-1 ring-ink/[0.08]"><option value="">All referral states</option>{[...new Set(rows.map(r=>String(r.state||'unknown').toLowerCase()))].map(s=><option key={s} value={s}>{s}</option>)}</select></div>
+      <DataTable minWidth="1160px" headers={['Referral ID / code','Referrer partner','Referred partner','Referral state','Reward state','Claimed / onboarded','Verified / live','Qualified / paid','Open partner']} rows={rows.map(r=>{
+        const ref=partnerById[r.referrer_id], referred=partnerById[r.referred_id], v=ref || referred
+        return {key:r.id,cells:[
+          <span><span className="block font-mono text-[9px] font-bold">{r.id}</span><span className="block text-[10px] font-extrabold text-plum-700">{r.code||'No code'}</span></span>,
+          ref?<button type="button" onClick={()=>onOpen(ref)} className="text-left"><span className="block max-w-[140px] truncate text-[10px] font-extrabold">{ref.business_name}</span><span className="font-mono text-[8px] text-ink-mute">{ref.partner_code||ref.id}</span></button>:<span className="text-[9px] text-ink-mute">Partner not in registry</span>,
+          referred?<button type="button" onClick={()=>onOpen(referred)} className="text-left"><span className="block max-w-[140px] truncate text-[10px] font-extrabold">{referred.business_name}</span><span className="font-mono text-[8px] text-ink-mute">{referred.partner_code||referred.id}</span></button>:<span className="text-[9px] text-ink-mute">Partner not in registry</span>,
+          <StatusPill value={r.state}/>,<StatusPill value={r.reward_status}/>,
+          <span className="text-[9px] text-ink-mute"><span className="block">Claimed {r.claimed_at?new Date(r.claimed_at).toLocaleDateString('en-IN'):'—'}</span><span className="mt-1 block">Onboarded {r.onboarding_completed_at?new Date(r.onboarding_completed_at).toLocaleDateString('en-IN'):'—'}</span></span>,
+          <span className="text-[9px] text-ink-mute"><span className="block">Verified {r.verified_at?new Date(r.verified_at).toLocaleDateString('en-IN'):'—'}</span><span className="mt-1 block">Live {r.live_at?new Date(r.live_at).toLocaleDateString('en-IN'):'—'}</span></span>,
+          <span className="text-[9px] text-ink-mute"><span className="block">Qualified {r.qualified_at?new Date(r.qualified_at).toLocaleDateString('en-IN'):'—'}</span><span className="mt-1 block">Paid {r.paid_at?new Date(r.paid_at).toLocaleDateString('en-IN'):'—'}</span></span>,
+          <button type="button" onClick={()=>onOpen(v)} className="rounded-lg bg-plum-50 px-2.5 py-1.5 text-[10px] font-extrabold text-plum-700">Partner 360</button>
+        ]}
+      })} empty="No partner referral records match those filters."/>
+      <p className="px-1 text-[10px] leading-relaxed text-ink-mute">Invite-only records are shown inside the related partner's Partner 360 drawer. This table represents realized referral relationships.</p>
+    </div>
+  )
+}
+
+function Searchable({ value, onChange, placeholder }) {
+  return <div className="relative"><Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-mute"/><input value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder} className="w-full rounded-xl bg-white py-2.5 pl-9 pr-3 text-[12px] font-semibold text-ink ring-1 ring-ink/[0.08] outline-none focus:ring-2 focus:ring-plum-300"/></div>
+}
+function StatusPill({ value }) {
+  const key=String(value||'unknown').toLowerCase().replace(/ /g,'_')
+  const cls=['approved','verified','accepted','settled','paid','live','qualified','completed','active'].includes(key)?'bg-forest-50 text-forest-800'
+    :['rejected','failed','cancelled','suspended','declined','closed'].includes(key)?'bg-rose-50 text-rose-800'
+    :['pending','submitted','under_review','action_required','expired','not_set','not_provisioned','unverified','unknown'].includes(key)?'bg-amber-50 text-amber-800'
+    :'bg-ink/[0.06] text-ink-soft'
+  return <span className={'inline-flex rounded-full px-2 py-1 text-[9px] font-extrabold '+cls}>{String(value||'Unknown').replace(/_/g,' ')}</span>
+}
+function Tile({ label, value, sub }) {
+  return <div className="rounded-xl bg-white p-3 ring-1 ring-ink/[0.08]"><p className="text-[9px] font-extrabold uppercase tracking-wide text-ink-mute">{label}</p><p className="mt-1 text-[17px] font-black text-ink">{value}</p><p className="mt-0.5 text-[9px] leading-relaxed text-ink-mute">{sub}</p></div>
+}
+function DataTable({ headers, rows, minWidth = '900px', empty='No matching records.' }) {
+  return rows.length ? (
+    <div className="overflow-x-auto rounded-2xl bg-white ring-1 ring-ink/[0.08]">
+      <table className="w-full border-collapse text-left" style={{minWidth}}>
+        <thead className="bg-ink/[0.025]"><tr className="border-b border-ink/[0.07] text-[9px] font-extrabold uppercase tracking-[0.1em] text-ink-mute">{headers.map((h,i)=><th key={h+i} className="whitespace-nowrap px-3 py-3">{h}</th>)}</tr></thead>
+        <tbody>{rows.map(r=><tr key={r.key} className="border-b border-ink/[0.055] last:border-0 hover:bg-plum-50/30">{r.cells.map((cell,i)=><td key={r.key+'-'+i} className="px-3 py-3 align-top text-[10.5px] text-ink-soft">{cell}</td>)}</tr>)}</tbody>
+      </table>
+      <p className="border-t border-ink/[0.06] px-3 py-2 text-[9px] text-ink-mute">{rows.length} records shown</p>
+    </div>
+  ) : <p className="rounded-2xl bg-white p-9 text-center text-[12px] text-ink-mute ring-1 ring-ink/[0.08]">{empty}</p>
 }
 
 /* ── Pipeline ──────────────────────────────────────────────────────── */
