@@ -1,91 +1,36 @@
-/**
- * The admin console's information architecture.
- *
- * ══════════════════════════════════════════════════════════════════════
- * PARTNERS, AND NOTHING ELSE, ON PURPOSE
- * ══════════════════════════════════════════════════════════════════════
- *
- * This was five groups and eighteen screens: Events, Catalogue, People,
- * Insight, Overview. All of it has been removed, and the components with
- * it — not hidden behind a flag, deleted.
- *
- * The reason is that the partner side had no operator interface at all.
- * "Partners" was one table with Approve and Reject on each row, which
- * answers exactly one question — is this business real — while the
- * lifecycle has nine more, each in a different table, each answerable
- * only from the SQL editor. The cost was measurable: a real caterer sat
- * with an unread listing for days while this console showed her as
- * approved and partner_readiness reported her dispatchable.
- *
- * A console covering five subjects badly was the reason the one subject
- * with a live defect had nowhere to be fixed. So it covers one subject,
- * completely.
- *
- * ── What that cost, stated rather than glossed ──────────────────────
- * The concierge screens are gone and there are real rows behind them —
- * 109 booking requests, 244 lines, 1,119 dispatch offers. They are
- * recoverable from git history and from nowhere else. That was the
- * explicit instruction, and this note exists so the next person finds
- * the reason rather than the hole.
- *
- * The customer app is next; when it exists, Customers becomes the second
- * group here and the same standard applies — everything about a subject,
- * or it does not go in.
- *
- * ── The registry is still data ──────────────────────────────────────
- * The shell renders whatever is here, so the sidebar, the command
- * palette and the page header agree on every screen's title, description
- * and badge without three lists drifting apart.
- */
-
+/** Sambramo control-centre navigation registry. */
 export const NAV = [
   {
-    id: 'partners',
-    label: 'Partners',
-    hint: 'The masters who do the work',
+    id: 'executive', label: 'Executive', hint: 'The company, in one operating picture',
     items: [
-      {
-        id: 'partners', label: 'Partner console', emoji: '🤝',
-        badge: 'vendors',
-        description: 'Every partner, their listings, their documents and what they can be offered.',
-      },
-      {
-        id: 'pricing-review', label: 'Pricing review', emoji: '💰',
-        badge: 'pricing',
-        description: 'Submitted partner pricing revisions. Approve the new version or request changes without changing the live customer price.',
-      },
-      {
-        id: 'listing-review', label: 'Anchor & MC pricing', emoji: '🎤',
-        description: 'Review and publish listing versions, open seasonal windows, tune the pricing settings, and see what the booking engine decided.',
-      },
-      {
-        id: 'verification', label: 'Verification queue', emoji: '🪪',
-        description: 'Applications waiting on a decision, oldest deadline first, with what was entered beside what was read off the document.',
-      },
+      { id: 'overview', label: 'Founder control tower', emoji: '✦', description: 'Executive KPIs, partner supply, live cards, customer demand and operational risk.' },
     ],
   },
-
   {
-    id: 'operations',
-    label: 'Operations',
-    hint: 'What is happening right now',
+    id: 'customers', label: 'Customer lifecycle', hint: 'Every customer relationship and support trail',
     items: [
-      {
-        id: 'live-ops', label: 'Live trips', emoji: '🚚',
-        description: 'Every partner on the road, sorted by trouble rather than by time — the late one and the silent one first.',
-      },
+      { id: 'customers', label: 'Customer 360', emoji: '◎', description: 'Customer profiles joined to celebrations, orders, enquiries, complaints, internal notes and account audit.' },
     ],
   },
-
   {
-    id: 'markets',
-    label: 'Markets',
-    hint: 'Where we are, and where we are wanted',
+    id: 'partners', label: 'Partner lifecycle', hint: 'Every partner, listing, upload and decision',
     items: [
-      {
-        id: 'city-interest', label: 'City interest', emoji: '🗺️',
-        description: 'Partners waiting in cities we have not opened, and which trades they are — the figure a launch decision is made on.',
-      },
+      { id: 'partners', label: 'Partner 360 registry', emoji: '🤝', badge: 'vendors', description: 'Partner identity, onboarding, every listing card, evidence upload, portfolio item, payout readiness and lifecycle history.' },
+      { id: 'pricing-review', label: 'Pricing review', emoji: '₹', badge: 'pricing', description: 'Submitted partner pricing revisions. Approve or request changes without unintentionally changing the live customer price.' },
+      { id: 'listing-review', label: 'Listing & Anchor / MC', emoji: '▦', description: 'Review and publish service cards, listing versions and trade-specific pricing.' },
+      { id: 'verification', label: 'Identity verification', emoji: '▣', description: 'Partner applications, uploaded identity evidence and verification decisions.' },
+    ],
+  },
+  {
+    id: 'operations', label: 'Operations', hint: 'What is happening right now',
+    items: [
+      { id: 'live-ops', label: 'Live operations', emoji: '◉', description: 'Operational work, partner dispatch signals and active issues.' },
+    ],
+  },
+  {
+    id: 'markets', label: 'Market expansion', hint: 'Where the network is and where it is wanted',
+    items: [
+      { id: 'city-interest', label: 'City interest', emoji: '⌖', description: 'Partner interest outside current markets and trade coverage for launch decisions.' },
     ],
   },
 ]
@@ -93,34 +38,15 @@ export const NAV = [
 export const NAV_ITEMS = NAV.flatMap(g => g.items.map(i => ({ ...i, group: g.id, groupLabel: g.label })))
 export const NAV_BY_ID = Object.fromEntries(NAV_ITEMS.map(i => [i.id, i]))
 
-/**
- * Old ids, so a bookmark or a ?nav= link from before this collapse does
- * not land on an error.
- *
- * Every one of them resolves to the partner console. That is honest for
- * the partner-shaped ones (`vendors` WAS this screen) and deliberately
- * blunt for the rest: the screen a link points at no longer exists, and
- * sending somebody to the one console there is beats a blank page.
- */
 export const NAV_ALIASES = {
-  vendors: 'partners',
-  overview: 'partners',
-  inbox: 'partners',
-  requests: 'partners',
-  enquiries: 'partners',
-  services: 'partners',
-  dates: 'partners',
-  decorphotos: 'partners',
-  catalogue: 'partners',
-  content: 'partners',
-  brand: 'partners',
-  customers: 'partners',
-  complaints: 'partners',
-  reviews: 'partners',
-  geography: 'partners',
+  vendors: 'partners', overview: 'overview', customers: 'customers',
+  inbox: 'partners', requests: 'partners', enquiries: 'customers',
+  services: 'partners', dates: 'customers', decorphotos: 'partners',
+  catalogue: 'partners', content: 'partners', brand: 'overview',
+  complaints: 'customers', reviews: 'partners', geography: 'city-interest',
 }
 
 export function resolveNav(id) {
   if (NAV_BY_ID[id]) return id
-  return NAV_ALIASES[id] ?? 'partners'
+  return NAV_ALIASES[id] || 'overview'
 }
