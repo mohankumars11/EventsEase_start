@@ -171,7 +171,7 @@ export default function ExecutiveOverview({ onNavigate }) {
         <Hero icon={Building2} label="Real partners" value={stats.vendors.length} note={stats.approved.length+' approved'}/>
         <Hero icon={BadgeCheck} label="Live service cards" value={stats.live.length} note={stats.dispatchable.length+' dispatchable'}/>
         <Hero icon={Radio} label="Partners active · 30d" value={stats.activePartners30d} note={fmt(stats.partnerEvents30d)+' linked activity events'}/>
-        <Hero icon={CircleDollarSign} label="Pricing packages live" value={[...data.tradePrices,...data.cateringPrices].filter(x=>['LIVE','PUBLISHED','ACTIVE'].includes(x.status)).length} note={stats.pendingPricing.length+' revisions waiting'}/>
+        <Hero icon={CircleDollarSign} label="Pricing packages live" value={stats.livePricingPackages} note={stats.pendingPricing.length+' revisions waiting'}/>
       </div>
       <div className="relative mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-white/10 pt-4 text-[11px] font-semibold text-white/60"><span>{fmt(stats.waiting.length)} partner decisions pending</span><span>{fmt(stats.cardReview)} listing cards waiting</span><span>{fmt(stats.stranded.length)} approved without a live card</span><span className="ml-auto text-white/45">{stats.rangeLabel}</span></div>
     </section>
@@ -219,7 +219,7 @@ export default function ExecutiveOverview({ onNavigate }) {
       </Panel>
     </section>
 
-    <section className="grid grid-cols-2 gap-3 xl:grid-cols-5"><Mini label="Partner trade listings" value={fmt(stats.tradeListings.length)} note={fmt(stats.tradeCount)+' trade types represented'}/><Mini label="Portfolio items" value={fmt(data.work.length)} note={fmt(stats.liveWork)+' approved for display'}/><Mini label="Documents uploaded" value={fmt(data.docs.length)} note={fmt(stats.pendingDocs.length)+' in pending review states'}/><Mini label="Payout readiness" value={fmt(stats.payoutReady)} note="Partner payout profiles marked verified"/><Mini label="Activity events · 30d" value={fmt(stats.partnerEvents30d)} note="Telemetry linked to real partners"/></section>
+    <section className="grid grid-cols-2 gap-3 xl:grid-cols-5"><Mini label="Partner trade listings" value={fmt(stats.tradeListings.length)} note={fmt(stats.tradeCount)+' trade types represented'}/><Mini label="Portfolio items" value={fmt(data.work.length)} note={fmt(stats.liveWork)+' approved for display'}/><Mini label="Documents uploaded" value={fmt(stats.documentCount)} note={fmt(stats.pendingDocs.length)+' in pending review states'}/><Mini label="Payout readiness" value={fmt(stats.payoutReady)} note="Partner payout profiles marked verified"/><Mini label="Activity events · 30d" value={fmt(stats.partnerEvents30d)} note="Telemetry linked to real partners"/></section>
     <p className="px-1 text-[10px] leading-relaxed text-gray-400">Definitions: live-card counts come from vendor_services; trade coverage comes from partner_listings. Dispatchable cards additionally require an approved, non-suspended partner who is accepting jobs. Pricing packages follow their package status fields; payout readiness counts verified payout profiles. Synthetic seed partners are excluded.</p>
   </div>
 }
