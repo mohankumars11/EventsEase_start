@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import {
   Loader2, Search, ShieldCheck, ShieldAlert, Clock, Radio, EyeOff, Images,
-  FileText, X, Check, AlertCircle, MapPin, Phone, Mail, Calendar,
+  FileText, X, Check, AlertCircle, MapPin, Phone, Mail, Calendar, Download,
   IndianRupee, Layers, RefreshCw, ChevronRight,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
@@ -362,6 +362,20 @@ function PartnerTable({ data, byVendor, onOpen }) {
     ].some(x => String(x ?? '').toLowerCase().includes(t))
   })
 
+  function exportRegistry() {
+    const header = ['Partner UUID','Login profile UUID','Partner code','Business name','Full name','Email','Account phone','Business phone','WhatsApp','Category','City','Area','State','Pincode','Verification state','Onboarding state','Current step','Live cards','Total cards','Documents','Payout verified','Accepting jobs','Accepting bookings','Subscription plan','Created at','Updated at']
+    const csvRows = [header, ...rows.map(v => {
+      const cards = byVendor[v.id] ?? []
+      const live = cards.filter(s => s.is_active && s.review_status === 'live').length
+      const docs = data.docs.filter(d => d.vendor_id === v.id).length
+      const payout = data.payouts.find(p => p.vendor_id === v.id)
+      return [v.id,v.profile_id,v.partner_code,v.business_name,v.profiles?.full_name,v.profiles?.email,v.profiles?.phone,v.contact_phone,v.whatsapp_phone,v.category,v.city,v.area,v.state,v.pincode,v.verification_status,v.onboarding_status,v.current_onboarding_step,live,cards.length,docs,!!payout?.verified_at,v.accepting_jobs,v.accepting_bookings,v.subscription_plan,v.created_at,v.updated_at]
+    })]
+    const csv = csvRows.map(row => row.map(value => '"' + String(value == null ? '' : value).replace(/"/g, '""') + '"').join(',')).join('\r\n')
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }))
+    const a = document.createElement('a'); a.href = url; a.download = 'sambramo-partner-registry-' + new Date().toISOString().slice(0, 10) + '.csv'; a.click(); URL.revokeObjectURL(url)
+  }
+
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
@@ -379,6 +393,9 @@ function PartnerTable({ data, byVendor, onOpen }) {
         <span className="rounded-xl bg-white px-3 py-2.5 text-[11px] font-extrabold text-ink-mute ring-1 ring-ink/[0.08]">
           {rows.length} / {data.vendors.length} partners
         </span>
+        <button type="button" onClick={exportRegistry} className="flex items-center gap-1.5 rounded-xl bg-plum-50 px-3 py-2.5 text-[11px] font-extrabold text-plum-700 ring-1 ring-plum-100">
+          <Download size={13} /> Export filtered registry
+        </button>
       </div>
 
       {rows.length === 0 ? (
