@@ -409,7 +409,7 @@ export default function VendorDashboard() {
           neither -- there has never been a pill. One review card, in
           the column, is the whole of it. */}
       {tab === 'offers' && (
-        <div className="-mx-4 -mt-4 mb-0 sm:-mx-6">
+        <div className="mb-0">
           <JobsHeader
             businessName={businessName}
             /* The PERSON, for the greeting. The h1 below it carries the
