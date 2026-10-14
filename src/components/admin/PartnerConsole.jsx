@@ -124,13 +124,13 @@ const money = n =>
 function usePartnerData() {
   const [state, setState] = useState({
     loading: true, error: null, payoutsReadable: true,
-    vendors: [], services: [], tradeListings: [], docs: [], payouts: [], work: [], tradePackages: [], cateringPackages: [], audit: [], notes: [], activityEvents: [],
+    vendors: [], services: [], tradeListings: [], docs: [], payouts: [], work: [], tradePackages: [], cateringPackages: [], audit: [], notes: [], activityEvents: [], verificationEvents: [],
   })
 
   const load = useCallback(async () => {
     setState(s => ({ ...s, loading: true, error: null }))
     try {
-      const [v, s, tl, d, p, w, tp, cp, a, n, ev] = await Promise.all([
+      const [v, s, tl, d, p, w, tp, cp, a, n, ev, ve] = await Promise.all([
         supabase.from('vendors').select('*, profiles:profiles!vendors_profile_id_fkey(id,full_name,email,phone,role,city,created_at)').eq('is_synthetic', false).order('created_at', { ascending: false }),
         supabase.from('vendor_services').select('*').order('created_at', { ascending: false }),
         supabase.from('partner_listings').select('id,vendor_id,trade,trade_id,status,review_note,submitted_at,reviewed_at,reviewed_by,created_at,updated_at').order('updated_at', { ascending: false }),
@@ -142,6 +142,7 @@ function usePartnerData() {
         supabase.from('admin_lifecycle_audit').select('id,entity_type,entity_id,vendor_id,action,before_state,after_state,actor_id,actor_role,note,created_at').not('vendor_id', 'is', null).order('created_at', { ascending: false }),
         supabase.from('admin_lifecycle_notes').select('id,target_type,vendor_id,note_kind,body,created_by,created_at').eq('target_type', 'partner').order('created_at', { ascending: false }),
         supabase.from('partner_events').select('id,vendor_id,profile_id,name,props,surface,app_build,created_at').order('created_at', { ascending: false }),
+        supabase.from('vendor_verification_events').select('id,vendor_id,from_value,to_value,actor_id,actor_role,note,created_at').order('created_at', { ascending: false }),
       ])
       if (v.error) throw v.error
       setState({
@@ -170,6 +171,7 @@ function usePartnerData() {
         audit: a.error ? [] : (a.data ?? []),
         notes: n.error ? [] : (n.data ?? []),
         activityEvents: ev.error ? [] : (ev.data ?? []),
+        verificationEvents: ve.error ? [] : (ve.data ?? []),
       })
     } catch (err) {
       setState(s => ({ ...s, loading: false, error: err }))
@@ -268,6 +270,7 @@ export default function PartnerConsole() {
           audit={data.audit.filter(a => a.vendor_id === open.id)}
           notes={data.notes.filter(n => n.vendor_id === open.id)}
           activityEvents={data.activityEvents.filter(e => e.vendor_id === open.id || (open.profile_id && e.profile_id === open.profile_id))}
+          verificationEvents={data.verificationEvents.filter(e => e.vendor_id === open.id)}
           actorId={user?.id}
           onClose={() => setOpen(null)}
           onChanged={data.refresh}
@@ -932,7 +935,7 @@ function ClosureQueue({ data, byVendor, onOpen }) {
    per-vendor and this drawer already holds every row it reads, so a
    round trip would buy nothing and add a spinner to a sheet that is
    otherwise instant. */
-function PartnerDrawer({ vendor: v, services, tradeListings = [], docs, payout, payoutsReadable = true, work = [], pricing = { trade: [], catering: [] }, audit = [], notes = [], activityEvents = [], actorId, onClose, onChanged }) {
+function PartnerDrawer({ vendor: v, services, tradeListings = [], docs, payout, payoutsReadable = true, work = [], pricing = { trade: [], catering: [] }, audit = [], notes = [], activityEvents = [], verificationEvents = [], actorId, onClose, onChanged }) {
   const toast = useToast()
   const [busy, setBusy] = useState(null)
   const [noteText, setNoteText] = useState('')
@@ -1337,6 +1340,24 @@ function PartnerDrawer({ vendor: v, services, tradeListings = [], docs, payout, 
               ))}
               {!activityEvents.length && <p className="rounded-xl bg-ink/[0.025] p-3 text-[11.5px] text-ink-mute">No partner app events are currently linked to this partner/profile. Telemetry appears here when the partner surface records activity.</p>}
               {activityEvents.length > 40 && <p className="text-[10px] text-ink-mute">Showing 40 of {activityEvents.length} events, newest first.</p>}
+            </div>
+          </Section>
+
+          <Section title={'Verification decisions (' + verificationEvents.length + ')'}>
+            <p className="text-[11px] leading-relaxed text-ink-mute">Historical decisions already recorded by the partner verification workflow, with previous state, new state, actor and reviewer note.</p>
+            <div className="mt-3 space-y-2">
+              {verificationEvents.map(e => (
+                <article key={e.id} className="rounded-xl bg-ink/[0.025] p-3 ring-1 ring-ink/[0.05]">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-[11.5px] font-extrabold text-ink">{String(e.from_value || 'New').replace(/_/g, ' ')} <ChevronRight size={11} className="inline"/> {String(e.to_value || 'Unknown').replace(/_/g, ' ')}</p>
+                    <time className="text-[9.5px] text-ink-mute">{e.created_at ? new Date(e.created_at).toLocaleString('en-IN') : '—'}</time>
+                  </div>
+                  <p className="mt-1 text-[9.5px] text-ink-mute">Actor · {e.actor_role || 'Not recorded'} · {e.actor_id || 'System / unknown'}</p>
+                  {e.note && <p className="mt-2 whitespace-pre-wrap rounded-lg bg-white p-2 text-[10.5px] leading-relaxed text-ink-soft">{e.note}</p>}
+                  <p className="mt-1 break-all font-mono text-[8px] text-ink-mute">Verification event ID · {e.id}</p>
+                </article>
+              ))}
+              {!verificationEvents.length && <p className="rounded-xl bg-ink/[0.025] p-3 text-[11.5px] text-ink-mute">No legacy verification-event rows are linked yet. New operator actions appear in the lifecycle audit.</p>}
             </div>
           </Section>
 
