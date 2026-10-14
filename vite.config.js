@@ -130,7 +130,9 @@ export default defineConfig({
        * from hours earlier.
        *
        * Set by the Android workflow before `vite build`. */
-      disable: process.env.CAPACITOR_BUILD === 'true',
+      // Local build diagnostics can skip Workbox when its Node/module format is incompatible.
+      // Normal web builds retain PWA generation; set SKIP_PWA=true only for local diagnosis.
+      disable: process.env.CAPACITOR_BUILD === 'true' || process.env.SKIP_PWA === 'true',
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'icon-512.png', 'icon-maskable-512.png'],
       manifest: {
