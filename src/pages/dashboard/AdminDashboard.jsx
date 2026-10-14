@@ -4,7 +4,6 @@ import { supabase } from '../../lib/supabase'
 import { resolveNav } from '../../config/adminNav'
 import AdminShell from '../../components/admin/AdminShell'
 import ExecutiveOverview from '../../components/admin/ExecutiveOverview'
-import CustomerConsole from '../../components/admin/CustomerConsole'
 import PartnerConsole from '../../components/admin/PartnerConsole'
 import VerificationQueue from '../../components/admin/VerificationQueue'
 import MarketInterest from '../../components/admin/MarketInterest'
@@ -50,7 +49,6 @@ export default function AdminDashboard() {
   }
 
   const screen = activeNav === 'overview' ? <ExecutiveOverview onNavigate={go} />
-    : activeNav === 'customers' ? <CustomerConsole />
     : activeNav === 'city-interest' ? <MarketInterest />
     : activeNav === 'live-ops' ? <LiveOperations />
     : activeNav === 'verification' ? <VerificationQueue />
