@@ -29,7 +29,7 @@ const STATUS_LOOK = {
   LIVE: ['Live', 'bg-forest-50 text-forest-700 ring-forest-200'],
   UNDER_REVIEW: ['Review in progress', 'bg-amber-50 text-amber-800 ring-amber-200'],
   ACTION_REQUIRED: ['Action needed', 'bg-rose-50 text-rose-800 ring-rose-200'],
-  REJECTED: ['Review in progress', 'bg-amber-50 text-amber-800 ring-amber-200'],
+  REJECTED: ['Changes needed', 'bg-rose-50 text-rose-800 ring-rose-200'],
   DRAFT: ['Draft', 'bg-ink/5 text-ink/65 ring-ink/10'],
   APPROVED: ['Live', 'bg-forest-50 text-forest-700 ring-forest-200'],
   SUSPENDED: ['Suspended', 'bg-rose-50 text-rose-800 ring-rose-200'],
@@ -111,7 +111,7 @@ export default function PricingControlCenter({ data, onEdit, onSeasonal, onPayou
             ? `Price editing unlocks on ${fmtDate(d.price_locked_until)} · 15-day policy.`
             : d.status === 'LIVE'
               ? 'Price updates follow the 15-day policy.'
-              : 'Regular price updates unlock once your listing is live · 15-day policy.'}
+              : 'Price updates unlock when live · 15-day policy.'}
         </p>
       </div>
 
