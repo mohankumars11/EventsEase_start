@@ -41,11 +41,12 @@ export default function ExecutiveOverview({ onNavigate }) {
         supabase.from('dispatch_offers').select('id,line_id,vendor_id,status,partner_amount_paise,offered_at,responded_at,accepted_at'),
         supabase.from('payout_claims').select('id,line_id,vendor_id,amount_paise,status,requested_at,settled_at,failed_at'),
         supabase.from('partner_referrals').select('id,referrer_id,referred_id,state,reward_status,created_at,qualified_at,paid_at'),
+        supabase.from('partner_payout_accounts').select('id,vendor_id,kyc_status,kyc_verified_at,route_status'),
       ])
-      const names = ['partner profiles', 'service cards', 'trade listings', 'documents', 'portfolio items', 'payout readiness', 'trade pricing', 'catering pricing', 'partner activity', 'booking lines', 'dispatch offers', 'payout claims', 'partner referrals']
+      const names = ['partner profiles', 'service cards', 'trade listings', 'documents', 'portfolio items', 'legacy payout readiness', 'trade pricing', 'catering pricing', 'partner activity', 'booking lines', 'dispatch offers', 'payout claims', 'partner referrals', 'payout-route KYC']
       const issues = results.map((r, i) => errOf(r) ? names[i] + ': ' + errOf(r) : '').filter(Boolean)
       const rows = results.map(rowsOf)
-      setData({ vendors: rows[0], services: rows[1], trades: rows[2], docs: rows[3], work: rows[4], payouts: rows[5], tradePrices: rows[6], cateringPrices: rows[7], activityEvents: rows[8], bookingLines: rows[9], dispatchOffers: rows[10], payoutClaims: rows[11], referrals: rows[12] })
+      setData({ vendors: rows[0], services: rows[1], trades: rows[2], docs: rows[3], work: rows[4], payouts: rows[5], tradePrices: rows[6], cateringPrices: rows[7], activityEvents: rows[8], bookingLines: rows[9], dispatchOffers: rows[10], payoutClaims: rows[11], referrals: rows[12], payoutAccounts: rows[13] })
       if (issues.length) setError('Some partner sources could not be read: ' + issues.join(' · ') + '. Figures may be incomplete.')
     } catch (e) {
       setError(e && e.message ? e.message : 'Could not load partner operations.')
