@@ -124,18 +124,19 @@ const money = n =>
 function usePartnerData() {
   const [state, setState] = useState({
     loading: true, error: null, payoutsReadable: true,
-    vendors: [], services: [], tradeListings: [], docs: [], payouts: [], work: [], tradePackages: [], cateringPackages: [], audit: [], notes: [], activityEvents: [], verificationEvents: [], bookingLines: [], dispatchOffers: [], payoutClaims: [], adjustments: [], subscriptions: [], referrals: [], referralInvites: [],
+    vendors: [], services: [], tradeListings: [], docs: [], payouts: [], work: [], tradePackages: [], cateringPackages: [], audit: [], notes: [], activityEvents: [], verificationEvents: [], bookingLines: [], dispatchOffers: [], payoutClaims: [], payoutAccounts: [], adjustments: [], subscriptions: [], referrals: [], referralInvites: [],
   })
 
   const load = useCallback(async () => {
     setState(s => ({ ...s, loading: true, error: null }))
     try {
-      const [v, s, tl, d, p, w, tp, cp, a, n, ev, ve, bl, offers, claims, adj, subs, refs, invites] = await Promise.all([
+      const [v, s, tl, d, p, pa, w, tp, cp, a, n, ev, ve, bl, offers, claims, adj, subs, refs, invites] = await Promise.all([
         supabase.from('vendors').select('*, profiles:profiles!vendors_profile_id_fkey(id,full_name,email,phone,role,city,created_at)').eq('is_synthetic', false).order('created_at', { ascending: false }),
         supabase.from('vendor_services').select('*').order('created_at', { ascending: false }),
         supabase.from('partner_listings').select('id,vendor_id,trade,trade_id,status,review_note,submitted_at,reviewed_at,reviewed_by,created_at,updated_at').order('updated_at', { ascending: false }),
         supabase.from('vendor_documents').select('*'),
         supabase.from('vendor_payout_details').select('*'),
+        supabase.from('partner_payout_accounts').select('id,vendor_id,kyc_status,kyc_note,kyc_verified_at,bank_name,account_last4,account_holder,ifsc,route_account_id,route_status,route_product_id,route_stakeholder_id,route_requirements,route_updated_at,created_at,updated_at'),
         supabase.from('partner_work').select('*').order('created_at', { ascending: false }),
         supabase.from('sambramo_trade_packages').select('id,vendor_id,vendor_service_id,parent_package_id,name,status,revision_round,commercial_inputs,submitted_at,review_note').in('status', ['UNDER_REVIEW','ACTION_REQUIRED','LIVE']),
         supabase.from('sambramo_catering_packages').select('id,vendor_id,vendor_service_id,parent_package_id,name,status,rate_bands').in('status', ['UNDER_REVIEW','ACTION_REQUIRED','LIVE']),
@@ -170,6 +171,7 @@ function usePartnerData() {
         services: s.data ?? [],
         docs: d.data ?? [],
         payouts: p.data ?? [],
+        payoutAccounts: pa.error ? [] : (pa.data ?? []),
         /* Write-only since 110 shipped -- nothing has ever read this,
            so day one of the queue is every row ever inserted. */
         work: w.data ?? [],
@@ -278,6 +280,7 @@ export default function PartnerConsole() {
           tradeListings={data.tradeListings.filter(t => t.vendor_id === open.id)}
           docs={data.docs.filter(d => d.vendor_id === open.id)}
           payout={data.payouts.find(p => p.vendor_id === open.id) ?? null}
+          payoutAccount={data.payoutAccounts.find(p => p.vendor_id === open.id) ?? null}
           payoutsReadable={data.payoutsReadable}
           work={data.work.filter(w => w.vendor_id === open.id)}
           pricing={{ trade: data.tradePackages.filter(p => p.vendor_id === open.id), catering: data.cateringPackages.filter(p => p.vendor_id === open.id) }}
@@ -956,7 +959,7 @@ function ClosureQueue({ data, byVendor, onOpen }) {
    per-vendor and this drawer already holds every row it reads, so a
    round trip would buy nothing and add a spinner to a sheet that is
    otherwise instant. */
-function PartnerDrawer({ vendor: v, services, tradeListings = [], docs, payout, payoutsReadable = true, work = [], pricing = { trade: [], catering: [] }, audit = [], notes = [], activityEvents = [], verificationEvents = [], bookingLines = [], dispatchOffers = [], payoutClaims = [], adjustments = [], subscriptions = [], referrals = [], referralInvites = [], actorId, onClose, onChanged }) {
+function PartnerDrawer({ vendor: v, services, tradeListings = [], docs, payout, payoutAccount = null, payoutsReadable = true, work = [], pricing = { trade: [], catering: [] }, audit = [], notes = [], activityEvents = [], verificationEvents = [], bookingLines = [], dispatchOffers = [], payoutClaims = [], payoutAccount = null, adjustments = [], subscriptions = [], referrals = [], referralInvites = [], actorId, onClose, onChanged }) {
   const toast = useToast()
   const [busy, setBusy] = useState(null)
   const [noteText, setNoteText] = useState('')
