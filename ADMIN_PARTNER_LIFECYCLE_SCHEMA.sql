@@ -304,3 +304,32 @@ $$;
 drop trigger if exists trg_admin_audit_partner_payout_lifecycle on public.vendor_payout_details;
 create trigger trg_admin_audit_partner_payout_lifecycle after insert or update of method, verified_at
   on public.vendor_payout_details for each row execute function public.audit_partner_payout_lifecycle();
+
+
+-- Track partner-linked account profile changes by field name only, not raw PII.
+create or replace function public.audit_partner_linked_profile_update()
+returns trigger language plpgsql security definer set search_path = public
+as $$
+declare fields_changed text[] := array[]::text[]; partner_row record;
+begin
+  if old.full_name is distinct from new.full_name then fields_changed := array_append(fields_changed, 'full_name'); end if;
+  if old.email is distinct from new.email then fields_changed := array_append(fields_changed, 'email'); end if;
+  if old.phone is distinct from new.phone then fields_changed := array_append(fields_changed, 'phone'); end if;
+  if old.city is distinct from new.city then fields_changed := array_append(fields_changed, 'city'); end if;
+  if old.role is distinct from new.role then fields_changed := array_append(fields_changed, 'role'); end if;
+  if cardinality(fields_changed) = 0 then return new; end if;
+  for partner_row in select id from public.vendors where profile_id = new.id and is_synthetic = false loop
+    insert into public.admin_lifecycle_audit
+      (entity_type, entity_id, vendor_id, action, before_state, after_state, actor_id, actor_role)
+    values ('partner', partner_row.id, partner_row.id, 'partner.account_profile_changed',
+      jsonb_build_object('changed_fields', fields_changed),
+      jsonb_build_object('changed_fields', fields_changed),
+      auth.uid(), public.get_my_role());
+  end loop;
+  return new;
+end;
+$$;
+drop trigger if exists trg_admin_audit_partner_linked_profile on public.profiles;
+create trigger trg_admin_audit_partner_linked_profile
+  after update of full_name, email, phone, city, role on public.profiles
+  for each row execute function public.audit_partner_linked_profile_update();
