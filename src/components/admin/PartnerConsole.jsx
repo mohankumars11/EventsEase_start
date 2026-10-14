@@ -124,13 +124,13 @@ const money = n =>
 function usePartnerData() {
   const [state, setState] = useState({
     loading: true, error: null, payoutsReadable: true,
-    vendors: [], services: [], tradeListings: [], docs: [], payouts: [], work: [], tradePackages: [], cateringPackages: [], audit: [], notes: [],
+    vendors: [], services: [], tradeListings: [], docs: [], payouts: [], work: [], tradePackages: [], cateringPackages: [], audit: [], notes: [], activityEvents: [],
   })
 
   const load = useCallback(async () => {
     setState(s => ({ ...s, loading: true, error: null }))
     try {
-      const [v, s, tl, d, p, w, tp, cp, a, n] = await Promise.all([
+      const [v, s, tl, d, p, w, tp, cp, a, n, ev] = await Promise.all([
         supabase.from('vendors').select('*, profiles:profiles!vendors_profile_id_fkey(id,full_name,email,phone,role,city,created_at)').eq('is_synthetic', false).order('created_at', { ascending: false }),
         supabase.from('vendor_services').select('*').order('created_at', { ascending: false }),
         supabase.from('partner_listings').select('id,vendor_id,trade,trade_id,status,review_note,submitted_at,reviewed_at,reviewed_by,created_at,updated_at').order('updated_at', { ascending: false }),
@@ -141,6 +141,7 @@ function usePartnerData() {
         supabase.from('sambramo_catering_packages').select('id,vendor_id,vendor_service_id,parent_package_id,name,status,rate_bands').in('status', ['UNDER_REVIEW','ACTION_REQUIRED','LIVE']),
         supabase.from('admin_lifecycle_audit').select('id,entity_type,entity_id,vendor_id,action,before_state,after_state,actor_id,actor_role,note,created_at').not('vendor_id', 'is', null).order('created_at', { ascending: false }),
         supabase.from('admin_lifecycle_notes').select('id,target_type,vendor_id,note_kind,body,created_by,created_at').eq('target_type', 'partner').order('created_at', { ascending: false }),
+        supabase.from('partner_events').select('id,vendor_id,profile_id,name,props,surface,app_build,created_at').order('created_at', { ascending: false }),
       ])
       if (v.error) throw v.error
       setState({
@@ -168,6 +169,7 @@ function usePartnerData() {
         cateringPackages: cp.error ? [] : (cp.data ?? []),
         audit: a.error ? [] : (a.data ?? []),
         notes: n.error ? [] : (n.data ?? []),
+        activityEvents: ev.error ? [] : (ev.data ?? []),
       })
     } catch (err) {
       setState(s => ({ ...s, loading: false, error: err }))
@@ -265,6 +267,7 @@ export default function PartnerConsole() {
           pricing={{ trade: data.tradePackages.filter(p => p.vendor_id === open.id), catering: data.cateringPackages.filter(p => p.vendor_id === open.id) }}
           audit={data.audit.filter(a => a.vendor_id === open.id)}
           notes={data.notes.filter(n => n.vendor_id === open.id)}
+          activityEvents={data.activityEvents.filter(e => e.vendor_id === open.id || (open.profile_id && e.profile_id === open.profile_id))}
           actorId={user?.id}
           onClose={() => setOpen(null)}
           onChanged={data.refresh}
@@ -912,7 +915,7 @@ function ClosureQueue({ data, byVendor, onOpen }) {
    per-vendor and this drawer already holds every row it reads, so a
    round trip would buy nothing and add a spinner to a sheet that is
    otherwise instant. */
-function PartnerDrawer({ vendor: v, services, tradeListings = [], docs, payout, payoutsReadable = true, work = [], pricing = { trade: [], catering: [] }, audit = [], notes = [], actorId, onClose, onChanged }) {
+function PartnerDrawer({ vendor: v, services, tradeListings = [], docs, payout, payoutsReadable = true, work = [], pricing = { trade: [], catering: [] }, audit = [], notes = [], activityEvents = [], actorId, onClose, onChanged }) {
   const toast = useToast()
   const [busy, setBusy] = useState(null)
   const [noteText, setNoteText] = useState('')
@@ -1296,6 +1299,27 @@ function PartnerDrawer({ vendor: v, services, tradeListings = [], docs, payout, 
             <div className="mt-3 space-y-2">
               {notes.map(n => <article key={n.id} className="rounded-xl bg-ink/[0.025] p-3 ring-1 ring-ink/[0.05]"><div className="flex items-center justify-between gap-2"><span className="rounded-full bg-plum-50 px-2 py-1 text-[9px] font-extrabold uppercase text-plum-700">{String(n.note_kind || 'internal').replace(/_/g, ' ')}</span><time className="text-[10px] text-ink-mute">{n.created_at ? new Date(n.created_at).toLocaleString('en-IN') : '—'}</time></div><p className="mt-2 whitespace-pre-wrap text-[11.5px] leading-relaxed text-ink-soft">{n.body}</p><p className="mt-2 font-mono text-[9px] text-ink-mute">Note ID · {n.id}</p></article>)}
               {!notes.length && <p className="rounded-xl bg-ink/[0.025] p-3 text-[11.5px] text-ink-mute">No operator notes yet. Notes will remain attached to this partner record.</p>}
+            </div>
+          </Section>
+
+          <Section title={'Partner app activity (' + activityEvents.length + ')'}>
+            <p className="text-[11px] leading-relaxed text-ink-mute">Recent partner-side telemetry linked by partner UUID or login profile UUID. Event properties are expandable for operational troubleshooting.</p>
+            <div className="mt-3 space-y-2">
+              {activityEvents.slice(0, 40).map(e => (
+                <article key={e.id} className="flex gap-2.5 rounded-xl bg-ink/[0.025] p-3 ring-1 ring-ink/[0.05]">
+                  <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-plum-500"/>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="break-words text-[11.5px] font-extrabold text-ink">{String(e.name || 'Partner event').replace(/_/g, ' ')}</p>
+                      <time className="text-[9.5px] text-ink-mute">{e.created_at ? new Date(e.created_at).toLocaleString('en-IN') : '—'}</time>
+                    </div>
+                    <p className="mt-1 text-[9.5px] text-ink-mute">{e.surface || 'Surface unknown'} · Build {e.app_build || 'unknown'} · Event ID {e.id}</p>
+                    {e.props && <details className="mt-1.5"><summary className="cursor-pointer text-[10px] font-bold text-plum-700">Inspect event properties</summary><pre className="mt-2 max-h-48 overflow-auto rounded-lg bg-white p-2 text-[9px] leading-relaxed text-ink-soft">{JSON.stringify(e.props, null, 2)}</pre></details>}
+                  </div>
+                </article>
+              ))}
+              {!activityEvents.length && <p className="rounded-xl bg-ink/[0.025] p-3 text-[11.5px] text-ink-mute">No partner app events are currently linked to this partner/profile. Telemetry appears here when the partner surface records activity.</p>}
+              {activityEvents.length > 40 && <p className="text-[10px] text-ink-mute">Showing 40 of {activityEvents.length} events, newest first.</p>}
             </div>
           </Section>
 
