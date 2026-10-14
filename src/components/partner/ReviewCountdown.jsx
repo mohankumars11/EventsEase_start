@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import ReviewDial from './ReviewDial'
-import { BadgeCheck, CalendarDays, ChevronRight, Clock3, FileSearch, Info, PlayCircle, TriangleAlert, X } from 'lucide-react'
+import { BadgeCheck, CalendarDays, ChevronRight, Clock3, FileSearch, Info, PlayCircle, TriangleAlert } from 'lucide-react'
 
 function remaining(due, now) {
   const ms = new Date(due).getTime() - now
@@ -159,111 +159,71 @@ export default function ReviewCountdown({
   const extendedReview = extended > 0
   const sent = formatSent(submittedAt)
 
+  const timerText = left && !overdue
+    ? `${String(left.hours).padStart(2, '0')}:${String(left.minutes).padStart(2, '0')}:${String(left.seconds).padStart(2, '0')}`
+    : elapsed
+      ? `${String(elapsed.hours).padStart(2, '0')}:${String(elapsed.minutes).padStart(2, '0')}:${String(elapsed.seconds).padStart(2, '0')}`
+      : '24:00:00'
+  const timerCaption = overdue
+    ? 'TIME ELAPSED · REVIEW EXTENDED'
+    : extendedReview
+      ? 'TIME REMAINING · EXTENDED WINDOW'
+      : 'TIME REMAINING · 24 HOUR WINDOW'
+
   return (
-    <div className={`mb-3 overflow-hidden rounded-[22px] bg-gradient-to-br from-yellow-300 via-amber-300 to-yellow-400 px-3.5 py-3.5 text-plum-950 shadow-[0_10px_30px_rgba(83,50,0,0.14)] ring-1 ring-yellow-500/50 ${compact ? 'mb-0' : ''}`}>
-      <div className="flex items-start gap-2.5">
-        <div className="min-w-0 flex-1">
-          <p className="flex items-center gap-2 text-[12.5px] font-black">
-            <Clock3 size={16} className="shrink-0" />
-            With our team
-          </p>
+    <section aria-label="Profile review status" className={`mb-3 overflow-hidden rounded-[20px] border border-amber-200 bg-[#FFFCF4] px-3 py-3 text-[#17152B] shadow-[0_3px_12px_rgba(65,42,0,.035)] sm:px-4 sm:py-4 ${compact ? 'mb-0' : ''}`}>
+      <div className="flex items-start justify-between gap-2">
+        <p className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-[0.12em] text-amber-700"><Clock3 size={15} className="shrink-0" />With our team</p>
+        <span className="shrink-0 rounded-full bg-amber-100 px-2.5 py-1 text-[9px] font-black uppercase tracking-wide text-amber-800">Under review</span>
+      </div>
+      <h2 className="mt-1.5 text-[21px] font-black leading-[1.04] tracking-[-0.045em] sm:text-[24px]">
+        {overdue ? 'We need a little more time.' : 'We’re reviewing your profile'}
+      </h2>
+      <p className="mt-1.5 text-[12px] font-medium leading-snug text-[#77738D] sm:text-[13px]">
+        {overdue ? 'Your review is taking a little longer than expected. We will keep you updated.' : 'Our team is verifying your details and listed services. This usually takes up to 24 hours.'}
+      </p>
 
-          <h2 className="mt-1 text-[24px] font-black leading-[0.96] tracking-[-0.04em]">
-            {overdue ? <>We need a<br />little more time.</> : <>We’re reviewing<br />your profile</>}
-          </h2>
-
-          <p className="mt-2 max-w-[220px] text-[11px] font-semibold leading-snug text-plum-950/80">
-            {overdue
-              ? 'Your review is taking a little longer than expected. We will keep you updated.'
-              : 'Our team is verifying your details and listed services. This usually takes up to 24 hours.'}
-          </p>
+      <div className="mt-3 flex items-center justify-center gap-3 rounded-[17px] border border-slate-100 bg-white px-3 py-3 sm:gap-5 sm:py-4">
+        <div className="relative flex h-[66px] w-[66px] shrink-0 items-center justify-center rounded-full bg-amber-50 sm:h-[76px] sm:w-[76px]">
+          <ReviewDial {...dial} label={null} size={66} />
+          <span className="pointer-events-none absolute inset-0 flex items-center justify-center"><Clock3 size={22} className="text-amber-600" strokeWidth={2} /></span>
         </div>
-
-        <div className="relative flex h-[104px] w-[104px] shrink-0 items-center justify-center rounded-full">
-          <div className="absolute inset-0 rounded-full bg-white/35 blur-[1px]" />
-          <div className="relative flex h-[100px] w-[100px] items-center justify-center rounded-full bg-yellow-200/30 ring-1 ring-white/60">
-            <ReviewDial {...dial} label={null} size={96} />
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-[13px] font-black tabular-nums leading-none">
-                {left && !overdue
-                  ? `${left.hours}h ${String(left.minutes).padStart(2, '0')}m ${String(left.seconds).padStart(2, '0')}s`
-                  : elapsed
-                    ? `${elapsed.hours}h ${String(elapsed.minutes).padStart(2, '0')}m ${String(elapsed.seconds).padStart(2, '0')}s`
-                    : '24h 00m 00s'}
-              </span>
-              <span className="mt-1 text-[9.5px] font-extrabold uppercase tracking-wide text-plum-950/65">
-                {overdue ? 'elapsed' : 'remaining'}
-              </span>
-            </div>
-          </div>
+        <div className="min-w-0">
+          <p className="whitespace-nowrap text-[29px] font-black leading-none tracking-[-0.045em] tabular-nums text-[#21124E] sm:text-[36px]">{timerText}</p>
+          <p className="mt-1.5 text-[8.5px] font-extrabold uppercase tracking-[0.09em] text-[#77738D] sm:text-[10px]">{timerCaption}</p>
         </div>
       </div>
 
-      <div className="mt-2.5 flex items-start gap-2 rounded-[17px] bg-white/75 px-3 py-2.5 ring-1 ring-white/70">
-        <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white text-amber-500 shadow-sm">
-          <Info size={14} />
-        </span>
-        <p className="text-[11px] font-bold leading-snug text-plum-950/80">
+      <div className="mt-2.5 flex items-start gap-2 rounded-[15px] border border-amber-100 bg-amber-50/70 px-3 py-2.5">
+        <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white text-amber-600"><Info size={15} /></span>
+        <p className="text-[11px] font-semibold leading-snug text-[#4E466A] sm:text-[12px]">
           {extendedReview
-            ? <>We needed a little longer on yours. <strong>The new timer above is the current review window.</strong> Nothing more is needed from you.</>
+            ? <>We needed a little longer on yours. <strong>The timer above shows your current review window.</strong> Nothing more is needed from you.</>
             : overdue
               ? <>We’ve extended the review window. <strong>We’ll keep you updated.</strong> Nothing more is needed from you.</>
-              : <>We’ll notify you as soon as your listing goes live. If it takes a little longer, we’ll automatically extend the time and keep you updated.</>}
+              : <>We’ll notify you as soon as your listing goes live. If it takes a little longer, we’ll extend the time and keep you updated.</>}
         </p>
       </div>
 
       <div className="mt-2.5 grid grid-cols-2 gap-2">
-        {onOpenCalendar && (
-          <button
-            type="button"
-            onClick={onOpenCalendar}
-            className="flex min-h-[46px] min-w-0 flex-nowrap items-center justify-center gap-0.5 rounded-full bg-plum-950 px-1.5 text-[10px] font-black text-white shadow-sm transition active:scale-[0.98] whitespace-nowrap"
-          >
-            <CalendarDays size={14} className="shrink-0" />
-            <span className="whitespace-nowrap">Update calendar</span>
-            <span className="shrink-0"><ChevronRight size={14} /></span>
-          </button>
-        )}
-
-        {onHowItWorks && (
-          <button
-            type="button"
-            onClick={onHowItWorks}
-            className="flex min-h-[46px] min-w-0 flex-nowrap items-center justify-center gap-0.5 rounded-full bg-white/80 px-1.5 text-[10px] font-black text-plum-950 shadow-sm ring-1 ring-white transition active:scale-[0.98] whitespace-nowrap"
-          >
-            <PlayCircle size={14} fill="currentColor" className="shrink-0 text-plum-900" />
-            <span className="whitespace-nowrap">See how it works</span>
-            <ChevronRight size={15} className="shrink-0" />
-          </button>
-        )}
+        {onOpenCalendar && <button type="button" onClick={onOpenCalendar} className="flex min-h-[42px] min-w-0 items-center justify-center gap-1 rounded-full bg-gradient-to-r from-violet-700 to-purple-600 px-1.5 text-[10px] font-extrabold text-white shadow-sm transition active:scale-[0.98] sm:text-[11px]">
+          <CalendarDays size={14} className="shrink-0" /><span className="whitespace-nowrap">Update calendar</span><ChevronRight size={14} className="shrink-0" />
+        </button>}
+        {onHowItWorks && <button type="button" onClick={onHowItWorks} className="flex min-h-[42px] min-w-0 items-center justify-center gap-1 rounded-full border border-violet-200 bg-white px-1.5 text-[10px] font-extrabold text-violet-700 transition active:scale-[0.98] sm:text-[11px]">
+          <PlayCircle size={14} className="shrink-0" /><span className="whitespace-nowrap">See how it works</span><ChevronRight size={14} className="shrink-0" />
+        </button>}
       </div>
 
-      {onOpenListing && listingCount > 0 && (
-        <button
-          type="button"
-          onClick={onOpenListing}
-          className="mt-2 flex min-h-[50px] w-full items-center justify-between gap-2 rounded-[17px] bg-white/80 px-3 text-left shadow-sm ring-1 ring-white transition active:scale-[0.99]"
-        >
-          <span className="flex min-w-0 items-center gap-2.5">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
-              <FileSearch size={18} />
-            </span>
-            <span className="min-w-0">
-              <span className="block text-[12px] font-black">See the listing being reviewed</span>
-              {listingNames && <span className="mt-0.5 block truncate text-[10.5px] font-semibold text-ink-mute">{listingNames}</span>}
-            </span>
-          </span>
-          <ChevronRight size={16} className="shrink-0 text-ink-mute" />
-        </button>
-      )}
+      {onOpenListing && listingCount > 0 && <button type="button" onClick={onOpenListing} className="mt-2 flex min-h-[48px] w-full items-center justify-between gap-2 rounded-[15px] border border-slate-100 bg-white px-2.5 text-left transition active:scale-[0.99]">
+        <span className="flex min-w-0 items-center gap-2.5">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-700"><FileSearch size={18} /></span>
+          <span className="min-w-0"><span className="block text-[11.5px] font-extrabold">See the listing being reviewed</span>{listingNames && <span className="mt-0.5 block truncate text-[10px] font-medium text-[#77738D]">{listingNames}</span>}</span>
+        </span>
+        <ChevronRight size={16} className="shrink-0 text-[#77738D]" />
+      </button>}
 
-      {extendedReview && (
-        <p className="mt-2 text-[10.5px] font-bold text-plum-950/65">
-          Review window extended {extended === 1 ? 'once' : `${extended} times`}{note ? ` · ${note}` : ''}
-        </p>
-      )}
-
-      {sent && <p className="mt-2 text-[10.5px] font-semibold text-plum-950/60">{sent}</p>}
-    </div>
+      {extendedReview && <p className="mt-2 text-[10px] font-semibold text-[#77738D]">Review window extended {extended === 1 ? 'once' : `${extended} times`}{note ? ` · ${note}` : ''}</p>}
+      {sent && <p className="mt-2 text-[10px] font-medium text-[#77738D]">{sent}</p>}
+    </section>
   )
 }
