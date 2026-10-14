@@ -222,23 +222,22 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
   ) : null
 
   return (
-    <div className="space-y-4 pb-5 pt-2" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 8px)' }}>
+    <div className="space-y-3 pb-5 pt-1" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 4px)' }}>
       {!selectedService ? (
         <>
-          <section className="relative -mx-4 overflow-hidden rounded-[26px] bg-gradient-to-br from-plum-800 via-plum-700 to-[#321067] px-5 pb-5 pt-5 text-white sm:-mx-6">
+          <section className="relative -mx-4 overflow-hidden rounded-[26px] bg-gradient-to-br from-plum-800 via-plum-700 to-[#321067] px-5 pb-4 pt-4 text-white sm:-mx-6">
             <div className="pointer-events-none absolute -right-12 -top-10 h-44 w-44 rounded-full border border-white/10 bg-white/[0.04]" />
             <div className="relative flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-white/60">Sambramo partner studio</p>
-                <h1 className="mt-1 text-[clamp(1.45rem,6vw,1.8rem)] font-extrabold leading-tight tracking-tight">Pricing & Listings</h1>
-                <p className="mt-1 text-[13px] text-white/75">Manage your services, packages and rates.</p>
+                <h1 className="text-[clamp(1.55rem,6vw,1.85rem)] font-extrabold leading-tight tracking-tight">Pricing & Listings</h1>
+                <p className="mt-1 text-[14px] font-medium text-white/80">Manage your services, packages and rates.</p>
               </div>
               <button type="button" onClick={() => setHelpOpen(true)} aria-label="Pricing help and setup guidance" title="Pricing help"
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/25 bg-white/10 text-white shadow-sm backdrop-blur transition hover:bg-white/15 active:scale-95">
-                <CircleHelp size={22} />
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/25 bg-white/10 text-white shadow-sm backdrop-blur transition hover:bg-white/15 active:scale-95">
+                <CircleHelp size={21} />
               </button>
             </div>
-            <div className="relative mt-5 grid grid-cols-4 gap-1 rounded-[22px] bg-white p-3 text-plum-950 shadow-[0_12px_30px_rgba(20,0,50,0.18)]">
+            <div className="relative mt-4 grid grid-cols-4 gap-1 rounded-[22px] bg-white p-2 text-plum-950 shadow-[0_12px_30px_rgba(20,0,50,0.18)]">
               <StatusMetric label="Live" count={counts.live} glyph="✓" tone="text-emerald-700 bg-emerald-50" />
               <StatusMetric label="In review" count={counts.review} glyph="◷" tone="text-amber-700 bg-amber-50" />
               <StatusMetric label="Drafts" count={counts.draft} glyph="▤" tone="text-violet-700 bg-violet-50" />
@@ -248,27 +247,27 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
 
           <button type="button" onClick={() => setSelectedServiceId(listingMeta.nextPriceServiceId ?? services[0]?.id ?? null)}
             disabled={!listingMeta.nextPriceServiceId}
-            className="flex w-full items-center gap-3 rounded-[22px] bg-gradient-to-r from-plum-50 to-white p-4 text-left ring-1 ring-plum-100 disabled:cursor-default">
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-plum-100 text-plum-700"><CalendarClock size={23} /></span>
+            className="flex w-full items-center gap-2.5 rounded-[18px] bg-gradient-to-r from-plum-50 via-white to-violet-50 px-3 py-2.5 text-left ring-1 ring-plum-100 disabled:cursor-default">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-plum-100 text-plum-700"><CalendarClock size={20} /></span>
             <span className="min-w-0 flex-1">
-              <span className="block text-[13.5px] font-extrabold text-plum-950">Price update window</span>
-              <span className="mt-0.5 block text-[14px] font-extrabold text-plum-800">{listingMeta.nextPriceDate ? `Next eligible price change in ${daysUntil(listingMeta.nextPriceDate)} day${daysUntil(listingMeta.nextPriceDate) === 1 ? '' : 's'}` : 'Your price-update dates appear here once a listing is published'}</span>
-              <span className="mt-0.5 block text-[11.5px] text-ink/55">Regular prices follow the 15-day update policy. An approved seasonal window, when available, is shown inside the listing.</span>
+              <span className="block text-[12.5px] font-extrabold text-plum-950">Price update window</span>
+              <span className="mt-0.5 block text-[12.5px] font-extrabold leading-snug text-plum-800">{listingMeta.nextPriceDate ? `Next eligible price change in ${daysUntil(listingMeta.nextPriceDate)} day${daysUntil(listingMeta.nextPriceDate) === 1 ? '' : 's'}` : 'Price-update dates appear here after a listing is published'}</span>
+              <span className="mt-0.5 block text-[10.5px] leading-snug text-ink/55">Regular prices follow the 15-day policy. Approved seasonal windows appear here when available.</span>
             </span>
-            <ChevronRight size={19} className="shrink-0 text-plum-700" />
+            <ChevronRight size={18} className="shrink-0 text-plum-700" />
           </button>
 
           <div className="flex items-center justify-between gap-3 px-1">
-            <div>
-              <h2 className="text-[21px] font-extrabold tracking-tight text-plum-950">Your listings</h2>
-              <p className="text-[12px] text-ink/50">{services.length} service{services.length === 1 ? '' : 's'} · status from saved listing data</p>
+            <div className="min-w-0">
+              <h2 className="text-[22px] font-extrabold tracking-tight text-plum-950">Your listings</h2>
+              <p className="text-[12px] leading-snug text-ink/55">{services.length} services · live status from saved listing data</p>
             </div>
-            <button type="button" onClick={() => setManageOpen(true)} className="flex h-10 shrink-0 items-center gap-1.5 rounded-full border border-plum-200 bg-white px-3 text-[12px] font-extrabold text-plum-700 shadow-sm">
+            <button type="button" onClick={() => setManageOpen(true)} className="flex h-10 shrink-0 items-center gap-1.5 rounded-full border border-plum-200 bg-white px-3 text-[12.5px] font-extrabold text-plum-700 shadow-sm">
               <SlidersHorizontal size={15} /> Manage
             </button>
           </div>
 
-          <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {[
               ['all', `All · ${services.length}`],
               ['live', `Live · ${counts.live}`],
@@ -276,7 +275,7 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
               ['draft', `Draft · ${counts.draft}`],
             ].map(([key, label]) => (
               <button key={key} type="button" onClick={() => setFilterStatus(key)}
-                className={`shrink-0 rounded-full px-3.5 py-2 text-[11.5px] font-extrabold ring-1 transition ${filterStatus === key ? 'bg-plum-700 text-white ring-plum-700' : 'bg-white text-ink/65 ring-ink/[0.09]'}`}>
+                className={`min-h-10 shrink-0 rounded-full px-4 py-2.5 text-[12px] font-extrabold leading-none ring-1 transition ${filterStatus === key ? 'bg-plum-700 text-white ring-plum-700' : 'bg-white text-ink/65 ring-ink/[0.09]'}`}>
                 {label}
               </button>
             ))}
@@ -291,16 +290,16 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
                 const configName = service.category || service.trade || 'Service'
                 return (
                   <button key={service.id} type="button" onClick={() => { setSelectedServiceId(service.id); setLegacyScreen('details') }}
-                    className="group flex w-full items-center gap-3 rounded-[24px] bg-white p-3.5 text-left ring-1 ring-ink/[0.07] shadow-[0_6px_22px_rgba(30,15,55,0.04)] transition active:scale-[0.995]">
-                    <span className="flex w-[92px] shrink-0 flex-col items-center gap-1.5">
-                      <span className="flex h-[82px] w-[82px] items-center justify-center overflow-hidden rounded-[22px] bg-gradient-to-br from-plum-50 to-violet-100 ring-1 ring-plum-100">
+                    className="group flex w-full items-center gap-3 rounded-[22px] bg-white p-3 text-left ring-1 ring-ink/[0.07] shadow-[0_6px_22px_rgba(30,15,55,0.04)] transition active:scale-[0.995]">
+                    <span className="flex w-[82px] shrink-0 flex-col items-center gap-1.5">
+                      <span className="flex h-[72px] w-[72px] items-center justify-center overflow-hidden rounded-[19px] bg-gradient-to-br from-plum-50 to-violet-100 ring-1 ring-plum-100">
                         <SambramoTradePictogram trade={configName} size="sm" showSparkle={false} title={false} />
                       </span>
                       <span className="max-w-full text-center text-[10.5px] font-bold leading-tight text-ink/70">{configName}</span>
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="flex flex-wrap items-center gap-2">
-                        <span className="text-[15px] font-extrabold text-plum-950">{service.name || configName}</span>
+                        <span className="text-[15.5px] font-extrabold leading-tight text-plum-950">{service.name || configName}</span>
                         <span className={`rounded-full px-2.5 py-1 text-[10.5px] font-extrabold ring-1 ${look.tone}`}>{look.label}</span>
                       </span>
                       <span className="mt-1.5 flex items-center gap-1.5 text-[11.5px] text-ink/55"><MapPin size={13} className="shrink-0 text-plum-600" />{service.city || service.location || vendor?.city || 'Service location not set'}</span>
@@ -619,8 +618,8 @@ function StatusMetric({ label, count, glyph, tone }) {
   return (
     <div className="flex min-w-0 flex-col items-center justify-center gap-1 rounded-[14px] border border-plum-100 bg-gradient-to-b from-white to-plum-50 px-0.5 py-2 text-center shadow-[0_2px_8px_rgba(35,12,64,0.06)]">
       <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-full text-[15px] font-black ${tone}`}>{glyph}</span>
-      <span className="block w-full truncate text-[8.5px] font-black uppercase tracking-[0.03em] text-plum-800">{label}</span>
-      <span className="block text-[22px] font-black leading-tight tabular-nums text-[#211035]">{count}</span>
+      <span className="block w-full truncate text-[10px] font-black uppercase tracking-[0.02em] text-plum-800">{label}</span>
+      <span className="block text-[27px] font-black leading-none tabular-nums text-[#211035]">{count}</span>
     </div>
   )
 }
