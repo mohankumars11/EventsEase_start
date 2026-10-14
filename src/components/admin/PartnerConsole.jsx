@@ -124,15 +124,16 @@ const money = n =>
 function usePartnerData() {
   const [state, setState] = useState({
     loading: true, error: null, payoutsReadable: true,
-    vendors: [], services: [], docs: [], payouts: [], work: [], tradePackages: [], cateringPackages: [], audit: [], notes: [],
+    vendors: [], services: [], tradeListings: [], docs: [], payouts: [], work: [], tradePackages: [], cateringPackages: [], audit: [], notes: [],
   })
 
   const load = useCallback(async () => {
     setState(s => ({ ...s, loading: true, error: null }))
     try {
-      const [v, s, d, p, w, tp, cp, a, n] = await Promise.all([
-        supabase.from('vendors').select('*').eq('is_synthetic', false).order('created_at', { ascending: false }),
+      const [v, s, tl, d, p, w, tp, cp, a, n] = await Promise.all([
+        supabase.from('vendors').select('*, profiles:profiles!vendors_profile_id_fkey(id,full_name,email,phone,role,city,created_at)').eq('is_synthetic', false).order('created_at', { ascending: false }),
         supabase.from('vendor_services').select('*').order('created_at', { ascending: false }),
+        supabase.from('partner_listings').select('id,vendor_id,trade,trade_id,status,review_note,submitted_at,reviewed_at,reviewed_by,created_at,updated_at').order('updated_at', { ascending: false }),
         supabase.from('vendor_documents').select('*'),
         supabase.from('vendor_payout_details').select('*'),
         supabase.from('partner_work').select('*').order('created_at', { ascending: false }),
@@ -153,6 +154,7 @@ function usePartnerData() {
            which of the two it is. */
         payoutsReadable: !p.error,
         vendors: v.data ?? [],
+        tradeListings: tl.error ? [] : (tl.data ?? []),
         /* Services are fetched for every vendor and filtered locally.
            Filtering server-side would need the vendor id list in the
            query, which changes as soon as anything is approved. */
@@ -255,6 +257,7 @@ export default function PartnerConsole() {
         <PartnerDrawer
           vendor={open}
           services={byVendor[open.id] ?? []}
+          tradeListings={data.tradeListings.filter(t => t.vendor_id === open.id)}
           docs={data.docs.filter(d => d.vendor_id === open.id)}
           payout={data.payouts.find(p => p.vendor_id === open.id) ?? null}
           payoutsReadable={data.payoutsReadable}
@@ -885,7 +888,7 @@ function ClosureQueue({ data, byVendor, onOpen }) {
    per-vendor and this drawer already holds every row it reads, so a
    round trip would buy nothing and add a spinner to a sheet that is
    otherwise instant. */
-function PartnerDrawer({ vendor: v, services, docs, payout, payoutsReadable = true, work = [], pricing = { trade: [], catering: [] }, audit = [], notes = [], actorId, onClose, onChanged }) {
+function PartnerDrawer({ vendor: v, services, tradeListings = [], docs, payout, payoutsReadable = true, work = [], pricing = { trade: [], catering: [] }, audit = [], notes = [], actorId, onClose, onChanged }) {
   const toast = useToast()
   const [busy, setBusy] = useState(null)
   const [noteText, setNoteText] = useState('')
@@ -1045,6 +1048,21 @@ function PartnerDrawer({ vendor: v, services, docs, payout, payoutsReadable = tr
             <Row icon={Calendar} label="Joined" value={v.created_at?.slice(0, 10) ?? '—'} />
             <Row icon={ShieldCheck} label="Terms"
                  value={v.terms_accepted_at ? `Signed ${v.terms_version ?? ''}`.trim() : 'Not signed'} />
+          </Section>
+
+          <Section title={`Trade listings (${tradeListings.length})`}>
+            {tradeListings.length ? tradeListings.map(t => (
+              <article key={t.id} className="rounded-xl bg-ink/[0.025] p-3 ring-1 ring-ink/[0.05]">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-full bg-plum-50 px-2 py-0.5 text-[10px] font-extrabold text-plum-700">{String(t.status || 'unknown').replace(/_/g, ' ')}</span>
+                  <span className="font-mono text-[9.5px] text-ink-mute">{t.trade_id || t.id}</span>
+                </div>
+                <p className="mt-1.5 text-[12.5px] font-extrabold text-ink">{t.trade}</p>
+                <p className="mt-1 break-words font-mono text-[9px] text-ink-mute">Listing UUID · {t.id}</p>
+                <p className="mt-1 text-[10.5px] text-ink-mute">Submitted {t.submitted_at ? new Date(t.submitted_at).toLocaleDateString('en-IN') : '—'} · Reviewed {t.reviewed_at ? new Date(t.reviewed_at).toLocaleDateString('en-IN') : 'Not reviewed'}</p>
+                {t.review_note && <p className="mt-2 rounded-lg bg-amber-50 px-2.5 py-1.5 text-[10.5px] text-amber-900">Review note: {t.review_note}</p>}
+              </article>
+            )) : <p className="text-[12px] italic text-ink-mute">No partner trade rows are linked to this business.</p>}
           </Section>
 
           <Section title={`What they list (${services.length})`}>
