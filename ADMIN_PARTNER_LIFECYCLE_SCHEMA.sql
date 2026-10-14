@@ -39,7 +39,7 @@ create policy "Operators add lifecycle notes" on public.admin_lifecycle_notes
 
 create table if not exists public.admin_lifecycle_audit (
   id uuid primary key default gen_random_uuid(),
-  entity_type text not null check (entity_type = any (array['partner'::text, 'listing'::text, 'partner_trade'::text, 'document'::text, 'pricing'::text)),
+  entity_type text not null check (entity_type = any (array['partner'::text, 'listing'::text, 'partner_trade'::text, 'document'::text, 'pricing'::text])),
   entity_id uuid not null,
   vendor_id uuid references public.vendors(id) on delete set null,
   action text not null,
