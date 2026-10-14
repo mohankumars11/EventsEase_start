@@ -1370,6 +1370,87 @@ function PartnerDrawer({ vendor: v, services, tradeListings = [], docs, payout, 
               `verification_status` by trigger, so writing a derived
               column shows a success toast over a no-op — that is exactly
               how this screen used to lie. */}
+          <Section title={'Payout routing & KYC'}>
+            {!payoutAccount ? (
+              <p className="text-[12px] italic text-ink-mute">No partner payout-route account is recorded. Check whether this partner still uses the older payout details form below.</p>
+            ) : (
+              <>
+                <Row icon={ShieldCheck} label="Payout KYC state" value={payoutAccount.kyc_status || 'Not recorded'} />
+                <Row icon={ShieldCheck} label="KYC verified" value={payoutAccount.kyc_verified_at ? new Date(payoutAccount.kyc_verified_at).toLocaleString('en-IN') : 'Not verified'} />
+                <Row icon={Layers} label="Bank" value={payoutAccount.bank_name || '—'} />
+                <Row icon={Layers} label="Account holder" value={payoutAccount.account_holder || '—'} />
+                <Row icon={Layers} label="Account ending" value={payoutAccount.account_last4 ? '•••• ' + payoutAccount.account_last4 : 'Not captured'} />
+                <Row icon={Layers} label="IFSC" value={payoutAccount.ifsc || '—'} />
+                <Row icon={ShieldCheck} label="Payment route status" value={payoutAccount.route_status || 'Not provisioned'} />
+                <Row icon={FileText} label="Route updated" value={payoutAccount.route_updated_at ? new Date(payoutAccount.route_updated_at).toLocaleString('en-IN') : '—'} />
+                <Row icon={FileText} label="Provider account ID" value={payoutAccount.route_account_id || '—'} />
+                <Row icon={FileText} label="Provider product / stakeholder" value={[payoutAccount.route_product_id, payoutAccount.route_stakeholder_id].filter(Boolean).join(' / ') || '—'} />
+                {payoutAccount.kyc_note && <p className="rounded-xl bg-amber-50 p-3 text-[10.5px] leading-relaxed text-amber-900">KYC note: {payoutAccount.kyc_note}</p>}
+                {payoutAccount.route_requirements && <details className="mt-2"><summary className="cursor-pointer text-[10px] font-bold text-plum-700">Inspect provider requirements</summary><pre className="mt-2 max-h-52 overflow-auto rounded-lg bg-ink/[0.025] p-2 text-[9px] leading-relaxed text-ink-soft">{JSON.stringify(payoutAccount.route_requirements, null, 2)}</pre></details>}
+              </>
+            )}
+            <p className="mt-3 text-[9.5px] leading-relaxed text-ink-mute">Sensitive PAN, full bank account number and UPI destination values are intentionally not copied into audit logs. Route status and masked account metadata are shown for operational readiness.</p>
+          </Section>
+
+          <Section title={'Payout claims & settlement history (' + payoutClaims.length + ')'}>
+            {payoutClaims.length ? payoutClaims.map(p => (
+              <article key={p.id} className="rounded-xl bg-ink/[0.025] p-3 ring-1 ring-ink/[0.05]">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1"><p className="text-[11.5px] font-extrabold text-ink">{money(Number(p.amount_paise || 0) / 100)} · {String(p.method || 'method unknown').replace(/_/g,' ')}</p><p className="mt-0.5 break-all font-mono text-[8.5px] text-ink-mute">Claim ID · {p.id}</p></div>
+                  <span className={'shrink-0 rounded-full px-2 py-1 text-[9px] font-extrabold ' + (['settled','paid','completed'].includes(String(p.status).toLowerCase()) ? 'bg-forest-50 text-forest-800' : ['failed','rejected'].includes(String(p.status).toLowerCase()) ? 'bg-rose-50 text-rose-800' : 'bg-amber-50 text-amber-800')}>{String(p.status || 'unknown').replace(/_/g,' ')}</span>
+                </div>
+                <div className="mt-2 grid grid-cols-2 gap-2 text-[9.5px] text-ink-mute">
+                  <p>Requested · {p.requested_at ? new Date(p.requested_at).toLocaleString('en-IN') : '—'}</p><p>Settled · {p.settled_at ? new Date(p.settled_at).toLocaleString('en-IN') : '—'}</p>
+                  <p>Attempt · {p.attempt ?? '—'}</p><p>Batch · {p.batch_id || '—'}</p>
+                  <p>Line · {p.line_id || '—'}</p><p>Reference · {p.reference || '—'}</p>
+                </div>
+                {(p.failure_code || p.failure_reason || p.note) && <p className="mt-2 rounded-lg bg-amber-50 p-2 text-[10px] leading-relaxed text-amber-900">{[p.failure_code && 'Failure code: ' + p.failure_code, p.failure_reason && 'Failure: ' + p.failure_reason, p.note && 'Note: ' + p.note].filter(Boolean).join(' · ')}</p>}
+              </article>
+            )) : <p className="text-[12px] italic text-ink-mute">No payout claims are linked to this partner yet.</p>}
+          </Section>
+
+          <Section title={'Partner adjustments (' + adjustments.length + ')'}>
+            {adjustments.length ? adjustments.map(a => (
+              <article key={a.id} className="rounded-xl bg-ink/[0.025] p-3 ring-1 ring-ink/[0.05]">
+                <div className="flex items-start justify-between gap-2"><div className="min-w-0"><p className="text-[11.5px] font-extrabold">{String(a.kind || 'Adjustment').replace(/_/g,' ')}</p><p className="mt-0.5 break-all font-mono text-[8.5px] text-ink-mute">Adjustment ID · {a.id}</p></div><p className="text-[12px] font-black">{money(Number(a.amount_paise || 0) / 100)}</p></div>
+                <p className="mt-2 text-[10px] leading-relaxed text-ink-soft">{a.reason || 'No reason recorded'}</p>
+                <p className="mt-1 text-[9.5px] text-ink-mute">Effective · {a.effective_on || '—'} · Created · {a.created_at ? new Date(a.created_at).toLocaleString('en-IN') : '—'}</p>
+                {a.line_id && <p className="mt-1 break-all font-mono text-[8.5px] text-ink-mute">Line {a.line_id}</p>}
+                {a.settled_claim_id && <p className="mt-1 break-all font-mono text-[8.5px] text-ink-mute">Settlement claim {a.settled_claim_id}</p>}
+              </article>
+            )) : <p className="text-[12px] italic text-ink-mute">No manual or system adjustments are recorded for this partner.</p>}
+          </Section>
+
+          <Section title={'Subscription history (' + subscriptions.length + ')'}>
+            {subscriptions.length ? subscriptions.map(s => (
+              <article key={s.id} className="flex items-start gap-3 rounded-xl bg-ink/[0.025] p-3 ring-1 ring-ink/[0.05]">
+                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-plum-50 text-plum-700"><Layers size={14}/></span>
+                <div className="min-w-0 flex-1"><p className="text-[11.5px] font-extrabold">{String(s.tier || 'Plan').toUpperCase()} · {String(s.status || 'unknown').replace(/_/g,' ')}</p><p className="mt-1 text-[9.5px] text-ink-mute">Started {s.started_at ? new Date(s.started_at).toLocaleDateString('en-IN') : '—'} · Expires {s.expires_at ? new Date(s.expires_at).toLocaleDateString('en-IN') : '—'}</p><p className="mt-1 break-all font-mono text-[8.5px] text-ink-mute">Subscription ID · {s.id}</p></div>
+              </article>
+            )) : <p className="text-[12px] italic text-ink-mute">No subscription history is linked to this partner.</p>}
+          </Section>
+
+          <Section title={'Referral lifecycle (' + referrals.length + ' records · ' + referralInvites.length + ' invites)'}>
+            <p className="text-[10.5px] leading-relaxed text-ink-mute">Referral milestones are joined by vendor ID. The referral and invite codes below are record references, not assumptions about reward eligibility.</p>
+            {referrals.map(r => (
+              <article key={r.id} className="mt-2 rounded-xl bg-ink/[0.025] p-3 ring-1 ring-ink/[0.05]">
+                <div className="flex items-start justify-between gap-2"><div><p className="text-[11.5px] font-extrabold">{String(r.state || 'unknown').replace(/_/g,' ')} · Reward {String(r.reward_status || 'not recorded').replace(/_/g,' ')}</p><p className="mt-0.5 break-all font-mono text-[8.5px] text-ink-mute">Referral ID · {r.id}</p></div><span className="rounded-full bg-plum-50 px-2 py-1 text-[9px] font-extrabold text-plum-700">{r.code || 'No code'}</span></div>
+                <p className="mt-2 break-all text-[9px] text-ink-mute">Referrer UUID · {r.referrer_id} · Referred UUID · {r.referred_id}</p>
+                <div className="mt-2 grid grid-cols-2 gap-2 text-[9.5px] text-ink-mute"><p>Claimed · {r.claimed_at ? new Date(r.claimed_at).toLocaleDateString('en-IN') : '—'}</p><p>Onboarding · {r.onboarding_completed_at ? new Date(r.onboarding_completed_at).toLocaleDateString('en-IN') : '—'}</p><p>Verified · {r.verified_at ? new Date(r.verified_at).toLocaleDateString('en-IN') : '—'}</p><p>Went live · {r.live_at ? new Date(r.live_at).toLocaleDateString('en-IN') : '—'}</p><p>Qualified · {r.qualified_at ? new Date(r.qualified_at).toLocaleDateString('en-IN') : '—'}</p><p>Reward paid · {r.paid_at ? new Date(r.paid_at).toLocaleDateString('en-IN') : '—'}</p></div>
+                {r.rejected_reason && <p className="mt-2 text-[10px] text-rose-700">Rejected: {r.rejected_reason}</p>}
+              </article>
+            ))}
+            {referralInvites.map(r => (
+              <article key={r.id} className="mt-2 rounded-xl bg-ink/[0.025] p-3 ring-1 ring-ink/[0.05]">
+                <p className="text-[11px] font-extrabold">Invite · {r.code}</p><p className="mt-0.5 break-all font-mono text-[8.5px] text-ink-mute">Invite ID · {r.id}</p>
+                <p className="mt-1 text-[9.5px] text-ink-mute">Trade · {r.trade_id || '—'} · Campaign · {r.campaign_id || '—'}</p>
+                <p className="mt-1 text-[9.5px] text-ink-mute">Created · {r.created_at ? new Date(r.created_at).toLocaleDateString('en-IN') : '—'} · Expires · {r.expires_at ? new Date(r.expires_at).toLocaleDateString('en-IN') : '—'} · Claimed · {r.claimed_at ? new Date(r.claimed_at).toLocaleDateString('en-IN') : 'Not yet'}</p>
+                {r.claimed_by && <p className="mt-1 break-all font-mono text-[8.5px] text-ink-mute">Claimed by profile · {r.claimed_by}</p>}
+              </article>
+            ))}
+            {!referrals.length && !referralInvites.length && <p className="mt-2 text-[12px] italic text-ink-mute">No referral records or invites are linked to this partner.</p>}
+          </Section>
+
           <Section title={`Lifecycle notes (${notes.length})`}>
             <p className="text-[11.5px] leading-relaxed text-ink-mute">Internal operator notes are linked directly to this partner ID. Use these for follow-ups, support context, compliance concerns or operational handoffs.</p>
             <div className="mt-2 grid gap-2">
