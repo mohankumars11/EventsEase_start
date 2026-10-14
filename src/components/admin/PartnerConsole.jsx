@@ -142,8 +142,8 @@ function usePartnerData() {
         supabase.from('vendor_payout_details').select('*'),
         supabase.from('partner_payout_accounts').select('id,vendor_id,kyc_status,kyc_note,kyc_verified_at,bank_name,account_last4,account_holder,ifsc,route_account_id,route_status,route_product_id,route_stakeholder_id,route_requirements,route_updated_at,created_at,updated_at'),
         supabase.from('partner_work').select('*').order('created_at', { ascending: false }),
-        supabase.from('sambramo_trade_packages').select('id,vendor_id,vendor_service_id,parent_package_id,name,status,revision_round,commercial_inputs,submitted_at,review_note').in('status', ['UNDER_REVIEW','ACTION_REQUIRED','LIVE']),
-        supabase.from('sambramo_catering_packages').select('id,vendor_id,vendor_service_id,parent_package_id,name,status,rate_bands').in('status', ['UNDER_REVIEW','ACTION_REQUIRED','LIVE']),
+        supabase.from('sambramo_trade_packages').select('id,vendor_id,vendor_service_id,parent_package_id,name,status,revision_round,commercial_inputs,trade_inputs,submitted_at,reviewed_at,created_at,updated_at,review_note'),
+        supabase.from('sambramo_catering_packages').select('id,vendor_id,vendor_service_id,parent_package_id,name,status,rate_bands,created_at,updated_at,review_note,submitted_at,reviewed_at,sourcing_mode,min_guests,max_guests'),
         supabase.from('admin_lifecycle_audit').select('id,entity_type,entity_id,vendor_id,action,before_state,after_state,actor_id,actor_role,note,created_at').not('vendor_id', 'is', null).order('created_at', { ascending: false }),
         supabase.from('admin_lifecycle_notes').select('id,target_type,vendor_id,note_kind,body,created_by,created_at').eq('target_type', 'partner').order('created_at', { ascending: false }),
         supabase.from('partner_events').select('id,vendor_id,profile_id,name,props,surface,app_build,created_at').order('created_at', { ascending: false }),
@@ -241,10 +241,10 @@ export default function PartnerConsole() {
                     && (!s.reviewed_at || new Date(s.revised_at) > new Date(s.reviewed_at)))).length
             : t.id === 'work' ? data.work.filter(w => w.review_status === 'under_review').length
             : t.id === 'closures' ? data.vendors.filter(v => v.closure_requested_at).length
-            : t.id === 'documents' ? data.docs.length
-            : t.id === 'dispatch' ? data.dispatchOffers.length
+             : t.id === 'documents' ? data.docs.filter(d => data.vendors.some(v => v.id === d.vendor_id)).length
+            : t.id === 'dispatch' ? data.dispatchOffers.filter(o => data.vendors.some(v => v.id === o.vendor_id)).length
             : t.id === 'payouts' ? data.payoutClaims.filter(p => !['settled','paid','completed','complete','failed','cancelled','rejected'].includes(String(p.status || '').toLowerCase())).length
-            : t.id === 'referrals' ? data.referrals.filter(r => !['paid','rejected','cancelled','complete','completed'].includes(String(r.reward_status || r.state || '').toLowerCase())).length
+            : t.id === 'referrals' ? data.referrals.filter(r => (data.vendors.some(v => v.id === r.referrer_id) || data.vendors.some(v => v.id === r.referred_id)) && !['paid','rejected','cancelled','complete','completed'].includes(String(r.reward_status || r.state || '').toLowerCase())).length
             : 0
           return (
             <button
