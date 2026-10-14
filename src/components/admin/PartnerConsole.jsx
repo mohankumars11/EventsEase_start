@@ -353,74 +353,98 @@ function PartnerTable({ data, byVendor, onOpen }) {
     if (status && v.verification_status !== status) return false
     if (!q.trim()) return true
     const t = q.trim().toLowerCase()
-    /* Searching by code is the whole point of having one: a partner says
-       SBM-PTR-0007 down the phone and it must land here. */
-    return [v.partner_code, v.business_name, v.city, v.area, v.pincode, v.category]
-      .some(x => String(x ?? '').toLowerCase().includes(t))
+    return [
+      v.id, v.profile_id, v.partner_code, v.business_name, v.city, v.area,
+      v.pincode, v.category, v.profiles?.email, v.profiles?.phone, v.contact_phone,
+    ].some(x => String(x ?? '').toLowerCase().includes(t))
   })
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap gap-2">
-        <div className="relative min-w-[200px] flex-1">
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative min-w-[230px] flex-1">
           <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-mute" />
-          <input
-            value={q} onChange={e => setQ(e.target.value)}
-            placeholder="Code, business, area, pincode…"
-            className="w-full rounded-xl bg-white py-2.5 pl-9 pr-3 text-[13px] font-semibold text-ink ring-1 ring-ink/[0.08]"
-          />
+          <input value={q} onChange={e => setQ(e.target.value)}
+            placeholder="Search partner ID, code, name, email, phone, area…"
+            className="w-full rounded-xl bg-white py-2.5 pl-9 pr-3 text-[12px] font-semibold text-ink ring-1 ring-ink/[0.08] outline-none focus:ring-2 focus:ring-plum-300" />
         </div>
-        <select
-          value={status} onChange={e => setStatus(e.target.value)}
-          className="rounded-xl bg-white px-3 py-2.5 text-[13px] font-semibold text-ink ring-1 ring-ink/[0.08]"
-        >
-          <option value="">All statuses</option>
+        <select value={status} onChange={e => setStatus(e.target.value)}
+          className="rounded-xl bg-white px-3 py-2.5 text-[12px] font-semibold text-ink ring-1 ring-ink/[0.08]">
+          <option value="">All lifecycle states</option>
           {Object.entries(VENDOR_STATE).map(([k, s]) => <option key={k} value={k}>{s.label}</option>)}
         </select>
+        <span className="rounded-xl bg-white px-3 py-2.5 text-[11px] font-extrabold text-ink-mute ring-1 ring-ink/[0.08]">
+          {rows.length} / {data.vendors.length} partners
+        </span>
       </div>
 
       {rows.length === 0 ? (
-        <p className="rounded-2xl bg-ink/[0.02] p-10 text-center text-[13px] text-ink-mute">
-          No partner matches that.
-        </p>
+        <p className="rounded-2xl bg-ink/[0.02] p-10 text-center text-[13px] text-ink-mute">No partner matches that filter.</p>
       ) : (
-        <ul className="space-y-2">
-          {rows.map(v => {
-            const rows2 = byVendor[v.id] ?? []
-            const live = rows2.filter(s => s.review_status === 'live' && s.is_active).length
-            const st = VENDOR_STATE[v.verification_status] ?? VENDOR_STATE.draft
-            const dispatchable = v.is_verified && !!v.location && live > 0
-            return (
-              <li key={v.id}>
-                <button
-                  type="button" onClick={() => onOpen(v)}
-                  className="flex w-full items-center gap-3 rounded-2xl bg-white p-3.5 text-left ring-1 ring-ink/[0.07] transition hover:ring-ink/20"
-                >
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[14px] font-extrabold text-ink">{v.business_name}</span>
-                    <span className="mt-0.5 block truncate text-[11.5px] text-ink-mute">
-                      {/* The code first. Two of the first eight partners are
-                          called "jon" and "hab" -- the name is not the handle. */}
-                      {v.partner_code ? `${v.partner_code} · ` : ''}
-                      {[v.area, v.city, v.pincode].filter(Boolean).join(' · ') || 'No location'}
-                    </span>
-                  </span>
-                  <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10.5px] font-extrabold ${st.cls}`}>
-                    {st.label}
-                  </span>
-                  {/* The honest one. Approved is not the same as working. */}
-                  <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10.5px] font-extrabold ${
-                    dispatchable ? 'bg-forest-100 text-forest-800' : 'bg-ink/[0.07] text-ink-mute'
-                  }`}>
-                    {dispatchable ? 'Offered work' : 'Not offered'}
-                  </span>
-                  <span className="shrink-0 text-[11.5px] font-semibold text-ink-mute">{rows2.length} listed</span>
-                  <ChevronRight size={15} className="shrink-0 text-ink-mute" />
-                </button>
-              </li>
-            )
-          })}
-        </ul>
+        <div className="overflow-x-auto rounded-2xl bg-white ring-1 ring-ink/[0.08]">
+          <table className="w-full min-w-[1120px] border-collapse text-left">
+            <thead className="bg-ink/[0.025]">
+              <tr className="border-b border-ink/[0.07] text-[9px] font-extrabold uppercase tracking-[0.12em] text-ink-mute">
+                <th className="px-3 py-3">Partner ID / name</th>
+                <th className="px-3 py-3">Contact</th>
+                <th className="px-3 py-3">Market / trade</th>
+                <th className="px-3 py-3">Lifecycle</th>
+                <th className="px-3 py-3 text-right">Live / total cards</th>
+                <th className="px-3 py-3 text-right">Uploads</th>
+                <th className="px-3 py-3">Payout</th>
+                <th className="px-3 py-3">Joined</th>
+                <th className="px-3 py-3"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map(v => {
+                const cards = byVendor[v.id] ?? []
+                const live = cards.filter(s => s.review_status === 'live' && s.is_active).length
+                const docs = data.docs.filter(d => d.vendor_id === v.id)
+                const payout = data.payouts.find(p => p.vendor_id === v.id)
+                const st = VENDOR_STATE[v.verification_status] ?? VENDOR_STATE.draft
+                const dispatchable = v.is_verified && !!v.location && live > 0 && !v.suspended_at && v.accepting_jobs !== false
+                return (
+                  <tr key={v.id} onClick={() => onOpen(v)} className="cursor-pointer border-b border-ink/[0.055] last:border-0 hover:bg-plum-50/40">
+                    <td className="px-3 py-3">
+                      <button type="button" onClick={e => { e.stopPropagation(); onOpen(v) }} className="max-w-[250px] text-left">
+                        <span className="block truncate text-[12px] font-extrabold text-ink">{v.business_name || 'Unnamed partner'}</span>
+                        <span className="mt-1 block font-mono text-[9px] font-bold text-plum-700">{v.partner_code || 'Partner code pending'}</span>
+                        <span className="mt-0.5 block max-w-[250px] truncate font-mono text-[9px] text-ink-mute" title={v.id}>{v.id}</span>
+                      </button>
+                    </td>
+                    <td className="px-3 py-3">
+                      <p className="max-w-[170px] truncate text-[10.5px] font-semibold text-ink">{v.profiles?.email || 'Email not linked'}</p>
+                      <p className="mt-0.5 text-[10px] text-ink-mute">{v.profiles?.phone || v.contact_phone || 'Phone not provided'}</p>
+                    </td>
+                    <td className="px-3 py-3">
+                      <p className="max-w-[150px] truncate text-[10.5px] font-bold text-ink">{v.city || 'City missing'}{v.area ? ' · ' + v.area : ''}</p>
+                      <p className="mt-0.5 max-w-[150px] truncate text-[10px] text-ink-mute">{v.category || 'Trade not set'}{v.pincode ? ' · ' + v.pincode : ''}</p>
+                    </td>
+                    <td className="px-3 py-3">
+                      <span className={'inline-flex rounded-full px-2 py-1 text-[9px] font-extrabold ' + st.cls}>{st.label}</span>
+                      <span className={'mt-1 block text-[9px] font-extrabold ' + (dispatchable ? 'text-forest-700' : 'text-ink-mute')}>{dispatchable ? 'Dispatchable' : 'Not dispatchable'}</span>
+                    </td>
+                    <td className="px-3 py-3 text-right">
+                      <p className="text-[13px] font-black tabular-nums text-ink">{live} <span className="font-medium text-ink-mute">/ {cards.length}</span></p>
+                      <p className="mt-0.5 text-[9px] text-ink-mute">{cards.filter(s => s.review_status === 'under_review').length} under review</p>
+                    </td>
+                    <td className="px-3 py-3 text-right">
+                      <p className="text-[12px] font-extrabold tabular-nums text-ink">{docs.length}</p>
+                      <p className="mt-0.5 text-[9px] text-ink-mute">{docs.filter(d => ['approved','verified','accepted'].includes(String(d.status || '').toLowerCase())).length} accepted</p>
+                    </td>
+                    <td className="px-3 py-3">
+                      <span className={'rounded-full px-2 py-1 text-[9px] font-extrabold ' + (payout?.verified_at ? 'bg-forest-50 text-forest-800' : 'bg-amber-50 text-amber-800')}>{payout?.verified_at ? 'Verified' : payout ? 'Unverified' : 'Not set'}</span>
+                    </td>
+                    <td className="px-3 py-3 whitespace-nowrap text-[10px] text-ink-mute">{v.created_at ? new Date(v.created_at).toLocaleDateString('en-IN') : '—'}</td>
+                    <td className="px-3 py-3"><ChevronRight size={14} className="text-ink-mute"/></td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+          <p className="border-t border-ink/[0.06] px-3 py-2.5 text-[9.5px] leading-relaxed text-ink-mute">Each row is keyed by the persistent vendor UUID. Open a record to inspect linked profile fields, every trade listing and service card, upload evidence, portfolio items, pricing packages, payout readiness, audit events and operator notes.</p>
+        </div>
       )}
     </div>
   )
