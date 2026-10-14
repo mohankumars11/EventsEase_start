@@ -779,7 +779,7 @@ export default function VendorDashboard() {
         )}
 
         {tab === 'pricing' && (
-          <div className="space-y-5">
+          <div className="space-y-0">
             {/* Anchor & MC (any trade with a pricing profile) gets the
                 Pricing Control Center over its published listing version;
                 every other trade keeps SambramoPricingStudio. */}
