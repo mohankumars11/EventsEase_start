@@ -36,11 +36,12 @@ export default function ExecutiveOverview({ onNavigate }) {
         supabase.from('vendor_payout_details').select('vendor_id,method,verified_at'),
         supabase.from('sambramo_trade_packages').select('id,vendor_id,name,status,created_at,updated_at'),
         supabase.from('sambramo_catering_packages').select('id,vendor_id,name,status,created_at,updated_at'),
+        supabase.from('partner_events').select('id,vendor_id,profile_id,name,created_at').order('created_at', { ascending: false }),
       ])
-      const names = ['partner profiles', 'service cards', 'trade listings', 'documents', 'portfolio items', 'payout readiness', 'trade pricing', 'catering pricing']
+      const names = ['partner profiles', 'service cards', 'trade listings', 'documents', 'portfolio items', 'payout readiness', 'trade pricing', 'catering pricing', 'partner activity']
       const issues = results.map((r, i) => errOf(r) ? names[i] + ': ' + errOf(r) : '').filter(Boolean)
       const rows = results.map(rowsOf)
-      setData({ vendors: rows[0], services: rows[1], trades: rows[2], docs: rows[3], work: rows[4], payouts: rows[5], tradePrices: rows[6], cateringPrices: rows[7] })
+      setData({ vendors: rows[0], services: rows[1], trades: rows[2], docs: rows[3], work: rows[4], payouts: rows[5], tradePrices: rows[6], cateringPrices: rows[7], activityEvents: rows[8] })
       if (issues.length) setError('Some partner sources could not be read: ' + issues.join(' · ') + '. Figures may be incomplete.')
     } catch (e) {
       setError(e && e.message ? e.message : 'Could not load partner operations.')
@@ -66,6 +67,16 @@ export default function ExecutiveOverview({ onNavigate }) {
     const revised = services.filter(s => s.is_active && s.review_status === 'live' && s.revised_at && (!s.reviewed_at || new Date(s.revised_at) > new Date(s.reviewed_at)))
     const pendingDocs = data.docs.filter(d => ['pending','submitted','under_review','needs_review'].includes(String(d.status || '').toLowerCase()) || ['pending','submitted','under_review'].includes(String(d.provider_status || '').toLowerCase()))
     const pendingPricing = [...data.tradePrices, ...data.cateringPrices].filter(x => ['UNDER_REVIEW','ACTION_REQUIRED'].includes(x.status))
+    const cutoff30 = Date.now() - 30 * 86400000
+    const recentPartnerEvents = data.activityEvents.filter(e => new Date(e.created_at || 0).getTime() >= cutoff30)
+    const activeIds = new Set()
+    for (const e of recentPartnerEvents) {
+      if (e.vendor_id && partnerIds.has(e.vendor_id)) activeIds.add(e.vendor_id)
+      else if (e.profile_id) {
+        const linked = vendors.find(v => v.profile_id === e.profile_id)
+        if (linked) activeIds.add(linked.id)
+      }
+    }
     const cutoff = range === 'all' ? 0 : Date.now() - Number(range) * 86400000
     const recent = items => items.filter(x => new Date(x.created_at || 0).getTime() >= cutoff)
     const days = range === '90' ? 30 : range === 'all' ? 12 : 14
@@ -102,6 +113,8 @@ export default function ExecutiveOverview({ onNavigate }) {
       tradeCount: new Set(data.trades.filter(t => partnerIds.has(t.vendor_id)).map(t => t.trade_id || t.trade)).size,
       liveWork: data.work.filter(w => w.review_status === 'live').length,
       payoutReady: data.payouts.filter(p => !!p.verified_at).length,
+      activePartners30d: activeIds.size,
+      partnerEvents30d: recentPartnerEvents.filter(e => (e.vendor_id && partnerIds.has(e.vendor_id)) || vendors.some(v => v.profile_id && v.profile_id === e.profile_id)).length,
       cardReview: byStatus('under_review'), rejected: byStatus('rejected'), inactive: services.filter(s => !s.is_active).length,
       rangeLabel: range === 'all' ? 'All time' : 'Last ' + range + ' days',
     }
@@ -133,7 +146,7 @@ export default function ExecutiveOverview({ onNavigate }) {
       <div className="relative mt-6 grid grid-cols-2 gap-2 sm:grid-cols-4">
         <Hero icon={Building2} label="Real partners" value={stats.vendors.length} note={stats.approved.length+' approved'}/>
         <Hero icon={BadgeCheck} label="Live service cards" value={stats.live.length} note={stats.dispatchable.length+' dispatchable'}/>
-        <Hero icon={Radio} label="Partner trades" value={stats.tradeListings.length} note={stats.tradeCount+' trade types represented'}/>
+        <Hero icon={Radio} label="Partners active · 30d" value={stats.activePartners30d} note={fmt(stats.partnerEvents30d)+' linked activity events'}/>
         <Hero icon={CircleDollarSign} label="Pricing packages live" value={[...data.tradePrices,...data.cateringPrices].filter(x=>['LIVE','PUBLISHED','ACTIVE'].includes(x.status)).length} note={stats.pendingPricing.length+' revisions waiting'}/>
       </div>
       <div className="relative mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-white/10 pt-4 text-[11px] font-semibold text-white/60"><span>{fmt(stats.waiting.length)} partner decisions pending</span><span>{fmt(stats.cardReview)} listing cards waiting</span><span>{fmt(stats.stranded.length)} approved without a live card</span><span className="ml-auto text-white/45">{stats.rangeLabel}</span></div>
@@ -175,7 +188,7 @@ export default function ExecutiveOverview({ onNavigate }) {
       </Panel>
     </section>
 
-    <section className="grid grid-cols-2 gap-3 xl:grid-cols-4"><Mini label="Partner trade listings" value={fmt(stats.tradeListings.length)} note={fmt(stats.tradeCount)+' trade types represented'}/><Mini label="Portfolio items" value={fmt(data.work.length)} note={fmt(stats.liveWork)+' approved for display'}/><Mini label="Documents uploaded" value={fmt(data.docs.length)} note={fmt(stats.pendingDocs.length)+' in pending review states'}/><Mini label="Payout readiness" value={fmt(stats.payoutReady)} note="Partner payout profiles marked verified"/></section>
+    <section className="grid grid-cols-2 gap-3 xl:grid-cols-5"><Mini label="Partner trade listings" value={fmt(stats.tradeListings.length)} note={fmt(stats.tradeCount)+' trade types represented'}/><Mini label="Portfolio items" value={fmt(data.work.length)} note={fmt(stats.liveWork)+' approved for display'}/><Mini label="Documents uploaded" value={fmt(data.docs.length)} note={fmt(stats.pendingDocs.length)+' in pending review states'}/><Mini label="Payout readiness" value={fmt(stats.payoutReady)} note="Partner payout profiles marked verified"/><Mini label="Activity events · 30d" value={fmt(stats.partnerEvents30d)} note="Telemetry linked to real partners"/></section>
     <p className="px-1 text-[10px] leading-relaxed text-gray-400">Definitions: live-card counts come from vendor_services; trade coverage comes from partner_listings. Dispatchable cards additionally require an approved, non-suspended partner who is accepting jobs. Pricing packages follow their package status fields; payout readiness counts verified payout profiles. Synthetic seed partners are excluded.</p>
   </div>
 }
