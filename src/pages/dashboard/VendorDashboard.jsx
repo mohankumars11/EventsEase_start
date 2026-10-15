@@ -514,7 +514,7 @@ export default function VendorDashboard() {
           listingCount={services?.length ?? 0}
           listingNames={(services ?? [])
             .filter(l => ['under_review', 'in_review', 'pending_review', 'submitted', 'submitted_for_review']
-              .includes(String(l.review_status ?? l.approval_status ?? '').toLowerCase().replace(/[\\s-]+/g, '_')))
+              .includes(String(l.review_status ?? l.approval_status ?? '').toLowerCase().replace(/[ -]+/g, '_')))
             .map(l => l.title || l.name || l.category).filter(Boolean).join(' · ')
             || 'Open the submitted listing details'}
           onOpenListing={() => {
