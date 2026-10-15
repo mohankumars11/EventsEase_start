@@ -5144,3 +5144,19 @@
   text-transform:none;
   text-align:center;
 }
+
+/* A small, friendly wave beside the partner's full business name. */
+.sambramo-wave-hand {
+  display: inline-block;
+  transform-origin: 70% 70%;
+  animation: sambramo-hand-wave 2.1s ease-in-out infinite;
+}
+@keyframes sambramo-hand-wave {
+  0%, 58%, 100% { transform: rotate(0deg); }
+  63%, 71%, 79% { transform: rotate(14deg); }
+  67%, 75%, 83% { transform: rotate(-7deg); }
+  87% { transform: rotate(8deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sambramo-wave-hand { animation: none; }
+}
