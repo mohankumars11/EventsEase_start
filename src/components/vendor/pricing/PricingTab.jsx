@@ -216,7 +216,7 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
         service.review_status,
         service.approval_status,
         service.status,
-      ].map(value => String(value ?? '').trim().toUpperCase().replace(/[\\s-]+/g, '_'))
+      ].map(value => String(value ?? '').trim().toUpperCase().replace(/[ -]+/g, '_'))
       return statuses.some(value => reviewStates.has(value))
     })
 
