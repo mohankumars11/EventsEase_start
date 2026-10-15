@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'motion/react'
 import { ArrowLeft, ArrowRight, Check, Loader2, Search, X, ShieldCheck, Landmark, Sparkles, ChevronRight, RotateCcw } from 'lucide-react'
 import SambramoTradePictogram from '../../components/vendor/SambramoTradePictogram'
+import TradeServiceArtwork from '../../components/vendor/TradeServiceArtwork'
 import { scanForTrade } from '../../components/vendor/TradeGrid'
 import { Sheet } from '../../components/vendor/anchor/ui'
 import { usePayoutStatus } from '../../components/vendor/anchor/stages/PayoutReviewStages'
@@ -233,10 +234,7 @@ export default function ServiceSelector() {
                     <Check size={14} strokeWidth={3} />
                   </span>
                   {CENTERED_TRADE_ART.has(c.name) ? (
-                    <span className="block w-full min-w-0 self-center overflow-hidden rounded-[18px]">
-                      <SambramoTradePictogram trade={c.name} size="md" showSparkle={false} title={false}
-                        className="!mx-auto !block !h-[82px] !w-full !max-w-full" />
-                    </span>
+                    <TradeServiceArtwork trade={c.name} />
                   ) : (
                     <SambramoTradePictogram trade={c.name} size="md" showSparkle={false} title={false} />
                   )}
