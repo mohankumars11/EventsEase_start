@@ -43,9 +43,12 @@ export default function JobsHeader({
             </button>
           </div>
         </div>
-        <p className="mt-4 text-[15px] font-medium leading-tight text-[#77738D] sm:text-[17px]">{wish},</p>
-        <h1 className="mt-1 max-w-full truncate text-[27px] font-black leading-[1.04] tracking-[-0.045em] text-[#17152B] sm:text-[36px]">{businessName ?? 'Your business'} <span aria-hidden="true">👋</span></h1>
-        <p className="mt-1 text-[15px] font-semibold text-[#77738D] sm:text-[18px]">{dayLine}</p>
+        <p className="mt-3 text-[15px] font-medium leading-snug text-[#77738D] sm:text-[17px]">{wish},</p>
+        <h1 className="mt-1 flex max-w-full flex-wrap items-baseline gap-x-2 gap-y-0.5 text-[clamp(1.65rem,7vw,2.25rem)] font-black leading-[1.08] tracking-[-0.04em] text-[#17152B]">
+          <span className="min-w-0 max-w-full [overflow-wrap:anywhere]">{businessName || 'Your business'}</span>
+          <span className="sambramo-wave-hand inline-block shrink-0 text-[0.88em]" aria-hidden="true">👋</span>
+        </h1>
+        <p className="mt-1 break-words text-[14px] font-semibold leading-snug text-[#77738D] sm:text-[17px]">{dayLine}</p>
         <div className="mt-3">
           <OnlineToggle vendorId={vendorId} initial={acceptingJobs} onChange={onAcceptingChange} />
         </div>
