@@ -97,6 +97,7 @@ export default function VendorDashboard() {
      later drive a tab badge without a second query. */
   const [unreadAlerts, setUnreadAlerts] = useState(0)
   const [howItWorksOpen, setHowItWorksOpen] = useState(false)
+  const [reviewListingRequested, setReviewListingRequested] = useState(false)
 
   const account = useVendorAccount()
   const {
@@ -512,8 +513,14 @@ export default function VendorDashboard() {
              that opens an empty screen. */
           listingCount={services?.length ?? 0}
           listingNames={(services ?? [])
-            .map(l => l.title || l.category).filter(Boolean).join(' · ') || null}
-          onOpenListing={() => openAccount('services')}
+            .filter(l => ['under_review', 'in_review', 'pending_review', 'submitted', 'submitted_for_review']
+              .includes(String(l.review_status ?? l.approval_status ?? '').toLowerCase().replace(/[\\s-]+/g, '_')))
+            .map(l => l.title || l.name || l.category).filter(Boolean).join(' · ')
+            || 'Open the submitted listing details'}
+          onOpenListing={() => {
+            setReviewListingRequested(true)
+            setTab('pricing')
+          }}
           onHowItWorks={() => setHowItWorksOpen(true)}
         />
       )}
@@ -789,6 +796,8 @@ export default function VendorDashboard() {
             <PricingTab
               vendor={vendor}
               services={services}
+              openReviewListing={reviewListingRequested}
+              onReviewListingHandled={() => setReviewListingRequested(false)}
               onOpenListings={() => setTab('list')}
               onEditListing={s => navigate('/dashboard/vendor?tab=list&edit=' + encodeURIComponent(s.id))}
               onOpenPayout={() => (import.meta.env.VITE_FF_PAYOUT_FULLSCREEN === 'false'
