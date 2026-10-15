@@ -1,68 +1,19 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Bell, CheckCheck, CalendarCheck, MessageSquare } from 'lucide-react'
+import { Bell, CheckCheck, CalendarCheck, MessageSquare, ChevronRight } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useLivePoll } from '../../hooks/useLivePoll'
 
-/**
- * Four numbers across the top of the operations home.
- *
- * ══════════════════════════════════════════════════════════════════════
- * EVERY ONE OF THEM IS A COUNT OF ROWS
- * ══════════════════════════════════════════════════════════════════════
- *
- * The reference design shows 6 / 2 / 1 / 4. Those are placeholders, and
- * the temptation with a tile row is to keep the shape and fill it with
- * whatever is nearest to hand. A dashboard number that nobody can trace
- * to a row is worse than an empty space, because a partner who taps
- * "1 Confirmed" and finds two bookings stops believing the other three.
- *
- * So:
- *
- *   New jobs    offers open right now — OFFERED and not yet expired
- *   Accepted    won, waiting on the customer to pay
- *   Confirmed   funded, still ahead of them
- *   Messages    replies from Sambramo they have not read
- *
- * "Responded" from the design is not here. It counts a thing that has
- * already happened and needs nothing done about it, and a tile that
- * never asks anything of anybody is a tile occupying a quarter of the
- * most valuable strip in the app. Accepted-awaiting-payment does need
- * watching, so it takes the slot.
- *
- * ══════════════════════════════════════════════════════════════════════
- * A ZERO IS SHOWN, NOT HIDDEN
- * ══════════════════════════════════════════════════════════════════════
- *
- * Unlike the attention rows below, which vanish at zero because they are
- * a to-do list. This is a scoreboard: four tiles that rearrange
- * themselves as counts change would be unreadable, and "0 new jobs" is
- * an answer a partner opens the app to get.
- */
+/** Compact live counts for the Partner Jobs home; zeroes remain visible. */
 export default function JobsStats({ vendorId, onOpen }) {
   const [n, setN] = useState({ offers: 0, accepted: 0, confirmed: 0, messages: 0 })
-
   const read = useCallback(async () => {
     if (!vendorId) return
     const today = new Date().toISOString().slice(0, 10)
-
-    /* head:true with count:'exact' asks the server for the number and
-       sends back no rows at all — four counts for roughly the bytes of
-       one, on a screen that polls. */
     const [offers, jobs, msgs] = await Promise.all([
-      supabase.from('partner_offer_feed')
-        .select('offer_id', { count: 'exact', head: true })
-        .eq('vendor_id', vendorId).eq('status', 'OFFERED')
-        .gt('expires_at', new Date().toISOString()),
-      supabase.from('partner_jobs')
-        .select('line_id, status, is_funded, paid_at, event_date')
-        .gte('event_date', today),
-      /* Absent until 125 is applied, which is why this one is allowed to
-         fail quietly rather than blanking the row. */
-      supabase.from('partner_messages')
-        .select('id', { count: 'exact', head: true })
-        .eq('vendor_id', vendorId).eq('sender', 'operator').is('read_at', null),
+      supabase.from('partner_offer_feed').select('offer_id', { count: 'exact', head: true }).eq('vendor_id', vendorId).eq('status', 'OFFERED').gt('expires_at', new Date().toISOString()),
+      supabase.from('partner_jobs').select('line_id, status, is_funded, paid_at, event_date').gte('event_date', today),
+      supabase.from('partner_messages').select('id', { count: 'exact', head: true }).eq('vendor_id', vendorId).eq('sender', 'operator').is('read_at', null),
     ])
-
     const live = (jobs.data ?? []).filter(j => !['cancelled', 'expired'].includes(j.status))
     setN({
       offers: offers.count ?? 0,
@@ -71,64 +22,43 @@ export default function JobsStats({ vendorId, onOpen }) {
       messages: msgs.error ? 0 : (msgs.count ?? 0),
     })
   }, [vendorId])
-
   useEffect(() => { read() }, [read])
   useLivePoll(read, 20_000, [read])
 
   const tiles = [
-    { id: 'offers',    icon: Bell,          label: 'New jobs',  value: n.offers,
-      tone: n.offers ? 'bg-saffron-400/15 text-saffron-800' : 'bg-ink/[0.04] text-ink-mute' },
-    { id: 'accepted',  icon: CheckCheck,    label: 'Accepted',  value: n.accepted,
-      tone: 'bg-plum-50 text-plum-700' },
-    { id: 'confirmed', icon: CalendarCheck, label: 'Confirmed', value: n.confirmed,
-      tone: 'bg-forest-50 text-forest-700' },
-    { id: 'messages',  icon: MessageSquare, label: 'Messages',  value: n.messages,
-      tone: n.messages ? 'bg-plum-50 text-plum-700' : 'bg-ink/[0.04] text-ink-mute' },
+    { id: 'offers', icon: Bell, label: 'New jobs', value: n.offers, tone: 'violet' },
+    { id: 'accepted', icon: CheckCheck, label: 'Accepted', value: n.accepted, tone: 'green' },
+    { id: 'confirmed', icon: CalendarCheck, label: 'Confirmed', value: n.confirmed, tone: 'blue' },
+    { id: 'messages', icon: MessageSquare, label: 'Messages', value: n.messages, tone: 'rose' },
   ]
+  const styles = {
+    violet: { card: 'border-violet-200', icon: 'bg-violet-50 text-violet-700' },
+    green: { card: 'border-emerald-200', icon: 'bg-emerald-50 text-emerald-700' },
+    blue: { card: 'border-sky-200', icon: 'bg-sky-50 text-sky-700' },
+    rose: { card: 'border-rose-200', icon: 'bg-rose-50 text-rose-700' },
+  }
 
   return (
-    <div className="-mx-4 bg-white px-2.5 pb-2 pt-2 sm:-mx-6 sm:px-6">
-      <div className="grid grid-cols-4 gap-1 sm:gap-2">
-        {tiles.map((t, index) => {
+    <section aria-label="Job activity" className="bg-white pb-3 pt-1">
+      <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
+        {tiles.map(t => {
           const Icon = t.icon
-          const palettes = [
-            'bg-[#E8CCFF] text-[#16002E] ring-[#D4A8FF]',
-            'bg-[#D8F6E2] text-[#071C12] ring-[#B9E8C9]',
-            'bg-[#D8EEFF] text-[#071B45] ring-[#B8DDFF]',
-            'bg-[#FFD9E7] text-[#350016] ring-[#FFBBD0]',
-          ]
-          const iconTones = [
-            'bg-[#F7EFFF] text-[#16002E]',
-            'bg-[#F2FFF6] text-[#071C12]',
-            'bg-[#F2F9FF] text-[#071B45]',
-            'bg-[#FFF2F7] text-[#350016]',
-          ]
+          const palette = styles[t.tone]
           return (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => onOpen?.(t.id)}
-              className={`group relative flex h-[82px] min-w-0 flex-col overflow-hidden rounded-[14px] p-2 text-left shadow-[0_6px_16px_rgba(0,0,0,.08)] ring-1 transition active:scale-[0.99] sm:h-[112px] sm:rounded-[18px] sm:p-3 ${palettes[index]}`}
-            >
-              <span className="absolute -right-5 -top-5 h-16 w-16 rounded-full bg-white/25 blur-xl" />
-              <span className={`relative flex h-7 w-7 shrink-0 items-center justify-center rounded-[10px] shadow-sm sm:h-10 sm:w-10 sm:rounded-[12px] ${iconTones[index]}`}>
-                <Icon size={18} strokeWidth={2.4} />
+            <button key={t.id} type="button" onClick={() => onOpen?.(t.id)} aria-label={`${t.value} ${t.label}`}
+              className={`group relative flex h-[70px] min-w-0 flex-col justify-between overflow-hidden rounded-[15px] border bg-white p-1.5 text-left shadow-[0_2px_8px_rgba(25,15,50,.035)] transition active:scale-[0.98] sm:h-[76px] sm:rounded-[17px] sm:p-2 ${palette.card}`}>
+              <span className="flex min-w-0 items-center gap-1.5">
+                <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-[10px] ${palette.icon}`}><Icon size={16} strokeWidth={2.25} /></span>
+                <span className="text-[22px] font-black leading-none tracking-[-0.045em] tabular-nums text-[#17152B] sm:text-[24px]">{t.value}</span>
               </span>
-
-              <span className="relative mt-auto text-[25px] font-black leading-none tracking-[-0.06em] tabular-nums sm:text-[32px]">
-                {t.value}
-              </span>
-
-              <span className="relative mt-0 min-w-0 pr-6 whitespace-nowrap text-[11px] font-black leading-tight sm:pr-9 sm:text-[15px]">
-                {t.label}
-              </span>
-              <span className="absolute bottom-2 right-2 flex h-6 w-6 items-center justify-center rounded-full bg-white/45 sm:bottom-3 sm:right-3 sm:h-8 sm:w-8">
-                <span className="text-[17px] leading-none sm:text-xl">›</span>
+              <span className="flex min-w-0 items-center justify-between gap-0.5 pl-0.5">
+                <span className="truncate text-[9.5px] font-bold leading-tight text-[#39354D] sm:text-[11px]">{t.label}</span>
+                <ChevronRight size={13} className="shrink-0 text-[#817A98]" />
               </span>
             </button>
           )
         })}
       </div>
-    </div>
+    </section>
   )
 }

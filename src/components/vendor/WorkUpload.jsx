@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react'
 import { CheckedInput, fails } from '../partner/FieldCheck'
 import {
-  Camera, ImagePlus, Video, Loader2, X, FileText, Quote, Plus, Play,
+  Camera, ImagePlus, Video, Loader2, X, FileText, Quote, Plus, Play, Music2,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { prepareImage } from '../../lib/imageUpload'
@@ -27,12 +27,13 @@ import { useToast, friendlyError } from '../../context/ToastContext'
  * hand tied.
  *
  * ══════════════════════════════════════════════════════════════════════
- * THREE KINDS, BECAUSE THEY ARE NOT THE SAME THING
+ * FOUR MEDIA TYPES, BECAUSE THEY ARE NOT THE SAME THING
  * ══════════════════════════════════════════════════════════════════════
  *
  *   photo        the work, still
  *   video        the work, moving — the most convincing thing a venue
  *                or a decorator owns, and the thing no form can capture
+ *   audio        a voice demo, music sample or soundscape
  *   testimonial  what a customer said. Typed, not uploaded: a
  *                screenshot of a WhatsApp message cannot be read by
  *                search, cannot be shown at a sensible size on a phone,
@@ -53,6 +54,7 @@ import { useToast, friendlyError } from '../../context/ToastContext'
  */
 
 const MAX_VIDEO = 40 * 1024 * 1024      // matches the bucket, migration 110
+const MAX_AUDIO = 20 * 1024 * 1024      // audio portfolio samples; migration 111
 
 /* A testimonial counts as started once any of its three boxes has
    something in it. An empty one is dropped on save (lib/partnerWork),
@@ -82,9 +84,11 @@ export default function WorkUpload({
   const photoIn = useRef(null)
   const cameraIn = useRef(null)
   const videoIn = useRef(null)
+  const audioIn = useRef(null)
 
   const photos = value.filter(v => v.kind === 'photo' || v.kind === 'document')
   const videos = value.filter(v => v.kind === 'video')
+  const audioSamples = value.filter(v => v.kind === 'audio')
   const words = value.filter(v => v.kind === 'testimonial')
 
   async function add(files, kind) {
@@ -96,8 +100,14 @@ export default function WorkUpload({
 
       const added = []
       for (const file of files) {
-        const isVideo = file.type.startsWith('video/')
-        const isPdf = file.type === 'application/pdf'
+        const isVideo = kind === 'video' || file.type.startsWith('video/')
+        const isAudio = kind === 'audio' || file.type.startsWith('audio/')
+        const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
+
+        if (isAudio && file.size > MAX_AUDIO) {
+          toast.error(`${file.name} is ${Math.round(file.size / 1048576)} MB. Audio samples must be 20 MB or smaller.`)
+          continue
+        }
 
         if (isVideo && file.size > MAX_VIDEO) {
           toast.error(`${file.name} is ${Math.round(file.size / 1048576)} MB.`
@@ -105,24 +115,42 @@ export default function WorkUpload({
           continue
         }
 
-        /* Video and PDF go up as they are: there is nothing to compress
+        /* Video, audio and PDF go up as they are: there is nothing to compress
            in the browser without a re-encode that would take longer than
            the upload it saves. */
-        const body = (isVideo || isPdf)
+        const body = (isVideo || isAudio || isPdf)
           ? file
           : (await prepareImage(file, { mode: 'balanced' })).blob
-        const ext = isVideo ? (file.name.split('.').pop() || 'mp4')
+        const ext = (isVideo || isAudio) ? (file.name.split('.').pop() || (isVideo ? 'mp4' : 'mp3'))
           : isPdf ? 'pdf' : 'jpg'
+        const extension = ext.toLowerCase()
+        const fallbackAudioType = ({
+          mp3: 'audio/mpeg', m4a: 'audio/mp4', mp4: 'audio/mp4', aac: 'audio/aac',
+          wav: 'audio/wav', ogg: 'audio/ogg', oga: 'audio/ogg', webm: 'audio/webm',
+          flac: 'audio/flac',
+        })[extension] ?? 'audio/mpeg'
+        const fallbackVideoType = ({ mov: 'video/quicktime', webm: 'video/webm' })[extension] ?? 'video/mp4'
+        const allowedAudioTypes = new Set([
+          'audio/mpeg', 'audio/mp4', 'audio/aac', 'audio/wav', 'audio/x-wav',
+          'audio/ogg', 'audio/webm', 'audio/flac', 'audio/x-m4a',
+        ])
+        const detectedAudioType = String(file.type || '').toLowerCase()
+        const contentType = isAudio
+          ? (allowedAudioTypes.has(detectedAudioType) ? detectedAudioType : fallbackAudioType)
+          : isVideo
+            ? (file.type.startsWith('video/') ? file.type : fallbackVideoType)
+            : isPdf ? 'application/pdf'
+            : (file.type.startsWith('image/') ? file.type : 'image/jpeg')
         const path = `${user.id}/work/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
 
         const { error } = await supabase.storage
           .from('partner-uploads')
-          .upload(path, body, { contentType: file.type || 'image/jpeg' })
+          .upload(path, body, { contentType })
         if (error) throw error
 
         added.push({
           path,
-          kind: isVideo ? 'video' : isPdf ? 'document' : 'photo',
+          kind: isVideo ? 'video' : isAudio ? 'audio' : isPdf ? 'document' : 'photo',
           name: file.name,
           caption: '',
         })
@@ -138,6 +166,7 @@ export default function WorkUpload({
       if (photoIn.current) photoIn.current.value = ''
       if (cameraIn.current) cameraIn.current.value = ''
       if (videoIn.current) videoIn.current.value = ''
+      if (audioIn.current) audioIn.current.value = ''
     }
   }
 
@@ -248,6 +277,42 @@ export default function WorkUpload({
                     aria-label="Video caption"
                     className="min-w-0 flex-1 rounded-xl bg-ink/[0.02] px-3 py-2 text-[12.5px] font-semibold text-ink ring-1 ring-ink/[0.06] placeholder:font-normal placeholder:text-ink-mute"
                   />
+                </span>
+              </Row>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ── Voice, music and audio samples ──────────────────────────── */}
+      <div className="rounded-[20px] bg-white p-4 ring-1 ring-ink/[0.06]">
+        <p className="text-[14px] font-extrabold leading-tight text-ink">
+          {copy.audioTitle ?? 'Audio samples'}
+        </p>
+        <p className="mt-0.5 text-[12px] leading-snug text-ink-soft">
+          Voice demos, music samples or short sound clips. Audio files must be 20 MB or smaller.
+        </p>
+        <input
+          ref={audioIn} type="file" accept="audio/*" multiple hidden
+          onChange={e => add([...e.target.files], 'audio')}
+        />
+        <button type="button" disabled={busy} onClick={() => audioIn.current?.click()}
+          className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-ink/[0.04] py-3 text-[13px] font-extrabold text-ink ring-1 ring-ink/[0.08] disabled:opacity-50">
+          <Music2 size={16} /> Add audio samples
+        </button>
+        {audioSamples.length > 0 && (
+          <div className="mt-3 space-y-2">
+            {audioSamples.map(sample => (
+              <Row key={sample.path} item={sample} onRemove={remove}>
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-plum-50 text-plum-700">
+                  <Music2 size={17} />
+                </span>
+                <span className="flex min-w-0 flex-1 flex-col">
+                  <span className="truncate text-[12px] font-bold text-ink">{sample.name || 'Audio sample'}</span>
+                  <CheckedInput field="caption" name={'caption_' + sample.path} showAll={showAll}
+                    value={sample.caption ?? ''} onChange={val => setField(sample, 'caption', val)}
+                    placeholder="Describe this sample (optional)" aria-label="Audio sample caption"
+                    className="mt-1 min-w-0 rounded-xl bg-ink/[0.02] px-3 py-2 text-[12.5px] font-semibold text-ink ring-1 ring-ink/[0.06] placeholder:font-normal placeholder:text-ink-mute" />
                 </span>
               </Row>
             ))}

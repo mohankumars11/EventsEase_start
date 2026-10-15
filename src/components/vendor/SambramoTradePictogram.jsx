@@ -36,7 +36,7 @@ export default function SambramoTradePictogram({ trade, size = 'md', className =
     '--sambramo-raster-y': `${(row / 4) * 100}%`,
   }), [col, row])
   return (
-    <span className={'sambramo-trade-pictogram sambramo-trade-pictogram-' + size + ' ' + className}
+    <span className={'sambramo-trade-pictogram sambramo-trade-pictogram-' + size +  + ' ' + className}
       data-trade-pictogram={canonical || 'trade'}
       data-pictogram-index={String(safeIndex + 1)}
       data-pictogram-asset={`sambramo-raster-34-${String(safeIndex + 1).padStart(2, '0')}`}

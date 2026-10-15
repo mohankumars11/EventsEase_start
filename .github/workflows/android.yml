@@ -59,7 +59,7 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: [feature/without-shopping, jobs_from_chatgpt, calendar_from_chatgpt, feature/earnings-on-calendar-latest-20260926, feature/earnings-white-futuristic-20260926, feature/jobs-perfect-mobile-alignment-20260927, feature/trade-champion-referral-from-build145, refactor/sambramo-workbook-pricing-20260929, feature/sambramo-instant-custom-pricing-20260930, feature/sambramo-catering-pricing-20260930, feature/sambramo-business-preview-pricing-lifecycle-20261001, feature/sambramo-partner-full-ready-20261003, sambramo-reference-2col-hd34-20261006, feature/sambramo-verification-build558-34pictograms-final-20261007, feature/sambramo-verification-build558-34pictograms-fixed-otp-20261007]
+    branches: [feature/pricing-tab-production-ready, feature/without-shopping, jobs_from_chatgpt, calendar_from_chatgpt, feature/earnings-on-calendar-latest-20260926, feature/earnings-white-futuristic-20260926, feature/jobs-perfect-mobile-alignment-20260927, feature/trade-champion-referral-from-build145, refactor/sambramo-workbook-pricing-20260929, feature/sambramo-instant-custom-pricing-20260930, feature/sambramo-catering-pricing-20260930, feature/sambramo-business-preview-pricing-lifecycle-20261001, feature/sambramo-partner-full-ready-20261003, sambramo-reference-2col-hd34-20261006, feature/sambramo-verification-build558-34pictograms-final-20261007, feature/sambramo-verification-build558-34pictograms-fixed-otp-20261007]
     # Only when something that affects the native shell changes. A copy
     # edit in a React component does not need a new APK -- the phone
     # picks it up from the live site on next launch.
@@ -189,7 +189,12 @@ jobs:
           VITE_BUILD: ${{ github.sha }}
         run: |
           set -a; . ./.env.android; set +a
-          npm run build
+          if npm run build > web-build.log 2>&1; then
+            cat web-build.log
+          else
+            cat web-build.log
+            exit 1
+          fi
 
           # The push service worker cannot read import.meta.env, so its
           # config is baked in here. Without this it initialises with
@@ -206,6 +211,17 @@ jobs:
           ls -la dist/ | head
           test -f dist/index.html
           grep -q '__FIREBASE_SW_CONFIG__' dist/firebase-messaging-sw.js             && { echo 'service worker config was NOT baked'; exit 1; } || true
+
+      # Preserve the actual bundler diagnostics when the web build fails.
+      # The artifact can be inspected without depending on transient runner logs.
+      - name: Upload web build diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sambramo-web-build-log-${{ matrix.flavour }}
+          path: web-build.log
+          if-no-files-found: warn
+          retention-days: 3
 
       # ══════════════════════════════════════════════════════════════
       # Open the screens before packaging them
@@ -251,10 +267,16 @@ jobs:
           # contributes variables, but the generated Gradle script still includes it.
           mkdir -p android/capacitor-cordova-android-plugins
           touch android/capacitor-cordova-android-plugins/cordova.variables.gradle
+          test -f android/capacitor-cordova-android-plugins/cordova.variables.gradle
 
       - name: Build
         working-directory: android
         run: |
+          # Recreate it in Gradle's own working directory as well. Capacitor
+          # plugin sync can omit it when there are no Cordova variables.
+          mkdir -p capacitor-cordova-android-plugins
+          touch capacitor-cordova-android-plugins/cordova.variables.gradle
+          test -f capacitor-cordova-android-plugins/cordova.variables.gradle
           chmod +x gradlew
           ./gradlew \
             assemble${{ matrix.flavour == 'customer' && 'Customer' || 'Partner' }}Debug \
@@ -315,7 +337,8 @@ jobs:
     # Only when both flavours built. A release carrying one of the two
     # apps is worse than no release: somebody installs the partner app,
     # looks for the customer one, and finds a stale copy from days ago.
-    if: success() && github.event_name == 'push'
+    # Build artifacts for the pricing branch only; do not publish a rolling public release.
+    if: success() && github.event_name == 'push' && github.ref_name != 'feature/pricing-tab-production-ready'
 
     steps:
       - uses: actions/checkout@v4
