@@ -5,3 +5,5 @@
 .sambramo-trade-pictogram-xs{width:40px;height:40px;border-radius:12px}.sambramo-trade-pictogram-sm{width:64px;height:52px;border-radius:14px}.sambramo-trade-pictogram-md{width:100%;height:82px;border-radius:18px}.sambramo-trade-pictogram-lg{width:100%;height:96px;border-radius:20px}
 .sambramo-trade-pictogram-xs .sambramo-trade-pictogram-sparkle{font-size:7px}.sambramo-trade-pictogram-sm .sambramo-trade-pictogram-sparkle{font-size:8px}.sambramo-trade-pictogram-lg .sambramo-trade-pictogram-sparkle{font-size:11px}
 @media (prefers-reduced-motion:no-preference){.sambramo-trade-pictogram{transition:transform .18s ease,box-shadow .18s ease}.sambramo-trade-pictogram:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(42,8,92,.12)}}
+/* Center-crop only the six final-row trade tiles whose source artwork sits too wide in its card frame. */
+.sambramo-trade-pictogram-center-crop .sambramo-trade-art{background-size:1000% 714.2857%;background-position:var(--sambramo-raster-center-x) var(--sambramo-raster-center-y)}
