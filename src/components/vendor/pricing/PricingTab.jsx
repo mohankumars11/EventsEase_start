@@ -6,7 +6,7 @@
  * trade keeps SambramoPricingStudio until it is ported, so nothing that
  * works today changes for them.
  */
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Loader2, Sparkles, ArrowRight, CircleAlert, Hourglass, CircleHelp, CheckCircle2, ChevronRight, X, ArrowLeft, MapPin, Package, CalendarClock, SlidersHorizontal, IndianRupee, Eye, Pencil } from 'lucide-react'
 import PricingControlCenter, { SeasonalUpdate } from './PricingControlCenter'
 import TradePricing from './TradePricing'
@@ -47,7 +47,7 @@ const statusGroup = status => status === 'LIVE' ? 'live'
 const shortDate = value => value ? new Date(value).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : ''
 const daysUntil = value => value ? Math.max(0, Math.ceil((new Date(value).getTime() - Date.now()) / 86400000)) : null
 
-export default function PricingTab({ vendor, services = [], onOpenListings, onEditListing, onOpenPayout }) {
+export default function PricingTab({ vendor, services = [], onOpenListings, onEditListing, onOpenPayout, openReviewListing = false, onReviewListingHandled }) {
   const [helpOpen, setHelpOpen] = useState(false)
   const [manageOpen, setManageOpen] = useState(false)
   const [selectedServiceId, setSelectedServiceId] = useState(null)
@@ -55,7 +55,8 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
   const [legacySelectedPackage, setLegacySelectedPackage] = useState(null)
   const [filterStatus, setFilterStatus] = useState('all')
   const [priceWindowOpen, setPriceWindowOpen] = useState(false)
-  const [listingMeta, setListingMeta] = useState({ byId: {}, versionById: {}, publishedAtById: {}, packagesById: {}, priceById: {}, priceUnitById: {}, packageDetailsById: {}, priceLockById: {}, nextPriceDate: null, nextPriceServiceId: null, loading: true })
+  const reviewNavigationHandled = useRef(false)
+  const [listingMeta, setListingMeta = useState({ byId: {}, versionById: {}, publishedAtById: {}, packagesById: {}, priceById: {}, priceUnitById: {}, packageDetailsById: {}, priceLockById: {}, nextPriceDate: null, nextPriceServiceId: null, loading: true })
   const engineReady = useEngineReady()
   const anchors = services.filter(s => hasProfileFor(s.category))
   const engine = engineReady ? services.filter(s => onEngine(s.category)) : []
@@ -194,6 +195,38 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
     })
     return () => { alive = false }
   }, [services])
+
+  // A tap on the Jobs review card must open the actual trade detail, not
+  // the account-level Services screen. Status comes from the same version
+  // and package rows shown in this tab, so we never guess a random service.
+  useEffect(() => {
+    if (!openReviewListing) {
+      reviewNavigationHandled.current = false
+      return
+    }
+    if (reviewNavigationHandled.current || listingMeta.loading) return
+
+    const reviewStates = new Set([
+      'UNDER_REVIEW', 'IN_REVIEW', 'PENDING_REVIEW', 'REVIEW_PENDING',
+      'SUBMITTED', 'SUBMITTED_FOR_REVIEW',
+    ])
+    const target = services.find(service => {
+      const statuses = [
+        listingMeta.byId[service.id],
+        service.review_status,
+        service.approval_status,
+        service.status,
+      ].map(value => String(value ?? '').trim().toUpperCase().replace(/[\\s-]+/g, '_'))
+      return statuses.some(value => reviewStates.has(value))
+    })
+
+    reviewNavigationHandled.current = true
+    setFilterStatus('review')
+    setLegacyScreen('details')
+    if (target?.id) setSelectedServiceId(target.id)
+    else setSelectedServiceId(null)
+    onReviewListingHandled?.()
+  }, [openReviewListing, listingMeta.loading, listingMeta.byId, services, onReviewListingHandled])
 
   if (engineReady === null && services.some(s => onEngine(s.category))) {
     return <div className="flex justify-center py-10"><Loader2 className="animate-spin text-plum-600" /></div>
