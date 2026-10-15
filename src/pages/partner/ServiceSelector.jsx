@@ -234,7 +234,7 @@ export default function ServiceSelector() {
                   </span>
                   {CENTERED_TRADE_ART.has(c.name) ? (
                     <span className="block w-full min-w-0 self-center overflow-hidden rounded-[18px]">
-                      <SambramoTradePictogram trade={c.name} size="md" showSparkle={false} title={false}
+                      <SambramoTradePictogram trade={c.name} size="md" showSparkle={false} title={false} centerCrop
                         className="!mx-auto !block !h-[82px] !w-full !max-w-full" />
                     </span>
                   ) : (
