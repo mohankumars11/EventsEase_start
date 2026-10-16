@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "note": "Cuisine groups and regional styles for Catering & Food. Merged from both Catering master specs (2026-10-10). Partners pick the styles they actually cook; custom labels go to review.",
+  "groups": [
+    { "id": "karnataka", "name": "Karnataka", "styles": [
+      ["ka_traditional", "Karnataka Traditional Cuisine"], ["ka_bengaluru", "Bengaluru Style"], ["ka_mysuru", "Mysuru Style"],
+      ["ka_udupi", "Udupi Cuisine"], ["ka_mangalorean", "Mangalorean / Coastal Karnataka"], ["ka_north", "North Karnataka"],
+      ["ka_south", "South Karnataka"], ["ka_kodava", "Kodava / Coorg"], ["ka_malenadu", "Malenadu"],
+      ["ka_uttara_kannada", "Uttara Kannada"], ["ka_konkani", "Konkani (Karnataka)"], ["ka_brahmin_veg", "Karnataka Brahmin-style Vegetarian"],
+      ["ka_festive", "Karnataka Festive Meals"], ["ka_wedding", "Karnataka Wedding Meals"]
+    ]},
+    { "id": "tamil_nadu", "name": "Tamil Nadu", "styles": [
+      ["tn_traditional", "Traditional Tamil Meals"], ["tn_wedding", "Tamil Wedding Meals"], ["tn_chennai", "Chennai Style"],
+      ["tn_chettinad", "Chettinad"], ["tn_kongunadu", "Kongunadu"], ["tn_madurai", "Madurai Style"],
+      ["tn_tirunelveli", "Tirunelveli Style"], ["tn_nanjil_nadu", "Nanjil Nadu"], ["tn_kongu_veg", "Kongu Vegetarian"],
+      ["tn_tiffin", "Tamil Tiffin"], ["tn_non_veg", "Tamil Non-Vegetarian"]
+    ]},
+    { "id": "andhra_telangana", "name": "Andhra Pradesh & Telangana", "styles": [
+      ["ap_coastal", "Coastal Andhra"], ["ap_rayalaseema", "Rayalaseema"], ["ap_traditional", "Andhra Traditional Meals"],
+      ["ap_veg", "Andhra Vegetarian"], ["ap_non_veg", "Andhra Non-Vegetarian"], ["ap_pickles", "Andhra Pickles and Sides"],
+      ["tg_traditional", "Telangana Traditional Meals"], ["tg_hyderabadi", "Hyderabadi Cuisine"], ["tg_hyderabadi_biryani", "Hyderabadi Biryani"],
+      ["tg_non_veg", "Telangana Non-Vegetarian"], ["tg_snacks", "Telangana Snacks"]
+    ]},
+    { "id": "kerala", "name": "Kerala", "styles": [
+      ["kl_sadya", "Kerala Sadya"], ["kl_malabar", "Malabar"], ["kl_thalassery", "Thalassery"], ["kl_travancore", "Travancore"],
+      ["kl_central", "Central Kerala"], ["kl_breakfast", "Kerala Breakfast"], ["kl_veg", "Kerala Vegetarian"],
+      ["kl_seafood", "Kerala Seafood"], ["kl_non_veg", "Kerala Non-Vegetarian"]
+    ]},
+    { "id": "north_india", "name": "North India", "styles": [
+      ["ni_punjabi", "Punjabi"], ["ni_delhi", "Delhi"], ["ni_mughlai", "Mughlai"], ["ni_awadhi", "Awadhi / Lucknowi"],
+      ["ni_kashmiri", "Kashmiri"], ["ni_himachali", "Himachali"], ["ni_pahadi", "Uttarakhand / Pahadi"],
+      ["ni_veg", "North Indian Vegetarian"], ["ni_non_veg", "North Indian Non-Vegetarian"], ["ni_tandoori", "Tandoori"],
+      ["ni_wedding_buffet", "North Indian Wedding Buffet"]
+    ]},
+    { "id": "west_india", "name": "Western India", "styles": [
+      ["wi_gujarati", "Gujarati"], ["wi_kathiawadi", "Kathiawadi"], ["wi_rajasthani", "Rajasthani"], ["wi_marwari", "Marwari"],
+      ["wi_maharashtrian", "Maharashtrian"], ["wi_malvani", "Malvani"], ["wi_goan", "Goan"], ["wi_konkani", "Konkani"]
+    ]},
+    { "id": "east_northeast", "name": "Eastern & Northeastern India", "styles": [
+      ["ei_bengali", "Bengali"], ["ei_odia", "Odia"], ["ei_assamese", "Assamese"], ["ei_bihari", "Bihari"], ["ei_jharkhandi", "Jharkhandi"],
+      ["ne_manipuri", "Manipuri"], ["ne_naga", "Naga"], ["ne_mizo", "Mizo"], ["ne_meghalaya", "Meghalaya Cuisine"],
+      ["ne_arunachal", "Arunachal Cuisine"], ["ne_tripuri", "Tripuri"], ["ne_general", "Northeastern Indian"]
+    ]},
+    { "id": "other_indian", "name": "Other Indian food styles", "styles": [
+      ["oi_street_food", "Indian Street Food"], ["oi_sweets", "Indian Sweets"], ["oi_snacks", "Indian Snacks and Chaat"],
+      ["oi_festival", "Traditional Festival Food"], ["oi_indo_chinese", "Indo-Chinese"]
+    ]},
+    { "id": "international", "name": "International", "styles": [
+      ["in_italian", "Italian"], ["in_french", "French"], ["in_mediterranean", "Mediterranean"], ["in_continental", "Continental"],
+      ["in_spanish", "Spanish"], ["in_greek", "Greek"], ["in_middle_eastern", "Middle Eastern"], ["in_lebanese", "Lebanese"],
+      ["in_turkish", "Turkish"], ["in_persian", "Persian"], ["in_chinese", "Chinese"], ["in_japanese", "Japanese"],
+      ["in_korean", "Korean"], ["in_thai", "Thai"], ["in_vietnamese", "Vietnamese"], ["in_indonesian", "Indonesian"],
+      ["in_malaysian", "Malaysian"], ["in_singaporean", "Singaporean"], ["in_filipino", "Filipino"], ["in_pan_asian", "Pan-Asian"],
+      ["in_mexican", "Mexican"], ["in_american", "American"], ["in_british", "British"], ["in_australian", "Australian"],
+      ["in_european_desserts", "European Desserts"]
+    ]},
+    { "id": "specialized", "name": "Specialized food styles", "styles": [
+      ["sp_pure_veg", "Pure Vegetarian"], ["sp_vegan", "Vegan"], ["sp_jain", "Jain"], ["sp_no_onion_garlic", "No Onion / No Garlic"],
+      ["sp_satvik", "Satvik"], ["sp_millet", "Millet-Based Food"], ["sp_healthy", "Healthy / Light Meals"], ["sp_kids", "Kids' Menu"],
+      ["sp_allergen_aware", "Allergen-aware offerings"]
+    ]}
+  ]
+}

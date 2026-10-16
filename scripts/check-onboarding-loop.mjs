@@ -1,173 +1,142 @@
-#!/usr/bin/env node
 /**
- * Does finishing a trade bring the partner back to Step 1?
+ * The partner entry, trade-opening, submission and payout contract.
  *
- * ══════════════════════════════════════════════════════════════════════
- * WHY THIS FILE EXISTS
- * ══════════════════════════════════════════════════════════════════════
+ *   entry        /partner/setup and /partner/services → ServiceSelector,
+ *                "What services do you offer?", the 34 registry trades
+ *   a trade      /partner/onboard/<registry id> opens that trade's own
+ *                existing flow directly (draft resumed by key) — never a
+ *                dashboard tab, never More
+ *   submit ok    → Jobs (/dashboard/vendor?submitted=…) with a server-read
+ *                  confirmation; account queued with submit_for_review()
+ *   submit fail  → stays in the flow with the error, nothing navigates
+ *   identity &   completed INSIDE the trade's "Identity Verification & Bank
+ *   bank         Details" step with the existing verification, bank list,
+ *                IFSC lookup and payout record; activation through the
+ *                existing Route setup; instant booking needs Razorpay
+ *                route_status = 'activated' (migration 20261010_15)
  *
- * A partner in six-step onboarding picked a trade, answered its
- * questionnaire, tapped Submit — and was dumped on the dashboard with
- * Step 1 silently completed behind them. Precisely the failure the
- * six-step redesign was built to prevent.
- *
- * Nothing had "navigated to the dashboard". The dashboard is the HOST
- * that renders the questionnaire, and the return hop was missing: the
- * modal unmounted and left the partner standing on its host. The whole
- * return mechanism existed and was correct; it hung off one condition
- * that could never be true:
- *
- *     const inSetup = pathname.startsWith('/partner/setup')
- *
- * `WhatYouOffer` is mounted only at `/partner/services`. The comment
- * above that line described a routing arrangement that had stopped
- * existing when Step 1 became its own component.
- *
- * ══════════════════════════════════════════════════════════════════════
- * WHY IT IS A STRING TEST AND NOT A RENDER TEST
- * ══════════════════════════════════════════════════════════════════════
- *
- * Every existing guard was green while this was broken. check-tabs-render
- * mounts the screens and they mount fine; nothing mounts WRONG. The bug
- * lives in which URL one screen hands to the next, across four files and
- * a modal, and it is only visible if you follow the parameter.
- *
- * So this asserts the contract on the parameter itself: who emits it, who
- * reads it, and who must not drop it.
+ * Every assertion reads the code that does the thing (comments stripped),
+ * plus the pure status functions run for real.
  *
  *   node scripts/check-onboarding-loop.mjs
  */
-import { readFileSync } from 'node:fs'
+import { readFileSync, existsSync } from 'node:fs'
+import { pathToFileURL } from 'node:url'
+import { resolve } from 'node:path'
 
 const tick = String.fromCharCode(10003)
 const cross = String.fromCharCode(10007)
 let bad = 0, ran = 0
 const ok = (n, cond, d = '') => { ran++; if (!cond) bad++; console.log(`  ${cond ? tick : cross} ${n}${cond ? '' : `   <-- ${d}`}`) }
 
-/* Comments describe the bug; code causes it. */
-const code = p => readFileSync(p, 'utf8')
+/* Comments describe the behaviour; code causes it. */
+const code = p => readFileSync(p, 'utf8').replace(/\r\n/g, '\n')
   .replace(/\/\*[\s\S]*?\*\//g, '')
   .replace(/^\s*\/\/.*$/gm, '')
   .replace(/\{\/\*[\s\S]*?\*\/\}/g, '')
 
-const hub   = code('src/pages/partner/steps/BusinessServicesStep.jsx')
-const offer = code('src/pages/partner/WhatYouOffer.jsx')
-const list  = code('src/components/vendor/VendorServiceList.jsx')
+const app = code('src/App.jsx')
+const stage = code('src/lib/partnerStage.js')
+const sel = code('src/pages/partner/ServiceSelector.jsx')
+const list = code('src/components/vendor/VendorServiceList.jsx')
+const flow = code('src/components/vendor/listing/ListingOnboardingFlow.jsx')
+const anchor = code('src/components/vendor/anchor/AnchorOnboardingFlow.jsx')
+const payoutStage = code('src/components/vendor/anchor/stages/PayoutReviewStages.jsx')
+const payouts = code('src/pages/partner/Payouts.jsx')
+const card = code('src/components/partner/SubmittedCard.jsx')
+const dash = code('src/pages/dashboard/VendorDashboard.jsx')
+const routes = code('src/lib/tradeRoutes.js')
+const onboard = code('src/pages/partner/TradeOnboarding.jsx')
+const form = code('src/components/vendor/bank/PayoutOnboardingForm.jsx')
+const picker = code('src/components/vendor/bank/BankPicker.jsx')
+const idPanel = code('src/components/partner/identity/IdentityPanel.jsx')
+const reqList = code('src/components/partner/identity/RequirementList.jsx')
 const pricing = code('src/components/vendor/SambramoPricingStudio.jsx')
 const tradePricing = code('src/components/vendor/TradePricingStudio.jsx')
-const dash  = code('src/pages/dashboard/VendorDashboard.jsx')
-const onboarding = code('src/hooks/usePartnerOnboarding.js')
+const has = (s, needle) => s.includes(needle)
 
-console.log('\nTHE MARKER IS EMITTED\n')
+console.log('\nTHE ENTRY IS THE SERVICE SELECTOR, NOT THE FIVE-SECTION OVERVIEW\n')
+ok('/partner/setup renders ServiceSelector', /path="\/partner\/setup" element=\{[\s\S]{0,120}<ServiceSelector \/>/.test(app))
+ok('/partner/services renders the same ServiceSelector', /path="\/partner\/services" element=\{[\s\S]{0,120}<ServiceSelector \/>/.test(app))
+ok('the legacy overview is not routed anywhere', !/PartnerSetupIntro/.test(app) && !existsSync('src/pages/partner/PartnerSetupIntro.jsx'))
+ok('a partner with no vendor row or no services lands on the selector',
+   /case STAGE\.NEW:\s*return '\/partner\/setup'/.test(stage) && /case STAGE\.CHOOSE_TRADES: return '\/partner\/setup'/.test(stage))
+ok('a partner with submitted or live listings lands on Jobs', /default:\s*return '\/dashboard\/vendor'/.test(stage))
 
-ok('Step 1 "Add a service" declares where it came from',
-   /\/partner\/services\?from=setup/.test(hub),
-   'without ?from=setup the trade flow cannot know to come back')
+console.log('\nTHE SELECTOR\n')
+ok('reads the canonical registry, in registry order', has(sel, 'TRADE_CONFIGS.slice().sort((a, b) => a.order - b.order)'))
+ok('says "What services do you offer?"', has(sel, 'What services do you offer?'))
+ok('search placeholder "Search for a service..."', has(sel, 'placeholder="Search for a service..."'))
+ok('empty search says "No services found. Try another name."', has(sel, 'No services found. Try another name.'))
+ok('multi-select toggles, with a selected count', has(sel, 'setPicked(p => (p.includes(name)') && has(sel, "selected` : 'Select at least one service to continue.'"))
+ok('Continue is disabled with nothing picked, and says why', has(sel, 'disabled={!picked.length || busy}'))
+ok('the sticky action reads "Continue with Selected Services"', has(sel, 'Continue with Selected Services'))
+ok('a summary "Let\'s set up your N services" precedes the first trade', has(sel, "Let's set up your"))
+ok('no identity or bank inputs on the selector', !/account_number|ifsc|aadhaar|<input[^>]*type="password"/i.test(sel))
+ok('its account rows are status only — they do not send anyone to More', !/ACCOUNT_LINKS|tab=account/.test(sel))
 
-ok('Step 1 sends a draft trade straight to its questionnaire',
-   /tab=list&start=.*encodeURIComponent\(pricingService\.category\).*return=setup/.test(hub),
-   'it used to send ?start= to a screen that reads no params')
+console.log('\nA TRADE OPENS ITS OWN ONBOARDING DIRECTLY\n')
+ok('/partner/onboard/:tradeId is routed to TradeOnboarding', /path="\/partner\/onboard\/:tradeId" element=\{[\s\S]{0,120}<TradeOnboarding \/>/.test(app))
+ok('the path is built from the canonical registry id', has(routes, 'configFor(trade)?.id'))
+ok('TradeOnboarding resolves the trade from the id and opens the existing flow', has(onboard, 'configFor(decodeURIComponent(tradeId') && has(onboard, '<AddItemFlow'))
+ok('a trade already listed opens that listing (edit), never a second one',
+   has(onboard, 'services.find(s => s.category === config.name)') && has(sel, 'if (listed[name]) { navigate(onboardPath(name)); return }'))
+ok('selector Continue, Jobs card and More → My services all open it',
+   has(sel, 'navigate(onboardPath(first))') && has(card, 'navigate(onboardPath(next))') && has(dash, 'onOpenTrade={trade => navigate(onboardPath(trade))}'))
+ok('no trade is opened through a dashboard tab any more',
+   ![sel, card].some(x => x.includes('tab=list&start=')) && !has(dash, 'onOpenTrade={trade => setParams'))
+ok('the tab bar is hidden on a trade onboarding', has(code('src/components/layout/PartnerBottomNav.jsx'), "'/partner/onboard'"))
 
-console.log('\nTHE MARKER IS READ, NOT INFERRED\n')
+console.log('\nSUBMIT GOES TO JOBS — ONLY WHEN THE SERVER SAID YES\n')
+const submitBody = flow.slice(flow.indexOf('async function submit()'), flow.indexOf('const answersSet'))
+ok('listing flow: an RPC error stays in the flow', has(submitBody, 'if (error) { setSubmitError(friendlyError(error)); return }'))
+ok('listing flow: hands back (next, data) only after that check',
+   submitBody.indexOf('onClose?.(nextTrade || undefined, data)') > submitBody.indexOf('if (error) { setSubmitError'))
+ok('anchor flow: hands back (next, data) after its RPC', has(anchor, 'onClose?.(nextTrade || undefined, data)'))
+ok('Save & exit closes with no result', has(flow, 'saveDraft({ answers: a, step }); onClose?.()'))
+const closes = [...list.matchAll(/onClose=\{\([^)]*\) => \{[\s\S]{0,200}?onSubmitted/g)]
+ok('both Listing-tab AddItemFlow instances route a submitted result to onSubmitted', closes.length === 2, `${closes.length} found`)
+ok('a submission lands on Jobs with ?submitted= (Listing tab and direct route alike)',
+   has(routes, 'navigate(`/dashboard/vendor?${q}`') && has(routes, 'submitted: trade') && has(list, 'afterSubmission(navigate') && has(onboard, 'afterSubmission(navigate'))
+ok('and puts the account in the review queue (existing RPC)', has(routes, "supabase.rpc('submit_for_review')"))
+ok('Jobs renders the confirmation card', has(dash, "tab === 'offers' && <SubmittedCard"))
+ok('the card reads the version status back from the server', has(card, "from('sambramo_listing_versions').select('status, vendor_service_id')"))
+ok('the card offers the next selected service and Add Another Service', /Continue Setting Up Another Service/.test(card) && /Add Another Service/.test(card))
 
-/* The dead condition. Inferring from the pathname is what broke it, and
-   it broke silently — so the test is that the inference is GONE. */
-ok('inSetup is not inferred from the pathname',
-   !/pathname\.startsWith\(['"`]\/partner\/setup/.test(offer),
-   'WhatYouOffer is never mounted under /partner/setup, so this is always false')
+console.log('\nIDENTITY AND BANK DETAILS ARE COMPLETED INSIDE THE STEP\n')
+ok('titled "Identity Verification & Bank Details"', has(payoutStage, 'title="Identity Verification & Bank Details"'))
+ok('the step renders the identity section and the payout form inline', has(payoutStage, '<IdentitySection') && has(payoutStage, '<PayoutOnboardingForm'))
+ok('the step never navigates away (no More tab, no Razorpay login)', !/useNavigate|navigate\(/.test(payoutStage) && !/login/i.test(payoutStage + form))
+ok('identity uses the existing chooser, Aadhaar flow and uploads', has(idPanel, '<IdentityChoice') && has(reqList, '<AadhaarOtpVerification') && has(reqList, '<DocumentCapture'))
+ok('statuses come from the backend rows, in the step\'s words', has(idPanel, 'evaluateAll(reqs') && has(idPanel, "checked: 'Verification in progress'"))
+ok('steps 2–4: PAN, bank, UPI, saved by "Save Bank & UPI Details"',
+   has(form, 'title="PAN and tax details"') && has(form, 'title="Bank account details"') && has(form, 'title="UPI details"') && has(form, 'Save Bank &amp; UPI Details'))
+ok('one payout record per partner (upsert on vendor_id)', has(form, ".from('vendor_payout_details').upsert(payload, { onConflict: 'vendor_id' })"))
+ok('bank list and IFSC lookup are the existing ones, shared with More', has(picker, "from '../../../data/indianBanks'") && has(picker, 'lookupIfsc(code)') && has(code('src/components/vendor/PayoutDetails.jsx'), 'useIfscLookup(ifsc, bank, setBank)'))
+ok('the bank list is searchable', has(picker, 'data-testid="bank-search"'))
+ok('account number typed twice; UPI confirmed; consent asked', has(form, 'account_number_confirm') && has(form, 'upiMismatch') && has(form, 'data-testid="bank-consent"'))
+ok('never asks for a PIN or password', !/type="password"|label[^>]*>[^<]*(PIN|password)/i.test(form))
+ok('saving starts payout activation through the existing Route setup', has(payoutStage, "routeSetup('setup')") && has(code('src/lib/payoutRoute.js'), 'op=route-setup'))
+ok('Payouts sends "add bank / PAN first" to the form that has a PAN field', /screen=bank/.test(payouts) && /pan/.test(code('src/components/vendor/PayoutDetails.jsx')))
+ok('Razorpay is credited with its own logo', existsSync('src/assets/brand/razorpay-logo.svg') && /RazorpayBadge/.test(payoutStage))
 
-ok('inSetup reads the explicit parameter',
-   /params\.get\(['"`]from['"`]\)\s*===\s*['"`]setup['"`]/.test(offer))
-
-ok('and it still appends &return=setup',
-   /return=setup/.test(offer))
-
-console.log('\nTHE DASHBOARD HONOURS IT\n')
-
-ok('returnTo maps to the Step 1 hub',
-   /return['"`]\)\s*===\s*['"`]setup['"`]\s*\?\s*['"`]\/partner\/setup\/services['"`]/.test(dash),
-   'the destination must be step 1, not the dashboard')
-
-console.log('\nNOTHING DROPS IT MID-FLOW\n')
-
-/* Both handlers replaced the WHOLE query string, so touching any tab
-   mid-flow quietly turned an onboarding partner into a dashboard
-   visitor. */
-ok('a helper exists to carry `return` across param rewrites',
-   /keepReturn/.test(dash))
-ok('setTab uses it',
-   /setTab = id =>\s*setParams\(keepReturn\(/.test(dash),
-   'a tab switch would drop return and strand the partner')
-ok('onOpenTrade uses it',
-   /onOpenTrade=\{trade => setParams\(keepReturn\(/.test(dash))
-
-ok('no bare setParams({ tab: … }) left in the dashboard',
-   !/setParams\(\{\s*tab:/.test(dash),
-   'every rewrite must go through keepReturn')
-
-console.log('\nBOTH EXITS FROM THE QUESTIONNAIRE COME BACK\n')
-
-/* Two AddItemFlow instances: add, and edit. The edit one ignored
-   returnTo unconditionally. */
-const closes = [...list.matchAll(/onClose=\{[\s\S]{0,400}?\}\}/g)].map(m => m[0])
-ok('both AddItemFlow instances have a close handler', closes.length >= 2,
-   `${closes.length} found`)
-ok('every close handler honours returnTo',
-   closes.every(c => /returnTo/.test(c)),
-   'the edit instance used to be onClose={() => setEditing(null)}')
-
-console.log('\nAN ABANDONED WALK DOES NOT HAUNT THE NEXT ONE\n')
-
-ok('the trade queue is cleared when a walk ends',
-   /clearQueue\(\)/.test(list),
-   'clearQueue was exported and never called, so a localStorage queue survived')
-
-console.log('\nFIRST SERVICE ENTRY MUST BE A REAL ACTION\n')
-
-ok('the empty Step 1 first-service card is a button',
-   /data-action=["']choose-first-service["']/.test(hub),
-   'the old empty-state card was a non-interactive div')
-ok('the first-service button uses the same picker handler as Add service',
-   /onClick=\{openServicePicker\}/.test(hub),
-   'the empty state and Add service must not have different navigation paths')
-ok('Add service preserves typed business basics before leaving Step 1',
-   /openServicePicker/.test(hub) && /vendors.*update/.test(hub),
-   'business details were previously local-only and could reset on return')
-ok('service completion returns with an explicit success marker',
-   /serviceAdded=1/.test(list),
-   'returning to Step 1 must not look like a reset')
-
-console.log('\nTHE ONBOARDING ACCOUNT READ MUST NOT CRASH\n')
-
-ok('the vendor availability result is captured before it is read',
-   /const \[ls, avail, docs, pay, week, genericRes, cateringRes, priceRes\]/.test(onboarding),
-   'an undefined availability variable makes the whole onboarding load throw and leaves the service buttons disabled')
-ok('Step 1 service actions are not disabled just because the vendor query is late',
-   !/disabled=\{serviceNavBusy \|\| !vendor\?\.id\}/.test(hub),
-   'the service entry must resolve/create the vendor row instead of rendering a dead control')
-ok('Step 1 can self-heal a missing vendor row before opening services',
-   /ensureVendorRow/.test(hub) && /activeVendor/.test(hub),
-   'the service action needs a real vendor id before navigation')
+const S = await import(pathToFileURL(resolve('src/lib/partnerAccountStatus.js')).href)
+ok('saved bank details are NOT active', S.payoutStatus({ method: 'bank', verified_at: null }, null) === 'details_saved')
+ok('a created Razorpay account is NOT active', S.payoutStatus({ method: 'bank' }, { route_account_id: 'acc_x', route_status: 'created' }) === 'activation_pending')
+ok('only route_status activated is active', S.payoutStatus({ method: 'bank' }, { route_account_id: 'acc_x', route_status: 'activated' }) === 'active')
+ok('suspended / rejected are restricted', ['suspended', 'rejected'].every(r => S.payoutStatus({}, { route_status: r }) === 'restricted'))
+ok('an uploaded ID is pending, not verified', S.identityStatus({ is_verified: false }, { 'VER-ID-IDENTITY': 'pending' }) === 'pending')
+ok('a trade licence never counts as identity', S.identityStatus({ is_verified: false }, { 'VER-TRADE-FSSAI': 'accepted' }) === 'not_started')
+ok('operator-verified identity is verified', S.identityStatus({ is_verified: true }, {}) === 'verified')
+const m15 = readFileSync('supabase/migrations/20261010_15_payout_ready_means_activated.sql', 'utf8')
+ok('migration 15 makes the server require route_status = activated', m15.includes("replace(def, 'pa.route_account_id is not null', 'pa.route_status = ''activated''')"))
 
 console.log('\nPRICING AND EDITING CONTRACTS\n')
-
-ok('SambramoPricingStudio passes the trade config into TradePricingStudio',
-   /<TradePricingStudio[\s\S]*?config=\{config\}/.test(pricing),
-   'without config the pricing screen crashes when it renders config.name')
-
-ok('TradePricingStudio requires its trade config',
-   /function TradePricingStudio\(\{ vendor, service, config,/.test(tradePricing))
-
-ok('Step 1 Edit listing targets an exact vendor service id',
-   /tab=list&edit=.*listing\.id/.test(hub),
-   'Edit listing must not reopen the add-service flow by trade name')
-
-ok('Vendor dashboard forwards the exact edit target',
-   dash.includes('editListing={params.get(\'edit\')}'))
-
-ok('Listing tab consumes the edit target and opens editing mode',
-   list.includes('setEditing(current => current === editListing ? current : editListing)'))
-
+ok('SambramoPricingStudio passes the trade config into TradePricingStudio', /<TradePricingStudio[\s\S]*?config=\{config\}/.test(pricing))
+ok('TradePricingStudio requires its trade config', /function TradePricingStudio\(\{ vendor, service, config,/.test(tradePricing))
+ok('Vendor dashboard forwards the exact edit target', has(dash, "editListing={params.get('edit')}"))
+ok('Listing tab consumes the edit target and opens editing mode', has(list, 'setEditing(current => current === editListing ? current : editListing)'))
+ok('a tab switch keeps the query it must keep', /setTab = id =>\s*setParams\(keepReturn\(/.test(dash))
 
 console.log(`\n${bad ? cross : tick} ${ran - bad}/${ran}\n`)
 process.exitCode = bad ? 1 : 0

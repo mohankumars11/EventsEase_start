@@ -56,3 +56,4 @@ export async function payLines({ lineIds, part = 'advance', description = 'Your 
   }
   return openRazorpay({ keyId: body.keyId, orderId: body.orderId, amountPaise: body.amountPaise, description, customer, notes: { part }, upiEnabled: body.upiEnabled })
 }
+

@@ -409,6 +409,34 @@ export const DOCUMENT_TYPES = {
     allowedFileTypes: IMAGE_OR_PDF, maximumFileSize: MAX_BYTES,
   },
 
+  drone_permit: {
+    kind: 'other',
+    label: 'Drone registration & remote pilot certificate',
+    hint: 'DigitalSky UIN for the drone and the DGCA remote pilot certificate of whoever flies it.',
+    frontRequired: true, backRequired: false,
+    numberRequired: false,
+    expiryRequired: true, minimumValidityDays: 30,
+    holderNameRequired: true, issuingAuthorityRequired: true,
+    verificationProvider: 'manual',
+    faceMatchRequired: false, businessMatchRequired: false,
+    manualReviewAllowed: true,
+    allowedFileTypes: IMAGE_OR_PDF, maximumFileSize: MAX_BYTES,
+  },
+
+  safety_credential: {
+    kind: 'other',
+    label: 'Safety credential',
+    hint: 'The certificate or authorisation for the regulated safety work you offer (inspection, emergency preparedness, crowd safety).',
+    frontRequired: true, backRequired: false,
+    numberRequired: false,
+    expiryRequired: true, minimumValidityDays: 30,
+    holderNameRequired: false, issuingAuthorityRequired: true,
+    verificationProvider: 'manual',
+    faceMatchRequired: false, businessMatchRequired: true,
+    manualReviewAllowed: true,
+    allowedFileTypes: IMAGE_OR_PDF, maximumFileSize: MAX_BYTES,
+  },
+
   police_clearance: {
     kind: 'police_clearance',
     detectAs: ['police_clearance'],

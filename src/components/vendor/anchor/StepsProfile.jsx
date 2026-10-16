@@ -252,7 +252,7 @@ export function PricingStep({ value, set }) {
         </div>
         <div className="mt-3 rounded-xl bg-white/10 px-3 py-2 text-[12.5px] font-semibold text-plum-50">
           {take > 0
-            ? <>Customer pays <b className="text-white">{rupees(customerPaise(take))}</b>/hr · you always receive <b className="text-white">₹{take.toLocaleString('en-IN')}</b></>
+            ? <>Your rate <b className="text-white">₹{take.toLocaleString('en-IN')}</b>/hr</>
             : 'Sambramo adds its 8% fee on top. You always receive this amount.'}
         </div>
       </Card>

@@ -14,6 +14,8 @@ import {
 } from '../../data/cateringPricing'
 import { CUISINE_BY_ID } from '../../data/cuisineMenus'
 import { SOURCING_MODES } from '../../data/cateringModel'
+import PartnerMediaLinks from './pricing/PartnerMediaLinks'
+import TradeCustomerPreviewScreen, { buildCateringTradeListing } from './pricing/TradeCustomerPreviewScreen'
 
 const sectionForCourse = courseId => ({
   welcome: 'welcome',
@@ -32,13 +34,14 @@ const sectionForCourse = courseId => ({
 const iid = () => crypto?.randomUUID?.() ?? ('tmp-' + Date.now() + Math.random())
 const normDishName = value => String(value ?? '').toLowerCase().replace(/[^a-z0-9]+/g, '')
 
-export default function CateringPricingStudio({ vendor, service, onBack, onOpenListings, onboarding = false }) {
+export default function CateringPricingStudio({ vendor, service, onBack, onOpenListings, onboarding = false, startPreview = false, priceLockedUntil = null }) {
   const capability = useMemo(() => cateringCapabilityFromListing(service), [service])
   const [packages, setPackages] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [editing, setEditing] = useState(null)
   const [preview, setPreview] = useState(false)
+  const [previewLaunchHandled, setPreviewLaunchHandled] = useState(false)
   const [catalogueDishes, setCatalogueDishes] = useState([])
   const [catalogueError, setCatalogueError] = useState('')
 
@@ -136,8 +139,8 @@ export default function CateringPricingStudio({ vendor, service, onBack, onOpenL
     })
   }
 
-  function openExisting(pkg) {
-    setPreview(false)
+  function openExisting(pkg, previewMode = false) {
+    setPreview(previewMode)
     setEditing({
       id: pkg.id,
       parentPackageId: pkg.parent_package_id ?? null,
@@ -175,6 +178,13 @@ export default function CateringPricingStudio({ vendor, service, onBack, onOpenL
     })
   }
 
+  useEffect(() => {
+    if (!startPreview || previewLaunchHandled || loading) return
+    setPreviewLaunchHandled(true)
+    const pkg = packages.find(item => ['ACTIVE', 'LIVE'].includes(String(item.status).toUpperCase())) ?? packages[0]
+    if (pkg) openExisting(pkg, true)
+  }, [startPreview, previewLaunchHandled, loading, packages])
+
   async function removePackage(pkg) {
     if (!confirm('Archive this menu package? It will no longer be offered to customers.')) return
     const { error: err } = await supabase.from('sambramo_catering_packages')
@@ -197,7 +207,9 @@ export default function CateringPricingStudio({ vendor, service, onBack, onOpenL
         setDraft={setEditing}
         preview={preview}
         setPreview={setPreview}
-        onBack={() => setEditing(null)}
+        previewOnly={startPreview}
+        priceLockedUntil={priceLockedUntil}
+        onBack={() => { setEditing(null); if (startPreview) onBack?.() }}
         onSaved={async status => { setEditing(null); await load(); if (onboarding) onBack?.() }}
       />
     )
@@ -353,12 +365,14 @@ export default function CateringPricingStudio({ vendor, service, onBack, onOpenL
   )
 }
 
-function CateringPackageEditor({ vendor, service, capability, catalogueDishes = [], draft, setDraft, preview, setPreview, onBack, onSaved }) {
+function CateringPackageEditor({ vendor, service, capability, catalogueDishes = [], draft, setDraft, preview, setPreview, previewOnly = false, priceLockedUntil = null, onBack, onSaved }) {
   const [dishSearch, setDishSearch] = useState('')
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
   const [savedMessage, setSavedMessage] = useState('')
   const [step, setStep] = useState('package')
+  const pricingLocked = !!priceLockedUntil && new Date(priceLockedUntil) > new Date()
+  const priceLockDays = pricingLocked ? Math.max(0, Math.ceil((new Date(priceLockedUntil).getTime() - Date.now()) / 86400000)) : 0
   const [dishCuisineFilter, setDishCuisineFilter] = useState('all')
   const [dishCourseFilter, setDishCourseFilter] = useState('all')
   const [dishDietFilter, setDishDietFilter] = useState('all')
@@ -614,7 +628,7 @@ function CateringPackageEditor({ vendor, service, capability, catalogueDishes = 
           <ChevronRight size={18} className="rotate-180" />
         </button>
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-plum-600">Catering menu pricing</p>
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-plum-600">{previewOnly ? "Customer preview" : "Catering menu pricing"}</p>
           <h2 className="truncate text-[20px] font-extrabold text-plum-950">{draft.name || 'New menu package'}</h2>
         </div>
       </div>
@@ -630,7 +644,7 @@ function CateringPackageEditor({ vendor, service, capability, catalogueDishes = 
         </section>
       )}
 
-      <div className="grid grid-cols-4 gap-1.5 rounded-2xl bg-ink/[0.04] p-1">
+      {!previewOnly && <div className="grid grid-cols-4 gap-1.5 rounded-2xl bg-ink/[0.04] p-1">
         {[
           ['package','1 · Menu'],
           ['menu','2 · Dishes'],
@@ -642,9 +656,21 @@ function CateringPackageEditor({ vendor, service, capability, catalogueDishes = 
             {label}
           </button>
         ))}
-      </div>
+      </div>}
 
-      {step === 'package' && (
+      {!previewOnly && pricingLocked && (step === 'price' || step === 'addons') && (
+        <section className="rounded-[22px] bg-plum-50 p-4 ring-1 ring-plum-100">
+          <div className="flex items-start gap-3">
+            <Lock size={19} className="mt-0.5 shrink-0 text-plum-700" />
+            <div>
+              <h3 className="text-[14px] font-extrabold text-plum-950">{step === 'price' ? 'Catering prices are locked' : 'Extra-service rates are locked'}</h3>
+              <p className="mt-1 text-[12px] leading-relaxed text-ink/65">Price bands, add-on rates, units and quantity pricing can be updated again in {priceLockDays} day{priceLockDays === 1 ? '' : 's'}. You can still update non-price profile and menu details.</p>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {!previewOnly && step === 'package' && (
         <section className="space-y-3 rounded-[26px] bg-white p-4 ring-1 ring-ink/[0.06]">
           <SectionHeading icon={Sparkles} title="Name and shape" helper="You choose the package name. Sambramo does not force generic tiers." />
           <Field fieldId="catering_package_name" label="Menu package name" value={draft.name} onChange={v => update('name', v)} placeholder="Wedding Plantain Leaf Feast" />
@@ -682,7 +708,7 @@ function CateringPackageEditor({ vendor, service, capability, catalogueDishes = 
         </section>
       )}
 
-      {step === 'menu' && (
+      {!previewOnly && step === 'menu' && (
         <section className="space-y-3 rounded-[26px] bg-white p-4 ring-1 ring-ink/[0.06]">
           <SectionHeading icon={UtensilsCrossed} title="Choose the dishes" helper={`${dishes.length.toLocaleString('en-IN')} dishes declared on this partner listing are available for this menu.`} />
 
@@ -810,7 +836,7 @@ function CateringPackageEditor({ vendor, service, capability, catalogueDishes = 
         </section>
       )}
 
-      {step === 'price' && (
+      {!previewOnly && !pricingLocked && step === 'price' && (
         <section className="space-y-3 rounded-[26px] bg-white p-4 ring-1 ring-ink/[0.06]">
           <SectionHeading icon={WalletCards} title="Set guest-volume pricing" helper="Catering is always priced per guest. Add bands when your per-guest supply rate changes with event size." />
 
@@ -858,7 +884,7 @@ function CateringPackageEditor({ vendor, service, capability, catalogueDishes = 
         </section>
       )}
 
-      {step === 'addons' && (
+      {!previewOnly && !pricingLocked && step === 'addons' && (
         <section className="space-y-3 rounded-[26px] bg-white p-4 ring-1 ring-ink/[0.06]">
           <SectionHeading icon={CirclePlus} title="Add optional extras" helper="Each extra has its own controlled unit and quantity rules." />
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -918,12 +944,46 @@ function CateringPackageEditor({ vendor, service, capability, catalogueDishes = 
             <p className="text-[10px] font-extrabold uppercase tracking-[0.08em] text-ink-mute">Customer preview</p>
             <h3 className="mt-0.5 text-[18px] font-extrabold text-ink">{draft.name || 'Your menu package'}</h3>
           </div>
-          <button type="button" onClick={() => setPreview(x => !x)} className="rounded-full bg-plum-50 px-3 py-1.5 text-[10.5px] font-extrabold text-plum-700">
-            {preview ? 'Partner setup' : 'Preview customer'}
-          </button>
+          {!previewOnly && (
+            <button type="button" onClick={() => setPreview(x => !x)} className="rounded-full bg-plum-50 px-3 py-1.5 text-[10.5px] font-extrabold text-plum-700">
+              {preview ? 'Partner setup' : 'Preview customer'}
+            </button>
+          )}
         </div>
         {preview ? (
-          <CustomerPreview draft={draft} dishes={dishes} previewGuests={previewGuests} setPreviewGuests={setPreviewGuests} />
+          previewOnly ? (
+            <TradeCustomerPreviewScreen
+              vendor={vendor}
+              service={service}
+              config={{ trade_id: 'E01', name: service?.category || service?.name || 'Catering & Food' }}
+              tradeName={service?.category || service?.name || 'Catering & Food'}
+              listing={buildCateringTradeListing({
+                vendor,
+                service,
+                config: { trade_id: 'E01', name: service?.category || service?.name || 'Catering & Food' },
+                draft,
+                dishes,
+                terms: service?.specs?.trade_v1 ?? service?.specs?.catering_v1 ?? {},
+              })}
+              onClose={() => { setPreview(false); onBack?.() }}
+            />
+          ) : (
+            <TradeCustomerPreviewScreen
+              vendor={vendor}
+              service={service}
+              config={{ trade_id: 'E01', name: service?.category || service?.name || 'Catering & Food' }}
+              tradeName={service?.category || service?.name || 'Catering & Food'}
+              listing={buildCateringTradeListing({
+                vendor,
+                service,
+                config: { trade_id: 'E01', name: service?.category || service?.name || 'Catering & Food' },
+                draft,
+                dishes,
+                terms: service?.specs?.trade_v1 ?? service?.specs?.catering_v1 ?? {},
+              })}
+              onClose={() => setPreview(false)}
+            />
+          )
         ) : (
           <div className="mt-3 grid grid-cols-2 gap-2">
             <InfoMetric label="Dishes" value={String(draft.items.length)} icon={UtensilsCrossed} />
@@ -934,7 +994,7 @@ function CateringPackageEditor({ vendor, service, capability, catalogueDishes = 
         )}
       </section>
 
-      <div className="fixed inset-x-0 bottom-[64px] z-30 bg-white/92 px-4 pb-3 pt-2 backdrop-blur-md sm:static sm:bg-transparent sm:p-0">
+      <div className={"fixed inset-x-0 bottom-[64px] z-30 bg-white/92 px-4 pb-3 pt-2 backdrop-blur-md sm:static sm:bg-transparent sm:p-0 " + (previewOnly ? "hidden" : "")}>
         <div className="mx-auto flex max-w-3xl gap-2">
           <button type="button" onClick={() => save('DRAFT')} disabled={saving}
             className="flex-1 rounded-2xl bg-white py-3.5 text-[12.5px] font-extrabold text-ink-soft ring-1 ring-ink/[0.1] disabled:opacity-50">
@@ -950,7 +1010,7 @@ function CateringPackageEditor({ vendor, service, capability, catalogueDishes = 
   )
 }
 
-function CustomerPreview({ draft, dishes, previewGuests, setPreviewGuests }) {
+function CustomerPreview({ draft, dishes, previewGuests, setPreviewGuests, terms = {} }) {
   const byId = new Map(dishes.map(d => [d.id, d]))
   const sections = CATERING_MENU_SECTIONS
     .map(section => ({
@@ -999,6 +1059,21 @@ function CustomerPreview({ draft, dishes, previewGuests, setPreviewGuests }) {
             </div>
           </div>
         )}
+      </div>
+      {(terms.min_notice_days != null || terms.cancellation_policy || terms.payment_policy || terms.reschedule_policy) && (
+        <section className="border-t border-ink/[0.07] bg-white p-4">
+          <p className="mb-2 text-[10px] font-extrabold uppercase tracking-[0.08em] text-ink-mute">Booking & payment terms</p>
+          {terms.min_notice_days != null && <div className="flex justify-between gap-3 py-1.5 text-[11.5px]"><span className="text-ink-soft">Book at least</span><b>{terms.min_notice_days} day(s) ahead</b></div>}
+          {terms.payment_policy && <div className="flex justify-between gap-3 py-1.5 text-[11.5px]"><span className="text-ink-soft">Payment</span><b>{String(terms.payment_policy).replace(/_/g, ' ')}</b></div>}
+          {terms.cancellation_policy && <div className="flex justify-between gap-3 py-1.5 text-[11.5px]"><span className="text-ink-soft">Cancellation</span><b className="text-right">{String(terms.cancellation_policy).replace(/_/g, ' ')}</b></div>}
+          {terms.reschedule_policy && <div className="flex justify-between gap-3 py-1.5 text-[11.5px]"><span className="text-ink-soft">Rescheduling</span><b className="text-right">{String(terms.reschedule_policy).replace(/_/g, ' ')}</b></div>}
+        </section>
+      )}
+      <div className="border-t border-ink/[0.07] bg-white p-4">
+        <div aria-label="Customer action preview" className={"rounded-full px-4 py-3 text-center text-[13px] font-extrabold text-white " + (String(terms.availability_policy ?? terms.booking_mode ?? 'instant').toLowerCase() === 'instant' ? "bg-gradient-to-r from-plum-700 to-violet-600" : "bg-slate-500")}>
+          {String(terms.availability_policy ?? terms.booking_mode ?? 'instant').toLowerCase() === 'instant' ? 'Instant Book & Pay' : 'Continue to secure booking'} →
+        </div>
+        <p className="mt-2 text-center text-[10px] leading-relaxed text-ink-mute">Preview only. Sambramo validates availability and the payable total through the existing booking flow.</p>
       </div>
     </div>
   )

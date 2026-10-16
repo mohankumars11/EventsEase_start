@@ -26,7 +26,11 @@ import {
   getTradePricingFields,
 } from '../../data/sambramoPricingCatalog'
 import WorkLibrary from './WorkLibrary'
-import SambramoPartnerPreviewCard, { SAMBRAMO_EVENT_OPTIONS, readSupportedEvents } from './SambramoPartnerPreviewCard'
+import { SAMBRAMO_EVENT_OPTIONS, readSupportedEvents } from './SambramoPartnerPreviewCard'
+import { buildLegacyTradeListing, default as TradeCustomerPreviewScreen } from './pricing/TradeCustomerPreviewScreen'
+import PartnerMediaLinks from './pricing/PartnerMediaLinks'
+import StorefrontReadiness from './pricing/StorefrontReadiness'
+import './pricing/StorefrontReadiness.css'
 import { transactionLaneFor, transactionLaneCopy, TRANSACTION_LANES } from '../../lib/sambramoTransactionLane'
 
 const DEFAULT_UNITS = {
@@ -208,11 +212,13 @@ function inferTier(name) {
   return 'standard'
 }
 
-export default function TradePricingStudio({ vendor, service, config, onBack, onOpenListings, onboarding = false }) {
+export default function TradePricingStudio({ vendor, service, config, onBack, onOpenListings, onboarding = false, startPreview = false, priceLockedUntil = null }) {
   const [packages, setPackages] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [editor, setEditor] = useState(null)
+  const [previewLaunchHandled, setPreviewLaunchHandled] = useState(false)
+  const [launchEditorInPreview, setLaunchEditorInPreview] = useState(false)
 
   const load = useCallback(async () => {
     if (!service?.id) {
@@ -265,11 +271,23 @@ export default function TradePricingStudio({ vendor, service, config, onBack, on
 
   useEffect(() => { load() }, [load])
 
+  useEffect(() => {
+    if (!startPreview || previewLaunchHandled || loading) return
+    setPreviewLaunchHandled(true)
+    const pkg = packages.find(item => item.status === 'LIVE') ?? packages[0]
+    if (pkg) {
+      setLaunchEditorInPreview(true)
+      setEditor(normalizeLoaded(pkg, pkg.price, service, config))
+    }
+  }, [startPreview, previewLaunchHandled, loading, packages, service, config])
+
   function openNew(seed = null) {
+    setLaunchEditorInPreview(false)
     setEditor(seed ? { ...blankPackage(config, service), ...seed } : blankPackage(config, service))
   }
 
   function openTemplate(template) {
+    setLaunchEditorInPreview(false)
     const base = blankPackage(config, service)
     setEditor({
       ...base,
@@ -281,6 +299,7 @@ export default function TradePricingStudio({ vendor, service, config, onBack, on
   }
 
   function openExisting(pkg) {
+    setLaunchEditorInPreview(false)
     setEditor(normalizeLoaded(pkg, pkg.price, service, config))
   }
 
@@ -294,7 +313,10 @@ export default function TradePricingStudio({ vendor, service, config, onBack, on
         draft={editor}
         setDraft={setEditor}
         readOnly={false}
-        onBack={() => setEditor(null)}
+        previewOnly={launchEditorInPreview}
+        priceLockedUntil={priceLockedUntil}
+        initialStep={launchEditorInPreview ? 'preview' : 'package'}
+        onBack={() => { setEditor(null); setLaunchEditorInPreview(false); if (launchEditorInPreview) onBack?.() }}
         onboarding={onboarding}
         onSaved={async (result, status) => {
           await load()
@@ -387,8 +409,8 @@ export default function TradePricingStudio({ vendor, service, config, onBack, on
   )
 }
 
-function TradePackageEditor({ vendor, service, config, packages = [], draft, setDraft, readOnly, onBack, onSaved, onOpenListings, onboarding = false }) {
-  const [activeStep, setActiveStep] = useState('package')
+function TradePackageEditor({ vendor, service, config, packages = [], draft, setDraft, readOnly, onBack, onSaved, onOpenListings, onboarding = false, initialStep = 'package', previewOnly = false, priceLockedUntil = null }) {
+  const [activeStep, setActiveStep] = useState(initialStep)
   const [saving, setSaving] = useState(false)
   const [localError, setLocalError] = useState('')
   const [saveNotice, setSaveNotice] = useState('')
@@ -397,6 +419,8 @@ function TradePackageEditor({ vendor, service, config, packages = [], draft, set
   const [mediaOpen, setMediaOpen] = useState(false)
   const [mediaRefresh, setMediaRefresh] = useState(0)
   const [previewAction, setPreviewAction] = useState('')
+  const pricingLocked = !!priceLockedUntil && new Date(priceLockedUntil) > new Date()
+  const priceLockDays = pricingLocked ? Math.max(0, Math.ceil((new Date(priceLockedUntil).getTime() - Date.now()) / 86400000)) : 0
 
   const fields = useMemo(() => getTradePricingFields(config), [config])
   const units = unitsFor(config)
@@ -647,20 +671,27 @@ function TradePackageEditor({ vendor, service, config, packages = [], draft, set
   return (
     <div className="trade-pricing-screen w-full min-w-0 pb-[calc(9rem+env(safe-area-inset-bottom))]">
       <header className="trade-pricing-editor-header">
-        <button type="button" onClick={goPrevious} aria-label={activeStep === 'package' ? 'Back to pricing list' : 'Previous step'} className="trade-pricing-back">
+        <button type="button" onClick={previewOnly ? onBack : goPrevious} aria-label={previewOnly ? 'Back to listing details' : activeStep === 'package' ? 'Back to pricing list' : 'Previous step'} className="trade-pricing-back">
           <ChevronLeft size={21} />
         </button>
         <div className="min-w-0 flex-1">
           <p className="trade-pricing-overline">Pricing · {config.name}</p>
           <h1>{draft.name || service?.name || 'New package'}</h1>
         </div>
-        <button type="button" onClick={() => setActiveStep('preview')} aria-label="Customer preview" className="trade-pricing-eye">
-          <Eye size={20} />
-        </button>
+        {!previewOnly ? <button type="button" onClick={() => setActiveStep('preview')} aria-label="Customer preview" className="trade-pricing-eye"><Eye size={20} /></button> : null}
       </header>
 
-      <StepRail activeStep={activeStep} ready={ready} onSelect={goTo} />
+      {!previewOnly ? <StepRail activeStep={activeStep} ready={ready} onSelect={goTo} /> : null}
 
+      {pricingLocked && !previewOnly && (
+        <section className="flex items-start gap-2.5 rounded-2xl bg-plum-50 p-3.5 ring-1 ring-plum-100">
+          <Lock size={16} className="mt-0.5 shrink-0 text-plum-700" />
+          <div>
+            <p className="text-[12.5px] font-extrabold text-plum-950">Price editing is temporarily locked</p>
+            <p className="mt-0.5 text-[11.5px] leading-relaxed text-ink/60">Regular price changes reopen in {priceLockDays} day{priceLockDays === 1 ? '' : 's'}. Profile details, descriptions and booking terms can still be updated now.</p>
+          </div>
+        </section>
+      )}
       {localError ? <section className="trade-pricing-error">{localError}</section> : null}
       {saveNotice ? <section role="status" aria-live="polite" className="trade-pricing-save-success"><Check size={16} /><span>{saveNotice}</span></section> : null}
       {localError ? <section role="alert" aria-live="assertive" className="trade-pricing-save-error"><Info size={16} /><span>{localError}</span></section> : null}
@@ -685,25 +716,25 @@ function TradePackageEditor({ vendor, service, config, packages = [], draft, set
       ) : null}
 
       {activeStep === 'pricing' ? (
-        <PricingStep config={config} units={units} draft={draft} readOnly={readOnly} onUpdate={update} />
+        <PricingStep config={config} units={units} draft={draft} readOnly={readOnly || pricingLocked} onUpdate={update} />
       ) : null}
 
       {activeStep === 'addons' ? (
-        <AddonsStep config={config} addons={addons} suggestions={addonSuggestions} readOnly={readOnly} onAdd={addAddon} onUpdate={updateAddon} onRemove={removeAddon} />
+        <AddonsStep config={config} addons={addons} suggestions={addonSuggestions} readOnly={readOnly || pricingLocked} onAdd={addAddon} onUpdate={updateAddon} onRemove={removeAddon} />
       ) : null}
 
       {activeStep === 'preview' ? (
-        <PreviewStep vendor={vendor} service={service} packages={packages} config={config} draft={draft} fields={fields} addons={addons} media={media} onOpenListings={onOpenListings} onManageMedia={() => setMediaOpen(true)} onPreviewAction={message => setPreviewAction(message)} onEditStep={goTo} />
+        <PreviewStep vendor={vendor} service={service} packages={packages} config={config} draft={draft} fields={fields} addons={addons} media={media} onPreviewAction={message => setPreviewAction(message)} onEditStep={previewOnly ? undefined : goTo} onClosePreview={previewOnly ? onBack : () => setActiveStep('package')} />
       ) : null}
 
-      {!readOnly && isPreview ? (
+      {!readOnly && !previewOnly && isPreview ? (
         <div className="trade-pricing-review-summary">
           <strong>{validation.length ? validation.length + ' required ' + (validation.length === 1 ? 'item' : 'items') + ' remaining' : 'Ready for Sambramo review'}</strong>
           <span>{validation.length ? 'Tap Submit to see exactly what needs to be completed.' : 'All mandatory pricing inputs are complete.'}</span>
         </div>
       ) : null}
 
-      {!readOnly ? (
+      {!readOnly && !previewOnly ? (
         <div className="trade-pricing-bottom">
           <button type="button" data-pricing-action="save-draft" onClick={() => save('DRAFT')} disabled={saving} aria-disabled={saving} className="trade-pricing-secondary-action">
             {saving ? 'Saving…' : 'Save draft'}
@@ -1029,37 +1060,22 @@ function AddonsStep({ config, addons, suggestions, readOnly, onAdd, onUpdate, on
   )
 }
 
-function PreviewStep({ vendor, service, config, packages = [], draft, fields, addons, media, onManageMedia, onPreviewAction, onEditStep }) {
-  const action = message => onPreviewAction?.(message)
+function PreviewStep({ vendor, service, config, packages = [], draft, fields, addons, media, onPreviewAction, onClosePreview }) {
+  const listing = useMemo(
+    () => buildLegacyTradeListing({ vendor, service, config, draft, packages, addons, fields }),
+    [vendor, service, config, draft, packages, addons, fields],
+  )
   return (
-    <section className="trade-pricing-panel trade-step-preview sambramo-preview-page">
-      <div className="sambramo-preview-toolbar">
-        <div className="min-w-0">
-          <p className="trade-pricing-overline">Partner preview · customer storefront</p>
-          <h2>Preview your customer-facing catalog</h2>
-          <p>The card below is generated from the package, event types, pricing, inclusions, add-ons and approved portfolio media you have entered.</p>
-        </div>
-        <button type="button" onClick={onManageMedia} className="sambramo-preview-manage">
-          <Images size={16} /> Manage media
-        </button>
-      </div>
-      <SambramoPartnerPreviewCard
-        vendor={vendor}
-        service={service}
-        config={config}
-        draft={draft}
-        packages={packages}
-        addons={addons}
-        media={media}
-        onEdit={step => onEditStep?.(step)}
-        onManageMedia={value => {
-          if (value === 'back') action('Preview stays on this pricing step.')
-          else if (value === 'events') onEditStep?.('details')
-          else if (String(value || '').startsWith('addon:')) onEditStep?.('addons')
-          else onManageMedia?.()
-        }}
-      />
-    </section>
+    <TradeCustomerPreviewScreen
+      vendor={vendor}
+      service={service}
+      config={config}
+      tradeName={config?.name || service?.category || service?.name}
+      listing={listing}
+      media={media}
+      onClose={onClosePreview}
+      onAction={onPreviewAction}
+    />
   )
 }
 

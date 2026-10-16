@@ -24,7 +24,7 @@ export function tradePictogramIcon(trade) {
   return props => <SambramoTradePictogram trade={trade} {...props} />
 }
 
-export default function SambramoTradePictogram({ trade, size = 'md', className = '', showSparkle = false, title = true }) {
+export default function SambramoTradePictogram({ trade, size = 'md', className = '', showSparkle = false, title = true, centerCrop = false }) {
   const canonical = useMemo(() => canonicalTrade(trade), [trade])
   const index = useMemo(() => SAMBRAMO_RASTER_TRADES.indexOf(canonical), [canonical])
   const safeIndex = index >= 0 ? index : 0
@@ -34,9 +34,11 @@ export default function SambramoTradePictogram({ trade, size = 'md', className =
     '--sambramo-raster-image': `url(${SAMBRAMO_RASTER_SPRITE})`,
     '--sambramo-raster-x': `${(col / 6) * 100}%`,
     '--sambramo-raster-y': `${(row / 4) * 100}%`,
+    '--sambramo-raster-center-x': `${((col + 0.15) / 6.3) * 100}%`,
+    '--sambramo-raster-center-y': `${((row + 0.15) / 4.3) * 100}%`,
   }), [col, row])
   return (
-    <span className={'sambramo-trade-pictogram sambramo-trade-pictogram-' + size + ' ' + className}
+    <span className={'sambramo-trade-pictogram sambramo-trade-pictogram-' + size + (centerCrop ? ' sambramo-trade-pictogram-center-crop' : '') + ' ' + className}
       data-trade-pictogram={canonical || 'trade'}
       data-pictogram-index={String(safeIndex + 1)}
       data-pictogram-asset={`sambramo-raster-34-${String(safeIndex + 1).padStart(2, '0')}`}

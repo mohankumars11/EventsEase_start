@@ -1,0 +1,92 @@
+{
+  "version": 1,
+  "note": "Food-category taxonomy (Catering spec doc 2, section 4, A–M) mapped to the menu course groups (doc 1, Part 10.4). Breakfast and traditional meal components are course groups of their own because breakfast and banana-leaf menus are built from them.",
+  "course_groups": [
+    ["welcome_drinks", "Welcome Drinks"], ["soups", "Soups"], ["starters", "Starters"], ["chaat", "Chaat"],
+    ["live_counters", "Live Counters"], ["breakfast", "Breakfast & Tiffin"], ["main_gravies", "Main-Course Gravies"],
+    ["dry_dishes", "Dry Dishes"], ["dal", "Dal / Lentils"], ["rice_biryani", "Rice and Biryani"], ["breads", "Indian Breads"],
+    ["meal_components", "Traditional Meal Components"], ["accompaniments", "Accompaniments"], ["salads", "Salads"],
+    ["desserts", "Desserts and Sweets"], ["frozen_desserts", "Ice Cream / Frozen Desserts"],
+    ["refreshments", "Tea / Coffee / Refreshments"], ["other", "Other"]
+  ],
+  "parents": [
+    { "id": "beverages", "name": "Welcome drinks and beverages", "course": "welcome_drinks", "children": [
+      ["bev_fresh_juice", "Fresh Juices"], ["bev_packaged_juice", "Packaged Juices"], ["bev_fruit_drinks", "Fruit-Based Drinks"],
+      ["bev_traditional", "Traditional Indian Drinks"], ["bev_buttermilk_lassi", "Buttermilk and Lassi"], ["bev_coconut", "Coconut-Based Drinks"],
+      ["bev_lemon", "Lemon-Based Drinks"], ["bev_mocktail", "Mocktails"], ["bev_signature", "Non-Alcoholic Signature Drinks"],
+      ["bev_tea", "Tea", "refreshments"], ["bev_coffee", "Coffee", "refreshments"], ["bev_filter_coffee", "Traditional Filter Coffee", "refreshments"],
+      ["bev_hot_chocolate", "Hot Chocolate", "refreshments"], ["bev_milk", "Milk-Based Drinks"], ["bev_herbal", "Herbal Drinks", "refreshments"],
+      ["bev_smoothie", "Smoothies"], ["bev_shake", "Shakes"], ["bev_water", "Bottled Water", "refreshments"], ["bev_other", "Other Beverages"]
+    ]},
+    { "id": "breakfast", "name": "Breakfast and tiffin", "course": "breakfast", "children": [
+      ["bf_idli", "Idli"], ["bf_dosa", "Dosa"], ["bf_uttapam", "Uttapam"], ["bf_vada", "Vada"], ["bf_pongal", "Pongal"],
+      ["bf_upma", "Upma"], ["bf_poha", "Poha"], ["bf_pesarattu", "Pesarattu"], ["bf_appam", "Appam"], ["bf_puttu", "Puttu"],
+      ["bf_adai", "Adai"], ["bf_poori", "Poori"], ["bf_paratha", "Paratha"], ["bf_chole_bhature", "Chole Bhature"],
+      ["bf_pav_bhaji", "Pav Bhaji"], ["bf_regional", "Traditional Regional Breakfasts"], ["bf_combo", "Breakfast Combos"], ["bf_other", "Other Breakfast Items"]
+    ]},
+    { "id": "soups", "name": "Soups and broths", "course": "soups", "children": [
+      ["sp_clear", "Clear Soups"], ["sp_cream", "Cream Soups"], ["sp_vegetable", "Vegetable Soups"], ["sp_mushroom", "Mushroom Soups"],
+      ["sp_tomato", "Tomato Soups"], ["sp_sweet_corn", "Sweet Corn Soups"], ["sp_asian", "Asian Soups"], ["sp_indian_broth", "Traditional Indian Broths"],
+      ["sp_rasam", "Rasam"], ["sp_regional", "Regional Soups"], ["sp_nonveg", "Chicken / Mutton / Seafood Soups"], ["sp_other", "Other Soups"]
+    ]},
+    { "id": "starters", "name": "Starters and appetizers", "course": "starters", "children": [
+      ["st_vegetable", "Vegetable Starters"], ["st_paneer", "Paneer Starters"], ["st_mushroom", "Mushroom Starters"], ["st_corn", "Corn Starters"],
+      ["st_potato", "Potato Starters"], ["st_tandoori", "Tandoori Starters"], ["st_kebab", "Kebab"], ["st_tikka", "Tikka"], ["st_cutlet", "Cutlets"],
+      ["st_pakoda", "Pakoda / Bhaji"], ["st_fritter", "Fritters"], ["st_spring_roll", "Spring Rolls"], ["st_manchurian", "Manchurian"],
+      ["st_crispy", "Crispy Fried Items"], ["st_chicken", "Chicken Starters"], ["st_mutton", "Mutton Starters"], ["st_fish", "Fish Starters"],
+      ["st_seafood", "Seafood Starters"], ["st_egg", "Egg Starters"], ["st_regional", "Regional Appetizers"], ["st_other", "Other Starters"]
+    ]},
+    { "id": "chaat", "name": "Chaat and street food", "course": "chaat", "children": [
+      ["ch_pani_puri", "Pani Puri / Golgappa"], ["ch_sev_puri", "Sev Puri"], ["ch_bhel", "Bhel Puri"], ["ch_dahi_puri", "Dahi Puri"],
+      ["ch_papdi", "Papdi Chaat"], ["ch_tikki", "Aloo Tikki Chaat"], ["ch_samosa", "Samosa Chaat"], ["ch_dahi_bhalla", "Dahi Bhalla"],
+      ["ch_kachori", "Kachori"], ["ch_pav", "Vada Pav / Misal Pav / Pav Bhaji"], ["ch_bajji", "Bajji / Bonda"], ["ch_regional", "Regional Street Food"], ["ch_other", "Other Chaat"]
+    ]},
+    { "id": "gravies", "name": "Main-course gravies and curries", "course": "main_gravies", "children": [
+      ["gr_paneer", "Paneer Curries"], ["gr_vegetable", "Vegetable Curries"], ["gr_mushroom", "Mushroom Curries"], ["gr_kofta", "Kofta Curries"],
+      ["gr_dal", "Dal Preparations", "dal"], ["gr_sambar", "Sambar / Kuzhambu / Huli", "dal"], ["gr_north", "North Indian Gravies"],
+      ["gr_south", "South Indian Gravies"], ["gr_andhra", "Andhra / Telangana Curries"], ["gr_kerala", "Kerala Curries"],
+      ["gr_bengali", "Bengali / Odia Curries"], ["gr_chicken", "Chicken Curries"], ["gr_mutton", "Mutton Curries"], ["gr_fish", "Fish Curries"],
+      ["gr_prawn", "Prawn Curries"], ["gr_egg", "Egg Curries"], ["gr_other", "Other Curries"]
+    ]},
+    { "id": "dry", "name": "Dry dishes and stir-fries", "course": "dry_dishes", "children": [
+      ["dr_poriyal", "Vegetable Poriyal / Palya / Thoran"], ["dr_sabzi", "Sabzi"], ["dr_paneer", "Paneer Dry Preparations"],
+      ["dr_mushroom", "Mushroom Preparations"], ["dr_potato", "Potato Preparations"], ["dr_regional_fry", "Regional Vegetable Fries"],
+      ["dr_chicken", "Chicken Fry"], ["dr_mutton", "Mutton Fry"], ["dr_fish", "Fish Fry"], ["dr_seafood", "Seafood Fry"], ["dr_other", "Other Dry Dishes"]
+    ]},
+    { "id": "rice", "name": "Rice, biryani and grains", "course": "rice_biryani", "children": [
+      ["rc_steamed", "Steamed Rice"], ["rc_regional", "Regional Rice Preparations"], ["rc_flavoured", "Flavoured Rice (Jeera / Lemon / Coconut / Tamarind / Tomato)"],
+      ["rc_curd", "Curd Rice"], ["rc_pulao", "Pulao"], ["rc_biryani", "Biryani"], ["rc_dum_biryani", "Dum Biryani"], ["rc_regional_biryani", "Regional Biryani"],
+      ["rc_fried_rice", "Fried Rice"], ["rc_millet", "Millet-Based Rice Dishes"], ["rc_khichdi", "Khichdi / Pongal"], ["rc_other", "Other Rice"]
+    ]},
+    { "id": "breads", "name": "Breads and flatbreads", "course": "breads", "children": [
+      ["br_chapati", "Chapati / Phulka / Roti"], ["br_tandoori", "Tandoori Roti"], ["br_naan", "Naan"], ["br_kulcha", "Kulcha"],
+      ["br_paratha", "Paratha"], ["br_poori", "Poori / Bhatura"], ["br_appam", "Appam"], ["br_parotta", "Malabar Parotta"],
+      ["br_neer_dosa", "Neer Dosa"], ["br_rotti", "Akki Roti / Jolada Rotti / Regional Rotis"], ["br_other", "Other Breads"]
+    ]},
+    { "id": "meals", "name": "Traditional meals and meal components", "course": "meal_components", "children": [
+      ["ml_karnataka", "Karnataka Traditional Meals"], ["ml_north_karnataka", "North Karnataka Meals"], ["ml_udupi", "Udupi Meals"],
+      ["ml_tamil", "Tamil Meals"], ["ml_sadya", "Kerala Sadya"], ["ml_andhra", "Andhra Meals"], ["ml_telangana", "Telangana Meals"],
+      ["ml_gujarati", "Gujarati Thali"], ["ml_rajasthani", "Rajasthani Thali"], ["ml_maharashtrian", "Maharashtrian Thali"],
+      ["ml_north_indian", "North Indian Thali"], ["ml_bengali", "Bengali Meals"], ["ml_banana_leaf", "Banana-Leaf Meals"],
+      ["ml_wedding", "Wedding Meals"], ["ml_festival", "Festival Meals"], ["ml_component", "Meal Components (Huli, Saaru, Kootu…)"], ["ml_other", "Other Meals"]
+    ]},
+    { "id": "accompaniments", "name": "Accompaniments", "course": "accompaniments", "children": [
+      ["ac_chutney", "Chutneys"], ["ac_pickle", "Pickles"], ["ac_raita", "Raita", "accompaniments"], ["ac_papad", "Papad"],
+      ["ac_salad", "Salads", "salads"], ["ac_kosambari", "Kosambari", "salads"], ["ac_pachadi", "Pachadi"], ["ac_thogayal", "Thogayal"],
+      ["ac_podi", "Podis"], ["ac_dip", "Dips"], ["ac_sauce", "Sauces"], ["ac_yogurt", "Yogurt-Based Accompaniments"], ["ac_other", "Other Accompaniments"]
+    ]},
+    { "id": "desserts", "name": "Desserts, sweets and frozen desserts", "course": "desserts", "children": [
+      ["ds_halwa", "Halwa"], ["ds_laddu", "Laddu"], ["ds_barfi", "Barfi"], ["ds_peda", "Peda"], ["ds_mysore_pak", "Mysore Pak"],
+      ["ds_holige", "Holige / Obbattu"], ["ds_payasam", "Payasam / Kheer"], ["ds_syrup", "Gulab Jamun / Rasgulla / Rasmalai"],
+      ["ds_jalebi", "Jalebi"], ["ds_milk", "Rabri / Basundi / Shrikhand / Phirni"], ["ds_bengali", "Sandesh / Chhena Poda"],
+      ["ds_festival", "Regional Festival Sweets"], ["ds_bakery", "Cakes / Pastries / Brownies / Cookies"], ["ds_pudding", "Puddings"],
+      ["ds_ice_cream", "Ice Cream", "frozen_desserts"], ["ds_kulfi", "Kulfi", "frozen_desserts"], ["ds_sorbet", "Sorbet", "frozen_desserts"],
+      ["ds_fruit", "Fruit-Based Desserts"], ["ds_other", "Other Desserts"]
+    ]},
+    { "id": "additional", "name": "Additional categories", "course": "other", "children": [
+      ["ad_kids", "Kids' Meals"], ["ad_packed", "Packed Meals"], ["ad_lunch_box", "Lunch Boxes"], ["ad_corporate_box", "Corporate Meal Boxes"],
+      ["ad_dietary", "Dietary-Specific Meals"], ["ad_millet", "Millet-Based Meals"], ["ad_vegan", "Vegan Meals"], ["ad_jain", "Jain Meals"],
+      ["ad_live_counter", "Live-Counter Dishes", "live_counters"], ["ad_seasonal", "Seasonal / Festival Dishes"], ["ad_other", "Other"]
+    ]}
+  ]
+}

@@ -41,6 +41,7 @@ export default async function handler(req, res) {
     generated: !!l.generated,
     generated_unit_paise: l.generated_unit_paise != null ? Math.round(Number(l.generated_unit_paise)) : null,
     is_estimate: !!l.is_estimate,
+    is_discount: !!l.is_discount,
     estimate_note: l.is_estimate ? String(l.estimate_note ?? '').trim().slice(0, 300) || null : null,
   })) : null
   if (lines) {
@@ -48,7 +49,8 @@ export default async function handler(req, res) {
     if (lines.some(l => l.is_estimate && !l.estimate_note)) return res.status(400).json({ error: 'Explain each line marked as an estimate.' })
   }
   const partnerAmountPaise = lines
-    ? Math.round(lines.filter(l => l.charged).reduce((t, l) => t + l.quantity * l.unit_take_home_paise, 0))
+    // A discount line subtracts; the quote can never go below zero.
+    ? Math.max(0, Math.round(lines.filter(l => l.charged).reduce((t, l) => t + (l.is_discount ? -1 : 1) * l.quantity * l.unit_take_home_paise, 0)))
     : money(body.partnerAmountPaise)
   if (!quoteRequestId || (body.decline !== true && partnerAmountPaise <= 0)) return res.status(400).json({ error: 'Quote request and positive partner quote are required.' })
 
@@ -86,7 +88,7 @@ export default async function handler(req, res) {
      event may be outside the partner's area, so the distance re-match does
      not apply; the date and capacity are re-checked under the partner lock
      when the customer accepts (book_accepted_quote). */
-  const directed = String(request.canonical_demand?.engine ?? '').startsWith('anchor')
+  const directed = /^(anchor|trades)-engine/.test(String(request.canonical_demand?.engine ?? ''))
   const location = request.service_location && typeof request.service_location === 'object'
     ? request.service_location : {}
   const lat = Number(location.lat)
@@ -117,7 +119,14 @@ export default async function handler(req, res) {
 
   }
 
-  const customerAmountPaise = Math.max(partnerAmountPaise + 100, Math.round(partnerAmountPaise / (1 - FEE_RATE)))
+  /* A directed quote (from the trades engine) is charged at its trade's own
+     fee policy, like the instant price would have been; others keep 8%. */
+  let feeRate = FEE_RATE
+  if (directed) {
+    const { data: tf } = await db.rpc('sambramo_trade_fee', { p_trade: request.canonical_demand?.tradeName ?? tradeNameFor(request.trade_id) ?? request.trade_id })
+    if (Number(tf) > 0 && Number(tf) < 0.5) feeRate = Number(tf)
+  }
+  const customerAmountPaise = Math.max(partnerAmountPaise + 100, Math.round(partnerAmountPaise / (1 - feeRate)))
   const platformFeePaise = customerAmountPaise - partnerAmountPaise
   // A directed quote is for a planned event: give the customer two days, not minutes.
   const acceptMinutes = directed ? 48 * 60 : CUSTOMER_ACCEPT_MINUTES
@@ -135,7 +144,7 @@ export default async function handler(req, res) {
       quote_valid_until: validUntil,
       notes: String(body.notes ?? '').trim().slice(0, 4000) || null,
       customer_amount_paise: customerAmountPaise,
-      platform_fee_rate: FEE_RATE,
+      platform_fee_rate: feeRate,
       platform_fee_paise: platformFeePaise,
       pricing_version: VERSION,
       status: 'SUBMITTED',

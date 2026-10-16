@@ -113,7 +113,7 @@ await esbuild.build({
      page loads it as a module. */
   format: 'esm',
   jsx: 'automatic',
-  loader: { '.js': 'jsx', '.jsx': 'jsx' },
+  loader: { '.js': 'jsx', '.jsx': 'jsx', '.svg': 'dataurl', '.png': 'dataurl' },
   resolveExtensions: ['.jsx', '.js', '.ts', '.tsx', '.json'],
   define: {
     'process.env.NODE_ENV': '"production"',
@@ -144,7 +144,14 @@ const html = `<!doctype html><meta charset="utf-8">
 
 const server = createServer((req, res) => {
   const url = req.url.split('?')[0]
-  if (url === '/app.css') { res.setHeader('content-type', 'text/css'); return res.end(readFileSync(cssPath)) }
+  /* The main sheet, then every lazy chunk's own sheet (e.g. the trade
+     pictograms): the app loads those with their chunk, the harness has no
+     chunks, so without them a component renders unstyled here and only here. */
+  if (url === '/app.css') {
+    res.setHeader('content-type', 'text/css')
+    const chunks = readdirSync(distAssets).filter(n => n.endsWith('.css') && n !== cssName).map(n => readFileSync(join(distAssets, n)))
+    return res.end(Buffer.concat([readFileSync(cssPath), ...chunks]))
+  }
   if (url === '/bundle.js') { res.setHeader('content-type', 'text/javascript'); return res.end(readFileSync(bundle)) }
   res.setHeader('content-type', 'text/html'); res.end(html)
 })

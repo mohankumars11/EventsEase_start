@@ -4,7 +4,7 @@
  * dashboard body failed — this finds the file.
  */
 import React from 'react'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, useLocation } from 'react-router-dom'
 import { ToastProvider } from '../../src/context/ToastContext'
 import Earnings from '../../src/components/vendor/Earnings'
 import JobAlerts from '../../src/components/vendor/JobAlerts'
@@ -40,6 +40,17 @@ const CASES = [
   ['VendorAvailability', <VendorAvailability vendor={{ id: 'v', weekly_days_off: [], accepting_bookings: true }} availability={{}} onSetDay={() => {}} onSetRange={() => {}} onClearDays={() => {}} onSaveRules={() => {}} />],
 ]
 
+/* Publishes the router's current path onto <body> so the interaction
+   assertions below can read it without a route table. A navigate() into
+   a MemoryRouter with no matching <Route> renders nothing and throws
+   nothing, so without this a broken onPick and a working one look
+   identical. */
+function LocationProbe() {
+  const { pathname } = useLocation()
+  React.useEffect(() => { document.body.dataset.smokeLoc = pathname }, [pathname])
+  return null
+}
+
 export default function SmokeScenes() {
   /* ══════════════════════════════════════════════════════════════
      MOUNTING IS NOT WORKING
@@ -67,10 +78,22 @@ export default function SmokeScenes() {
       } else {
         card.click()
         setTimeout(() => {
-          if (!document.querySelector('[data-add-item-flow]')) {
-            console.error('SMOKE: VendorServiceList — tapping a trade opened nothing')
+          /* ── Tapping a trade now ROUTES, it does not mount a flow ──
+             This used to require [data-add-item-flow] to appear, because
+             the grid set `picking` and VendorServiceList rendered
+             AddItemFlow inline underneath itself. Commit 3cd117e replaced
+             that with direct trade routes — TradeGrid's onPick is now
+             `navigate(onboardPath(t))` (VendorServiceList.jsx:377) — so
+             the inline flow never mounts and this guard failed on every
+             run against the architecture it was written for.
+
+             The thing worth guarding did not change: tapping a trade has
+             to take the partner somewhere. So assert the destination. */
+          const loc = document.body.dataset.smokeLoc ?? ''
+          if (!/^\/partner\/onboard\/.+/.test(loc)) {
+            console.error(`SMOKE: VendorServiceList — tapping a trade went nowhere (at "${loc}")`)
           }
-          /* Close it again so the calendar underneath is reachable. */
+          /* Close anything that did open, so the calendar is reachable. */
           const close = document.querySelector('[data-add-item-flow] [aria-label="Close"]')
           close?.click()
 
@@ -105,6 +128,7 @@ export default function SmokeScenes() {
   }, [])
   return (
     <MemoryRouter>
+      <LocationProbe />
       <ToastProvider>
         <div id="smoke" style={{ width: 390, margin: '0 auto', padding: 12, font: '12px system-ui' }}>
           {CASES.map(([name, el]) => (

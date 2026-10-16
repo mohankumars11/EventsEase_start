@@ -14,7 +14,7 @@
 // forgotten regeneration is a broken build rather than a price that is
 // quietly out of date.
 //
-// inputs: 4f68f42b2a4871ed
+// inputs: 7740a92af4862351
 // src/data/servicePricing.js
 var SIZE_BANDS = [
   { upTo: 30, factor: 0.45 },
@@ -4447,7 +4447,12 @@ function partnerEarnings(quotedPaise, {
     /** Itemised for the breakdown sheet. Order matches how it is read. */
     lines: [
       { id: "gross", label: "Job value", paise: gross, sign: "+" },
-      { id: "fee", label: "Platform fee", paise: -fee, sign: "-", note: `${Math.round(feeRate * 100)}%` },
+      /* The rate itself is not printed. This line used to carry
+         note: `${Math.round(feeRate * 100)}%`, which rendered "8%" on
+         the partner's own earnings sheet -- the one number the pricing
+         brief says a partner screen must not state. The amount stays,
+         because a deduction a partner cannot see is worse. */
+      { id: "fee", label: "Platform & coordination fee", paise: -fee, sign: "-" },
       { id: "tcs", label: "TCS (GST)", paise: -tcs, sign: "-", note: "deposited for you" },
       {
         id: "tds",
@@ -5031,7 +5036,7 @@ function priceLogisticsLine({ serviceId, demand = {} }) {
     basis: { version: LOGISTICS_PRICE_BOOK_VERSION, engine: "sambramo-logistics-deterministic-v1", serviceId, input: demand, components, roundedInr: rounded }
   };
 }
-function platformSplit(amountPaise, feeRate = 0.15) {
+function platformSplit(amountPaise, feeRate = 0.08) {
   const gross = Math.max(0, Number(amountPaise) || 0);
   const fee = Math.round(gross * Number(feeRate));
   return { grossPaise: gross, platformFeePaise: fee, partnerPaise: gross - fee };

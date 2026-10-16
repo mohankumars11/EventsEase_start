@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useSheetLock } from '../../hooks/useSheetLock'
 import { X, Loader2, Check, Repeat } from 'lucide-react'
 import { istTodayISO } from '../../lib/istTime'
 import { CheckedInput, fails, focusFirstInvalid } from './FieldCheck'
@@ -51,6 +52,8 @@ export default function RecurringAvailability({
   onSave,
   onClose,
 }) {
+  useSheetLock(true, onClose)
+
   const today = istTodayISO()
 
   /* Seed from whatever is in force today. A weekday with no rule is
@@ -119,10 +122,10 @@ export default function RecurringAvailability({
   return (
     <>
       <div onClick={onClose} aria-hidden="true"
-           className="fixed inset-0 z-40 bg-ink/40 transition-opacity" />
+           className="fixed inset-0 z-[90] bg-ink/40 transition-opacity" />
       <section
         role="dialog" aria-modal="true" aria-label="Recurring availability"
-        className="fixed inset-x-0 bottom-0 z-50 max-h-[88vh] overflow-y-auto rounded-t-[26px] bg-white pb-[max(env(safe-area-inset-bottom),18px)] shadow-2xl sm:inset-x-auto sm:left-1/2 sm:bottom-auto sm:top-1/2 sm:-ml-[230px] sm:mt-[-46vh] sm:w-[460px] sm:rounded-[26px]"
+        className="fixed inset-x-0 bottom-0 z-[91] max-h-[88dvh] overflow-y-auto overscroll-contain rounded-t-[26px] bg-white pb-[max(env(safe-area-inset-bottom),18px)] shadow-2xl sm:inset-x-auto sm:left-1/2 sm:bottom-auto sm:top-1/2 sm:-ml-[230px] sm:mt-[-46vh] sm:w-[460px] sm:rounded-[26px]"
       >
         <div className="sticky top-0 z-10 rounded-t-[26px] bg-white px-4 pb-2 pt-3">
           <div className="mx-auto mb-2.5 h-1 w-10 rounded-full bg-ink/15 sm:hidden" />

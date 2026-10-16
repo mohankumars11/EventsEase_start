@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Landmark, Smartphone, Check, Loader2, ShieldCheck, AlertTriangle } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
-import { BANKS, bankForCode, codeForBank } from '../../data/indianBanks'
-import { lookupIfsc, looksLikeIfsc } from '../../lib/ifsc'
+import { bankForCode, codeForBank } from '../../data/indianBanks'
+import { looksLikeIfsc } from '../../lib/ifsc'
+import BankPicker, { useIfscLookup } from './bank/BankPicker'
 import { last4 } from '../../lib/documents/mask'
 import { normalise } from '../../lib/validation/fieldRules'
 import { useFieldCheck, FieldMessage, useServerErrors, focusFirstInvalid, anyError } from '../partner/FieldCheck'
@@ -63,10 +64,6 @@ export default function PayoutDetails({ vendorId, onSaved }) {
   const [accNo2, setAccNo2] = useState('')
   const [pan, setPan] = useState('')
 
-  /* What the IFSC service said. Its own state rather than folded into
-     the form: it is evidence about what was typed, not a value. */
-  const [branch, setBranch] = useState(null)
-  const [checking, setChecking] = useState(false)
 
   useEffect(() => {
     if (!vendorId) return
@@ -92,28 +89,10 @@ export default function PayoutDetails({ vendorId, onSaved }) {
     return () => { dead = true }
   }, [vendorId])
 
-  /* The lookup, debounced, and only once the shape is right. */
-  const timer = useRef()
-  useEffect(() => {
-    clearTimeout(timer.current)
-    setBranch(null)
-    const code = ifsc.trim().toUpperCase()
-    if (!looksLikeIfsc(code)) { setChecking(false); return }
-
-    setChecking(true)
-    timer.current = setTimeout(async () => {
-      const r = await lookupIfsc(code)
-      setChecking(false)
-      setBranch(r)
-      // A partner who typed the code before picking the bank should not
-      // then have to pick it — the code already said which bank it is.
-      if (r.ok && !bank) {
-        const known = BANKS.find(b => b.name === r.bank)
-        if (known) setBank(known.name)
-      }
-    }, 450)
-    return () => clearTimeout(timer.current)
-  }, [ifsc, bank])
+  /* What the IFSC service said — evidence about what was typed, not a
+     value. The lookup (debounced, Razorpay's IFSC service) is shared with
+     the onboarding step: components/vendor/bank/BankPicker. */
+  const { branch, checking } = useIfscLookup(ifsc, bank, setBank)
 
   /* Does the code belong to the bank that was picked? */
   const bankMismatch = useMemo(() => {
@@ -248,14 +227,7 @@ export default function PayoutDetails({ vendorId, onSaved }) {
         <div className="mt-4 space-y-3.5">
           <div>
             <label className="label" htmlFor="po-bank">Your bank</label>
-            <select
-              id="po-bank" className="input"
-              value={bank}
-              onChange={e => { setBank(e.target.value); setSaved(false) }}
-            >
-              <option value="">Choose your bank…</option>
-              {BANKS.map(b => <option key={b.code} value={b.name}>{b.name}</option>)}
-            </select>
+            <BankPicker value={bank} onChange={v => { setBank(v); setSaved(false) }} />
           </div>
 
           <div>

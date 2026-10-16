@@ -4,7 +4,7 @@ import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   ClipboardList, CalendarDays, LayoutDashboard, UserCog,
   Loader2, AlertCircle,
-  Bell, IndianRupee, Calculator, Eye, Sparkles, Store,
+  Bell, IndianRupee, Calculator, Eye, Sparkles, Store, Plus,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { BRAND } from '../../config/sambramo'
@@ -26,17 +26,19 @@ import CustomQuoteInbox from '../../components/vendor/CustomQuoteInbox'
 import JobsHeader from '../../components/partner/JobsHeader'
 import ReviewCountdown from '../../components/partner/ReviewCountdown'
 import JobsStats from '../../components/partner/JobsStats'
+import PartnerStories from '../../components/partner/PartnerStories'
 import { unreadNotificationCount } from '../../lib/partnerInbox'
 import UpcomingWeek from '../../components/partner/UpcomingWeek'
 import AttentionSummary from '../../components/partner/AttentionSummary'
 import PartnerGrowthCarousel from '../../components/partner/PartnerGrowthCarousel'
-import PartnerStoryViewer from '../../components/partner/PartnerStoryViewer'
 import PartnerHowItWorks from '../../components/partner/PartnerHowItWorks'
 import CalendarMonth from '../../components/partner/CalendarMonth'
 import { usePartnerAttention } from '../../hooks/usePartnerAttention'
 import { usePendingPartnerReferral } from '../../hooks/usePendingPartnerReferral'
 import { useAccountScreens } from '../../hooks/useAccountScreens'
 import { PARTNER_TERMS_VERSION } from '../../config/partnerTerms'
+import SubmittedCard from '../../components/partner/SubmittedCard'
+import { onboardPath } from '../../lib/tradeRoutes'
 
 /**
  * The partner's console.
@@ -305,25 +307,26 @@ export default function VendorDashboard() {
   }
 
   return (
-    /* ── Clear the tab bar, and only the tab bar ──────────────────────
-       This was `pb-28` -- 112px, a round number picked by eye. The bar
-       actually measures ~63px (py-2 + pt-2.5 around a 28px icon and its
-       label) plus whatever the gesture bar needs, which it adds to
-       itself as `env(safe-area-inset-bottom)`.
+    /* ── Clearing the tab bar is PartnerAppShell's job, not this one ──
+       This used to carry pb-[calc(76px+env(safe-area-inset-bottom))].
+       PartnerAppShell already pays calc(68px + the same inset) on the
+       <main> that wraps this screen, and its header says so in as many
+       words: "Set here and nowhere else — a screen that adds its own
+       gets double the gap." This was that screen, so every partner tab
+       reserved ~144px of dead strip.
 
-       So 112px was ~36px of dead space under every tab, on all four of
-       them, and it did not track the gesture bar: on a phone without one
-       it was too much, and the constant would have had to change to stay
-       right on one with a taller inset.
-
-       68px + 8px of breathing room, plus the same inset the bar uses, is
-       the height of the thing being cleared rather than a guess at it.
+       It mattered more after viewport-fit=cover: until then the inset
+       resolved to 0 on both, and the doubling was a flat 144px. Now each
+       one adds the real gesture inset too.
 
        ── And one width, only on Earnings ───────────────────────────────
        Earnings is the only tab with a desktop layout: a two-column
        dashboard needs more than 1024px to be worth having, and every
        other tab is a phone column by design. */
-    <div className={`${tab === 'earnings' ? 'lg:max-w-6xl' : ''} max-w-5xl mx-auto px-4 pt-4 pb-[calc(76px+env(safe-area-inset-bottom,0px))] sm:px-6 sm:pt-5`}>
+    <div
+      className={`${tab === 'earnings' ? 'lg:max-w-6xl' : ''} max-w-5xl mx-auto px-4 sm:px-6`}
+      style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 16px)' }}
+    >
 
       {/* Above the header, above the tabs, above everything.
           A master opens this app because something is happening or to
@@ -401,12 +404,17 @@ export default function VendorDashboard() {
           status bar. Nothing may be rendered ABOVE this on the Jobs tab:
           `-mt-4` pulls the header up over whatever precedes it, so a
           sibling above gets dragged half off the top edge with its
-          corners clipped. The review countdown was doing exactly that.
-          Its clock now lives inside the header's own status pill. */}
+          corners clipped. The review countdown was doing exactly that,
+          which is why it renders BELOW, in the content column.
+
+          It does not live in a header pill. This comment used to say it
+          did, and so did the one further down, while JobsHeader
+          destructured reviewDueAt and reviewSubmittedAt and used
+          neither -- there has never been a pill. One review card, in
+          the column, is the whole of it. */}
       {tab === 'offers' && (
-        <div className="-mx-4 -mt-4 mb-0 sm:-mx-6">
+        <div className="mb-0">
           <JobsHeader
-            lifecycle={lifecycle}
             businessName={businessName}
             /* The PERSON, for the greeting. The h1 below it carries the
                business. `profiles.full_name` is free text, so
@@ -416,8 +424,6 @@ export default function VendorDashboard() {
             avatarUrl={vendor?.avatar_url}
             unreadAlerts={unreadAlerts}
             acceptingJobs={vendor?.accepting_jobs}
-            reviewDueAt={vendor?.review_due_at}
-            reviewSubmittedAt={vendor?.submitted_at}
             onAcceptingChange={() => refresh()}
             /* ── Three tap targets, three destinations ──────────────
                The avatar, the bell and the status pill all called
@@ -434,6 +440,11 @@ export default function VendorDashboard() {
           />
         </div>
       )}
+
+      {/* Partner-wide promotional stories sit immediately above the
+          Jobs scoreboard, so they are visible without changing the
+          existing header, review card, stats, or bottom navigation. */}
+      {tab === 'offers' && <PartnerStories />}
 
       {/* ── The scoreboard ───────────────────────────────────────────
           Four counts, each traceable to rows, riding up over the
@@ -454,7 +465,13 @@ export default function VendorDashboard() {
                bell. */
             onOpen={key => {
               if (key === 'messages') openAccount('messages')
-              else if (key === 'confirmed' || key === 'accepted') setTab('availability')
+              /* These used to open the Calendar, a month grid that shows
+                 neither list. MyJobs -- "Your jobs" -- is on THIS tab,
+                 directly below the tiles, and is the thing being counted. */
+              else if (key === 'confirmed' || key === 'accepted') {
+                document.querySelector('[data-my-jobs]')
+                  ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }
               else if (key === 'offers') {
                 document.querySelector('[data-offer-inbox]')
                   ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -462,6 +479,19 @@ export default function VendorDashboard() {
             }}
           />
         </div>
+      )}
+
+      {/* ── "Your service has been submitted for review." ───────────
+          Where a successful trade submission lands (?submitted=), with
+          the server's status, the payout truth and the next service. */}
+      {/* ONE review card, not two. ReviewCountdown owns the review
+          state whenever the account is under review, and it carries the
+          same facts plus the clock. Rendering both put two cards saying
+          "we are reading it" directly above each other, with different
+          icons and different tones, every time a partner submitted a
+          trade -- which is precisely the moment they are watching. */}
+      {tab === 'offers' && vendor?.verification_status !== 'submitted' && (
+        <SubmittedCard vendorId={vendor?.id} services={services} />
       )}
 
       {/* ── The review clock, in full ─────────────────────────────────
@@ -494,7 +524,6 @@ export default function VendorDashboard() {
         />
       )}
 
-      {tab === 'offers' && <PartnerStoryViewer />}
 
       {tab === 'offers' && (
         <PartnerGrowthCarousel
@@ -543,6 +572,15 @@ export default function VendorDashboard() {
         />
       )}
 
+      {/* Adding a trade is one tap from Jobs, without reselecting the
+          ones already set up — the selector marks those with their status. */}
+      {tab === 'offers' && (services?.length ?? 0) > 0 && !params.get('submitted') && (
+        <button type="button" data-cta="add-another-service" onClick={() => navigate('/partner/services')}
+          className="mb-4 flex w-full items-center justify-center gap-1.5 rounded-2xl bg-white py-3 text-[13.5px] font-extrabold text-plum-700 ring-1 ring-plum-200 active:scale-[0.99]">
+          <Plus size={16} /> Add Another Service
+        </button>
+      )}
+
       {/* ══════════════════════════════════════════════════════════════
           THE OLD HEADER IS GONE
           ══════════════════════════════════════════════════════════════
@@ -573,19 +611,23 @@ export default function VendorDashboard() {
       {/* Only when something is WRONG.
 
           "You are live on Sambramo" was three lines of green congratulating
-          a partner for a state they can already read in one word: the Live
-          pill sits next to their business name at the top of every tab. A
-          card that repeats the pill is not reassurance, it is the app
-          talking about itself above the jobs somebody opened it to see.
+          a partner for a state that needs no card: being live is what the
+          absence of a review card means. A card celebrating the normal
+          state is the app talking about itself above the jobs somebody
+          opened it to see.
+
+          (This used to claim a "Live pill sits next to their business
+          name". There is no such pill -- JobsHeader renders a PARTNER
+          chip and an accepting-jobs dot, and nothing else.)
 
           Pending or rejected is the opposite — it changes what every other
           screen on the app means, and a partner who does not know they are
           not live will sit waiting for jobs that are never coming. That
           keeps its card, on every tab. */}
       {/* ── The blocking status card used to render here ────────────
-          Removed. It said the same thing as the status pill in
-          JobsHeader ("Your profile is with our team" against "Under
-          review / We are checking your profile"), and unlike the pill it
+          Removed. It said the same thing as ReviewCountdown below
+          ("Your profile is with our team" against "Under review / We are
+          checking your profile"), and unlike that card it
           rendered on every tab -- so a partner under review read it on
           Jobs, Calendar, Earnings and More.
 
@@ -695,7 +737,7 @@ export default function VendorDashboard() {
                   job next Saturday is not -- but on the SAME tab, because
                   a master who accepted a job and then could not find it
                   anywhere had no way to know the tap had worked. */}
-              <div>
+              <div data-my-jobs>
                 <p className="mb-2 type-overline text-ink-mute">Your jobs</p>
                 <MyJobs vendorId={vendor.id} />
               </div>
@@ -730,15 +772,15 @@ export default function VendorDashboard() {
                 <>
                   <p className="text-[14px] font-extrabold text-ink">Jobs open once you are approved</p>
                   <p className="mx-auto mt-1 max-w-xs text-[12.5px] leading-snug text-ink-mute">
-                    We check every master before sending them work. Finish the six
-                    setup steps and we will take it from there.
+                    We check every master before sending them work. Set up a service
+                    and submit it for review — we will take it from there.
                   </p>
                   <button
                     type="button"
                     onClick={() => navigate('/partner/setup')}
                     className="mt-4 min-h-[44px] rounded-full bg-gradient-to-r from-plum-700 to-plum-500 px-5 text-[13px] font-extrabold text-white"
                   >
-                    Continue setup
+                    {(services?.length ?? 0) > 0 ? 'Add another service' : 'Set up a service'}
                   </button>
                 </>
               )}
@@ -747,7 +789,7 @@ export default function VendorDashboard() {
         )}
 
         {tab === 'pricing' && (
-          <div className="space-y-5">
+          <div className="space-y-0">
             {/* Anchor & MC (any trade with a pricing profile) gets the
                 Pricing Control Center over its published listing version;
                 every other trade keeps SambramoPricingStudio. */}
@@ -930,7 +972,7 @@ export default function VendorDashboard() {
                listing, on the tab that already renders it. Switching the
                tab rather than routing keeps the partner inside the
                dashboard and keeps one implementation of the flow. */
-            onOpenTrade={trade => setParams(keepReturn({ tab: 'list', start: trade }))}
+            onOpenTrade={trade => navigate(onboardPath(trade))}
           />
         )}
 

@@ -55,6 +55,9 @@ import { LOGISTICS_TRADES, logisticsSpecsForServices } from '../../data/logistic
 import LogisticsPriceBook from './LogisticsPriceBook'
 import AnchorOnboardingFlow from './anchor/AnchorOnboardingFlow'
 import { hasProfileFor } from '../../data/tradePricingProfiles'
+import ListingOnboardingFlow from './listing/ListingOnboardingFlow'
+import { configFor } from '../../data/trades'
+import { useEngineReady, onEngine } from '../../lib/tradeEngine'
 
 /**
  * Adding what you do, as a journey rather than a form.
@@ -174,6 +177,7 @@ function seedFrom(row) {
    trade continues below, unchanged. */
 export default function AddItemFlow(props) {
   const [profileTrade, setProfileTrade] = useState(null)
+  const engineReady = useEngineReady()
   const trade = props.editing?.category ?? profileTrade ?? props.startTrade
   if (trade && hasProfileFor(trade)) {
     const offering = offeringsForTrade(trade)[0]
@@ -189,11 +193,40 @@ export default function AddItemFlow(props) {
       />
     )
   }
-  return <GenericAddItemFlow {...props} onProfileTrade={setProfileTrade} />
+  /* Not `return null`. This branch is the window between tapping a trade
+     and the engine probe answering, and rendering nothing meant the tap
+     appeared to do nothing at all — the single thing this screen exists
+     to do. check-tabs-render has been failing on exactly this. The probe
+     now also times out (see lib/tradeEngine.js), so this state is bounded. */
+  if (engineReady === null && onEngine(trade)) {
+    return (
+      <div data-add-item-flow className="fixed inset-0 z-[96] flex flex-col items-center justify-center gap-3 bg-page">
+        <Loader2 size={26} className="animate-spin text-plum-700" />
+        <p className="text-[15px] font-semibold text-ink/70">Opening {trade}…</p>
+      </div>
+    )
+  }
+  if (engineReady && onEngine(trade)) {
+    const offering = offeringsForTrade(configFor(trade).name)[0]
+    return (
+      <ListingOnboardingFlow
+        key={configFor(trade).id}
+        trade={trade}
+        vendorId={props.vendorId}
+        editing={props.editing}
+        onAdd={props.onAdd}
+        onUpdate={props.onUpdate}
+        onClose={props.onClose}
+        onSwitchTrade={props.editing ? undefined : setProfileTrade}
+        offeringName={offering?.name ?? configFor(trade).name}
+      />
+    )
+  }
+  return <GenericAddItemFlow {...props} onProfileTrade={setProfileTrade} engineReady={!!engineReady} />
 }
 
 function GenericAddItemFlow({
-  onProfileTrade = null,
+  onProfileTrade = null, engineReady = false,
   existing = [], onAdd, onClose, startTrade = null, vendorId = null,
   /* ── Editing one saved listing ─────────────────────────────────────
      The vendor_services row, or null for the add flow. When set, the
@@ -899,7 +932,7 @@ function GenericAddItemFlow({
             <TradeStep
               q={q} setQ={setQ}
               value={trade}
-              onPick={t => { if (onProfileTrade && hasProfileFor(t)) { onProfileTrade(t); return } setTrade(t); setPicked([]); setDetail({}); setMenus([]); goNext() }}
+              onPick={t => { if (onProfileTrade && (hasProfileFor(t) || (engineReady && onEngine(t)))) { onProfileTrade(t); return } setTrade(t); setPicked([]); setDetail({}); setMenus([]); goNext() }}
             />
           )}
 

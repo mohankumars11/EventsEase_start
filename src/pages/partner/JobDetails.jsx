@@ -10,6 +10,7 @@ import { setupSpec } from '../../data/instantSetups'
 import { requirementsFor, moneyFor, contactReleased } from '../../lib/jobDetail'
 import { iconForTrade } from '../../components/vendor/TradeGrid'
 import JobTimeline from '../../components/partner/JobTimeline'
+import MaterialsCard from '../../components/partner/materials/MaterialsCard'
 import LiveTracking from '../../components/partner/LiveTracking'
 import { travelWindow, travelOpensWording } from '../../lib/istTime'
 
@@ -149,6 +150,12 @@ export default function JobDetails() {
             to do.
 
             Same rule, now shared and IST-anchored: lib/istTime. */}
+        {/* What has to be BOUGHT for this booking, if anything.
+            Renders nothing at all when the engine says NO_MATERIALS, so
+            a DJ never sees a materials card. Sits above the trip panel
+            because buying happens before travelling. */}
+        <MaterialsCard lineId={lineId} vendorId={job?.vendor_id} />
+
         {['accepted', 'paid', 'in_progress'].includes(job.status) && (
           travel.open ? (
             <LiveTracking job={job} onDone={read} />

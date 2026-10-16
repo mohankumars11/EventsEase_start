@@ -48,6 +48,8 @@ const ServiceDetail      = lazy(() => import('./pages/services/ServiceDetail'))
 const InstantBooking     = lazy(() => import('./pages/book/InstantBooking'))
 const AnchorBrowse       = lazy(() => import('./pages/book/AnchorBrowse'))
 const AnchorBook         = lazy(() => import('./pages/book/AnchorBook'))
+const TradeBrowse        = lazy(() => import('./pages/book/TradeBrowse'))
+const TradeBook          = lazy(() => import('./pages/book/TradeBook'))
 const ChooseLane         = lazy(() => import('./pages/book/ChooseLane'))
 const WhenStep           = lazy(() => import('./pages/book/WhenStep'))
 const LogisticsRequirements = lazy(() => import('./pages/book/LogisticsRequirements'))
@@ -73,9 +75,13 @@ const PartnerOnboarding    = lazy(() => import('./pages/partner/PartnerOnboardin
 const LocationPermission   = lazy(() => import('./pages/partner/LocationPermission'))
 const LocationCapture      = lazy(() => import('./pages/partner/LocationCapture'))
 const LocationConfirm      = lazy(() => import('./pages/partner/LocationConfirm'))
-const PartnerSetupIntro    = lazy(() => import('./pages/partner/PartnerSetupIntro'))
 const MarketCheck          = lazy(() => import('./pages/partner/MarketCheck'))
-const WhatYouOffer       = lazy(() => import('./pages/partner/WhatYouOffer'))
+/* The partner's way in: "What services do you offer?" (all 34 trades,
+   multi-select). Replaced the five-section overview at /partner/setup and
+   the older WhatYouOffer picker at /partner/services. */
+const ServiceSelector    = lazy(() => import('./pages/partner/ServiceSelector'))
+/* One trade's own onboarding, opened directly by its registry id. */
+const TradeOnboarding    = lazy(() => import('./pages/partner/TradeOnboarding'))
 const PartnerPayouts     = lazy(() => import('./pages/partner/Payouts'))
 /* One job, in full. A route rather than a taller card so a notification
    can point AT a booking instead of dropping somebody on a list. */
@@ -426,6 +432,8 @@ function AppRoutes() {
       {/* Anchor & MC at each partner's published price (resolve_anchor_booking). */}
       <Route path="/book/anchor" element={<BareShell><AnchorBrowse /></BareShell>} />
       <Route path="/book/anchor/:serviceId" element={<BareShell><AnchorBook /></BareShell>} />
+      <Route path="/book/s/:trade" element={<BareShell><TradeBrowse /></BareShell>} />
+      <Route path="/book/s/:trade/:serviceId" element={<BareShell><TradeBook /></BareShell>} />
 
       {/* The two doors, for a date that could honestly take either lane. */}
       <Route path="/book/choose" element={<BareShell><ChooseLane /></BareShell>} />
@@ -652,7 +660,7 @@ function AppRoutes() {
 
       <Route path="/partner/setup" element={
         <ProtectedRoute allowedRoles={['vendor']}>
-          <PageBoundary><PartnerSetupIntro /></PageBoundary>
+          <PageBoundary><ServiceSelector /></PageBoundary>
         </ProtectedRoute>
       } />
 
@@ -661,11 +669,16 @@ function AppRoutes() {
           `/partner/services` is the same screen reached later from
           More → My Services → Add Service. One component, so the
           twenty-six trades and the duplicate rule cannot drift between
-          the two ways in — WhatYouOffer reads which one it is from the
+          the two ways in — ServiceSelector reads which one it is from the
           path and sends the partner back to the right place. */}
       <Route path="/partner/services" element={
         <ProtectedRoute allowedRoles={['vendor']}>
-          <PageBoundary><WhatYouOffer /></PageBoundary>
+          <PageBoundary><ServiceSelector /></PageBoundary>
+        </ProtectedRoute>
+      } />
+      <Route path="/partner/onboard/:tradeId" element={
+        <ProtectedRoute allowedRoles={['vendor']}>
+          <PageBoundary><TradeOnboarding /></PageBoundary>
         </ProtectedRoute>
       } />
       {/* Full-screen payouts (Razorpay Route): no tab bar, Back returns. */}

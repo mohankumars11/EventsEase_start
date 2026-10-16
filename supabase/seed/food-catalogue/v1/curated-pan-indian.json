@@ -1,0 +1,75 @@
+{
+  "note": "Pan-Indian courses: beverages, soups, starters, chaat, accompaniments, salads, desserts, live-counter, kids', Jain/satvik/millet and packed meals. Editorial (needs_review).",
+  "groups": [
+    { "cuisines": [], "category": "bev_fresh_juice", "diet": "veg", "dishes": [["Fresh Lime Juice"], ["Sweet Lime Juice", "Mosambi Juice"], ["Watermelon Juice"], ["Orange Juice"], ["Pineapple Juice"], ["Mango Juice"], ["Pomegranate Juice"], ["Muskmelon Juice"], ["Grape Juice"], ["Carrot Beetroot Juice"], ["Sugarcane Juice"], ["Amla Juice"], ["Guava Juice"], ["Apple Juice"], ["Mixed Fruit Juice"]] },
+    { "cuisines": ["oi_festival"], "category": "bev_traditional", "diet": "veg", "dishes": [["Jaljeera"], ["Aam Panna"], ["Kokum Sherbet"], ["Rose Sharbat"], ["Khus Sharbat"], ["Bel Sharbat"], ["Thandai"], ["Badam Milk"], ["Rose Milk"], ["Kesar Badam Milk"], ["Sattu Drink"], ["Nimbu Pani"], ["Shikanji"], ["Masala Soda"], ["Fresh Lime Soda"], ["Gulkand Milk"]] },
+    { "cuisines": [], "category": "bev_buttermilk_lassi", "diet": "veg", "dishes": [["Sweet Lassi"], ["Salted Lassi"], ["Mango Lassi"], ["Rose Lassi"], ["Masala Chaas"], ["Plain Buttermilk"], ["Mint Chaas"]] },
+    { "cuisines": [], "category": "bev_coconut", "diet": "veg", "dishes": [["Tender Coconut Water"], ["Tender Coconut Shake"], ["Coconut Milk Cooler"]] },
+    { "cuisines": [], "category": "bev_mocktail", "diet": "veg", "dishes": [["Virgin Mojito"], ["Blue Lagoon"], ["Watermelon Mint Cooler"], ["Litchi Cooler"], ["Pina Colada (virgin)"], ["Fruit Punch"], ["Kiwi Cooler"], ["Mango Mint Mojito"], ["Cranberry Spritzer"], ["Ginger Lemon Fizz"], ["Signature House Mocktail"]] },
+    { "cuisines": [], "category": "bev_shake", "diet": "veg", "dishes": [["Chocolate Milkshake"], ["Strawberry Milkshake"], ["Mango Milkshake"], ["Banana Milkshake"], ["Cold Coffee"], ["Oreo Shake"], ["Chikoo Shake"], ["Dry Fruit Shake"]] },
+    { "cuisines": [], "category": "bev_smoothie", "diet": "veg", "dishes": [["Berry Smoothie"], ["Mango Banana Smoothie"], ["Green Smoothie"], ["Oats Banana Smoothie"]] },
+    { "cuisines": [], "category": "bev_tea", "diet": "veg", "dishes": [["Masala Chai"], ["Ginger Tea", "Adrak Chai"], ["Elaichi Tea"], ["Lemon Tea"], ["Green Tea"], ["Iced Tea"], ["Irani Chai"], ["Kulhad Chai"], ["Herbal Tea"]] },
+    { "cuisines": [], "category": "bev_filter_coffee", "diet": "veg", "dishes": [["South Indian Filter Coffee"], ["Kumbakonam Degree Coffee"], ["Chukku Kaapi", "Dry Ginger Coffee"]] },
+    { "cuisines": [], "category": "bev_coffee", "diet": "veg", "dishes": [["Cappuccino"], ["Cafe Latte"], ["Americano"], ["Espresso"], ["Cold Brew"], ["Iced Latte"]] },
+    { "cuisines": [], "category": "bev_hot_chocolate", "diet": "veg", "dishes": [["Hot Chocolate"], ["Turmeric Latte", "Haldi Doodh"]] },
+    { "cuisines": [], "category": "bev_water", "diet": "vegan", "dishes": [["Packaged Drinking Water"], ["Mineral Water (bottles)"]] },
+
+    { "cuisines": [], "category": "sp_tomato", "diet": "veg", "dishes": [["Tomato Soup"], ["Cream of Tomato Soup"], ["Tomato Basil Soup"], ["Tomato Shorba"]] },
+    { "cuisines": [], "category": "sp_sweet_corn", "diet": "veg", "dishes": [["Sweet Corn Veg Soup"], ["Cream of Corn Soup"]] },
+    { "cuisines": ["oi_indo_chinese"], "category": "sp_asian", "diet": "veg", "dishes": [["Hot and Sour Soup (Veg)"], ["Manchow Soup (Veg)"], ["Lemon Coriander Soup"], ["Clear Vegetable Soup"], ["Tom Yum Soup (Veg)"], ["Wonton Soup (Veg)"]] },
+    { "cuisines": [], "category": "sp_cream", "diet": "veg", "dishes": [["Cream of Mushroom Soup"], ["Cream of Vegetable Soup"], ["Cream of Broccoli Soup"], ["Pumpkin Soup"], ["Minestrone"]] },
+    { "cuisines": [], "category": "sp_nonveg", "diet": "non_veg", "dishes": [["Chicken Sweet Corn Soup"], ["Hot and Sour Chicken Soup"], ["Chicken Manchow Soup"], ["Mutton Paya Soup"], ["Chicken Clear Soup"], ["Seafood Soup"]] },
+
+    { "cuisines": ["oi_snacks"], "category": "st_vegetable", "diet": "veg", "dishes": [
+      ["Vegetable Cutlet"], ["Corn Cheese Balls"], ["Veg Spring Rolls"], ["Stuffed Mushroom"], ["Baby Corn Pepper Fry"], ["Crispy Corn"], ["Honey Chilli Potato"],
+      ["Paneer 65"], ["Gobi 65"], ["Mushroom 65"], ["Cheese Balls"], ["Veg Lollipop"], ["Samosa"], ["Punjabi Samosa"], ["Onion Samosa"], ["Kachori (Moong Dal)"],
+      ["Aloo Bonda"], ["Mysore Bonda"], ["Onion Pakoda"], ["Mixed Veg Pakoda"], ["Paneer Pakoda"], ["Bread Pakoda"], ["Mirchi Bajji"], ["Banana Bajji"],
+      ["Veg Puff"], ["Mini Idli Fry"], ["Masala Peanuts"], ["Hara Bhara Tikki"], ["Sabudana Tikki"], ["Beetroot Tikki"]
+    ]},
+    { "cuisines": ["oi_snacks"], "category": "st_chicken", "diet": "non_veg", "dishes": [["Chicken 65"], ["Chilli Chicken (Dry)"], ["Chicken Lollipop"], ["Chicken Pepper Fry"], ["Chicken Pakoda"], ["Chicken Cutlet"], ["Chicken Spring Roll"], ["Chicken Popcorn"], ["Chicken Majestic"], ["Chicken Kebab (Bengaluru style)"]] },
+    { "cuisines": [], "category": "st_fish", "diet": "non_veg", "dishes": [["Fish Fingers"], ["Apollo Fish"], ["Fish Amritsari"], ["Chilli Fish"], ["Fish Pakoda"]] },
+    { "cuisines": [], "category": "st_seafood", "diet": "non_veg", "dishes": [["Prawn Fry"], ["Golden Fried Prawns"], ["Chilli Prawns"], ["Prawn Koliwada"], ["Calamari Rings"]] },
+    { "cuisines": [], "category": "st_mutton", "diet": "non_veg", "dishes": [["Mutton Sukka"], ["Mutton Pepper Fry"], ["Mutton Cutlet"], ["Keema Samosa"]] },
+    { "cuisines": [], "category": "st_egg", "diet": "egg", "dishes": [["Egg Bonda"], ["Egg Pakoda"], ["Egg 65"], ["Masala Omelette Bites"], ["Egg Bhurji Pav"], ["Devilled Eggs"]] },
+
+    { "cuisines": ["oi_street_food", "oi_snacks"], "category": "ch_pani_puri", "diet": "veg", "dishes": [["Pani Puri"], ["Golgappa"], ["Puchka"], ["Dahi Pani Puri"]] },
+    { "cuisines": ["oi_street_food", "oi_snacks"], "category": "ch_regional", "diet": "veg", "dishes": [
+      ["Sev Puri"], ["Bhel Puri"], ["Dahi Puri"], ["Papdi Chaat"], ["Aloo Tikki Chaat"], ["Samosa Chaat"], ["Dahi Bhalla"], ["Kachori Chaat"], ["Ragda Pattice"],
+      ["Pav Bhaji"], ["Vada Pav"], ["Masala Pav"], ["Corn Chaat"], ["Sprouts Chaat"], ["Palak Patta Chaat"], ["Tokri Chaat"], ["Chana Jor Garam"], ["Jhalmuri"],
+      ["Kathi Roll (Paneer)"], ["Frankie (Veg)"], ["Momos (Veg)"], ["Paneer Momos"]
+    ]},
+    { "cuisines": ["oi_street_food"], "category": "ch_regional", "diet": "non_veg", "dishes": [["Chicken Kathi Roll"], ["Chicken Momos"], ["Chicken Shawarma Roll"], ["Egg Roll"]] },
+
+    { "cuisines": [], "category": "ac_chutney", "diet": "veg", "dishes": [["Coconut Chutney"], ["Mint Chutney", "Pudina Chutney"], ["Tomato Chutney"], ["Coriander Chutney"], ["Tamarind Chutney", "Imli Chutney"], ["Peanut Chutney"], ["Onion Chutney"], ["Ginger Chutney"], ["Red Chilli Chutney"], ["Green Chutney"]] },
+    { "cuisines": [], "category": "ac_pickle", "diet": "veg", "dishes": [["Mango Pickle"], ["Lime Pickle"], ["Mixed Vegetable Pickle"], ["Garlic Pickle"], ["Green Chilli Pickle"], ["Gongura Pickle"], ["Amla Pickle"]] },
+    { "cuisines": [], "category": "ac_raita", "diet": "veg", "dishes": [["Boondi Raita"], ["Cucumber Raita"], ["Mixed Vegetable Raita"], ["Onion Raita"], ["Pineapple Raita"], ["Burani Raita"], ["Mint Raita"], ["Plain Curd"]] },
+    { "cuisines": [], "category": "ac_papad", "diet": "veg", "dishes": [["Roasted Papad"], ["Fried Papad"], ["Masala Papad"], ["Sandige", "Rice Fryums"], ["Appalam"]] },
+    { "cuisines": [], "category": "ac_salad", "diet": "veg", "dishes": [["Green Salad"], ["Cucumber Salad"], ["Sprouted Moong Salad"], ["Fruit Salad"], ["Pasta Salad"], ["Macaroni Salad"], ["Onion Lemon Salad", "Laccha Onion"], ["Russian Salad"], ["Kachumber Salad"], ["Corn Salad"], ["Chana Chaat Salad"], ["Greek Salad"], ["Caesar Salad (Veg)"]] },
+    { "cuisines": [], "category": "ac_podi", "diet": "veg", "dishes": [["Gunpowder", "Idli Milagai Podi"], ["Paruppu Podi"], ["Karuvepilai Podi", "Curry Leaf Podi"], ["Chutney Pudi"]] },
+    { "cuisines": [], "category": "ac_sauce", "diet": "veg", "dishes": [["Tomato Ketchup"], ["Schezwan Sauce"], ["Mayonnaise (eggless)"], ["Tahini"]] },
+
+    { "cuisines": ["oi_sweets"], "category": "ds_syrup", "diet": "veg", "dishes": [["Kala Jamun"], ["Angoori Jamun"], ["Rasmalai"], ["Rasgulla"], ["Chhena Murki"], ["Kesar Rasmalai"]] },
+    { "cuisines": ["oi_sweets"], "category": "ds_halwa", "diet": "veg", "dishes": [["Badam Halwa", "Badam Alva"], ["Kashi Halwa", "Ash Gourd Halwa"], ["Carrot Halwa"], ["Beetroot Halwa"], ["Bread Halwa"], ["Pineapple Kesari"], ["Rava Kesari"], ["Suji Halwa", "Sooji Halwa"], ["Wheat Halwa"], ["Bombay Karachi Halwa"]] },
+    { "cuisines": ["oi_sweets"], "category": "ds_laddu", "diet": "veg", "dishes": [["Boondi Laddu"], ["Motichoor Laddu"], ["Dry Fruit Laddu"], ["Coconut Laddu"], ["Til Laddu"], ["Rava Laddu (Pan-Indian)"]] },
+    { "cuisines": ["oi_sweets"], "category": "ds_barfi", "diet": "veg", "dishes": [["Kaju Katli"], ["Badam Barfi"], ["Pista Barfi"], ["Milk Barfi"], ["Coconut Barfi"], ["Chocolate Barfi"], ["Kalakand"], ["Soan Papdi"]] },
+    { "cuisines": ["oi_sweets"], "category": "ds_jalebi", "diet": "veg", "dishes": [["Jalebi"], ["Jangiri", "Imarti"], ["Paneer Jalebi"]] },
+    { "cuisines": ["oi_sweets"], "category": "ds_payasam", "diet": "veg", "dishes": [["Rice Kheer"], ["Semiya Kheer"], ["Sabudana Kheer"], ["Makhana Kheer"], ["Dry Fruit Payasam"]] },
+    { "cuisines": [], "category": "ds_ice_cream", "diet": "veg", "dishes": [["Vanilla Ice Cream"], ["Chocolate Ice Cream"], ["Butterscotch Ice Cream"], ["Strawberry Ice Cream"], ["Tender Coconut Ice Cream"], ["Sitaphal Ice Cream"], ["Mango Ice Cream"], ["Gulab Jamun with Ice Cream"], ["Brownie with Ice Cream"]] },
+    { "cuisines": [], "category": "ds_kulfi", "diet": "veg", "dishes": [["Malai Kulfi"], ["Kesar Pista Kulfi"], ["Mango Kulfi"], ["Matka Kulfi"], ["Kulfi Falooda"]] },
+    { "cuisines": [], "category": "ds_fruit", "diet": "veg", "dishes": [["Fruit Platter"], ["Fruit Custard"], ["Fruit Trifle"], ["Seasonal Cut Fruits"], ["Fruit Cream"]] },
+    { "cuisines": ["in_european_desserts", "in_continental"], "category": "ds_bakery", "dishes": [["Chocolate Brownie"], ["Blueberry Cheesecake"], ["Black Forest Pastry"], ["Red Velvet Pastry"], ["Tiramisu (eggless)"], ["Chocolate Mousse"], ["Caramel Custard"], ["Lemon Tart"], ["Assorted Cookies"], ["Cupcakes"], ["Donuts"], ["Swiss Roll"]] },
+    { "cuisines": [], "category": "ds_sorbet", "diet": "vegan", "dishes": [["Lemon Sorbet"], ["Mango Sorbet"], ["Raspberry Sorbet"]] },
+
+    { "cuisines": [], "category": "ad_live_counter", "diet": "veg", "dishes": [
+      ["Live Dosa Station"], ["Live Appam Station"], ["Live Pasta Station"], ["Live Chaat Station"], ["Live Jalebi Station"], ["Live Tawa Sabzi"],
+      ["Live Roti / Naan Station"], ["Live Pizza Station"], ["Live Noodle Station"], ["Live Waffle Station"], ["Live Pancake Station"], ["Live Halwa Station"],
+      ["Live Juice Station"], ["Live Mocktail Bar"], ["Live Filter Coffee Station"], ["Live Kulfi Counter"], ["Live Ice Cream Counter"], ["Live Paan Counter"]
+    ]},
+    { "cuisines": ["sp_kids"], "category": "ad_kids", "diet": "veg", "dishes": [["Mini Pizza"], ["French Fries"], ["Veg Nuggets"], ["Pasta in Cheese Sauce"], ["Mini Burgers (Veg)"], ["Cheese Sandwich"], ["Jam Sandwich"], ["Smiley Fries"], ["Mini Idli with Ghee"], ["Chocolate Pastry (kids)"]] },
+    { "cuisines": ["sp_jain"], "category": "ad_jain", "diet": "jain", "dishes": [["Jain Pav Bhaji"], ["Jain Paneer Butter Masala"], ["Jain Dal Tadka"], ["Jain Veg Pulao"], ["Jain Kadhi"], ["Jain Pasta"], ["Raw Banana Sabzi (Jain)"], ["Jain Chole"]] },
+    { "cuisines": ["sp_satvik", "sp_no_onion_garlic"], "category": "ad_dietary", "diet": "veg", "dishes": [["Satvik Thali"], ["No Onion No Garlic Sambar"], ["Satvik Khichdi"], ["Lauki Sabzi (Satvik)"], ["Sabudana Khichdi (Vrat)"], ["Kuttu Puri", "Buckwheat Puri"], ["Samak Rice Pulao", "Vrat Rice"]] },
+    { "cuisines": ["sp_millet", "sp_healthy"], "category": "ad_millet", "diet": "veg", "dishes": [["Ragi Mudde Meal"], ["Jowar Roti Meal"], ["Bajra Khichdi"], ["Millet Upma"], ["Foxtail Millet Pulao"], ["Ragi Halwa"], ["Millet Payasam"], ["Ragi Cookies"], ["Quinoa Salad"]] },
+    { "cuisines": ["sp_vegan"], "category": "ad_vegan", "diet": "vegan", "dishes": [["Vegan Buddha Bowl"], ["Tofu Tikka"], ["Vegan Thai Curry"], ["Coconut Milk Kheer (vegan)"], ["Chana Masala (vegan)"]] },
+    { "cuisines": [], "category": "ad_packed", "dishes": [["Veg Meal Box"], ["Non-Veg Meal Box"], ["Mini Meals Box"], ["Breakfast Box"], ["Biryani Box"], ["Executive Lunch Box"], ["Snack Box"], ["Corporate Combo Meal"]] }
+  ]
+}

@@ -6,6 +6,8 @@
  * The partner fills the flagged ones, may adjust or add, and sends. The
  * countdown is drawn from the server's expires_at and never restarts.
  * Totals are integer paise; the fee is the same 8% as instant bookings.
+ * A discount line subtracts from the total and is sent flagged, so the
+ * server subtracts it too (it never takes the quote below zero).
  */
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
@@ -19,7 +21,8 @@ const left = ms => {
 }
 
 export function quoteTotals(lines, advancePct, discountPaise = 0) {
-  const partner = lines.reduce((t, l) => t + (l.charged === false ? 0 : (Number(l.qty) || 0) * (Number(l.unit_paise) || 0)), 0) - discountPaise
+  const line = l => (l.charged === false ? 0 : (Number(l.qty) || 0) * (Number(l.unit_paise) || 0))
+  const partner = Math.max(0, lines.reduce((t, l) => t + (l.discount ? -line(l) : line(l)), 0) - discountPaise)
   const customer = Math.round(partner / (1 - FEE_RATE) / 10) * 10
   const advance = Math.round(customer * advancePct / 100 / 10) * 10
   return { partner, fee: customer - partner, customer, advance, balance: customer - advance }
@@ -59,7 +62,9 @@ export default function QuoteEditor({ request, lines: lines0, expiresAt, advance
             <motion.div key={l.id} layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, height: 0 }}
               className={`border-b border-ink/[0.05] px-4 py-3 last:border-0 ${l.needs && !(l.unit_paise > 0) ? 'bg-amber-50/60' : ''}`}>
               <div className="flex items-center gap-2">
-                <span className="flex-1 text-[13.5px] font-bold text-ink">{l.description}</span>
+                {l.discount
+                  ? <input value={l.description} onChange={e => put(i, { description: e.target.value.slice(0, 80) })} className="flex-1 bg-transparent text-[13.5px] font-bold text-forest-700 outline-none" />
+                  : <span className="flex-1 text-[13.5px] font-bold text-ink">{l.description}</span>}
                 {l.auto && <span className="rounded-full bg-forest-50 px-2 py-0.5 text-[10px] font-extrabold text-forest-700">From your rates</span>}
                 {l.needs && !(l.unit_paise > 0) && <span className="flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-extrabold text-amber-800"><TriangleAlert size={10} />Needs you</span>}
                 {!l.auto && <button type="button" aria-label="Remove line" onClick={() => setLines(ls => ls.filter((_, j) => j !== i))} className="text-ink/30"><Trash2 size={14} /></button>}
@@ -69,13 +74,15 @@ export default function QuoteEditor({ request, lines: lines0, expiresAt, advance
                 <input inputMode="numeric" value={l.unit_paise ? Math.round(l.unit_paise / 100) : ''} placeholder="₹ amount"
                   onChange={e => put(i, { unit_paise: Number(e.target.value.replace(/\D/g, '')) * 100 })}
                   className="ml-auto h-9 w-[110px] rounded-xl bg-[#f6f4fb] px-2.5 text-right text-[13px] font-extrabold outline-none ring-1 ring-ink/[0.08] focus:ring-2 focus:ring-plum-500" />
-                <span className="w-[76px] text-right font-extrabold text-ink">{rupees((Number(l.qty) || 0) * (l.unit_paise || 0))}</span>
+                <span className={`w-[76px] text-right font-extrabold ${l.discount ? 'text-forest-700' : 'text-ink'}`}>{l.discount ? '−' : ''}{rupees((Number(l.qty) || 0) * (l.unit_paise || 0))}</span>
               </div>
             </motion.div>
           ))}
         </AnimatePresence>
         <button type="button" onClick={() => setLines(ls => [...ls, { id: `new-${ls.length}`, description: 'New item', qty: 1, unit: 'item', unit_paise: 0 }])}
           className="flex w-full items-center justify-center gap-1.5 py-3 text-[13px] font-extrabold text-plum-700"><Plus size={15} /> Add a line</button>
+        <button type="button" onClick={() => setLines(ls => [...ls, { id: `disc-${ls.length}`, description: 'Discount', qty: 1, unit: 'item', unit_paise: 0, discount: true }])}
+          className="flex w-full items-center justify-center gap-1.5 border-t border-ink/[0.05] py-3 text-[13px] font-extrabold text-forest-700"><Plus size={15} /> Add a discount</button>
       </div>
 
       <div className="rounded-[22px] bg-gradient-to-br from-plum-800 to-plum-950 p-4 text-white">

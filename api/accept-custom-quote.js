@@ -81,7 +81,7 @@ export default async function handler(req, res) {
     /* A directed Anchor & MC quote may be outside the partner's area by
        design; its date and capacity are re-checked inside
        book_accepted_quote under the partner lock. */
-    const directed = String(request.canonical_demand?.engine ?? '').startsWith('anchor')
+    const directed = /^(anchor|trades)-engine/.test(String(request.canonical_demand?.engine ?? ''))
     if (!directed && !(await partnerStillEligible())) {
       await db.from('sambramo_quote_requests')
         .update({ state: request.state, updated_at: new Date().toISOString() })
@@ -113,7 +113,7 @@ export default async function handler(req, res) {
         request_id: request.booking_request_id,
         service_id: request.offering_id ?? request.trade_id,
         service_name: request.service_name ?? request.offering_id ?? request.trade_id,
-        trade: request.trade_id,
+        trade: tradeNameFor(request.trade_id) ?? request.trade_id,
         customer_note: demand.note ?? demand.summary ?? null,
         reference_photo_url: request.reference_photo_url ?? null,
         quoted_amount_paise: quoted,
@@ -141,6 +141,14 @@ export default async function handler(req, res) {
           customer_amount_paise: quoted,
           platform_fee_paise: fee,
           captured_at: now,
+          /* A quote from the trades engine is paid like an instant booking:
+             the partner's advance % now, the balance before the date
+             (create-booking-payment reads advance_paise). Other quotes
+             carry none and are paid in full, as before. */
+          ...(/^(anchor|trades)-engine/.test(String(demand.engine ?? '')) && Number(demand.advance_pct) > 0 && Number(demand.advance_pct) < 100
+            ? { advance_pct: Number(demand.advance_pct),
+                advance_paise: Math.min(quoted, Math.round((quoted * Number(demand.advance_pct)) / 100 / 10) * 10) }
+            : {}),
         },
         policy_version: VERSION,
       },

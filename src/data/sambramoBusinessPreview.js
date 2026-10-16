@@ -5,6 +5,7 @@
  * This file defines UI structure and readiness semantics only.
  * It never becomes the authoritative source of vendor rates.
  */
+import { tradeOf } from './trades/registry'
 
 export const PREVIEW_VERSION = 1
 
@@ -154,13 +155,19 @@ const TRADE_ALIASES = {
   'Emcee / Anchor': 'Anchor & MC',
   'Warehouse / storage': 'Warehouse / Storage',
   'Warehouse / Storage': 'Warehouse / Storage',
-  'Transportation': 'Group Passenger Transport',
+  // Canonical registry names whose preview card is titled differently.
+  // "Transportation" is E12, never L03 — the two used to resolve to each other.
+  'Transportation': 'Event Cars & Guest Transfers',
+  'Passenger Transport': 'Group Passenger Transport',
 }
 
 export const normalizeTrade = (tradeName, tradeId) => {
   const alias = TRADE_ALIASES[tradeName] ?? TRADE_ALIASES[String(tradeName ?? '').trim()]
+  // The registry knows every canonical name and slug; its code is this file's id.
+  const code = tradeOf(tradeId)?.code ?? tradeOf(tradeName)?.code
   return (
     TRADE_BY_ID[tradeId] ??
+    TRADE_BY_ID[code] ??
     TRADE_BY_NAME[tradeName] ??
     TRADE_BY_NAME[alias] ??
     TRADE_PREVIEW_CONFIG.find(x => x.name.toLowerCase() === String(alias ?? tradeName ?? '').toLowerCase()) ??

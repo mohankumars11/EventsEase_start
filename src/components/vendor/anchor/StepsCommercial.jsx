@@ -2,21 +2,16 @@
  * Steps 5–7: the generated packages, when a job becomes a custom quote,
  * and the booking terms that make instant payment possible.
  */
-import { useCallback, useEffect, useState } from 'react'
-import useEmblaCarousel from 'embla-carousel-react'
+import { useEffect, useState } from 'react'
 import { motion } from 'motion/react'
-import { Award, Crown, Gem, Pencil, Check, X, RefreshCw, Inbox, Timer, FilePen, Send } from 'lucide-react'
+import { Pencil, Check, X, Inbox, Timer, FilePen, Send } from 'lucide-react'
 import {
   Card, Label, TextField, Chip, ChipRow, Segmented, Toggle, OptionCard, Sheet, SectionTitle,
 } from './ui'
 import { ADDONS, ADDONS_V3, SLA_HOURS, ADVANCE, CANCELLATION, TRAVEL_BILLING, RIDER, TIER_DEFAULTS } from './options'
 import { rupees, takeHomeOf } from '../../../lib/tierPackages'
+import PackageCarousel from '../packages/PackageCarousel'
 
-const TIER_LOOK = {
-  ESSENTIAL: { icon: Award, from: 'from-amber-50', ring: 'ring-amber-200', tint: 'text-amber-700' },
-  SIGNATURE: { icon: Crown, from: 'from-plum-50', ring: 'ring-plum-500', tint: 'text-plum-700' },
-  VIP: { icon: Gem, from: 'from-sky-50', ring: 'ring-sky-200', tint: 'text-sky-700' },
-}
 const label = id => ADDONS_V3.find(a => a.id === id)?.label ?? ADDONS.find(a => a.id === id)?.label ?? id
 
 /** Merge the generated tier with whatever the partner changed on it. */
@@ -36,84 +31,41 @@ export function finalPackages(generated, overrides = {}, offered = {}) {
 }
 
 /* ═══ 5 · Packages ═════════════════════════════════════════════════════ */
+/** Anchor's tier -> the shape PackageCarousel draws.
+ *
+ *  `price_paise` on an anchor package is the CUSTOMER price, so the rate
+ *  the partner is shown is takeHomeOf() of it -- their own number, not a
+ *  total derived from the platform fee. The carousel labels it
+ *  "Your rate" and there is no second line quoting the customer. */
+export function toCardPackages(pkgs, offered) {
+  const ids = Object.keys(offered).concat('pre_event_call').filter((x, k, arr) => arr.indexOf(x) === k)
+  return pkgs.map(p => ({
+    key: p.tier,
+    name: p.name,
+    ratePaise: takeHomeOf(p.price_paise),
+    unit: 'per event',
+    meta: `${p.duration_hours} hours`,
+    base: `${p.duration_hours} hours of hosting`,
+    badge: p.badge,
+    edited: p.edited,
+    inclusions: ids.map(id => ({ id, label: label(id), included: p.inclusions.includes(id) })),
+  }))
+}
+
 export function PackagesStep({ generated, overrides, setOverrides, offered, maxHours, onRegenerate }) {
   const pkgs = finalPackages(generated, overrides, offered)
-  const [emblaRef, embla] = useEmblaCarousel({ align: 'center', startIndex: 1, containScroll: false })
-  const [sel, setSel] = useState(1)
   const [editing, setEditing] = useState(null)
-
-  const onSelect = useCallback(() => embla && setSel(embla.selectedScrollSnap()), [embla])
-  useEffect(() => { if (!embla) return; onSelect(); embla.on('select', onSelect); return () => embla.off('select', onSelect) }, [embla, onSelect])
 
   return (
     <>
-      <SectionTitle title="Your packages" sub="Built from your take-home. Swipe through, edit anything, then continue." />
+      <SectionTitle title="Your packages" sub="Built from your rate. Swipe through, edit anything, then continue." />
 
-      <div className="-mx-4 overflow-hidden pb-2 pt-4" ref={emblaRef}>
-        <div className="flex touch-pan-y">
-          {pkgs.map((p, i) => {
-            const look = TIER_LOOK[p.tier]
-            const Icon = look.icon
-            const active = i === sel
-            return (
-              <div key={p.tier} className="min-w-0 shrink-0 grow-0 basis-[78%] px-1.5">
-                <motion.div animate={{ scale: active ? 1 : 0.92, opacity: active ? 1 : 0.6 }}
-                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                  className={`relative rounded-[26px] bg-gradient-to-b ${look.from} to-white p-5 ring-1 ${p.tier === 'SIGNATURE' ? 'ring-2' : ''} ${look.ring}`}>
-                  {p.badge && (
-                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-gradient-to-r from-plum-600 to-fuchsia-500 px-3.5 py-1 text-[11px] font-extrabold uppercase tracking-wide text-white shadow-lg">
-                      ★ {p.badge}
-                    </span>
-                  )}
-                  <div className="flex items-center justify-between">
-                    <span className="flex items-center gap-2">
-                      <span className={`flex h-9 w-9 items-center justify-center rounded-xl bg-white ${look.tint} shadow-sm`}><Icon size={18} /></span>
-                      <span className="text-[17px] font-extrabold text-ink">{p.name}</span>
-                    </span>
-                    <button type="button" aria-label={`Edit ${p.name}`} onClick={() => setEditing(p.tier)}
-                      className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-ink/60 shadow-sm"><Pencil size={15} /></button>
-                  </div>
-
-                  <p className="mt-4 text-[32px] font-extrabold leading-none tracking-tight text-ink">{rupees(p.price_paise)}</p>
-                  <p className="mt-1 text-[12px] font-bold text-ink/50">
-                    Customer price · you receive {rupees(takeHomeOf(p.price_paise))}
-                  </p>
-                  <span className="mt-3 inline-flex rounded-full bg-white px-3 py-1 text-[12px] font-extrabold text-ink/70 ring-1 ring-ink/[0.07]">
-                    {p.duration_hours} hours
-                  </span>
-
-                  <div className="mt-4 space-y-1.5">
-                    {Object.keys(offered).concat('pre_event_call').filter((x, k, arr) => arr.indexOf(x) === k).map(id => {
-                      const inc = p.inclusions.includes(id)
-                      return (
-                        <p key={id} className={`flex items-center gap-2 text-[12.5px] ${inc ? 'font-bold text-ink' : 'text-ink/35 line-through'}`}>
-                          <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full ${inc ? 'bg-forest-600 text-white' : 'bg-ink/10 text-ink/40'}`}>
-                            {inc ? <Check size={10} strokeWidth={3.5} /> : <X size={10} strokeWidth={3} />}
-                          </span>
-                          {label(id)}
-                        </p>
-                      )
-                    })}
-                  </div>
-                  {p.edited && <p className="mt-3 text-[11px] font-extrabold uppercase tracking-wide text-plum-600">Edited by you</p>}
-                </motion.div>
-              </div>
-            )
-          })}
-        </div>
-      </div>
-
-      <div className="mt-2 flex justify-center gap-1.5">
-        {pkgs.map((p, i) => (
-          <button key={p.tier} type="button" aria-label={`Show ${p.name}`} onClick={() => embla?.scrollTo(i)}
-            className={`h-2 rounded-full transition-all ${i === sel ? 'w-6 bg-plum-700' : 'w-2 bg-ink/15'}`} />
-        ))}
-      </div>
-
-      <button type="button" onClick={onRegenerate}
-        className="mx-auto mt-4 flex items-center gap-1.5 rounded-full px-4 py-2 text-[12.5px] font-extrabold text-plum-700 ring-1 ring-plum-200">
-        <RefreshCw size={14} /> Reset to generated prices
-      </button>
+      <PackageCarousel
+        packages={toCardPackages(pkgs, offered)}
+        editable
+        onEdit={p => setEditing(p.key)}
+        onReset={onRegenerate}
+      />
 
       <EditSheet tier={editing} pkg={pkgs.find(p => p.tier === editing)} offered={offered} maxHours={maxHours}
         onClose={() => setEditing(null)}
@@ -138,7 +90,7 @@ function EditSheet({ tier, pkg, offered, maxHours, onClose, onSave }) {
     <Sheet open={!!tier} onOpenChange={o => !o && onClose()} title={pkg ? `Edit ${pkg.name}` : ''}>
       {pkg && (
         <>
-          <Label hint={`Generated: ${rupees(pkg.generated_price_paise)}. Changes go to our team for review.`}>Customer price</Label>
+          <Label hint={`Suggested: ${rupees(takeHomeOf(pkg.generated_price_paise))}. Changes go to our team for review.`}>Your rate</Label>
           <TextField prefix="₹" inputMode="numeric" value={price} onChange={x => setPrice(x.replace(/\D/g, '').slice(0, 7))} />
           <p className="mt-1.5 text-[12px] font-bold text-forest-700">You receive {rupees(takeHomeOf(Number(price) * 100))}</p>
           <div className="mt-5" />

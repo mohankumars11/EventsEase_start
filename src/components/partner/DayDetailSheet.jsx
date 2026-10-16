@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useSheetLock } from '../../hooks/useSheetLock'
 import { assessChange, LEVEL } from '../../lib/calendarAlerts'
 import { FIELD_RULES } from '../../lib/validation/fieldRules'
 import { X, CalendarCheck, CalendarClock, CalendarX2, Clock, StickyNote, MapPin, IndianRupee, Check, Loader2, AlertTriangle, CalendarRange, Info } from 'lucide-react'
@@ -11,6 +12,7 @@ import {
 import { istTodayISO } from '../../lib/istTime'
 import { INTEREST_FLOOR } from '../../lib/demand'
 import DayPricing from './calendar/DayPricing'
+import DayCapacity from './calendar/DayCapacity'
 
 /**
  * One day, in full, and the only place a day is edited.
@@ -95,6 +97,21 @@ export default function DayDetailSheet({
   pricing = null,
   onClose,
 }) {
+  /* At lg this is NOT a sheet -- it is `lg:static`, an inline panel in
+     the page. Locking the body there would freeze a page that has no
+     overlay on it, so the lock follows the same breakpoint the styles do. */
+  const [isOverlay, setIsOverlay] = useState(
+    () => typeof window !== 'undefined' && !window.matchMedia('(min-width: 1024px)').matches)
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const mq = window.matchMedia('(min-width: 1024px)')
+    const sync = () => setIsOverlay(!mq.matches)
+    sync()
+    mq.addEventListener('change', sync)
+    return () => mq.removeEventListener('change', sync)
+  }, [])
+  useSheetLock(isOverlay, onClose)
+
   const row = availability[date] ?? null
   const todayISO = istTodayISO()
   const verdict = useMemo(() => dayStatus({
@@ -244,12 +261,12 @@ export default function DayDetailSheet({
       {/* Backdrop. Only this fades — see the header. */}
       <div
         onClick={onClose}
-        className="fixed inset-0 z-40 bg-ink/40 transition-opacity lg:hidden"
+        className="fixed inset-0 z-[90] bg-ink/40 transition-opacity lg:hidden"
         aria-hidden="true"
       />
       <section
         role="dialog" aria-modal="true" aria-label={`Availability for ${pretty}`}
-        className="fixed inset-x-0 bottom-0 z-50 max-h-[88vh] overflow-y-auto rounded-t-[26px] bg-white pb-[max(env(safe-area-inset-bottom),18px)] shadow-2xl lg:static lg:z-auto lg:max-h-none lg:overflow-visible lg:rounded-[22px] lg:pb-4 lg:shadow-none lg:ring-1 lg:ring-ink/[0.06]"
+        className="fixed inset-x-0 bottom-0 z-[91] max-h-[88dvh] overflow-y-auto overscroll-contain rounded-t-[26px] bg-white pb-[max(env(safe-area-inset-bottom),18px)] shadow-2xl lg:static lg:z-auto lg:max-h-none lg:overflow-visible lg:rounded-[22px] lg:pb-4 lg:shadow-none lg:ring-1 lg:ring-ink/[0.06]"
       >
         {/* The grab handle is mobile-only; on a desktop panel it is noise. */}
         <div className="sticky top-0 z-10 rounded-t-[26px] bg-white px-4 pb-2 pt-3 lg:static lg:rounded-none lg:px-4 lg:pt-4">
@@ -301,6 +318,7 @@ export default function DayDetailSheet({
           </div>
 
           <DayPricing info={pricing} />
+          <DayCapacity vendorId={vendor?.id} date={date} />
 
           {jobsOnDay.length > 0 && (
             <Section title="Confirmed bookings">

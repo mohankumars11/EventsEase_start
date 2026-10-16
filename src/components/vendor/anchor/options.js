@@ -72,6 +72,25 @@ export const TIER_DEFAULTS = {
 
 export const SLA_HOURS = [2, 4, 8, 24]
 
+/* ── The partner no longer chooses this ────────────────────────────
+   ADVANCE was a 30/50/100 segment on three onboarding steps, and what
+   it set decides how much of the customer's money is taken at booking.
+   A partner-chosen advance is a partner-chosen early payout, which is
+   exactly what the procurement work replaces with a booking-specific,
+   customer-approved materials amount.
+
+   100 means the customer pays in full at booking. The money is held and
+   released on the existing completion path -- the partner is not paid
+   earlier because this number went up; nothing about their payout
+   changes. It stays in booking_rules because submit_listing_version
+   validates `booking_rules ?& array['advance_pct',...]` and all three
+   resolvers read it, so removing the KEY is a server change; removing
+   the CHOICE is not.
+
+   ADVANCE itself is kept, unreferenced by any step, because the admin
+   console still renders the stored value. */
+export const PLATFORM_ADVANCE_PCT = 100
+
 export const ADVANCE = [
   { value: 30, label: '30%' }, { value: 50, label: '50%' }, { value: 100, label: '100%' },
 ]
@@ -114,7 +133,7 @@ export const STAGES = [
   { id: 'packages', label: 'Essential, Signature & VIP', short: 'Packages' },
   { id: 'availability', label: 'Availability & travel', short: 'Calendar' },
   { id: 'rules', label: 'Booking & cancellation', short: 'Rules' },
-  { id: 'payout', label: 'Verification & payout', short: 'Payout' },
+  { id: 'payout', label: 'Identity & bank details', short: 'ID & Bank' },
   { id: 'review', label: 'Review & publish', short: 'Publish' },
 ]
 

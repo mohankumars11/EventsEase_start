@@ -183,7 +183,7 @@ export default function AnchorOnboardingFlow({
       })
       if (error) { setSubmitError(friendlyError(error)); return }
 
-      toast.success('Your profile has been submitted for review.')
+      // The confirmation is the Jobs tab card (SubmittedCard), shown after this hands back.
       clearDraft()
       const nextTrade = completeTrade(trade)
       onClose?.(nextTrade || undefined, data)
@@ -204,14 +204,17 @@ export default function AnchorOnboardingFlow({
       { id: 'pricing', label: 'Pricing approved', status: 'pending', next: 'Submit to send your packages for review.' },
       { id: 'availability', label: 'Calendar & booking windows', status: done.has('availability') ? 'pass' : 'fail', next: 'Set your limits and open your calendar.' },
       { id: 'rules', label: 'Booking & cancellation rules', status: done.has('rules') ? 'pass' : 'fail', next: 'Finish Booking & cancellation.' },
-      { id: 'payout', label: 'Razorpay payout account', status: payout.route ? 'pass' : 'fail', next: 'Complete payout setup to be booked instantly.' },
+      { id: 'payout', label: 'Razorpay payout account', status: payout.active ? 'pass' : 'fail', next: 'Complete payout setup to be booked instantly.' },
     ],
   }), [done, payout])
 
   const missing = tried && !canNext ? MISSING[step] : null
 
   const body = (
-    <div data-anchor-flow className={`${embedded ? 'relative' : 'fixed inset-0 z-[96]'} flex flex-col bg-[#fbfaff]`}>
+    /* See the note in ListingOnboardingFlow: data-add-item-flow is the
+       shared marker the render guards assert on, data-anchor-flow is the
+       specific one. */
+    <div data-add-item-flow data-anchor-flow className={`${embedded ? 'relative' : 'fixed inset-0 z-[96]'} flex flex-col bg-[#fbfaff]`}>
       <header className="shrink-0 bg-white/90 px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top,0px))] backdrop-blur-xl ring-1 ring-ink/[0.05]">
         <div className="mx-auto flex max-w-lg items-center gap-2">
           <button type="button" onClick={back} aria-label="Back" className="flex h-10 w-10 items-center justify-center rounded-full text-ink/70 hover:bg-ink/[0.05]"><ArrowLeft size={20} /></button>
@@ -243,7 +246,7 @@ export default function AnchorOnboardingFlow({
                 : <p className="rounded-2xl bg-amber-50 p-4 text-[13px] font-bold text-amber-900">Finish How you charge first. Your packages are built from it.</p>)}
               {step === 'availability' && <AvailabilityStage value={a.availability} set={put('availability')} />}
               {step === 'rules' && <RulesStage value={a.rules} set={put('rules')} />}
-              {step === 'payout' && <PayoutStage status={payout} />}
+              {step === 'payout' && <PayoutStage status={payout} vendorId={embedded ? null : vendorId} />}
               {step === 'review' && (
                 <ReviewStage items={readiness.items} state={readiness.state} quotesOk={false}
                   tiers={finalPackages(generated, a.overrides, offered)} name={a.about.stage_name}

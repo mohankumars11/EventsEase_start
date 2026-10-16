@@ -1,0 +1,92 @@
+{
+  "note": "Karnataka regional dishes. Editorial (needs_review). Diet set only where the dish is unambiguous; names are common English transliterations, alternates as aliases.",
+  "groups": [
+    { "cuisines": ["ka_traditional", "ka_south"], "category": "ml_component", "diet": "veg", "dishes": [
+      ["Bisi Bele Bath", "Bisibelebath", "Bisi Bele Bhath"], ["Ragi Mudde", "Ragi Ball"], ["Bassaru"], ["Majjige Huli", "Majjige Huli Kootu"],
+      ["Tili Saaru", "Thili Saaru"], ["Bele Saaru"], ["Kattu Saaru"], ["Menasina Saaru"], ["Huruli Saaru", "Horse Gram Saaru"],
+      ["Soppu Saaru"], ["Mavinakayi Saaru", "Raw Mango Saaru"], ["Hesaru Kaalu Saaru"], ["Avarekalu Saaru"], ["Avarekalu Huli"],
+      ["Bendekayi Huli", "Okra Huli"], ["Southekayi Huli"], ["Kumbalakayi Huli", "Ash Gourd Huli"], ["Nuggekayi Huli", "Drumstick Huli"],
+      ["Mangalore Southekayi Huli"], ["Hagalakayi Gojju", "Bitter Gourd Gojju"], ["Pineapple Gojju"], ["Tomato Gojju"], ["Bendekayi Gojju"],
+      ["Huli Thovve"], ["Bele Thovve"], ["Vegetable Sagu"], ["Mixed Vegetable Kurma"], ["Badanekayi Ennegayi", "Ennegayi", "Stuffed Brinjal Curry"]
+    ]},
+    { "cuisines": ["ka_traditional", "ka_south"], "category": "dr_poriyal", "diet": "veg", "dishes": [
+      ["Beans Palya"], ["Cabbage Palya"], ["Carrot Palya"], ["Beetroot Palya"], ["Bendekayi Palya", "Okra Palya"], ["Alugadde Palya", "Potato Palya"],
+      ["Avarekalu Palya"], ["Soppu Palya", "Greens Palya"], ["Bale Dindu Palya", "Banana Stem Palya"], ["Balekayi Palya", "Raw Banana Palya"],
+      ["Thonde Kayi Palya", "Ivy Gourd Palya"], ["Hagalakayi Palya", "Bitter Gourd Palya"], ["Suvarna Gadde Palya", "Yam Palya"],
+      ["Gorikayi Palya", "Cluster Beans Palya"], ["Chow Chow Palya"], ["Menthya Soppu Palya", "Methi Palya"], ["Sabsige Soppu Palya", "Dill Leaves Palya"]
+    ]},
+    { "cuisines": ["ka_traditional"], "category": "ac_kosambari", "diet": "veg", "dishes": [
+      ["Hesarubele Kosambari", "Moong Dal Kosambari"], ["Kadale Bele Kosambari", "Chana Dal Kosambari"], ["Southekayi Kosambari", "Cucumber Kosambari"],
+      ["Carrot Kosambari"], ["Mavinakayi Kosambari", "Raw Mango Kosambari"]
+    ]},
+    { "cuisines": ["ka_traditional", "ka_bengaluru", "ka_udupi"], "category": "rc_flavoured", "diet": "veg", "dishes": [
+      ["Chitranna", "Lemon Rice"], ["Puliyogare", "Tamarind Rice"], ["Vangi Bath"], ["Mavinakayi Chitranna", "Mango Rice"], ["Kayi Holige Anna", "Coconut Rice"],
+      ["Tomato Bath"], ["Methi Bath"], ["Pudina Bath"], ["Ghee Rice"], ["Pulav (Karnataka style)"]
+    ]},
+    { "cuisines": ["ka_traditional"], "category": "rc_curd", "diet": "veg", "dishes": [["Mosaranna", "Curd Rice"], ["Majjige Anna"]] },
+    { "cuisines": ["ka_traditional", "ka_north", "ka_south"], "category": "br_rotti", "diet": "veg", "dishes": [
+      ["Akki Rotti", "Akki Roti", "Rice Rotti"], ["Ragi Rotti", "Ragi Roti"], ["Jolada Rotti", "Jowar Rotti"], ["Sajje Rotti", "Bajra Rotti"],
+      ["Thalipeetu"], ["Menthya Rotti"]
+    ]},
+    { "cuisines": ["ka_udupi", "ka_bengaluru", "ka_mysuru"], "category": "bf_dosa", "diet": "veg", "dishes": [
+      ["Masala Dosa", "Masale Dose"], ["Mysore Masala Dosa"], ["Set Dosa", "Set Dose"], ["Benne Dosa", "Davangere Benne Dosa"], ["Plain Dosa"],
+      ["Rava Dosa"], ["Ragi Dosa"], ["Onion Rava Dosa"], ["Paper Dosa"], ["Open Butter Masala Dosa"], ["Mangalore Neer Dosa"], ["Akki Dosa"], ["Southekayi Dosa", "Cucumber Dosa"]
+    ]},
+    { "cuisines": ["ka_udupi", "ka_bengaluru"], "category": "bf_idli", "diet": "veg", "dishes": [
+      ["Idli"], ["Thatte Idli"], ["Rava Idli"], ["Button Idli"], ["Kanchipuram Idli"], ["Mallige Idli"], ["Kotte Kadubu", "Moode"], ["Halasina Hannina Kadubu", "Jackfruit Idli"]
+    ]},
+    { "cuisines": ["ka_udupi", "ka_bengaluru", "ka_traditional"], "category": "bf_upma", "diet": "veg", "dishes": [
+      ["Khara Bath"], ["Uppittu", "Upma"], ["Shavige Bath", "Vermicelli Upma"], ["Akki Tari Uppittu"], ["Chow Chow Bath"]
+    ]},
+    { "cuisines": ["ka_udupi", "ka_bengaluru"], "category": "bf_vada", "diet": "veg", "dishes": [
+      ["Medu Vada", "Uddina Vade"], ["Maddur Vada", "Maddur Vade"], ["Masala Vada", "Ambode"], ["Sabudana Vada"], ["Rava Vade"]
+    ]},
+    { "cuisines": ["ka_udupi", "ka_bengaluru", "ka_traditional"], "category": "bf_poha", "diet": "veg", "dishes": [["Avalakki Oggarane", "Poha"], ["Mosaru Avalakki"], ["Huli Avalakki"]] },
+    { "cuisines": ["ka_udupi", "ka_traditional"], "category": "bf_poori", "diet": "veg", "dishes": [["Poori Saagu"], ["Mangalore Buns"], ["Goli Baje", "Mangalore Bajji"]] },
+    { "cuisines": ["ka_mysuru", "ka_traditional", "ka_festive"], "category": "ds_mysore_pak", "diet": "veg", "dishes": [["Mysore Pak"], ["Ghee Mysore Pak"], ["Soft Mysore Pak"]] },
+    { "cuisines": ["ka_traditional", "ka_festive", "ka_wedding"], "category": "ds_holige", "diet": "veg", "dishes": [
+      ["Bele Obbattu", "Bele Holige"], ["Kayi Obbattu", "Kayi Holige", "Coconut Holige"], ["Shenga Holige", "Groundnut Holige"], ["Sakkare Holige"]
+    ]},
+    { "cuisines": ["ka_traditional", "ka_festive", "ka_wedding"], "category": "ds_payasam", "diet": "veg", "dishes": [
+      ["Shavige Payasa", "Semiya Payasam"], ["Gasagase Payasa", "Poppy Seed Payasa"], ["Hesaru Bele Payasa"], ["Akki Payasa"], ["Sabbakki Payasa", "Sago Payasa"],
+      ["Kadale Bele Payasa"], ["Godhi Payasa", "Broken Wheat Payasa"], ["Hayagreeva"]
+    ]},
+    { "cuisines": ["ka_traditional", "ka_festive", "ka_north"], "category": "ds_festival", "diet": "veg", "dishes": [
+      ["Chiroti"], ["Badam Puri"], ["Dharwad Peda"], ["Kardantu", "Gokak Kardantu"], ["Belagavi Kunda", "Kunda"], ["Karadantu"], ["Kajjaya", "Athirasa"],
+      ["Mandige"], ["Kobbari Mithai", "Coconut Burfi"], ["Rave Unde", "Rava Laddu"], ["Besan Unde"], ["Ellu Unde", "Sesame Laddu"],
+      ["Churmuri Unde"], ["Sajjige", "Kesari Bath"], ["Halbai"], ["Patholi"], ["Shavige Kesari"], ["Bevu Bella"], ["Karjikayi"], ["Ellu Bella"]
+    ]},
+    { "cuisines": ["ka_north"], "category": "ml_north_karnataka", "diet": "veg", "dishes": [
+      ["Ennegayi Palya"], ["Shenga Chutney Pudi", "Groundnut Chutney Powder"], ["Gurellu Chutney", "Niger Seed Chutney"], ["Agase Chutney", "Flaxseed Chutney"],
+      ["Kalu Palya", "Sprouts Palya"], ["Jhunka", "Zunka"], ["Pundi Palle", "Gongura Palya"], ["Mirchi Bajji (North Karnataka)"], ["Girmit"],
+      ["Mandakki Oggarane"], ["Kalu Saaru"], ["Shenga Holige"], ["Madali"], ["Huggi"]
+    ]},
+    { "cuisines": ["ka_mangalorean", "ka_udupi"], "category": "ml_component", "diet": "veg", "dishes": [
+      ["Pathrode"], ["Kadubu"], ["Mangalore Southekayi Sambar"], ["Kadle Manoli"], ["Tendle Upkari"], ["Bonda Pachadi"], ["Kaipakka"],
+      ["Mangalore Rasam"], ["Ambade Gojju"], ["Avial (Udupi style)"], ["Kadle Balyar"], ["Undi", "Undhi"], ["Moode"]
+    ]},
+    { "cuisines": ["ka_mangalorean"], "category": "gr_chicken", "diet": "non_veg", "dishes": [
+      ["Kori Gassi"], ["Chicken Ghee Roast", "Mangalorean Ghee Roast"], ["Chicken Sukka"], ["Kori Rotti"], ["Chicken Pulimunchi"]
+    ]},
+    { "cuisines": ["ka_mangalorean"], "category": "gr_fish", "diet": "non_veg", "dishes": [
+      ["Mangalorean Fish Curry", "Meen Gassi"], ["Fish Pulimunchi"], ["Anjal Rava Fry", "Kingfish Rava Fry"], ["Bangude Pulimunchi", "Mackerel Pulimunchi"],
+      ["Boothai Fry", "Sardine Fry"], ["Pomfret Tawa Fry"], ["Kane Rava Fry", "Ladyfish Fry"]
+    ]},
+    { "cuisines": ["ka_mangalorean"], "category": "gr_prawn", "diet": "non_veg", "dishes": [["Prawn Ghee Roast"], ["Prawn Sukka"], ["Prawn Gassi"], ["Crab Masala"], ["Marvai Sukka", "Clam Sukka"]] },
+    { "cuisines": ["ka_kodava"], "category": "gr_mutton", "diet": "non_veg", "dishes": [["Pandi Curry", "Coorg Pork Curry"], ["Kodava Mutton Curry"], ["Koli Curry", "Kodava Chicken Curry"]] },
+    { "cuisines": ["ka_kodava"], "category": "br_other", "diet": "veg", "dishes": [["Kadambuttu"], ["Noolputtu"], ["Akki Otti"], ["Paputtu"]] },
+    { "cuisines": ["ka_kodava"], "category": "ml_component", "diet": "veg", "dishes": [["Bembla Curry", "Bamboo Shoot Curry"], ["Kumm Curry", "Mushroom Curry (Coorg)"], ["Chekke Curry", "Raw Jackfruit Curry"]] },
+    { "cuisines": ["ka_malenadu"], "category": "ml_component", "diet": "veg", "dishes": [["Kesuvina Ele Patrode", "Colocasia Leaf Patrode"], ["Hittina Kadubu"], ["Appe Huli"], ["Kalale Gojju"], ["Malenadu Akki Rotti"]] },
+    { "cuisines": ["ka_malenadu"], "category": "gr_chicken", "diet": "non_veg", "dishes": [["Malenadu Koli Saaru"], ["Malnad Chicken Fry"]] },
+    { "cuisines": ["ka_uttara_kannada", "ka_konkani"], "category": "ml_component", "diet": "veg", "dishes": [["Tambuli"], ["Kokum Saaru"], ["Gojju Avalakki"], ["Alsande Ambat", "Black-eyed Pea Ambat"], ["Phodi"]] },
+    { "cuisines": ["ka_uttara_kannada", "ka_konkani"], "category": "gr_fish", "diet": "non_veg", "dishes": [["Karwari Fish Curry"], ["Karwari Fish Fry"], ["Bangda Tikhale"], ["Kalwa Sukke", "Oyster Sukke"]] },
+    { "cuisines": ["ka_south", "ka_bengaluru"], "category": "gr_mutton", "diet": "non_veg", "dishes": [["Mutton Saaru"], ["Nati Koli Saaru", "Country Chicken Curry"], ["Mutton Chops (Bengaluru military hotel)"], ["Donne Biryani"], ["Kheema Unde Saaru"], ["Boti Gojju"]] },
+    { "cuisines": ["ka_bengaluru", "ka_south"], "category": "rc_biryani", "diet": "non_veg", "dishes": [["Donne Chicken Biryani"], ["Donne Mutton Biryani"], ["Military Hotel Pulav"]] },
+    { "cuisines": ["ka_bengaluru"], "category": "ch_regional", "diet": "veg", "dishes": [["Churumuri", "Churmuri"], ["Masala Puri"], ["Nippattu"], ["Kodubale"], ["Benne Murukku"], ["Mangalore Goli Baje"], ["Holige Saaru"]] },
+    { "cuisines": ["ka_traditional", "ka_wedding"], "category": "ml_banana_leaf", "diet": "veg", "dishes": [
+      ["Karnataka Wedding Oota", "Karnataka Banana-Leaf Meal"], ["Udupi Banana-Leaf Meal"], ["North Karnataka Oota"], ["Brahmin Wedding Oota"], ["Karnataka Festival Meal"]
+    ]},
+    { "cuisines": ["ka_traditional"], "category": "bev_traditional", "diet": "veg", "dishes": [["Panaka", "Panakam"], ["Kokum Juice"], ["Neer Majjige", "Spiced Buttermilk"], ["Ragi Malt", "Ragi Ambli"], ["Kashaya"]] },
+    { "cuisines": ["ka_traditional", "sp_millet"], "category": "rc_millet", "diet": "veg", "dishes": [["Navane Bisi Bele Bath", "Foxtail Millet Bisi Bele Bath"], ["Saame Pongal", "Little Millet Pongal"], ["Harka Chitranna", "Kodo Millet Lemon Rice"], ["Ragi Dosa"], ["Ragi Rava Idli"]] }
+  ]
+}
