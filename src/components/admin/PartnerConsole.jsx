@@ -1471,7 +1471,7 @@ function PartnerDrawer({ vendor: v, services, tradeListings = [], docs, payout, 
             )}
           </Section>
 
-          <Section title={\`Identity & compliance uploads (\${docs.length})\`}>
+          <Section title={`Identity & compliance uploads (${docs.length})`}>
             {docs.length === 0 ? (
               <p className="text-[12px] italic text-ink-mute">No partner documents are linked to this record yet.</p>
             ) : (
@@ -1519,7 +1519,7 @@ function PartnerDrawer({ vendor: v, services, tradeListings = [], docs, payout, 
             )}
           </Section>
 
-          <Section title={\`Pricing packages & version history (\${(pricing.trade ?? []).length + (pricing.catering ?? []).length})\`}>
+          <Section title={`Pricing packages & version history (${(pricing.trade ?? []).length + (pricing.catering ?? []).length})`}>
             {!(pricing.trade?.length || pricing.catering?.length) ? (
               <p className="text-[12px] italic text-ink-mute">No trade or catering pricing packages are recorded for this partner.</p>
             ) : [...(pricing.trade ?? []).map(p => ({ ...p, packageType: 'Trade', payload: { commercial_inputs: p.commercial_inputs, trade_inputs: p.trade_inputs } })), ...(pricing.catering ?? []).map(p => ({ ...p, packageType: 'Catering', payload: { rate_bands: p.rate_bands } }))].sort((a,b) => new Date(b.submitted_at || b.updated_at || b.created_at || 0) - new Date(a.submitted_at || a.updated_at || a.created_at || 0)).map(p => (
