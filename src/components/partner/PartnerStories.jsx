@@ -79,7 +79,7 @@ const STORY_CSS = `
   0% { transform: scale(1.02) translate3d(0,0,0); }
   100% { transform: scale(1.12) translate3d(-1.2%, -1%, 0); }
 }
-@keyframes partnerStoryRise {
+@keyframes partnerStoryProgress { from { transform: scaleX(0); } to { transform: scaleX(1); } }\n@keyframes partnerStoryRise {
   from { opacity: 0; transform: translate3d(0,18px,0); }
   to { opacity: 1; transform: translate3d(0,0,0); }
 }
