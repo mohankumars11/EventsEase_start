@@ -10,6 +10,7 @@ import MarketInterest from '../../components/admin/MarketInterest'
 import LiveOperations from '../../components/admin/LiveOperations'
 import PricingReviewQueue from '../../components/admin/PricingReviewQueue'
 import AnchorListingAdmin from '../../components/admin/AnchorListingAdmin'
+import PartnerStoryStudio from '../../components/admin/PartnerStoryStudio'
 
 export default function AdminDashboard() {
   const { profile } = useAuth()
@@ -54,6 +55,7 @@ export default function AdminDashboard() {
     : activeNav === 'verification' ? <VerificationQueue />
     : activeNav === 'pricing-review' ? <PricingReviewQueue />
     : activeNav === 'listing-review' ? <AnchorListingAdmin />
+    : activeNav === 'partner-stories' ? <PartnerStoryStudio />
     : <PartnerConsole />
 
   return (

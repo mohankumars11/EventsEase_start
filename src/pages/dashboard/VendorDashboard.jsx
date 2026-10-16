@@ -30,6 +30,7 @@ import { unreadNotificationCount } from '../../lib/partnerInbox'
 import UpcomingWeek from '../../components/partner/UpcomingWeek'
 import AttentionSummary from '../../components/partner/AttentionSummary'
 import PartnerGrowthCarousel from '../../components/partner/PartnerGrowthCarousel'
+import PartnerStoryViewer from '../../components/partner/PartnerStoryViewer'
 import PartnerHowItWorks from '../../components/partner/PartnerHowItWorks'
 import CalendarMonth from '../../components/partner/CalendarMonth'
 import { usePartnerAttention } from '../../hooks/usePartnerAttention'
@@ -492,6 +493,8 @@ export default function VendorDashboard() {
           onHowItWorks={() => setHowItWorksOpen(true)}
         />
       )}
+
+      {tab === 'offers' && <PartnerStoryViewer />}
 
       {tab === 'offers' && (
         <PartnerGrowthCarousel

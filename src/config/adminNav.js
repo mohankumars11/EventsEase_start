@@ -12,6 +12,7 @@ export const NAV = [
       { id: 'partners', label: 'Partner 360 registry', emoji: '🤝', badge: 'vendors', description: 'Partner identity, onboarding, every listing card, documents, portfolio work, payout readiness and lifecycle history.' },
       { id: 'pricing-review', label: 'Pricing review', emoji: '₹', badge: 'pricing', description: 'Review submitted partner price revisions while protecting currently published prices.' },
       { id: 'listing-review', label: 'Listings & Anchor / MC', emoji: '▦', description: 'Review and publish service cards, listing revisions and trade-specific pricing.' },
+      { id: 'partner-stories', label: 'Partner story studio', emoji: '▣', description: 'Upload and order story cards for the four partner learning stories.' },
       { id: 'verification', label: 'Identity verification', emoji: '▣', description: 'Partner applications, uploaded evidence, verification status and operator decisions.' },
     ],
   },
