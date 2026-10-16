@@ -3,7 +3,7 @@ import { Check, ChevronLeft, ChevronRight, Clock3, MapPin, MessageCircle, Naviga
 import instantBookingScreen from '../../../shots/01-listing-card.png'
 import jobsScreen from '../../../shots/apk-tab-jobs.png'
 import tripScreen from '../../../shots/trip-live.png'
-import paymentScreen from '../../../shots/money-and-more.png'
+import paymentScreen from '../../../screenshots/money-and-more.png'
 
 const DURATION = 14000
 
