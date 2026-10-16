@@ -35,10 +35,10 @@ import { supabase } from '../../lib/supabase'
  */
 
 export const STORIES = [
-  { key: 'instant-bookings', label: 'Instant bookings', blurb: 'From discovery to booking' },
-  { key: 'jobs-received', label: 'Jobs received', blurb: 'Every detail in one place' },
+  { key: 'instant-booking', label: 'Instant bookings', blurb: 'From discovery to booking' },
   { key: 'start-trip', label: 'Start your trip', blurb: 'Keep the customer in the loop' },
-  { key: 'event-payment', label: 'Event done · Payment', blurb: 'Wrap up with confidence' },
+  { key: 'live-tracking', label: 'Live tracking', blurb: 'The customer sees you coming' },
+  { key: 'event-complete', label: 'Event done · Payment', blurb: 'Wrap up with confidence' },
 ]
 
 const BUCKET = 'partner-story-media'
