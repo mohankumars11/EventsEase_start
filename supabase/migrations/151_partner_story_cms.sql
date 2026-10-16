@@ -1,0 +1,14 @@
+create table if not exists public.partner_story_slides(id uuid primary key default gen_random_uuid(),story_key text not null check(story_key in('instant-booking','start-trip','live-tracking','event-complete')),title text not null,description text not null default '',media_url text not null,media_type text not null check(media_type in('image','video')),position integer not null default 0,is_published boolean not null default false,created_at timestamptz not null default now(),updated_at timestamptz not null default now());
+create index if not exists partner_story_slides_order_idx on public.partner_story_slides(story_key,is_published,position);
+alter table public.partner_story_slides enable row level security;
+drop policy if exists "Published partner stories are readable" on public.partner_story_slides;
+create policy "Published partner stories are readable" on public.partner_story_slides for select to anon,authenticated using(is_published=true);
+drop policy if exists "Admins manage partner stories" on public.partner_story_slides;
+create policy "Admins manage partner stories" on public.partner_story_slides for all to authenticated using(exists(select 1 from public.profiles p where p.id=auth.uid() and lower(coalesce(p.role,'')) in('admin','super_admin'))) with check(exists(select 1 from public.profiles p where p.id=auth.uid() and lower(coalesce(p.role,'')) in('admin','super_admin')));
+insert into storage.buckets(id,name,public,file_size_limit,allowed_mime_types) values('partner-story-media','partner-story-media',true,104857600,array['image/jpeg','image/png','image/webp','image/avif','video/mp4','video/webm','video/quicktime']) on conflict(id) do update set public=true,file_size_limit=104857600;
+drop policy if exists "Public can view partner story media" on storage.objects;
+create policy "Public can view partner story media" on storage.objects for select to anon,authenticated using(bucket_id='partner-story-media');
+drop policy if exists "Admins upload partner story media" on storage.objects;
+create policy "Admins upload partner story media" on storage.objects for insert to authenticated with check(bucket_id='partner-story-media' and exists(select 1 from public.profiles p where p.id=auth.uid() and lower(coalesce(p.role,'')) in('admin','super_admin')));
+drop policy if exists "Admins delete partner story media" on storage.objects;
+create policy "Admins delete partner story media" on storage.objects for delete to authenticated using(bucket_id='partner-story-media' and exists(select 1 from public.profiles p where p.id=auth.uid() and lower(coalesce(p.role,'')) in('admin','super_admin')));
