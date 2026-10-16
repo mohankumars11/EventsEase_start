@@ -1,11 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
-import { Check, ChevronLeft, ChevronRight, Clock3, MapPin, MessageCircle, Navigation, Wallet, X, Zap } from 'lucide-react'
+import { Check, ChevronLeft, ChevronRight, MapPin, MessageCircle, Navigation, Wallet, X, Zap } from 'lucide-react'
 import instantBookingScreen from '../../../shots/01-listing-card.png'
 import jobsScreen from '../../../shots/apk-tab-jobs.png'
 import tripScreen from '../../../shots/trip-live.png'
 import paymentScreen from '../../../screenshots/money-and-more.png'
 
 const DURATION = 14000
+const INSTANT_GUIDE = [
+  { title: 'A new job just arrived!', description: 'When a customer books an event, you’ll get an instant notification in your Jobs tab.', image: instantBookingScreen, alt: 'Customer event booking and instant booking price', label: 'NEW BOOKING', points: ['A customer books a listed service.', 'Keep internet on to receive notifications.', 'Open Jobs to see the new booking.'] },
+  { title: 'Open your Jobs tab', description: 'The new job appears with the important event details. Tap it to view the full booking.', image: jobsScreen, alt: 'SAMBRAMO Partner Jobs tab and booking details', label: 'REVIEW DETAILS', points: ['Event date and time', 'Event location', 'Package value and full details'] },
+  { title: 'Choose your response', description: 'After reviewing the details, choose the option that suits your availability.', image: jobsScreen, alt: 'SAMBRAMO Partner booking response options', label: 'YOUR CHOICE', points: ['Accept — confirm you can take the job.', 'Negotiate — discuss or clarify details.', 'Pass — decline if you are unavailable.'] },
+]
 
 const STORIES = [
   {
@@ -112,21 +117,28 @@ export default function PartnerStories() {
   const [activeIndex, setActiveIndex] = useState(-1)
   const [viewed, setViewed] = useState([])
   const [progressKey, setProgressKey] = useState(0)
+  const [guideSlide, setGuideSlide] = useState(0)
   const touchStart = useRef(null)
   const activeStory = STORIES[activeIndex]
+  const isInstantGuide = Boolean(activeStory?.guideSlides)
+  const guide = isInstantGuide ? INSTANT_GUIDE[guideSlide] : null
 
   const close = () => setActiveIndex(-1)
   const open = index => {
+    setGuideSlide(0)
     setActiveIndex(index)
     setProgressKey(key => key + 1)
   }
   const previous = () => {
+    if (isInstantGuide && guideSlide > 0) { setGuideSlide(i => i - 1); setProgressKey(key => key + 1); return }
     if (activeIndex > 0) {
       setActiveIndex(index => index - 1)
       setProgressKey(key => key + 1)
     }
   }
   const next = () => {
+    if (isInstantGuide && guideSlide < INSTANT_GUIDE.length - 1) { setGuideSlide(i => i + 1); setProgressKey(key => key + 1); return }
+    if (isInstantGuide && guideSlide === INSTANT_GUIDE.length - 1) { setViewed(current => current.includes(activeIndex) ? current : [...current, activeIndex]); setGuideSlide(0); setActiveIndex(index => index + 1); setProgressKey(key => key + 1); return }
     if (activeIndex >= STORIES.length - 1) {
       close()
       return
@@ -140,12 +152,13 @@ export default function PartnerStories() {
     if (activeIndex < 0) return undefined
     const timer = window.setTimeout(() => {
       setViewed(current => current.includes(activeIndex) ? current : [...current, activeIndex])
-      if (activeIndex === STORIES.length - 1) setActiveIndex(-1)
-      else setActiveIndex(index => index + 1)
+      if (isInstantGuide && guideSlide < INSTANT_GUIDE.length - 1) setGuideSlide(i => i + 1)
+      else if (activeIndex === STORIES.length - 1) { setActiveIndex(-1); setGuideSlide(0) }
+      else { setActiveIndex(index => index + 1); setGuideSlide(0) }
       setProgressKey(key => key + 1)
     }, DURATION)
     return () => window.clearTimeout(timer)
-  }, [activeIndex, progressKey])
+  }, [activeIndex, progressKey, guideSlide])
 
   useEffect(() => {
     if (activeIndex < 0) return undefined
@@ -226,15 +239,15 @@ export default function PartnerStories() {
             </div>
 
             <div className="relative z-20 flex gap-1 px-3 pt-3">
-              {STORIES.map((story, index) => (
-                <div key={story.id} className="h-[3px] flex-1 overflow-hidden rounded-full bg-white/35">
+              {(isInstantGuide ? INSTANT_GUIDE : STORIES).map((story, index) => (
+                <div key={isInstantGuide ? `guide-${index}` : story.id} className="h-[3px] flex-1 overflow-hidden rounded-full bg-white/35">
                   <div
                     key={`${progressKey}-${index}`}
                     className="h-full rounded-full bg-white"
                     style={{
-                      width: index < activeIndex ? '100%' : index > activeIndex ? '0%' : '100%',
+                      width: (isInstantGuide ? index < guideSlide : index < activeIndex) ? '100%' : (isInstantGuide ? index > guideSlide : index > activeIndex) ? '0%' : '100%',
                       transformOrigin: 'left center',
-                      animation: index === activeIndex ? `partnerStoryProgress ${DURATION}ms linear forwards` : 'none',
+                      animation: (isInstantGuide ? index === guideSlide : index === activeIndex) ? `partnerStoryProgress ${DURATION}ms linear forwards` : 'none',
                     }}
                   />
                 </div>
@@ -248,7 +261,7 @@ export default function PartnerStories() {
                 </div>
                 <div className="min-w-0">
                   <p className="text-[10px] font-black uppercase tracking-[0.13em] text-white">SAMBRAMO PARTNER</p>
-                  <p className="truncate text-[10px] text-white/75">{activeStory.eyebrow}</p>
+                  <p className="truncate text-[10px] text-white/75">{isInstantGuide ? 'YOUR INTERACTIVE PARTNER GUIDE' : activeStory.eyebrow}</p>
                 </div>
               </div>
               <button type="button" onClick={close} aria-label="Close stories" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-black/35 text-white ring-1 ring-white/20">
@@ -259,9 +272,9 @@ export default function PartnerStories() {
             <div className="relative z-10 flex min-h-0 flex-1 flex-col px-5 pt-5 pb-2">
               <div key={activeStory.id} className="partner-story-rise">
                 <p className="max-w-[330px] whitespace-pre-line text-[clamp(28px,7.2vw,40px)] font-black leading-[1.02] tracking-[-0.045em] text-white drop-shadow-lg">
-                  {activeStory.title}
+                  {isInstantGuide ? guide.title : activeStory.title}
                 </p>
-                <p className="mt-2 max-w-[340px] text-[13px] leading-relaxed text-white/85">{activeStory.description}</p>
+                <p className="mt-2 max-w-[340px] text-[13px] leading-relaxed text-white/85">{isInstantGuide ? guide.description : activeStory.description}</p>
               </div>
 
               <div className="relative flex min-h-[190px] flex-1 items-center justify-center py-4">
@@ -270,13 +283,13 @@ export default function PartnerStories() {
                   <div className="absolute -inset-2 rounded-[25px] bg-white/10 blur-xl" />
                   <div className="relative overflow-hidden rounded-[22px] border border-white/50 bg-white p-2 shadow-[0_24px_70px_rgba(0,0,0,.45)]">
                     <div className="relative h-[clamp(155px,29vh,245px)] overflow-hidden rounded-[15px] bg-[#f4effb]">
-                      <img src={activeStory.image} alt={activeStory.imageAlt} className="h-full w-full object-cover object-top" />
+                      <img src={isInstantGuide ? guide.image : activeStory.image} alt={isInstantGuide ? guide.alt : activeStory.imageAlt} className="h-full w-full object-cover object-top" />
                       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#19002f]/90 to-transparent px-3 pb-3 pt-8">
-                        <p className="text-[12px] font-black text-white">{activeStory.visualTitle}</p>
-                        <p className="mt-0.5 text-[10px] text-white/80">{activeStory.visualSub}</p>
+                        <p className="text-[12px] font-black text-white">{isInstantGuide ? guide.title : activeStory.visualTitle}</p>
+                        <p className="mt-0.5 text-[10px] text-white/80">{isInstantGuide ? 'Interactive partner learning capsule' : activeStory.visualSub}</p>
                       </div>
                       <div className="absolute right-2 top-2 rounded-full border border-white/80 bg-white/95 px-2.5 py-1 text-[8px] font-black tracking-[0.08em] text-[#4B0082] shadow-lg">
-                        {activeStory.visualState}
+                        {isInstantGuide ? guide.label : activeStory.visualState}
                       </div>
                     </div>
                   </div>
@@ -291,10 +304,10 @@ export default function PartnerStories() {
               <div key={`${activeStory.id}-instructions`} className="partner-story-rise relative z-10 rounded-[22px] border border-white/15 bg-[#21083A]/90 p-4 backdrop-blur-xl">
                 <div className="mb-3 flex items-center justify-between">
                   <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#D8C2FF]">How it works</p>
-                  <span className="text-[9px] font-bold text-white/55">{activeIndex + 1} / 4</span>
+                  <span className="text-[9px] font-bold text-white/55">{isInstantGuide ? `${guideSlide + 1} / 3` : `${activeIndex + 1} / 4`}</span>
                 </div>
                 <div className="space-y-2.5">
-                  {activeStory.steps.map((step, index) => (
+                  {(isInstantGuide ? guide.points : activeStory.steps).map((step, index) => (
                     <div key={step} className="flex items-start gap-2.5">
                       <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#6D28D9] text-[9px] font-black text-white">{index + 1}</span>
                       <p className="text-[11px] leading-[1.4] text-white/90">{step}</p>
@@ -303,18 +316,18 @@ export default function PartnerStories() {
                 </div>
                 <div className="mt-3 flex items-start gap-2 border-t border-white/10 pt-3">
                   <Check size={15} className="mt-0.5 shrink-0 text-[#C6A6FF]" />
-                  <p className="text-[11px] font-bold leading-relaxed text-white">{activeStory.takeaway}</p>
+                  <p className="text-[11px] font-bold leading-relaxed text-white">{isInstantGuide ? 'Swipe or tap Next to continue through the three booking cards.' : activeStory.takeaway}</p>
                 </div>
               </div>
             </div>
 
             <div className="relative z-20 flex items-center justify-between px-5 pb-[max(16px,env(safe-area-inset-bottom))] pt-3">
-              <button type="button" onClick={previous} disabled={activeIndex === 0} className="flex h-10 items-center gap-1 rounded-full border border-white/25 px-3 text-[11px] font-bold text-white disabled:opacity-35">
+              <button type="button" onClick={previous} disabled={activeIndex === 0 && (!isInstantGuide || guideSlide === 0)} className="flex h-10 items-center gap-1 rounded-full border border-white/25 px-3 text-[11px] font-bold text-white disabled:opacity-35">
                 <ChevronLeft size={15} /> Back
               </button>
               <span className="text-[9px] font-semibold tracking-wide text-white/55">QUICK PARTNER GUIDE</span>
               <button type="button" onClick={next} className="flex h-10 items-center gap-1 rounded-full bg-white px-4 text-[11px] font-black text-[#4B0082]">
-                {activeIndex === STORIES.length - 1 ? 'Done' : 'Next'} <ChevronRight size={15} />
+                {activeIndex === STORIES.length - 1 && (!isInstantGuide || guideSlide === 2) ? 'Done' : 'Next'} <ChevronRight size={15} />
               </button>
             </div>
           </div>
