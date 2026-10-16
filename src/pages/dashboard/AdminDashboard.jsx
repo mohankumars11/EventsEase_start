@@ -10,8 +10,7 @@ import MarketInterest from '../../components/admin/MarketInterest'
 import LiveOperations from '../../components/admin/LiveOperations'
 import PricingReviewQueue from '../../components/admin/PricingReviewQueue'
 import AnchorListingAdmin from '../../components/admin/AnchorListingAdmin'
-import PartnerStoryManager from '../../components/admin/PartnerStoryManager'
-import PartnerStoryStudio from '../../components/admin/PartnerStoryStudio'
+import PartnerStoryUploads from '../../components/admin/PartnerStoryUploads'
 
 export default function AdminDashboard() {
   const { profile } = useAuth()
@@ -53,11 +52,10 @@ export default function AdminDashboard() {
   const screen = activeNav === 'overview' ? <ExecutiveOverview onNavigate={go} />
     : activeNav === 'city-interest' ? <MarketInterest />
     : activeNav === 'live-ops' ? <LiveOperations />
+    : activeNav === 'story-uploads' ? <PartnerStoryUploads />
     : activeNav === 'verification' ? <VerificationQueue />
     : activeNav === 'pricing-review' ? <PricingReviewQueue />
     : activeNav === 'listing-review' ? <AnchorListingAdmin />
-    : activeNav === 'story-manager' ? <PartnerStoryManager />
-    : activeNav === 'partner-stories' ? <PartnerStoryStudio />
     : <PartnerConsole />
 
   return (

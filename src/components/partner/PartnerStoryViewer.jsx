@@ -1,11 +1,11 @@
 import { useEffect,useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { X,ChevronLeft,ChevronRight } from 'lucide-react'
-const KEYS=['instant-booking','jobs','start-trip','event-done']
-const META={'instant-booking':['Instant Booking','Your Interactive Partner Guide'],'jobs':['Your Jobs tab','Find and review new jobs'],'start-trip':['Start Your Trip','Keep the customer updated'],'event-done':['Event Done & Payment','Finish the job with confidence']}
+const KEYS=['instant-bookings','jobs-received','start-trip','event-payment']
+const META={'instant-bookings':['Instant Bookings','Your Interactive Partner Guide'],'jobs-received':['Jobs Received','Find and review new jobs'],'start-trip':['Start Your Trip','Keep the customer updated'],'event-payment':['Event Done & Payment','Finish the job with confidence']}
 export default function PartnerStoryViewer(){
 const [items,setItems]=useState([]),[open,setOpen]=useState(null),[card,setCard]=useState(0)
-useEffect(()=>{let live=true;supabase.from('partner_story_cards').select('*').eq('is_published',true).order('position').then(({data,error})=>{if(live&&!error)setItems(data||[])});return()=>{live=false}},[])
+useEffect(()=>{let live=true;supabase.from('partner_story_slides').select('*').eq('is_published',true).order('position').then(({data,error})=>{if(live&&!error)setItems(data||[])});return()=>{live=false}},[])
 const groups=items.reduce((a,x)=>{(a[x.story_key] ||= []).push(x);return a},{})
 function begin(k){if(groups[k]?.length){setOpen(k);setCard(0)}}function next(){const a=groups[open]||[];if(card<a.length-1)setCard(v=>v+1);else{setOpen(null);setCard(0)}}function prev(){if(card>0)setCard(v=>v-1);else setOpen(null)}
 const current=(groups[open]||[])[card]
