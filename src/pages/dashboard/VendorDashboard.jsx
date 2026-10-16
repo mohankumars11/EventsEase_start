@@ -26,6 +26,7 @@ import CustomQuoteInbox from '../../components/vendor/CustomQuoteInbox'
 import JobsHeader from '../../components/partner/JobsHeader'
 import ReviewCountdown from '../../components/partner/ReviewCountdown'
 import JobsStats from '../../components/partner/JobsStats'
+import PartnerStories from '../../components/partner/PartnerStories'
 import { unreadNotificationCount } from '../../lib/partnerInbox'
 import UpcomingWeek from '../../components/partner/UpcomingWeek'
 import AttentionSummary from '../../components/partner/AttentionSummary'
@@ -439,6 +440,11 @@ export default function VendorDashboard() {
           />
         </div>
       )}
+
+      {/* Partner-wide promotional stories sit immediately above the
+          Jobs scoreboard, so they are visible without changing the
+          existing header, review card, stats, or bottom navigation. */}
+      {tab === 'offers' && <PartnerStories />}
 
       {/* ── The scoreboard ───────────────────────────────────────────
           Four counts, each traceable to rows, riding up over the
