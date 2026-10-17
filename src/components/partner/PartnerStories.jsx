@@ -131,6 +131,10 @@ export default function PartnerStories() {
   const [progressKey, setProgressKey] = useState(0)
   const [guideSlide, setGuideSlide] = useState(0)
   const [uploaded, setUploaded] = useState({})
+  const [paused, setPaused] = useState(false)
+  const [progress, setProgress] = useState(0)
+  const startedAt = useRef(0)
+  const elapsed = useRef(0)
   const touchStart = useRef(null)
 
   /* Published slides, grouped by story key. Admin uploads land here
@@ -190,17 +194,37 @@ export default function PartnerStories() {
     setProgressKey(key => key + 1)
   }
 
+  /* The clock.
+     It used to be a setTimeout for the turn plus a CSS animation for
+     the bar. Two clocks cannot be paused together: holding the screen
+     would freeze the bar and the card would turn underneath it anyway.
+     So one rAF loop against wall-clock time drives both, and `elapsed`
+     survives a pause so releasing resumes rather than restarts. */
   useEffect(() => {
-    if (activeIndex < 0) return undefined
-    const timer = window.setTimeout(() => {
-      setViewed(current => current.includes(activeIndex) ? current : [...current, activeIndex])
-      if (isInstantGuide && guideSlide < slides.length - 1) setGuideSlide(i => i + 1)
-      else if (activeIndex === STORIES.length - 1) { setActiveIndex(-1); setGuideSlide(0) }
-      else { setActiveIndex(index => index + 1); setGuideSlide(0) }
-      setProgressKey(key => key + 1)
-    }, DURATION)
-    return () => window.clearTimeout(timer)
-  }, [activeIndex, progressKey, guideSlide])
+    if (activeIndex < 0 || paused) return undefined
+    startedAt.current = performance.now() - elapsed.current
+    let frame = 0
+    const tick = now => {
+      elapsed.current = now - startedAt.current
+      const ratio = Math.min(1, elapsed.current / DURATION)
+      setProgress(ratio)
+      if (ratio >= 1) {
+        elapsed.current = 0
+        setViewed(current => current.includes(activeIndex) ? current : [...current, activeIndex])
+        if (isInstantGuide && guideSlide < slides.length - 1) setGuideSlide(i => i + 1)
+        else if (activeIndex === STORIES.length - 1) { setActiveIndex(-1); setGuideSlide(0) }
+        else { setActiveIndex(index => index + 1); setGuideSlide(0) }
+        setProgressKey(key => key + 1)
+        return
+      }
+      frame = requestAnimationFrame(tick)
+    }
+    frame = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(frame)
+  }, [activeIndex, progressKey, guideSlide, paused, isInstantGuide, slides])
+
+  /* Any move to another card restarts its bar from zero. */
+  useEffect(() => { elapsed.current = 0; setProgress(0) }, [activeIndex, guideSlide, progressKey])
 
   useEffect(() => {
     if (activeIndex < 0) return undefined
@@ -236,15 +260,24 @@ export default function PartnerStories() {
                 aria-label={`Watch story: ${story.shortTitle}`}
                 className="min-w-0 flex flex-col items-center gap-1.5 text-center active:scale-[0.97] transition-transform"
               >
-                <span className={`block w-full max-w-[76px] aspect-square rounded-full p-[3px] ${hasViewed ? 'bg-[#16A34A]' : 'bg-gradient-to-br from-[#BFA0FF] via-[#6D28D9] to-[#4B0082]'} partner-story-pulse`}>
+                <span className={`relative block w-full max-w-[76px] aspect-square rounded-full p-[3px] ${hasViewed ? 'bg-[#16A34A]' : 'bg-gradient-to-br from-[#BFA0FF] via-[#6D28D9] to-[#4B0082]'} partner-story-pulse`}>
                   <span className="flex h-full w-full rounded-full bg-white p-[3px]">
                     <span className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-[#4B0082]">
                       <img src={deckFor(story)[0]?.media_type === 'image' ? deckFor(story)[0].media_url : story.image} alt="" className="absolute inset-0 h-full w-full object-cover opacity-55" />
                       <span className="absolute inset-0 bg-gradient-to-br from-[#4B0082]/30 via-[#4B0082]/60 to-[#18002E]/90" />
                       <Icon size={22} strokeWidth={2.2} className="relative z-10 text-white drop-shadow" />
-                      {hasViewed && <span className="absolute bottom-1 right-1 z-20 flex h-4 w-4 items-center justify-center rounded-full bg-[#16A34A] text-white"><Check size={10} strokeWidth={3} /></span>}
                     </span>
                   </span>
+                  {/* The badge sits on the OUTER ring, not inside the
+                      inner circle: that one is `overflow-hidden
+                      rounded-full`, so a badge at its bottom-right
+                      corner was clipped away by the curve and a partner
+                      never saw that they had watched a story. */}
+                  {hasViewed && (
+                    <span className="absolute -bottom-0.5 -right-0.5 z-30 flex h-[18px] w-[18px] items-center justify-center rounded-full bg-[#16A34A] text-white ring-2 ring-white shadow">
+                      <Check size={11} strokeWidth={3.5} />
+                    </span>
+                  )}
                 </span>
                 <span className="line-clamp-2 min-h-[25px] w-full text-[9px] font-bold leading-tight text-[#393044]">{story.shortTitle}</span>
               </button>
@@ -280,6 +313,37 @@ export default function PartnerStories() {
               <div className="absolute -right-14 top-[28%] h-44 w-44 rounded-full border border-white/10" />
             </div>
 
+            {/* Instagram's gesture set: tap right for the next card,
+                tap left for the previous, hold anywhere to pause.
+                These sit above the artwork and below the header, so
+                Close and the Back/Next buttons still win a tap. */}
+            <button
+              type="button" aria-label="Previous card"
+              onClick={previous}
+              onPointerDown={() => setPaused(true)}
+              onPointerUp={() => setPaused(false)}
+              onPointerCancel={() => setPaused(false)}
+              onPointerLeave={() => setPaused(false)}
+              className="absolute left-0 top-16 bottom-20 z-20 w-1/3"
+            />
+            <button
+              type="button" aria-label="Next card"
+              onClick={next}
+              onPointerDown={() => setPaused(true)}
+              onPointerUp={() => setPaused(false)}
+              onPointerCancel={() => setPaused(false)}
+              onPointerLeave={() => setPaused(false)}
+              className="absolute right-0 top-16 bottom-20 z-20 w-2/3"
+            />
+
+            {paused && (
+              <span className="absolute left-1/2 z-30 -translate-x-1/2 rounded-full bg-black/55 px-3 py-1 text-[10px] font-bold tracking-wide text-white backdrop-blur"
+                style={{ top: 'calc(env(safe-area-inset-top, 0px) + 58px)' }}
+              >
+                PAUSED
+              </span>
+            )}
+
             {hasDeck && guide && (
               /* The uploaded card, shown whole. object-contain rather
                  than cover: this artwork is composed to the edge and a
@@ -291,23 +355,31 @@ export default function PartnerStories() {
               </div>
             )}
 
-            <div className="relative z-20 flex gap-1 px-3 pt-3">
+            {/* pt must clear the notch: with viewport-fit=cover the
+                sheet starts at y=0, so a flat pt-3 put the bars on top
+                of the clock and the signal bars. */}
+            <div
+              className="relative z-30 flex gap-1 px-3"
+              style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 10px)' }}
+            >
               {(isInstantGuide ? slides : STORIES).map((story, index) => (
                 <div key={isInstantGuide ? `guide-${index}` : story.id} className="h-[3px] flex-1 overflow-hidden rounded-full bg-white/35">
                   <div
                     key={`${progressKey}-${index}`}
                     className="h-full rounded-full bg-white"
                     style={{
-                      width: (isInstantGuide ? index < guideSlide : index < activeIndex) ? '100%' : (isInstantGuide ? index > guideSlide : index > activeIndex) ? '0%' : '100%',
-                      transformOrigin: 'left center',
-                      animation: (isInstantGuide ? index === guideSlide : index === activeIndex) ? `partnerStoryProgress ${DURATION}ms linear forwards` : 'none',
+                      width: (isInstantGuide ? index < guideSlide : index < activeIndex)
+                        ? '100%'
+                        : (isInstantGuide ? index === guideSlide : index === activeIndex)
+                          ? `${progress * 100}%`
+                          : '0%',
                     }}
                   />
                 </div>
               ))}
             </div>
 
-            <div className="relative z-20 flex items-center justify-between px-4 pt-3">
+            <div className="relative z-30 flex items-center justify-between px-4 pt-3">
               <div className="flex min-w-0 items-center gap-2.5">
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/50 bg-[#4B0082] text-white">
                   <activeStory.icon size={18} />

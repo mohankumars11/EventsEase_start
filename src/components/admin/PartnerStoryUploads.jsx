@@ -87,13 +87,35 @@ export default function PartnerStoryUploads() {
   const [done, setDone] = useState(null)
   const fileInput = useRef(null)
 
+  const [editing, setEditing] = useState(null)       // slide id being renamed
+  const [draft, setDraft] = useState({ title: '', description: '' })
+  const [showArchived, setShowArchived] = useState(false)
+  const [history, setHistory] = useState(null)       // slide id -> events, or null
+  const [historyFor, setHistoryFor] = useState(null)
+  const [hasHistory, setHasHistory] = useState(true) // until 171 says otherwise
+
   const load = useCallback(async () => {
     setError(null)
-    const { data, error: e } = await supabase
+    /* `deleted_at` only exists once 171 is pasted. Asking for a column
+       that is not there fails the whole select with 42703, so the
+       narrower select is the fallback and archiving is hidden. */
+    const COLS = 'id, story_key, position, title, description, media_url, media_type, is_published, created_at'
+    let { data, error: e } = await supabase
       .from('partner_story_slides')
-      .select('id, story_key, position, title, description, media_url, media_type, is_published, created_at')
+      .select(`${COLS}, deleted_at`)
       .order('story_key', { ascending: true })
       .order('position', { ascending: true })
+
+    if (e && (e.code === '42703' || /deleted_at/.test(e.message || ''))) {
+      setHasHistory(false)
+      ;({ data, error: e } = await supabase
+        .from('partner_story_slides')
+        .select(COLS)
+        .order('story_key', { ascending: true })
+        .order('position', { ascending: true }))
+    } else if (!e) {
+      setHasHistory(true)
+    }
 
     if (e) {
       /* 42P01 is "relation does not exist" — 169 is not pasted yet. That
@@ -113,7 +135,11 @@ export default function PartnerStoryUploads() {
   useEffect(() => { load() }, [load])
 
   const forStory = useMemo(
-    () => (slides ?? []).filter(s => s.story_key === storyKey),
+    () => (slides ?? []).filter(s => s.story_key === storyKey && (showArchived ? s.deleted_at : !s.deleted_at)),
+    [slides, storyKey, showArchived],
+  )
+  const archivedCount = useMemo(
+    () => (slides ?? []).filter(s => s.story_key === storyKey && s.deleted_at).length,
     [slides, storyKey],
   )
 
@@ -193,12 +219,66 @@ export default function PartnerStoryUploads() {
     load()
   }
 
-  async function remove(slide) {
-    const { error: e } = await supabase.from('partner_story_slides').delete().eq('id', slide.id)
+  /* Rename / retitle. The trigger in 171 records the before and after,
+     so there is no need to write a history row from here. */
+  async function saveEdit(slide) {
+    const title = draft.title.trim() || '—'
+    const description = draft.description.trim() || '—'
+    if (title === slide.title && description === slide.description) { setEditing(null); return }
+    const { error: e } = await supabase
+      .from('partner_story_slides')
+      .update({ title, description, updated_at: new Date().toISOString() })
+      .eq('id', slide.id)
     if (e) { setError(e.message); return }
-    const key = pathOf(slide.media_url)
-    if (key) await supabase.storage.from(BUCKET).remove([key])
+    setEditing(null)
+    setDone('Renamed.')
     load()
+  }
+
+  /* Archive, not delete.
+     The media object is kept: restoring a row that points at a deleted
+     file would restore a broken card. `is_published` goes false in the
+     same update because the APKs already on phones filter on that
+     column alone and would keep showing an archived card otherwise. */
+  async function archive(slide) {
+    if (!hasHistory) {
+      setError('Archiving needs migration 171. Paste supabase/migrations/171_partner_story_history.sql first.')
+      return
+    }
+    const { error: e } = await supabase
+      .from('partner_story_slides')
+      .update({ deleted_at: new Date().toISOString(), is_published: false, updated_at: new Date().toISOString() })
+      .eq('id', slide.id)
+    if (e) { setError(e.message); return }
+    setDone('Moved to archive. It is in the history and can be restored.')
+    load()
+  }
+
+  async function restore(slide) {
+    const { error: e } = await supabase
+      .from('partner_story_slides')
+      .update({ deleted_at: null, updated_at: new Date().toISOString() })
+      .eq('id', slide.id)
+    if (e) { setError(e.message); return }
+    setDone('Restored as a draft. Publish it when you want partners to see it.')
+    load()
+  }
+
+  async function openHistory(slide) {
+    setHistoryFor(slide.id); setHistory(null); setError(null)
+    const { data, error: e } = await supabase
+      .from('partner_story_slide_events')
+      .select('id, action, changed, at')
+      .eq('slide_id', slide.id)
+      .order('at', { ascending: false })
+    if (e) {
+      setError(/does not exist/i.test(e.message || '')
+        ? 'History needs migration 171. Paste supabase/migrations/171_partner_story_history.sql first.'
+        : e.message)
+      setHistoryFor(null)
+      return
+    }
+    setHistory(data ?? [])
   }
 
   if (slides === null) return <p className="p-6 text-sm text-gray-500">Loading story slides…</p>
@@ -226,6 +306,8 @@ export default function PartnerStoryUploads() {
       <p className="rounded-xl bg-sky-50 p-3 text-[13px] text-sky-900 ring-1 ring-sky-200">
         <b>Published slides reach the partner app</b> the next time a partner opens the Jobs tab — no new APK.
         Drafts stay hidden. Needs the APK built from commit e0d762c or later; Build #755 cannot show them.
+        {!hasHistory && <> <b>Archive and history need migration 171</b> — paste{' '}
+        <code>supabase/migrations/171_partner_story_history.sql</code>; until then a slide can only be unpublished.</>}
       </p>
 
       {error && (
@@ -237,7 +319,9 @@ export default function PartnerStoryUploads() {
 
       <nav className="flex flex-wrap gap-2">
         {STORIES.map(s => {
-          const n = (slides ?? []).filter(x => x.story_key === s.key).length
+          /* Live slides only. Counting archived rows here made the tab
+             read 3 while the list below it read 2. */
+          const n = (slides ?? []).filter(x => x.story_key === s.key && !x.deleted_at).length
           const on = s.key === storyKey
           return (
             <button
@@ -328,14 +412,70 @@ export default function PartnerStoryUploads() {
         </div>
       </section>
 
+      {historyFor && (
+        <section className="rounded-2xl bg-white p-4 ring-1 ring-gray-200">
+          <div className="flex items-center justify-between">
+            <h3 className="text-[11px] font-bold uppercase tracking-wider text-gray-500">Change history</h3>
+            <button type="button" onClick={() => { setHistoryFor(null); setHistory(null) }}
+              className="text-[12px] font-bold text-gray-500 hover:text-gray-800">Close</button>
+          </div>
+          {history === null ? (
+            <p className="mt-2 text-[13px] text-gray-500">Loading…</p>
+          ) : history.length === 0 ? (
+            <p className="mt-2 text-[13px] text-gray-500">
+              Nothing recorded for this slide. History starts at the moment 171 was applied, so
+              anything older than that is not here.
+            </p>
+          ) : (
+            <ol className="mt-2 space-y-2">
+              {history.map(h => (
+                <li key={h.id} className="flex gap-3 rounded-xl bg-gray-50 p-2.5 text-[13px] ring-1 ring-gray-200">
+                  <span className={`h-fit rounded-full px-2 py-0.5 text-[11px] font-bold ${
+                    h.action === 'archived' ? 'bg-rose-100 text-rose-800'
+                      : h.action === 'published' ? 'bg-emerald-100 text-emerald-800'
+                        : h.action === 'created' ? 'bg-violet-100 text-violet-800'
+                          : 'bg-gray-200 text-gray-700'}`}
+                  >{h.action}</span>
+                  <span className="min-w-0 flex-1">
+                    {Object.entries(h.changed ?? {}).length === 0
+                      ? <span className="text-gray-500">—</span>
+                      : Object.entries(h.changed).map(([field, v]) => (
+                        <span key={field} className="block truncate text-gray-700">
+                          <b className="font-semibold">{field}</b>{': '}
+                          <span className="text-gray-400 line-through">{String(v?.from ?? '')}</span>
+                          {' → '}
+                          <span className="text-gray-900">{String(v?.to ?? '')}</span>
+                        </span>
+                      ))}
+                    <span className="mt-0.5 block text-[11px] text-gray-400">
+                      {new Date(h.at).toLocaleString()}
+                    </span>
+                  </span>
+                </li>
+              ))}
+            </ol>
+          )}
+        </section>
+      )}
+
       <section>
         <h3 className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
-          Slides in “{story.label}” ({forStory.length})
+          {showArchived ? 'Archived' : 'Slides'} in “{story.label}” ({forStory.length})
         </h3>
+        {hasHistory && (archivedCount > 0 || showArchived) && (
+          <button
+            type="button" onClick={() => { setShowArchived(v => !v); setEditing(null) }}
+            className="mt-1 text-[12px] font-bold text-violet-700 hover:text-violet-900"
+          >
+            {showArchived ? '← Back to live slides' : `View archive (${archivedCount})`}
+          </button>
+        )}
 
         {forStory.length === 0 ? (
           <p className="mt-2 rounded-xl bg-gray-50 p-3 text-[13px] text-gray-500 ring-1 ring-gray-200">
-            Nothing uploaded to this story yet. The partner app is showing its built-in slides.
+            {showArchived
+              ? 'Nothing archived in this story.'
+              : 'Nothing uploaded to this story yet. The partner app is showing its built-in slides.'}
           </p>
         ) : (
           <ul className="mt-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -357,18 +497,66 @@ export default function PartnerStoryUploads() {
                         #{s.position} · {s.media_type === 'video' ? 'Video' : 'Photo'}
                       </span>
                     </div>
-                    {s.title && s.title !== '—' && <p className="text-[14px] font-bold text-gray-900">{s.title}</p>}
-                    {s.description && s.description !== '—' && <p className="text-[13px] text-gray-600">{s.description}</p>}
-                    <div className="flex gap-3 pt-1">
-                      <button
-                        type="button" onClick={() => setPublished(s, !s.is_published)}
-                        className="text-[12px] font-bold text-violet-700 hover:text-violet-900"
-                      >{s.is_published ? 'Unpublish' : 'Publish'}</button>
-                      <button
-                        type="button" onClick={() => remove(s)}
-                        className="text-[12px] font-bold text-rose-600 hover:text-rose-800"
-                      >Delete</button>
-                    </div>
+                    {editing === s.id ? (
+                      <div className="space-y-1.5 pt-1">
+                        <input
+                          autoFocus value={draft.title}
+                          onChange={e => setDraft(d => ({ ...d, title: e.target.value }))}
+                          placeholder="Name"
+                          className="w-full rounded-lg bg-gray-50 px-2 py-1.5 text-[14px] font-bold text-gray-900 ring-1 ring-gray-300"
+                        />
+                        <input
+                          value={draft.description}
+                          onChange={e => setDraft(d => ({ ...d, description: e.target.value }))}
+                          placeholder="Description"
+                          className="w-full rounded-lg bg-gray-50 px-2 py-1.5 text-[13px] text-gray-700 ring-1 ring-gray-300"
+                        />
+                        <div className="flex gap-3 pt-0.5">
+                          <button type="button" onClick={() => saveEdit(s)}
+                            className="text-[12px] font-bold text-emerald-700 hover:text-emerald-900">Save</button>
+                          <button type="button" onClick={() => setEditing(null)}
+                            className="text-[12px] font-bold text-gray-500 hover:text-gray-800">Cancel</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        {s.title && s.title !== '—' && <p className="text-[14px] font-bold text-gray-900">{s.title}</p>}
+                        {s.description && s.description !== '—' && <p className="text-[13px] text-gray-600">{s.description}</p>}
+                        <div className="flex flex-wrap gap-x-3 gap-y-1 pt-1">
+                          {s.deleted_at ? (
+                            <button
+                              type="button" onClick={() => restore(s)}
+                              className="text-[12px] font-bold text-emerald-700 hover:text-emerald-900"
+                            >Restore</button>
+                          ) : (
+                            <>
+                              <button
+                                type="button" onClick={() => setPublished(s, !s.is_published)}
+                                className="text-[12px] font-bold text-violet-700 hover:text-violet-900"
+                              >{s.is_published ? 'Unpublish' : 'Publish'}</button>
+                              <button
+                                type="button"
+                                onClick={() => { setEditing(s.id); setDraft({
+                                  title: s.title === '—' ? '' : (s.title ?? ''),
+                                  description: s.description === '—' ? '' : (s.description ?? ''),
+                                }) }}
+                                className="text-[12px] font-bold text-gray-700 hover:text-gray-900"
+                              >Rename</button>
+                              <button
+                                type="button" onClick={() => archive(s)}
+                                className="text-[12px] font-bold text-rose-600 hover:text-rose-800"
+                              >Archive</button>
+                            </>
+                          )}
+                          {hasHistory && (
+                            <button
+                              type="button" onClick={() => openHistory(s)}
+                              className="text-[12px] font-bold text-gray-500 hover:text-gray-800"
+                            >History</button>
+                          )}
+                        </div>
+                      </>
+                    )}
                   </div>
                 </li>
               )

@@ -15,22 +15,22 @@ import PartnerStoryUploads from '../../src/components/admin/PartnerStoryUploads'
 
 const SLIDES = [
   {
-    id: 's1', story_key: 'instant-bookings', position: 0,
-    title: 'A new job just arrived', description: 'The booking lands in your Jobs tab the moment a customer pays.',
+    id: 's1', story_key: 'instant-booking', position: 0,
+    title: 'A new job just arrived!', description: 'The booking lands in your Jobs tab the moment a customer pays.',
     media_url: 'demo-1.jpg', media_type: 'image',
-    is_published: true, created_at: new Date().toISOString(),
+    is_published: true, deleted_at: null, created_at: new Date().toISOString(),
   },
   {
-    id: 's2', story_key: 'instant-bookings', position: 1,
-    title: 'Open the job', description: 'Date, venue and package value, all on one screen.',
+    id: 's2', story_key: 'instant-booking', position: 1,
+    title: 'Open your Jobs tab', description: 'Date, venue and package value, all on one screen.',
     media_url: 'demo-2.mp4', media_type: 'video',
-    is_published: false, created_at: new Date().toISOString(),
+    is_published: false, deleted_at: null, created_at: new Date().toISOString(),
   },
   {
-    id: 's3', story_key: 'start-trip', position: 0,
-    title: 'Share the journey', description: '—',
+    id: 's3', story_key: 'instant-booking', position: 2,
+    title: 'An older card', description: 'Archived last week.',
     media_url: 'demo-3.jpg', media_type: 'image',
-    is_published: true, created_at: new Date().toISOString(),
+    is_published: false, deleted_at: new Date().toISOString(), created_at: new Date().toISOString(),
   },
 ]
 
