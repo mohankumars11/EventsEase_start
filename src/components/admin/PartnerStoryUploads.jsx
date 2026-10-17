@@ -17,13 +17,12 @@ import { supabase } from '../../lib/supabase'
  * WHAT THIS SCREEN WILL AND WILL NOT CLAIM
  * ══════════════════════════════════════════════════════════════════════
  *
- * It can prove a row was written and an object was stored. It CANNOT
- * prove a partner sees it, because the partner app reads a hardcoded
- * array today and that file lives on another branch. So nothing here
- * says "live to partners" — a slide is `Published`, which is a fact
- * about this table, and the banner says plainly that the app side is
- * not wired yet. A screen that claimed otherwise would be the reason
- * someone uploads twenty slides and sees none of them.
+ * It can prove a row was written and an object was stored. It cannot
+ * prove a given phone has fetched it: PartnerStories.jsx reads the
+ * table when the Jobs tab mounts, not continuously. So the banner says
+ * "next time a partner opens the Jobs tab" and nothing here says
+ * "live" — a screen that promised instant would be the reason someone
+ * stares at an open app waiting for a card that arrives on next open.
  *
  * ══════════════════════════════════════════════════════════════════════
  * UPLOAD ORDER: OBJECT FIRST, ROW SECOND
@@ -34,10 +33,15 @@ import { supabase } from '../../lib/supabase'
  * as a broken slide, whereas an orphaned object is invisible and cheap.
  */
 
+/* Labels and order are the partner app's rail, left to right. `key` is
+   what the table's CHECK accepts — see SLIDE_KEY in PartnerStories.jsx.
+   `live-tracking` is the key that holds "Jobs received": the two names
+   were written by different hands, and the operator should only ever
+   see the one the partner sees. */
 export const STORIES = [
   { key: 'instant-booking', label: 'Instant bookings', blurb: 'From discovery to booking' },
+  { key: 'live-tracking', label: 'Jobs received', blurb: 'Every detail in one place' },
   { key: 'start-trip', label: 'Start your trip', blurb: 'Keep the customer in the loop' },
-  { key: 'live-tracking', label: 'Live tracking', blurb: 'The customer sees you coming' },
   { key: 'event-complete', label: 'Event done · Payment', blurb: 'Wrap up with confidence' },
 ]
 
@@ -78,7 +82,7 @@ export default function PartnerStoryUploads() {
   const [queue, setQueue] = useState([])
   const [heading, setHeading] = useState('')
   const [body, setBody] = useState('')
-  const [publishNow, setPublishNow] = useState(false)
+  const [publishNow, setPublishNow] = useState(true)
   const [busy, setBusy] = useState(null)
   const [done, setDone] = useState(null)
   const fileInput = useRef(null)
@@ -220,8 +224,8 @@ export default function PartnerStoryUploads() {
       )}
 
       <p className="rounded-xl bg-sky-50 p-3 text-[13px] text-sky-900 ring-1 ring-sky-200">
-        <b>The partner app does not read these yet.</b> It still shows its four built-in stories from code.
-        Slides you publish here are stored and will appear the moment that wiring lands — not in the current APK.
+        <b>Published slides reach the partner app</b> the next time a partner opens the Jobs tab — no new APK.
+        Drafts stay hidden. Needs the APK built from commit e0d762c or later; Build #755 cannot show them.
       </p>
 
       {error && (
