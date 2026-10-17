@@ -24,7 +24,7 @@ const INSTANT_GUIDE = [
   { title: 'Choose your response', description: 'After reviewing the details, choose the option that suits your availability.', image: jobsScreen, alt: 'SAMBRAMO Partner booking response options', label: 'YOUR CHOICE', points: ['Accept — confirm you can take the job.', 'Negotiate — discuss or clarify details.', 'Pass — decline if you are unavailable.'] },
 ]
 
-const STORIES = [
+const BUILT_IN_STORIES = [
   {
     id: 'instant-bookings',
     shortTitle: 'Instant bookings',
@@ -140,6 +140,38 @@ export default function PartnerStories() {
   /* Published slides, grouped by story key. Admin uploads land here
      without a new APK: the cards are fetched at launch, not bundled.
      An empty table leaves every story exactly as it ships. */
+  /* The story headings now live in `partner_stories` so an operator can
+     rename or add one. The built-in four stand in when 172 is not
+     applied, or when every row has been archived — an empty rail is
+     worse than a stale one. A story the table knows but this build
+     does not gets no icon or artwork of its own, so it falls back to
+     the first story's glyph and leans on its first uploaded card. */
+  const [storyDefs, setStoryDefs] = useState(null)
+
+  useEffect(() => {
+    let live = true
+    supabase
+      .from('partner_stories')
+      .select('key, label, blurb, position, deleted_at')
+      .order('position')
+      .then(({ data, error }) => {
+        if (!live || error || !data) return
+        setStoryDefs(data.filter(r => !r.deleted_at))
+      })
+    return () => { live = false }
+  }, [])
+
+  const STORIES = useMemo(() => {
+    if (!storyDefs?.length) return BUILT_IN_STORIES
+    const byKey = Object.fromEntries(BUILT_IN_STORIES.map(b => [SLIDE_KEY[b.id] ?? b.id, b]))
+    return storyDefs.map(r => {
+      const base = byKey[r.key] ?? BUILT_IN_STORIES[0]
+      /* `id` stays the key the SLIDE_KEY map expects, so a built-in
+         story keeps finding its uploads; a new one is its own key. */
+      return { ...base, id: byKey[r.key] ? base.id : r.key, shortTitle: r.label, eyebrow: r.blurb || base.eyebrow }
+    })
+  }, [storyDefs])
+
   useEffect(() => {
     let live = true
     supabase
@@ -155,7 +187,7 @@ export default function PartnerStories() {
   }, [])
 
   const deckFor = useMemo(
-    () => story => (story ? uploaded[SLIDE_KEY[story.id]] ?? [] : []),
+    () => story => (story ? uploaded[SLIDE_KEY[story.id] ?? story.id] ?? [] : []),
     [uploaded],
   )
 
@@ -246,7 +278,7 @@ export default function PartnerStories() {
             <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[#4B0082]">Partner stories</p>
             <p className="text-[10px] text-[#81758F] mt-0.5">Quick guides for every booking</p>
           </div>
-          <span className="text-[10px] font-semibold text-[#81758F]">4 stories</span>
+          <span className="text-[10px] font-semibold text-[#81758F]">{STORIES.length} stories</span>
         </div>
         <div className="grid grid-cols-4 gap-2 px-1">
           {STORIES.map((story, index) => {

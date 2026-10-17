@@ -38,7 +38,7 @@ import { supabase } from '../../lib/supabase'
    `live-tracking` is the key that holds "Jobs received": the two names
    were written by different hands, and the operator should only ever
    see the one the partner sees. */
-export const STORIES = [
+export const FALLBACK_STORIES = [
   { key: 'instant-booking', label: 'Instant bookings', blurb: 'From discovery to booking' },
   { key: 'live-tracking', label: 'Jobs received', blurb: 'Every detail in one place' },
   { key: 'start-trip', label: 'Start your trip', blurb: 'Keep the customer in the loop' },
@@ -74,7 +74,7 @@ function publicUrl(path) {
 }
 
 export default function PartnerStoryUploads() {
-  const [storyKey, setStoryKey] = useState(STORIES[0].key)
+  const [storyKey, setStoryKey] = useState(FALLBACK_STORIES[0].key)
   const [slides, setSlides] = useState(null)
   const [error, setError] = useState(null)
   const [migrationMissing, setMigrationMissing] = useState(false)
@@ -93,6 +93,14 @@ export default function PartnerStoryUploads() {
   const [history, setHistory] = useState(null)       // slide id -> events, or null
   const [historyFor, setHistoryFor] = useState(null)
   const [hasHistory, setHasHistory] = useState(true) // until 171 says otherwise
+
+  const [storyRows, setStoryRows] = useState(null)   // null until 172 answers
+  const [manageStories, setManageStories] = useState(false)
+  const [editingStory, setEditingStory] = useState(null)
+  const [storyDraft, setStoryDraft] = useState({ label: '', blurb: '' })
+  const [newStory, setNewStory] = useState({ label: '', blurb: '' })
+  const [storyHistoryFor, setStoryHistoryFor] = useState(null)
+  const [storyHistory, setStoryHistory] = useState(null)
 
   const load = useCallback(async () => {
     setError(null)
@@ -132,7 +140,110 @@ export default function PartnerStoryUploads() {
     setSlides(data ?? [])
   }, [])
 
-  useEffect(() => { load() }, [load])
+  const loadStories = useCallback(async () => {
+    const { data, error: e } = await supabase
+      .from('partner_stories')
+      .select('key, label, blurb, position, deleted_at')
+      .order('position', { ascending: true })
+    /* No table yet: the four built-in stories stand in, and the
+       management controls hide rather than throwing at the operator. */
+    if (e) { setStoryRows(null); return }
+    setStoryRows(data ?? [])
+  }, [])
+
+  useEffect(() => { load(); loadStories() }, [load, loadStories])
+
+  /* What the tabs show. From the table once 172 is applied, otherwise
+     the built-in four. Archived stories drop out either way. */
+  const STORIES = useMemo(() => {
+    if (!storyRows) return FALLBACK_STORIES
+    const live = storyRows.filter(r => !r.deleted_at)
+    return live.length
+      ? live.map(r => ({ key: r.key, label: r.label, blurb: r.blurb ?? '' }))
+      : FALLBACK_STORIES
+  }, [storyRows])
+
+  const archivedStories = useMemo(
+    () => (storyRows ?? []).filter(r => r.deleted_at),
+    [storyRows],
+  )
+
+  /* The selected tab can vanish — archived, or the list arrived and
+     does not contain it. Fall back to the first rather than render a
+     screen whose heading names a story that is not there. */
+  useEffect(() => {
+    if (STORIES.length && !STORIES.some(x => x.key === storyKey)) setStoryKey(STORIES[0].key)
+  }, [STORIES, storyKey])
+
+  const slugify = label => label.toLowerCase().trim()
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40)
+
+  async function addStory() {
+    const label = newStory.label.trim()
+    if (!label) return
+    const key = slugify(label)
+    if (!key) { setError('Give the story a name with at least one letter or number.'); return }
+    if ((storyRows ?? []).some(r => r.key === key)) {
+      setError(`A story with the key “${key}” already exists — archived ones count too.`)
+      return
+    }
+    const position = (storyRows ?? []).reduce((m, r) => Math.max(m, r.position ?? 0), -1) + 1
+    const { error: e } = await supabase
+      .from('partner_stories')
+      .insert({ key, label, blurb: newStory.blurb.trim() || null, position })
+    if (e) { setError(e.message); return }
+    setNewStory({ label: '', blurb: '' })
+    setDone(`Story “${label}” added. It reaches partners in the next APK build, not the one installed.`)
+    loadStories()
+  }
+
+  async function saveStory(row) {
+    const label = storyDraft.label.trim()
+    if (!label) { setError('A story needs a name.'); return }
+    const { error: e } = await supabase
+      .from('partner_stories')
+      .update({ label, blurb: storyDraft.blurb.trim() || null, updated_at: new Date().toISOString() })
+      .eq('key', row.key)
+    if (e) { setError(e.message); return }
+    setEditingStory(null)
+    setDone('Story renamed.')
+    loadStories()
+  }
+
+  async function archiveStory(row) {
+    const live = (slides ?? []).filter(x => x.story_key === row.key && !x.deleted_at).length
+    if (live && !window.confirm(
+      `“${row.label}” still has ${live} slide${live === 1 ? '' : 's'} in it. ` +
+      'Archiving the story hides it from the console; the slides stay where they are. Continue?')) return
+    const { error: e } = await supabase
+      .from('partner_stories')
+      .update({ deleted_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+      .eq('key', row.key)
+    if (e) { setError(e.message); return }
+    setDone('Story archived. It is in the history and can be restored.')
+    loadStories()
+  }
+
+  async function restoreStory(row) {
+    const { error: e } = await supabase
+      .from('partner_stories')
+      .update({ deleted_at: null, updated_at: new Date().toISOString() })
+      .eq('key', row.key)
+    if (e) { setError(e.message); return }
+    setDone('Story restored.')
+    loadStories()
+  }
+
+  async function openStoryHistory(row) {
+    setStoryHistoryFor(row.key); setStoryHistory(null); setError(null)
+    const { data, error: e } = await supabase
+      .from('partner_story_events')
+      .select('id, action, changed, at')
+      .eq('story_key', row.key)
+      .order('at', { ascending: false })
+    if (e) { setError(e.message); setStoryHistoryFor(null); return }
+    setStoryHistory(data ?? [])
+  }
 
   const forStory = useMemo(
     () => (slides ?? []).filter(s => s.story_key === storyKey && (showArchived ? s.deleted_at : !s.deleted_at)),
@@ -315,6 +426,154 @@ export default function PartnerStoryUploads() {
       )}
       {done && (
         <p className="rounded-xl bg-emerald-50 p-3 text-[13px] text-emerald-900 ring-1 ring-emerald-200">{done}</p>
+      )}
+
+      <div className="flex items-center justify-between">
+        <h3 className="text-[11px] font-bold uppercase tracking-wider text-gray-500">Stories</h3>
+        {storyRows !== null && (
+          <button
+            type="button" onClick={() => { setManageStories(v => !v); setEditingStory(null) }}
+            className="text-[12px] font-bold text-violet-700 hover:text-violet-900"
+          >{manageStories ? 'Done managing' : 'Manage stories'}</button>
+        )}
+      </div>
+
+      {storyRows === null && (
+        <p className="rounded-xl bg-amber-50 p-3 text-[13px] text-amber-900 ring-1 ring-amber-200">
+          <b>To rename, add or remove a story</b> paste{' '}
+          <code>supabase/migrations/172_partner_stories_are_rows.sql</code>. Until then these four are
+          fixed in code, and only the cards inside them can be changed.
+        </p>
+      )}
+
+      {manageStories && storyRows !== null && (
+        <section className="space-y-3 rounded-2xl bg-white p-4 ring-1 ring-gray-200">
+          <p className="text-[12px] text-gray-500">
+            Renaming a story or adding one changes this console and the <b>next</b> APK build. A phone
+            that is already installed keeps the names it shipped with — only the cards inside a story
+            travel without a rebuild.
+          </p>
+
+          <ul className="space-y-2">
+            {(storyRows ?? []).filter(r => !r.deleted_at).map(row => (
+              <li key={row.key} className="rounded-xl bg-gray-50 p-3 ring-1 ring-gray-200">
+                {editingStory === row.key ? (
+                  <div className="space-y-1.5">
+                    <input
+                      autoFocus value={storyDraft.label}
+                      onChange={e => setStoryDraft(d => ({ ...d, label: e.target.value }))}
+                      placeholder="Story name"
+                      className="w-full rounded-lg bg-white px-2 py-1.5 text-[14px] font-bold text-gray-900 ring-1 ring-gray-300"
+                    />
+                    <input
+                      value={storyDraft.blurb}
+                      onChange={e => setStoryDraft(d => ({ ...d, blurb: e.target.value }))}
+                      placeholder="Short line under the name"
+                      className="w-full rounded-lg bg-white px-2 py-1.5 text-[13px] text-gray-700 ring-1 ring-gray-300"
+                    />
+                    <div className="flex gap-3 pt-0.5">
+                      <button type="button" onClick={() => saveStory(row)}
+                        className="text-[12px] font-bold text-emerald-700 hover:text-emerald-900">Save</button>
+                      <button type="button" onClick={() => setEditingStory(null)}
+                        className="text-[12px] font-bold text-gray-500 hover:text-gray-800">Cancel</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="min-w-0">
+                      <b className="text-[14px] font-bold text-gray-900">{row.label}</b>
+                      {row.blurb && <span className="ml-2 text-[12px] text-gray-500">{row.blurb}</span>}
+                      <span className="ml-2 text-[11px] text-gray-400">
+                        {(slides ?? []).filter(x => x.story_key === row.key && !x.deleted_at).length} slides · {row.key}
+                      </span>
+                    </span>
+                    <span className="flex gap-3">
+                      <button type="button"
+                        onClick={() => { setEditingStory(row.key); setStoryDraft({ label: row.label, blurb: row.blurb ?? '' }) }}
+                        className="text-[12px] font-bold text-gray-700 hover:text-gray-900">Rename</button>
+                      <button type="button" onClick={() => archiveStory(row)}
+                        className="text-[12px] font-bold text-rose-600 hover:text-rose-800">Remove</button>
+                      <button type="button" onClick={() => openStoryHistory(row)}
+                        className="text-[12px] font-bold text-gray-500 hover:text-gray-800">History</button>
+                    </span>
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+
+          {archivedStories.length > 0 && (
+            <div className="rounded-xl bg-gray-50 p-3 ring-1 ring-gray-200">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500">Removed stories</p>
+              <ul className="mt-1.5 space-y-1">
+                {archivedStories.map(row => (
+                  <li key={row.key} className="flex items-center justify-between gap-2 text-[13px]">
+                    <span className="text-gray-600">{row.label} <span className="text-gray-400">· {row.key}</span></span>
+                    <button type="button" onClick={() => restoreStory(row)}
+                      className="text-[12px] font-bold text-emerald-700 hover:text-emerald-900">Restore</button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <div className="rounded-xl bg-violet-50 p-3 ring-1 ring-violet-200">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-violet-800">Add a story</p>
+            <div className="mt-2 grid gap-2 sm:grid-cols-2">
+              <input
+                value={newStory.label}
+                onChange={e => setNewStory(d => ({ ...d, label: e.target.value }))}
+                placeholder="Story name"
+                className="rounded-lg bg-white px-2 py-1.5 text-[14px] text-gray-900 ring-1 ring-violet-200"
+              />
+              <input
+                value={newStory.blurb}
+                onChange={e => setNewStory(d => ({ ...d, blurb: e.target.value }))}
+                placeholder="Short line (optional)"
+                className="rounded-lg bg-white px-2 py-1.5 text-[13px] text-gray-700 ring-1 ring-violet-200"
+              />
+            </div>
+            <button
+              type="button" onClick={addStory} disabled={!newStory.label.trim()}
+              className="mt-2 rounded-lg bg-violet-600 px-3 py-1.5 text-[12px] font-bold text-white disabled:bg-gray-200 disabled:text-gray-400"
+            >Add story</button>
+          </div>
+        </section>
+      )}
+
+      {storyHistoryFor && (
+        <section className="rounded-2xl bg-white p-4 ring-1 ring-gray-200">
+          <div className="flex items-center justify-between">
+            <h3 className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+              Story history · {storyHistoryFor}
+            </h3>
+            <button type="button" onClick={() => { setStoryHistoryFor(null); setStoryHistory(null) }}
+              className="text-[12px] font-bold text-gray-500 hover:text-gray-800">Close</button>
+          </div>
+          {storyHistory === null ? (
+            <p className="mt-2 text-[13px] text-gray-500">Loading…</p>
+          ) : storyHistory.length === 0 ? (
+            <p className="mt-2 text-[13px] text-gray-500">Nothing recorded since 172 was applied.</p>
+          ) : (
+            <ol className="mt-2 space-y-2">
+              {storyHistory.map(h => (
+                <li key={h.id} className="flex gap-3 rounded-xl bg-gray-50 p-2.5 text-[13px] ring-1 ring-gray-200">
+                  <span className="h-fit rounded-full bg-gray-200 px-2 py-0.5 text-[11px] font-bold text-gray-700">{h.action}</span>
+                  <span className="min-w-0 flex-1">
+                    {Object.entries(h.changed ?? {}).map(([field, v]) => (
+                      <span key={field} className="block truncate text-gray-700">
+                        <b className="font-semibold">{field}</b>{': '}
+                        <span className="text-gray-400 line-through">{String(v?.from ?? '')}</span>
+                        {' → '}<span className="text-gray-900">{String(v?.to ?? '')}</span>
+                      </span>
+                    ))}
+                    <span className="mt-0.5 block text-[11px] text-gray-400">{new Date(h.at).toLocaleString()}</span>
+                  </span>
+                </li>
+              ))}
+            </ol>
+          )}
+        </section>
       )}
 
       <nav className="flex flex-wrap gap-2">
