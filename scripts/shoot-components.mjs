@@ -33,7 +33,7 @@ import esbuild from 'esbuild'
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const [outFile, ...rest] = process.argv.slice(2)
 if (!outFile) {
-  console.error('usage: node scripts/shoot-components.mjs <out.png> [--scenes <file.jsx>] [--width N] [--wait ms] [--eval <js>] [--desktop]')
+  console.error('usage: node scripts/shoot-components.mjs <out.png> [--scenes <file.jsx>] [--width N] [--wait ms] [--eval <js>] [--desktop] [--query k=v]')
   process.exit(1)
 }
 const flag = (n, d) => { const i = rest.indexOf(`--${n}`); return i === -1 ? d : rest[i + 1] }
@@ -228,7 +228,11 @@ await send('Runtime.enable')
 await send('Page.enable')
 await send('Emulation.setDeviceMetricsOverride',
   { width, height: 900, deviceScaleFactor: SCALE, mobile: !desktop })
-await send('Page.navigate', { url: `http://127.0.0.1:${PORT}/` })
+/* `--query foo=bar` reaches the scene as window.location.search, so one
+   scene file can render any of sixteen screens instead of sixteen
+   near-identical scenes drifting apart. */
+const query = flag('query', '')
+await send('Page.navigate', { url: `http://127.0.0.1:${PORT}/${query ? `?${query}` : ''}` })
 await sleep(settle)
 
 const mounted = await send('Runtime.evaluate', { expression: 'window.__mounted === true' })
