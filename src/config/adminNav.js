@@ -21,6 +21,7 @@ export const NAV = [
   {
     id: 'operations', label: 'Operations', hint: 'Partner readiness and live work',
     items: [
+      { id: 'revenue', label: 'Payments & revenue', emoji: '₹', description: 'Booked, collected, owed and paid kept apart, each naming the table and column it came from.' },
       { id: 'orders', label: 'Bookings & orders', emoji: '◫', description: 'Every booking line, its lifecycle timestamps and the money recorded against it.' },
       { id: 'media', label: 'Media library', emoji: '▧', description: 'Portfolio work, compliance documents and listing photos, with the review decision on each.' },
       { id: 'live-ops', label: 'Live operations', emoji: '◉', description: 'Operational work, partner availability and active service signals.' },
