@@ -1255,12 +1255,20 @@ function PartnerDrawer({ vendor: v, services, tradeListings = [], docs, payout, 
     /* Fixed, and with NO transformed ancestor. An entrance animation on a
        parent breaks position:fixed outright — an identity transform is
        still a containing block — and the sheet renders off-screen. */
-    <div className="fixed inset-0 z-50 flex justify-end bg-ink/40" onClick={onClose}>
+    /* FULL WORKSPACE, not a drawer.
+       This was `max-w-lg` pinned to the right: a 512px column holding
+       every document, package, payout and audit row a reviewer needs to
+       decide on. On a 1920px monitor three quarters of the screen was
+       dimmed backdrop while the evidence scrolled in a strip. A reviewer
+       who cannot see the evidence approves on faith.
+       It now fills the viewport with a small inset, so the dialog still
+       reads as a layer above the console rather than a navigation. */
+    <div className="fixed inset-0 z-50 flex justify-center bg-ink/40 p-0 sm:p-4 lg:p-6" onClick={onClose}>
       <aside
         onClick={e => e.stopPropagation()}
-        className="h-full w-full max-w-lg overflow-y-auto bg-white shadow-2xl"
+        className="flex h-full w-full max-w-[1600px] flex-col overflow-hidden bg-white shadow-2xl sm:rounded-2xl"
       >
-        <header className="sticky top-0 z-10 flex items-start gap-3 border-b border-ink/[0.07] bg-white px-5 py-4">
+        <header className="flex shrink-0 items-start gap-3 border-b border-ink/[0.07] bg-white px-5 py-4 lg:px-7">
           <div className="min-w-0 flex-1">
             <h2 className="truncate text-[17px] font-extrabold text-ink">{v.business_name}</h2>
             {v.partner_code && (
@@ -1279,7 +1287,11 @@ function PartnerDrawer({ vendor: v, services, tradeListings = [], docs, payout, 
           </button>
         </header>
 
-        <div className="space-y-5 px-5 py-5">
+        {/* The body owns the scroll now. min-h-0 is load-bearing: a flex
+            child defaults to min-height:auto and refuses to shrink, so
+            without it the panel grows past the viewport and the page
+            scrolls instead of the evidence. */}
+        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-5 py-5 lg:px-7">
           {/* The headline answer. */}
           <div className={`rounded-2xl p-3.5 ring-1 ${
             dispatchable ? 'bg-forest-50 ring-forest-200' : 'bg-amber-50 ring-amber-200'
