@@ -6,2859 +6,4695 @@
  */
 export const TRADE_PROFILE_SCHEMA = {
   "bar_beverages": {
+    "screens": [
+      {
+        "id": "profile",
+        "title": "Your bar & beverage service",
+        "sub": "What you serve and how much you can handle."
+      },
+      {
+        "id": "bar_setup",
+        "title": "Bar configuration",
+        "sub": "What comes with your bar."
+      }
+    ],
+    "catalogue": {
+      "key": "beverages",
+      "title": "Your beverage menu",
+      "noun": "beverage",
+      "nounPlural": "beverages"
+    },
     "table": "partner_bar_beverages_profiles",
     "itemsTable": "partner_bar_beverages_items",
     "columns": [
       {
         "k": "display_name",
+        "key": "display_name",
         "label": "What name should customers see for your bar or beverage service?",
         "type": "TEXT",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "text"
       },
       {
         "k": "beverage_types",
+        "key": "beverage_types",
         "label": "What types of beverages do you provide?",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "supply_scope",
+        "key": "supply_scope",
         "label": "Do you supply drinks, serving staff, bar equipment, or a combination?",
         "type": "TEXT",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "single"
       },
       {
         "k": "supply_scope_custom",
+        "key": "supply_scope_custom",
         "label": "Describe your combination",
-        "type": "TEXT"
+        "type": "TEXT",
+        "screen": "profile",
+        "cond": "supply_scope in [custom_combination]",
+        "showWhen": {
+          "q": "supply_scope",
+          "in": [
+            "custom_combination"
+          ]
+        },
+        "form": "textarea"
       },
       {
         "k": "events",
+        "key": "events",
         "label": "Which events do you serve?",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "guests_per_hour",
+        "key": "guests_per_hour",
         "label": "How many guests can you serve per hour?",
         "type": "NUMERIC",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "number"
       },
       {
         "k": "mobile_bar",
+        "key": "mobile_bar",
         "label": "Do you provide a mobile bar counter?",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "screen": "bar_setup",
+        "form": "toggle"
       },
       {
         "k": "bar_stations",
+        "key": "bar_stations",
         "label": "How many bar stations can you supply?",
         "type": "NUMERIC",
-        "req": true
+        "req": true,
+        "screen": "bar_setup",
+        "form": "number"
       },
       {
         "k": "bartenders",
+        "key": "bartenders",
         "label": "How many bartenders can you provide?",
         "type": "NUMERIC",
-        "req": true
+        "req": true,
+        "screen": "bar_setup",
+        "form": "number"
       },
       {
         "k": "glassware_included",
+        "key": "glassware_included",
         "label": "Is glassware included?",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "screen": "bar_setup",
+        "form": "toggle"
       },
       {
         "k": "ice_included",
+        "key": "ice_included",
         "label": "Is ice included?",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "screen": "bar_setup",
+        "form": "toggle"
       },
       {
         "k": "garnish_included",
+        "key": "garnish_included",
         "label": "Is garnish included?",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "screen": "bar_setup",
+        "form": "toggle"
       },
       {
         "k": "setup_teardown_included",
+        "key": "setup_teardown_included",
         "label": "Is setup and teardown included?",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "screen": "bar_setup",
+        "form": "toggle"
       },
       {
         "k": "needs_water_power",
+        "key": "needs_water_power",
         "label": "Is a water supply or power source required at the venue?",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "screen": "bar_setup",
+        "form": "toggle"
       }
     ],
     "itemColumns": [
       {
         "k": "name",
+        "key": "name",
         "label": "Beverage name",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "text"
       },
       {
         "k": "category",
+        "key": "category",
         "label": "Category",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
       },
       {
         "k": "description",
+        "key": "description",
         "label": "Description",
-        "type": "TEXT"
+        "type": "TEXT",
+        "form": "textarea"
       },
       {
         "k": "serving_size",
+        "key": "serving_size",
         "label": "Serving size",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "text"
       },
       {
         "k": "unit_price",
+        "key": "unit_price",
         "label": "Price per serving",
-        "type": "BIGINT"
+        "type": "BIGINT",
+        "req": true,
+        "form": "money"
       },
       {
         "k": "min_order",
+        "key": "min_order",
         "label": "Minimum order (servings)",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "form": "number"
       },
       {
         "k": "allergens",
+        "key": "allergens",
         "label": "Ingredients / allergens",
-        "type": "TEXT"
+        "type": "TEXT",
+        "form": "text"
       },
       {
         "k": "qty_available",
+        "key": "qty_available",
         "label": "Servings you can supply per event",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "form": "number"
       },
       {
         "k": "prep_minutes",
+        "key": "prep_minutes",
         "label": "Preparation / serving time (minutes)",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "form": "number"
       },
       {
         "k": "staff_equipment_included",
+        "key": "staff_equipment_included",
         "label": "Staff and equipment included in this price?",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "form": "toggle"
       }
     ]
   },
   "bridal_makeup_hair": {
+    "screens": [
+      {
+        "id": "profile",
+        "title": "Your makeup & hair work",
+        "sub": "What you offer and how you work."
+      }
+    ],
+    "catalogue": {
+      "key": "services",
+      "title": "Your services",
+      "noun": "service",
+      "nounPlural": "services"
+    },
     "table": "partner_bridal_makeup_hair_profiles",
     "itemsTable": "partner_bridal_makeup_hair_items",
     "columns": [
       {
         "k": "services_offered",
+        "key": "services_offered",
         "label": "What makeup and hair services do you offer?",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "styles",
+        "key": "styles",
         "label": "Which styles can customers choose?",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "who",
+        "key": "who",
         "label": "Do you offer bridal, family and guest services?",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "people_per_day",
+        "key": "people_per_day",
         "label": "How many people can you serve on the same day?",
         "type": "NUMERIC",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "number"
       },
       {
         "k": "travels_to_venue",
+        "key": "travels_to_venue",
         "label": "Do you travel to the customer's venue?",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
       },
       {
         "k": "trial_available",
+        "key": "trial_available",
         "label": "Do you provide a trial session?",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
       }
     ],
     "itemColumns": [
       {
         "k": "service",
+        "key": "service",
         "label": "Service",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
       },
       {
         "k": "duration_minutes",
+        "key": "duration_minutes",
         "label": "How long it takes",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "req": true,
+        "form": "number"
       },
       {
         "k": "deliverables",
+        "key": "deliverables",
         "label": "What the customer gets",
-        "type": "TEXT"
+        "type": "TEXT",
+        "form": "textarea"
       },
       {
         "k": "materials_included",
+        "key": "materials_included",
         "label": "Products / materials included",
-        "type": "TEXT"
+        "type": "TEXT",
+        "form": "textarea"
       },
       {
         "k": "artists",
+        "key": "artists",
         "label": "Artists needed",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "req": true,
+        "form": "number"
       },
       {
         "k": "travel_applies",
+        "key": "travel_applies",
         "label": "Travel charge applies to this service?",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "form": "toggle"
       },
       {
         "k": "price",
+        "key": "price",
         "label": "Price",
-        "type": "BIGINT"
+        "type": "BIGINT",
+        "req": true,
+        "form": "money"
       },
       {
         "k": "price_unit",
+        "key": "price_unit",
         "label": "Charged",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
       }
     ]
   },
   "cake_desserts": {
+    "screens": [
+      {
+        "id": "profile",
+        "title": "Your cakes & desserts",
+        "sub": "What you bake and how much notice you need."
+      },
+      {
+        "id": "customisation",
+        "title": "Customisation",
+        "sub": "What customers can personalise."
+      }
+    ],
+    "catalogue": {
+      "key": "products",
+      "title": "Your products",
+      "noun": "product",
+      "nounPlural": "products"
+    },
     "table": "partner_cake_desserts_profiles",
     "itemsTable": "partner_cake_desserts_items",
     "columns": [
       {
         "k": "product_types",
+        "key": "product_types",
         "label": "What types of cakes and desserts do you make?",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "flavours",
+        "key": "flavours",
         "label": "Which flavours do you offer?",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "sizes",
+        "key": "sizes",
         "label": "Which sizes or serving counts can customers order?",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "dietary",
+        "key": "dietary",
         "label": "Which dietary options can you support?",
-        "type": "TEXT[]"
+        "type": "TEXT[]",
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "lead_days",
+        "key": "lead_days",
         "label": "How many days in advance do you need an order?",
         "type": "NUMERIC",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "number"
       },
       {
         "k": "design_choice",
+        "key": "design_choice",
         "label": "Can customers choose a design or theme?",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "screen": "customisation",
+        "form": "toggle"
       },
       {
         "k": "reference_upload",
+        "key": "reference_upload",
         "label": "Can they upload reference images?",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "screen": "customisation",
+        "form": "toggle"
       },
       {
         "k": "name_message",
+        "key": "name_message",
         "label": "Can they add a name or message?",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "screen": "customisation",
+        "form": "toggle"
       },
       {
         "k": "figurines",
+        "key": "figurines",
         "label": "Are figurines or special decorations available?",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "screen": "customisation",
+        "form": "toggle"
       },
       {
         "k": "tasting",
+        "key": "tasting",
         "label": "Is a tasting session available?",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "screen": "customisation",
+        "form": "toggle"
       },
       {
         "k": "custom_design_fee",
+        "key": "custom_design_fee",
         "label": "Do you charge a custom design fee?",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "screen": "customisation",
+        "form": "toggle"
       },
       {
         "k": "custom_design_fee_amount",
+        "key": "custom_design_fee_amount",
         "label": "Custom design fee",
-        "type": "BIGINT"
+        "type": "BIGINT",
+        "screen": "customisation",
+        "cond": "custom_design_fee is set",
+        "showWhen": {
+          "q": "custom_design_fee",
+          "truthy": true
+        },
+        "form": "money"
       }
     ],
     "itemColumns": [
       {
         "k": "name",
+        "key": "name",
         "label": "Product name",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "text"
       },
       {
         "k": "product_type",
+        "key": "product_type",
         "label": "Type",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
       },
       {
         "k": "flavour",
+        "key": "flavour",
         "label": "Flavour",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "text"
       },
       {
         "k": "size",
+        "key": "size",
         "label": "Size or weight",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "text"
       },
       {
         "k": "servings",
+        "key": "servings",
         "label": "Serves",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "req": true,
+        "form": "number"
       },
       {
         "k": "price",
+        "key": "price",
         "label": "Price",
-        "type": "BIGINT"
+        "type": "BIGINT",
+        "req": true,
+        "form": "money"
       },
       {
         "k": "price_unit",
+        "key": "price_unit",
         "label": "Charged",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
       },
       {
         "k": "min_order",
+        "key": "min_order",
         "label": "Minimum order",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "form": "number"
       },
       {
         "k": "allergens",
+        "key": "allergens",
         "label": "Ingredients / allergens",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "text"
       },
       {
         "k": "lead_days",
+        "key": "lead_days",
         "label": "Production lead time",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "req": true,
+        "form": "number"
       },
       {
         "k": "photos",
+        "key": "photos",
         "label": "Photos",
-        "type": "TEXT[]"
+        "type": "TEXT[]",
+        "form": "photos"
       }
     ]
   },
   "catering_food": {
+    "screens": [
+      {
+        "id": "profile",
+        "title": "Business & service profile",
+        "sub": "What you cook and how you serve."
+      },
+      {
+        "id": "capacity",
+        "title": "Guest capacity & service",
+        "sub": null
+      },
+      {
+        "id": "pricing_rules",
+        "title": "Pricing & minimum orders",
+        "sub": null
+      }
+    ],
+    "catalogue": null,
     "table": "partner_catering_food_profiles",
     "itemsTable": null,
     "columns": [
       {
         "k": "services",
+        "key": "services",
         "label": "What catering services do you provide?",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "prep_location",
+        "key": "prep_location",
         "label": "Where is your food prepared?",
         "type": "TEXT",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "single"
       },
       {
         "k": "service_styles",
+        "key": "service_styles",
         "label": "How do you serve food?",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "service_area",
+        "key": "service_area",
         "label": "Where can you provide catering?",
-        "type": "TEXT"
+        "type": "TEXT",
+        "screen": "profile",
+        "form": "single"
       },
       {
         "k": "max_guests",
+        "key": "max_guests",
         "label": "Most guests at one event",
         "type": "NUMERIC",
-        "req": true
+        "req": true,
+        "screen": "capacity",
+        "form": "number"
       },
       {
         "k": "guests_per_day",
+        "key": "guests_per_day",
         "label": "Total guests you can cook for in a day",
         "type": "NUMERIC",
-        "req": true
+        "req": true,
+        "screen": "capacity",
+        "form": "number"
       },
       {
         "k": "events_per_day",
+        "key": "events_per_day",
         "label": "Events you can cater on the same day",
         "type": "NUMERIC",
-        "req": true
+        "req": true,
+        "screen": "capacity",
+        "form": "number"
       },
       {
         "k": "staff",
+        "key": "staff",
         "label": "Serving staff available",
         "type": "NUMERIC",
-        "req": true
+        "req": true,
+        "screen": "capacity",
+        "form": "number"
       },
       {
         "k": "staff_per_100",
+        "key": "staff_per_100",
         "label": "Serving staff per 100 guests",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "screen": "capacity",
+        "form": "number"
       },
       {
         "k": "service_hours",
+        "key": "service_hours",
         "label": "Service hours included per event",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "screen": "capacity",
+        "form": "number"
       },
       {
         "k": "min_billable_guests",
+        "key": "min_billable_guests",
         "label": "Minimum billable guests",
         "type": "NUMERIC",
-        "req": true
+        "req": true,
+        "screen": "pricing_rules",
+        "form": "number"
       },
       {
         "k": "child_policy",
+        "key": "child_policy",
         "label": "Children",
         "type": "TEXT",
-        "req": true
+        "req": true,
+        "screen": "pricing_rules",
+        "form": "single"
       }
     ],
     "itemColumns": []
   },
   "decoration_floral": {
+    "screens": [
+      {
+        "id": "profile",
+        "title": "Your decoration work",
+        "sub": "What you decorate and how."
+      }
+    ],
+    "catalogue": {
+      "key": "packages",
+      "title": "Your decoration packages",
+      "noun": "package",
+      "nounPlural": "packages"
+    },
     "table": "partner_decoration_floral_profiles",
     "itemsTable": "partner_decoration_floral_items",
     "columns": [
       {
         "k": "services",
+        "key": "services",
         "label": "What decoration services do you provide?",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "themes",
+        "key": "themes",
         "label": "Which themes and styles do you offer?",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "flowers",
+        "key": "flowers",
         "label": "Do you use fresh flowers, artificial flowers or both?",
         "type": "TEXT",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "single"
       },
       {
         "k": "custom_designs",
+        "key": "custom_designs",
         "label": "Do you offer custom designs?",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
       },
       {
         "k": "setup_dismantle",
+        "key": "setup_dismantle",
         "label": "Do you handle setup and dismantling?",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
       }
     ],
     "itemColumns": [
       {
         "k": "name",
+        "key": "name",
         "label": "Package name",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "text"
       },
       {
         "k": "areas",
+        "key": "areas",
         "label": "Areas included",
-        "type": "TEXT[]"
+        "type": "TEXT[]",
+        "req": true,
+        "form": "multi"
       },
       {
         "k": "items",
+        "key": "items",
         "label": "Items included",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "textarea"
       },
       {
         "k": "flowers",
+        "key": "flowers",
         "label": "Flowers",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
       },
       {
         "k": "stage_size",
+        "key": "stage_size",
         "label": "Stage size covered",
-        "type": "JSONB"
+        "type": "JSONB",
+        "form": "dimensions"
       },
       {
         "k": "guest_capacity",
+        "key": "guest_capacity",
         "label": "Suits up to",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "form": "number"
       },
       {
         "k": "price",
+        "key": "price",
         "label": "Package price",
-        "type": "BIGINT"
+        "type": "BIGINT",
+        "req": true,
+        "form": "money"
       },
       {
         "k": "setup_hours",
+        "key": "setup_hours",
         "label": "Setup time",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "req": true,
+        "form": "number"
       },
       {
         "k": "photos",
+        "key": "photos",
         "label": "Photos of this setup",
-        "type": "TEXT[]"
+        "type": "TEXT[]",
+        "form": "photos"
       }
     ]
   },
   "dj_music": {
+    "screens": [
+      {
+        "id": "profile",
+        "title": "Your music performance",
+        "sub": "What you play and who performs."
+      },
+      {
+        "id": "performance",
+        "title": "Performance details",
+        "sub": "What a booking includes."
+      }
+    ],
+    "catalogue": null,
     "table": "partner_dj_music_profiles",
     "itemsTable": null,
     "columns": [
       {
         "k": "performance_kinds",
+        "key": "performance_kinds",
         "label": "What kind of music performances do you provide?",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "event_types",
+        "key": "event_types",
         "label": "Which event types do you support?",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "styles",
+        "key": "styles",
         "label": "Which music styles do you play?",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "performers",
+        "key": "performers",
         "label": "How many performers can you provide?",
         "type": "NUMERIC",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "number"
       },
       {
         "k": "own_equipment",
+        "key": "own_equipment",
         "label": "Do you supply your own sound and lighting equipment?",
         "type": "TEXT",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "single"
       },
       {
         "k": "formats",
+        "key": "formats",
         "label": "Performance format",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "performance",
+        "form": "multi"
       },
       {
         "k": "duration_options",
+        "key": "duration_options",
         "label": "Duration options",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "performance",
+        "form": "multi"
       },
       {
         "k": "setup_minutes",
+        "key": "setup_minutes",
         "label": "Setup / soundcheck time",
         "type": "NUMERIC",
-        "req": true
+        "req": true,
+        "screen": "performance",
+        "form": "number"
       },
       {
         "k": "equipment_included",
+        "key": "equipment_included",
         "label": "Equipment included",
-        "type": "TEXT"
+        "type": "TEXT",
+        "screen": "performance",
+        "form": "textarea"
       },
       {
         "k": "power_needs",
+        "key": "power_needs",
         "label": "Power requirements",
-        "type": "TEXT"
+        "type": "TEXT",
+        "screen": "performance",
+        "form": "text"
       },
       {
         "k": "space_needs",
+        "key": "space_needs",
         "label": "Space / stage requirements",
-        "type": "TEXT"
+        "type": "TEXT",
+        "screen": "performance",
+        "form": "text"
       },
       {
         "k": "song_requests",
+        "key": "song_requests",
         "label": "Takes playlist / custom song requests",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "screen": "performance",
+        "form": "toggle"
       },
       {
         "k": "special_production",
+        "key": "special_production",
         "label": "Special production requirements",
-        "type": "TEXT"
+        "type": "TEXT",
+        "screen": "performance",
+        "form": "textarea"
       }
     ],
     "itemColumns": []
   },
   "end_to_end_event_logistics": {
+    "screens": [
+      {
+        "id": "scope",
+        "title": "What you manage",
+        "sub": "Pick everything you can take on."
+      }
+    ],
+    "catalogue": null,
     "table": "partner_end_to_end_event_logistics_profiles",
     "itemsTable": null,
     "columns": [
       {
         "k": "scope",
+        "key": "scope",
         "label": "What parts of event logistics can you manage?",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "scope",
+        "form": "multi"
       },
       {
         "k": "delivered_by",
+        "key": "delivered_by",
         "label": "Who performs this work?",
         "type": "TEXT",
-        "req": true
+        "req": true,
+        "screen": "scope",
+        "form": "single"
       },
       {
         "k": "own_vehicles",
+        "key": "own_vehicles",
         "label": "Vehicles you operate",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "screen": "scope",
+        "form": "number"
       },
       {
         "k": "own_staff",
+        "key": "own_staff",
         "label": "Staff you employ",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "screen": "scope",
+        "form": "number"
       },
       {
         "k": "max_concurrent_projects",
+        "key": "max_concurrent_projects",
         "label": "Projects you can run at the same time",
         "type": "NUMERIC",
-        "req": true
+        "req": true,
+        "screen": "scope",
+        "form": "number"
       }
     ],
     "itemColumns": []
   },
   "event_equipment_rental": {
+    "screens": [
+      {
+        "id": "profile",
+        "title": "What you rent out",
+        "sub": "Pick every type you have."
+      },
+      {
+        "id": "terms",
+        "title": "Rental terms",
+        "sub": "The rules every rental follows."
+      }
+    ],
+    "catalogue": {
+      "key": "items",
+      "title": "Your rental items",
+      "noun": "item",
+      "nounPlural": "items"
+    },
     "table": "partner_event_equipment_rental_profiles",
     "itemsTable": "partner_event_equipment_rental_items",
     "columns": [
       {
         "k": "equipment_types",
+        "key": "equipment_types",
         "label": "Which equipment types are available?",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "min_period",
+        "key": "min_period",
         "label": "Minimum rental period",
         "type": "TEXT",
-        "req": true
+        "req": true,
+        "screen": "terms",
+        "form": "single"
       },
       {
         "k": "max_period",
+        "key": "max_period",
         "label": "Maximum rental period",
-        "type": "TEXT"
+        "type": "TEXT",
+        "screen": "terms",
+        "form": "single"
       },
       {
         "k": "handover",
+        "key": "handover",
         "label": "Delivery / pickup options",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "terms",
+        "form": "multi"
       },
       {
         "k": "setup_offered",
+        "key": "setup_offered",
         "label": "You offer setup and dismantling",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "screen": "terms",
+        "form": "toggle"
       },
       {
         "k": "deposit",
+        "key": "deposit",
         "label": "Security deposit (refundable)",
-        "type": "BIGINT"
+        "type": "BIGINT",
+        "screen": "terms",
+        "form": "money"
       },
       {
         "k": "damage_policy",
+        "key": "damage_policy",
         "label": "Damage / loss policy",
         "type": "TEXT",
-        "req": true
+        "req": true,
+        "screen": "terms",
+        "form": "textarea"
       },
       {
         "k": "late_fee",
+        "key": "late_fee",
         "label": "Late-return charge per day",
-        "type": "BIGINT"
+        "type": "BIGINT",
+        "screen": "terms",
+        "form": "money"
       },
       {
         "k": "cleaning_fee",
+        "key": "cleaning_fee",
         "label": "Cleaning fee",
-        "type": "BIGINT"
+        "type": "BIGINT",
+        "screen": "terms",
+        "form": "money"
       }
     ],
     "itemColumns": [
       {
         "k": "name",
+        "key": "name",
         "label": "Item name",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "text"
       },
       {
         "k": "sku",
+        "key": "sku",
         "label": "SKU / code",
-        "type": "TEXT"
+        "type": "TEXT",
+        "form": "text"
       },
       {
         "k": "description",
+        "key": "description",
         "label": "Description",
-        "type": "TEXT"
+        "type": "TEXT",
+        "form": "textarea"
       },
       {
         "k": "photos",
+        "key": "photos",
         "label": "Photo",
-        "type": "TEXT[]"
+        "type": "TEXT[]",
+        "form": "photos"
       },
       {
         "k": "total_qty",
+        "key": "total_qty",
         "label": "Total quantity",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "req": true,
+        "form": "number"
       },
       {
         "k": "condition",
+        "key": "condition",
         "label": "Condition",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
       },
       {
         "k": "rate",
+        "key": "rate",
         "label": "Rental rate",
-        "type": "BIGINT"
+        "type": "BIGINT",
+        "req": true,
+        "form": "money"
       },
       {
         "k": "rate_period",
+        "key": "rate_period",
         "label": "Per",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
       },
       {
         "k": "replacement_value",
+        "key": "replacement_value",
         "label": "Replacement value",
-        "type": "BIGINT"
+        "type": "BIGINT",
+        "form": "money"
       },
       {
         "k": "delivery_restrictions",
+        "key": "delivery_restrictions",
         "label": "Delivery restrictions",
-        "type": "TEXT"
+        "type": "TEXT",
+        "form": "text"
       },
       {
         "k": "needs_operator",
+        "key": "needs_operator",
         "label": "Needs an operator / installer",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "form": "toggle"
       }
     ]
   },
   "event_lighting": {
+    "screens": [
+      {
+        "id": "profile",
+        "title": "Your lighting service",
+        "sub": "What you light and how."
+      }
+    ],
+    "catalogue": {
+      "key": "fixtures",
+      "title": "Your fixtures",
+      "noun": "fixture",
+      "nounPlural": "fixtures"
+    },
     "table": "partner_event_lighting_profiles",
     "itemsTable": "partner_event_lighting_items",
     "columns": [
       {
         "k": "service_types",
+        "key": "service_types",
         "label": "Which lighting services do you provide?",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "suitability",
+        "key": "suitability",
         "label": "Indoor / outdoor",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "coverage_sqft",
+        "key": "coverage_sqft",
         "label": "Largest area you can light",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "screen": "profile",
+        "form": "number"
       },
       {
         "k": "rigging",
+        "key": "rigging",
         "label": "You handle rigging (truss, hanging)",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
       },
       {
         "k": "power_needs",
+        "key": "power_needs",
         "label": "Power requirements",
         "type": "TEXT",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "text"
       },
       {
         "k": "controllers",
+        "key": "controllers",
         "label": "Controller / console options",
-        "type": "TEXT[]"
+        "type": "TEXT[]",
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "operator",
+        "key": "operator",
         "label": "Operator available",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
       },
       {
         "k": "setup_dismantle",
+        "key": "setup_dismantle",
         "label": "Setup and dismantling included",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
       },
       {
         "k": "safety",
+        "key": "safety",
         "label": "Safety measures",
-        "type": "TEXT"
+        "type": "TEXT",
+        "screen": "profile",
+        "form": "textarea"
       },
       {
         "k": "transport",
+        "key": "transport",
         "label": "You transport the equipment",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
       }
     ],
     "itemColumns": [
       {
         "k": "name",
+        "key": "name",
         "label": "Fixture",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "text"
       },
       {
         "k": "total_qty",
+        "key": "total_qty",
         "label": "Quantity",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "req": true,
+        "form": "number"
       },
       {
         "k": "suitability",
+        "key": "suitability",
         "label": "Use",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
       },
       {
         "k": "watts",
+        "key": "watts",
         "label": "Power draw",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "form": "number"
       },
       {
         "k": "rate",
+        "key": "rate",
         "label": "Rental rate",
-        "type": "BIGINT"
+        "type": "BIGINT",
+        "req": true,
+        "form": "money"
       },
       {
         "k": "rate_period",
+        "key": "rate_period",
         "label": "Per",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
       },
       {
         "k": "photos",
+        "key": "photos",
         "label": "Photo",
-        "type": "TEXT[]"
+        "type": "TEXT[]",
+        "form": "photos"
       }
     ]
   },
   "event_materials_supplier": {
+    "screens": [
+      {
+        "id": "profile",
+        "title": "What you supply",
+        "sub": "Pick everything you sell for events."
+      }
+    ],
+    "catalogue": {
+      "key": "products",
+      "title": "Your products",
+      "noun": "product",
+      "nounPlural": "products"
+    },
     "table": "partner_event_materials_supplier_profiles",
     "itemsTable": "partner_event_materials_supplier_items",
     "columns": [
       {
         "k": "supplies",
+        "key": "supplies",
         "label": "What supplies do you sell or supply for events?",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "fulfilment",
+        "key": "fulfilment",
         "label": "How customers receive orders",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "prep_hours",
+        "key": "prep_hours",
         "label": "Order preparation time",
         "type": "NUMERIC",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "number"
       }
     ],
     "itemColumns": [
       {
         "k": "sku",
+        "key": "sku",
         "label": "SKU",
-        "type": "TEXT"
+        "type": "TEXT",
+        "form": "text"
       },
       {
         "k": "name",
+        "key": "name",
         "label": "Name",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "text"
       },
       {
         "k": "description",
+        "key": "description",
         "label": "Description",
-        "type": "TEXT"
+        "type": "TEXT",
+        "form": "textarea"
       },
       {
         "k": "photos",
+        "key": "photos",
         "label": "Photo",
-        "type": "TEXT[]"
+        "type": "TEXT[]",
+        "form": "photos"
       },
       {
         "k": "unit",
+        "key": "unit",
         "label": "Unit of sale",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
       },
       {
         "k": "unit_price",
+        "key": "unit_price",
         "label": "Unit price",
-        "type": "BIGINT"
+        "type": "BIGINT",
+        "req": true,
+        "form": "money"
       },
       {
         "k": "stock",
+        "key": "stock",
         "label": "Available stock",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "req": true,
+        "form": "number"
       },
       {
         "k": "min_order",
+        "key": "min_order",
         "label": "Minimum order",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "form": "number"
       },
       {
         "k": "quantity_breaks",
+        "key": "quantity_breaks",
         "label": "Quantity breaks",
-        "type": "TEXT"
+        "type": "TEXT",
+        "form": "text"
       },
       {
         "k": "customisable",
+        "key": "customisable",
         "label": "Can be customised / branded",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "form": "toggle"
       },
       {
         "k": "lead_days",
+        "key": "lead_days",
         "label": "Lead time",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "form": "number"
       },
       {
         "k": "return_conditions",
+        "key": "return_conditions",
         "label": "Return conditions",
-        "type": "TEXT"
+        "type": "TEXT",
+        "form": "text"
       }
     ]
   },
   "gifts_favours": {
+    "screens": [
+      {
+        "id": "profile",
+        "title": "Your gifts & favours",
+        "sub": "What you make and how much notice you need."
+      }
+    ],
+    "catalogue": {
+      "key": "products",
+      "title": "Your gift products",
+      "noun": "product",
+      "nounPlural": "products"
+    },
     "table": "partner_gifts_favours_profiles",
     "itemsTable": "partner_gifts_favours_items",
     "columns": [
       {
         "k": "gift_types",
+        "key": "gift_types",
         "label": "What types of gifts or favours do you offer?",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "packaging_personalisation",
+        "key": "packaging_personalisation",
         "label": "Can customers choose packaging and personalization?",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
       },
       {
         "k": "min_order",
+        "key": "min_order",
         "label": "What is the minimum order quantity?",
         "type": "NUMERIC",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "number"
       },
       {
         "k": "prep_days",
+        "key": "prep_days",
         "label": "How much time do you need to prepare an order?",
         "type": "NUMERIC",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "number"
       }
     ],
     "itemColumns": [
       {
         "k": "name",
+        "key": "name",
         "label": "Name",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "text"
       },
       {
         "k": "material",
+        "key": "material",
         "label": "Material",
-        "type": "TEXT"
+        "type": "TEXT",
+        "form": "text"
       },
       {
         "k": "dimensions",
+        "key": "dimensions",
         "label": "Dimensions",
-        "type": "JSONB"
+        "type": "JSONB",
+        "form": "dimensions"
       },
       {
         "k": "unit_price",
+        "key": "unit_price",
         "label": "Price",
-        "type": "BIGINT"
+        "type": "BIGINT",
+        "req": true,
+        "form": "money"
       },
       {
         "k": "unit",
+        "key": "unit",
         "label": "Per",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
       },
       {
         "k": "quantity_tiers",
+        "key": "quantity_tiers",
         "label": "Quantity tiers",
-        "type": "TEXT"
+        "type": "TEXT",
+        "form": "text"
       },
       {
         "k": "packaging",
+        "key": "packaging",
         "label": "Packaging",
-        "type": "TEXT"
+        "type": "TEXT",
+        "form": "text"
       },
       {
         "k": "personalisation",
+        "key": "personalisation",
         "label": "Personalisation available",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "form": "toggle"
       },
       {
         "k": "personalisation_fee",
+        "key": "personalisation_fee",
         "label": "Personalisation per item",
-        "type": "BIGINT"
+        "type": "BIGINT",
+        "form": "money"
       },
       {
         "k": "proof_required",
+        "key": "proof_required",
         "label": "Proof approval before production",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "form": "toggle"
       },
       {
         "k": "stock",
+        "key": "stock",
         "label": "In stock (0 if made to order)",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "form": "number"
       },
       {
         "k": "lead_days",
+        "key": "lead_days",
         "label": "Lead time",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "req": true,
+        "form": "number"
       },
       {
         "k": "photos",
+        "key": "photos",
         "label": "Photos",
-        "type": "TEXT[]"
+        "type": "TEXT[]",
+        "form": "photos"
       }
     ]
   },
   "guest_services": {
+    "screens": [
+      {
+        "id": "profile",
+        "title": "Your guest services",
+        "sub": "Pick every role you staff."
+      }
+    ],
+    "catalogue": {
+      "key": "role_specs",
+      "title": "Each role",
+      "noun": "role",
+      "nounPlural": "roles"
+    },
     "table": "partner_guest_services_profiles",
     "itemsTable": "partner_guest_services_items",
     "columns": [
       {
         "k": "roles",
+        "key": "roles",
         "label": "Which services do you provide?",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       }
     ],
     "itemColumns": [
       {
         "k": "role",
+        "key": "role",
         "label": "Role",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
       },
       {
         "k": "min_staff",
+        "key": "min_staff",
         "label": "Minimum staff",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "req": true,
+        "form": "number"
       },
       {
         "k": "max_staff",
+        "key": "max_staff",
         "label": "Maximum staff",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "req": true,
+        "form": "number"
       },
       {
         "k": "languages",
+        "key": "languages",
         "label": "Languages",
-        "type": "TEXT[]"
+        "type": "TEXT[]",
+        "form": "multi"
       },
       {
         "k": "dress_code",
+        "key": "dress_code",
         "label": "Dress code",
-        "type": "TEXT"
+        "type": "TEXT",
+        "form": "text"
       },
       {
         "k": "uniform",
+        "key": "uniform",
         "label": "Uniform provided",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "form": "toggle"
       },
       {
         "k": "experience",
+        "key": "experience",
         "label": "Experience",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
       },
       {
         "k": "briefing_minutes",
+        "key": "briefing_minutes",
         "label": "Briefing time",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "form": "number"
       },
       {
         "k": "shift_hours",
+        "key": "shift_hours",
         "label": "Shift length",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "req": true,
+        "form": "number"
       },
       {
         "k": "break_policy",
+        "key": "break_policy",
         "label": "Break policy",
-        "type": "TEXT"
+        "type": "TEXT",
+        "form": "text"
       },
       {
         "k": "supervisor_required",
+        "key": "supervisor_required",
         "label": "Needs a supervisor",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "form": "toggle"
       },
       {
         "k": "rate",
+        "key": "rate",
         "label": "Rate",
-        "type": "BIGINT"
+        "type": "BIGINT",
+        "req": true,
+        "form": "money"
       },
       {
         "k": "rate_unit",
+        "key": "rate_unit",
         "label": "Per",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
       }
     ]
   },
   "invitation_printing": {
+    "screens": [
+      {
+        "id": "profile",
+        "title": "What you produce",
+        "sub": "Pick everything you make."
+      }
+    ],
+    "catalogue": {
+      "key": "products",
+      "title": "Your products",
+      "noun": "product",
+      "nounPlural": "products"
+    },
     "table": "partner_invitation_printing_profiles",
     "itemsTable": "partner_invitation_printing_items",
     "columns": [
       {
         "k": "products",
+        "key": "products",
         "label": "Which of these do you provide?",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "languages",
+        "key": "languages",
         "label": "Languages / scripts you can typeset",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "revisions",
+        "key": "revisions",
         "label": "Design revisions included",
         "type": "NUMERIC",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "number"
       },
       {
         "k": "proof_required",
+        "key": "proof_required",
         "label": "You send a proof for approval before production",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
       }
     ],
     "itemColumns": [
       {
         "k": "name",
+        "key": "name",
         "label": "Product",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "text"
       },
       {
         "k": "format",
+        "key": "format",
         "label": "Format",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
       },
       {
         "k": "size",
+        "key": "size",
         "label": "Size / dimensions",
-        "type": "TEXT"
+        "type": "TEXT",
+        "form": "text"
       },
       {
         "k": "paper",
+        "key": "paper",
         "label": "Paper / material",
-        "type": "TEXT"
+        "type": "TEXT",
+        "form": "text"
       },
       {
         "k": "process",
+        "key": "process",
         "label": "Printing process",
-        "type": "TEXT"
+        "type": "TEXT",
+        "form": "single"
       },
       {
         "k": "colours",
+        "key": "colours",
         "label": "Number of colours",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "form": "number"
       },
       {
         "k": "file_formats",
+        "key": "file_formats",
         "label": "File formats delivered",
-        "type": "TEXT[]"
+        "type": "TEXT[]",
+        "form": "multi"
       },
       {
         "k": "delivery_method",
+        "key": "delivery_method",
         "label": "Delivered via",
-        "type": "TEXT"
+        "type": "TEXT",
+        "form": "single"
       },
       {
         "k": "design_fee",
+        "key": "design_fee",
         "label": "Design fee",
-        "type": "BIGINT"
+        "type": "BIGINT",
+        "form": "money"
       },
       {
         "k": "per_piece",
+        "key": "per_piece",
         "label": "Price per piece",
-        "type": "BIGINT"
+        "type": "BIGINT",
+        "req": true,
+        "form": "money"
       },
       {
         "k": "min_qty",
+        "key": "min_qty",
         "label": "Minimum quantity",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "form": "number"
       },
       {
         "k": "quantity_tiers",
+        "key": "quantity_tiers",
         "label": "Quantity tiers",
-        "type": "TEXT"
+        "type": "TEXT",
+        "form": "text"
       },
       {
         "k": "envelope_accessories",
+        "key": "envelope_accessories",
         "label": "Envelope / accessories",
-        "type": "TEXT"
+        "type": "TEXT",
+        "form": "text"
       },
       {
         "k": "lead_days",
+        "key": "lead_days",
         "label": "Lead time after approval",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "req": true,
+        "form": "number"
       }
     ]
   },
   "live_entertainment": {
+    "screens": [
+      {
+        "id": "profile",
+        "title": "Your acts",
+        "sub": "Pick every act you provide."
+      }
+    ],
+    "catalogue": {
+      "key": "acts",
+      "title": "Each act",
+      "noun": "act",
+      "nounPlural": "acts"
+    },
     "table": "partner_live_entertainment_profiles",
     "itemsTable": "partner_live_entertainment_items",
     "columns": [
       {
         "k": "act_types",
+        "key": "act_types",
         "label": "Which acts are provided?",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       }
     ],
     "itemColumns": [
       {
         "k": "name",
+        "key": "name",
         "label": "Act name",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "text"
       },
       {
         "k": "description",
+        "key": "description",
         "label": "Description",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "textarea"
       },
       {
         "k": "performers",
+        "key": "performers",
         "label": "Performers",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "req": true,
+        "form": "number"
       },
       {
         "k": "durations",
+        "key": "durations",
         "label": "Duration options",
-        "type": "TEXT[]"
+        "type": "TEXT[]",
+        "req": true,
+        "form": "multi"
       },
       {
         "k": "format",
+        "key": "format",
         "label": "Performance format",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
       },
       {
         "k": "setup_minutes",
+        "key": "setup_minutes",
         "label": "Setup / soundcheck",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "form": "number"
       },
       {
         "k": "stage_space",
+        "key": "stage_space",
         "label": "Stage space needed",
-        "type": "JSONB"
+        "type": "JSONB",
+        "form": "dimensions"
       },
       {
         "k": "tech_rider",
+        "key": "tech_rider",
         "label": "Equipment & technical rider",
-        "type": "TEXT"
+        "type": "TEXT",
+        "form": "textarea"
       },
       {
         "k": "languages",
+        "key": "languages",
         "label": "Languages",
-        "type": "TEXT[]"
+        "type": "TEXT[]",
+        "form": "multi"
       },
       {
         "k": "audience",
+        "key": "audience",
         "label": "Audience suitability",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
       },
       {
         "k": "price",
+        "key": "price",
         "label": "Price",
-        "type": "BIGINT"
+        "type": "BIGINT",
+        "req": true,
+        "form": "money"
       },
       {
         "k": "price_unit",
+        "key": "price_unit",
         "label": "Per",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
       },
       {
         "k": "showreel",
+        "key": "showreel",
         "label": "Showreel link",
-        "type": "TEXT"
+        "type": "TEXT",
+        "form": "url"
       }
     ]
   },
   "loading_unloading_crew": {
+    "screens": [
+      {
+        "id": "profile",
+        "title": "Your crew",
+        "sub": "What you handle and who you send."
+      },
+      {
+        "id": "crew",
+        "title": "Crew configuration",
+        "sub": "How your crews are put together."
+      }
+    ],
+    "catalogue": null,
     "table": "partner_loading_unloading_crew_profiles",
     "itemsTable": null,
     "columns": [
       {
         "k": "work",
+        "key": "work",
         "label": "Loading, unloading or both?",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "materials",
+        "key": "materials",
         "label": "What kinds of materials do you handle?",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "access",
+        "key": "access",
         "label": "Access you can work with",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "tools",
+        "key": "tools",
         "label": "Lifting tools you bring",
-        "type": "TEXT[]"
+        "type": "TEXT[]",
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "max_item_kg",
+        "key": "max_item_kg",
         "label": "Heaviest single item you will lift",
         "type": "NUMERIC",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "number"
       },
       {
         "k": "workers",
+        "key": "workers",
         "label": "Workers available per day",
         "type": "NUMERIC",
-        "req": true
+        "req": true,
+        "screen": "crew",
+        "form": "number"
       },
       {
         "k": "skills",
+        "key": "skills",
         "label": "Skills",
-        "type": "TEXT[]"
+        "type": "TEXT[]",
+        "screen": "crew",
+        "form": "multi"
       },
       {
         "k": "supervisor",
+        "key": "supervisor",
         "label": "Supervisor available",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "screen": "crew",
+        "form": "toggle"
       },
       {
         "k": "min_crew",
+        "key": "min_crew",
         "label": "Minimum crew size",
         "type": "NUMERIC",
-        "req": true
+        "req": true,
+        "screen": "crew",
+        "form": "number"
       },
       {
         "k": "min_paid_hours",
+        "key": "min_paid_hours",
         "label": "Minimum paid hours",
         "type": "NUMERIC",
-        "req": true
+        "req": true,
+        "screen": "crew",
+        "form": "number"
       },
       {
         "k": "shifts",
+        "key": "shifts",
         "label": "Shift options",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "crew",
+        "form": "multi"
       },
       {
         "k": "breaks",
+        "key": "breaks",
         "label": "Breaks",
-        "type": "TEXT"
+        "type": "TEXT",
+        "screen": "crew",
+        "form": "text"
       },
       {
         "k": "safety_equipment",
+        "key": "safety_equipment",
         "label": "Safety equipment",
-        "type": "TEXT[]"
+        "type": "TEXT[]",
+        "screen": "crew",
+        "form": "multi"
       },
       {
         "k": "travel",
+        "key": "travel",
         "label": "Crew travel",
         "type": "TEXT",
-        "req": true
+        "req": true,
+        "screen": "crew",
+        "form": "single"
       }
     ],
     "itemColumns": []
   },
   "medium_large_goods_vehicle": {
+    "screens": [
+      {
+        "id": "profile",
+        "title": "Your goods vehicles",
+        "sub": "What you carry and how."
+      }
+    ],
+    "catalogue": {
+      "key": "vehicles",
+      "title": "Your vehicles",
+      "noun": "vehicle",
+      "nounPlural": "vehicles"
+    },
     "table": "partner_medium_large_goods_vehicle_profiles",
     "itemsTable": "partner_medium_large_goods_vehicle_items",
     "columns": [
       {
         "k": "loads",
+        "key": "loads",
         "label": "Which loads do your trucks move?",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "handling",
+        "key": "handling",
         "label": "Special handling",
-        "type": "TEXT[]"
+        "type": "TEXT[]",
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "routes",
+        "key": "routes",
         "label": "Routes you run",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "permit_scope",
+        "key": "permit_scope",
         "label": "Goods-carriage permit",
         "type": "TEXT",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "single"
       },
       {
         "k": "service_radius_km",
+        "key": "service_radius_km",
         "label": "Furthest you will go for one booking",
         "type": "NUMERIC",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "number"
       },
       {
         "k": "part_load",
+        "key": "part_load",
         "label": "You take part loads (shared truck)",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
       }
     ],
     "itemColumns": [
       {
         "k": "category",
+        "key": "category",
         "label": "Vehicle type",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
       },
       {
         "k": "payload_kg",
+        "key": "payload_kg",
         "label": "Load capacity",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "req": true,
+        "form": "number"
       },
       {
         "k": "load_dimensions",
+        "key": "load_dimensions",
         "label": "Load space (L × W × H)",
-        "type": "JSONB"
+        "type": "JSONB",
+        "req": true,
+        "form": "dimensions"
       },
       {
         "k": "body",
+        "key": "body",
         "label": "Body type",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
       },
       {
         "k": "features",
+        "key": "features",
         "label": "Loading features",
-        "type": "TEXT[]"
+        "type": "TEXT[]",
+        "form": "multi"
       },
       {
         "k": "driver_included",
+        "key": "driver_included",
         "label": "Driver included",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "form": "toggle"
       },
       {
         "k": "registration",
+        "key": "registration",
         "label": "Registration number (private)",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "text"
       },
       {
         "k": "photos",
+        "key": "photos",
         "label": "Vehicle photos",
-        "type": "TEXT[]"
+        "type": "TEXT[]",
+        "form": "photos"
       },
       {
         "k": "count",
+        "key": "count",
         "label": "How many of this vehicle",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "req": true,
+        "form": "number"
       }
     ]
   },
   "mehendi_artist": {
+    "screens": [
+      {
+        "id": "profile",
+        "title": "Your mehendi",
+        "sub": "Styles, coverage and who you serve."
+      }
+    ],
+    "catalogue": {
+      "key": "services",
+      "title": "Your mehendi services",
+      "noun": "service",
+      "nounPlural": "services"
+    },
     "table": "partner_mehendi_artist_profiles",
     "itemsTable": "partner_mehendi_artist_items",
     "columns": [
       {
         "k": "who",
+        "key": "who",
         "label": "Bridal, family / guest or casual mehendi?",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "styles",
+        "key": "styles",
         "label": "Which styles are offered?",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "coverage",
+        "key": "coverage",
         "label": "Coverage levels",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "intricate_bridal",
+        "key": "intricate_bridal",
         "label": "Intricate bridal work available",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
       },
       {
         "k": "cone",
+        "key": "cone",
         "label": "Is natural / cone material provided?",
         "type": "TEXT",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "single"
       },
       {
         "k": "trial_designs",
+        "key": "trial_designs",
         "label": "Trial designs available",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
       },
       {
         "k": "references_value",
+        "key": "references",
         "label": "Customers can share design references",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
       }
     ],
     "itemColumns": [
       {
         "k": "service",
+        "key": "service",
         "label": "Service",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
       },
       {
         "k": "coverage",
+        "key": "coverage",
         "label": "Coverage",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
       },
       {
         "k": "minutes",
+        "key": "minutes",
         "label": "Time per person",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "req": true,
+        "form": "number"
       },
       {
         "k": "price",
+        "key": "price",
         "label": "Price",
-        "type": "BIGINT"
+        "type": "BIGINT",
+        "req": true,
+        "form": "money"
       },
       {
         "k": "price_unit",
+        "key": "price_unit",
         "label": "Per",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
       }
     ]
   },
   "mini_truck_pickup": {
+    "screens": [
+      {
+        "id": "profile",
+        "title": "Your mini trucks",
+        "sub": "Where you go and what you carry."
+      }
+    ],
+    "catalogue": {
+      "key": "vehicles",
+      "title": "Your vehicles",
+      "noun": "vehicle",
+      "nounPlural": "vehicles"
+    },
     "table": "partner_mini_truck_pickup_profiles",
     "itemsTable": "partner_mini_truck_pickup_items",
     "columns": [
       {
         "k": "service_radius_km",
+        "key": "service_radius_km",
         "label": "How far from your base will you take a trip?",
         "type": "NUMERIC",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "number"
       },
       {
         "k": "loads",
+        "key": "loads",
         "label": "What do your mini trucks usually carry?",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "helpers",
+        "key": "helpers",
         "label": "You can send helpers for loading",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
       },
       {
         "k": "same_day",
+        "key": "same_day",
         "label": "You take same-day, on-demand trips",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
       },
       {
         "k": "notice",
+        "key": "notice",
         "label": "Shortest notice you need",
         "type": "TEXT",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "single"
       }
     ],
     "itemColumns": [
       {
         "k": "category",
+        "key": "category",
         "label": "Vehicle",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
       },
       {
         "k": "payload_kg",
+        "key": "payload_kg",
         "label": "Load capacity",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "req": true,
+        "form": "number"
       },
       {
         "k": "load_dimensions",
+        "key": "load_dimensions",
         "label": "Load space",
-        "type": "JSONB"
+        "type": "JSONB",
+        "req": true,
+        "form": "dimensions"
       },
       {
         "k": "body",
+        "key": "body",
         "label": "Body",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
       },
       {
         "k": "count",
+        "key": "count",
         "label": "How many",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "req": true,
+        "form": "number"
       },
       {
         "k": "driver_included",
+        "key": "driver_included",
         "label": "Driver included",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "form": "toggle"
       },
       {
         "k": "registration",
+        "key": "registration",
         "label": "Registration number (private)",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "text"
       },
       {
         "k": "access",
+        "key": "access",
         "label": "Loading access requirements",
-        "type": "TEXT"
+        "type": "TEXT",
+        "form": "text"
       },
       {
         "k": "photos",
+        "key": "photos",
         "label": "Vehicle photos",
-        "type": "TEXT[]"
+        "type": "TEXT[]",
+        "form": "photos"
       }
     ]
   },
   "passenger_transport": {
+    "screens": [
+      {
+        "id": "profile",
+        "title": "Your passenger transport",
+        "sub": "What you provide."
+      }
+    ],
+    "catalogue": {
+      "key": "vehicles",
+      "title": "Your vehicles",
+      "noun": "vehicle",
+      "nounPlural": "vehicles"
+    },
     "table": "partner_passenger_transport_profiles",
     "itemsTable": "partner_passenger_transport_items",
     "columns": [
       {
         "k": "vehicle_services",
+        "key": "vehicle_services",
         "label": "What do you provide?",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "service_radius_km",
+        "key": "service_radius_km",
         "label": "Service area radius",
         "type": "NUMERIC",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "number"
       },
       {
         "k": "driver_type",
+        "key": "driver_type",
         "label": "Drivers",
         "type": "TEXT",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "single"
       },
       {
         "k": "airport_station",
+        "key": "airport_station",
         "label": "Flight / train coordination",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
       }
     ],
     "itemColumns": [
       {
         "k": "category",
+        "key": "category",
         "label": "Vehicle",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
       },
       {
         "k": "seats",
+        "key": "seats",
         "label": "Passenger capacity",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "req": true,
+        "form": "number"
       },
       {
         "k": "bags",
+        "key": "bags",
         "label": "Luggage capacity (bags)",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "form": "number"
       },
       {
         "k": "accessibility",
+        "key": "accessibility",
         "label": "Accessibility features",
-        "type": "TEXT[]"
+        "type": "TEXT[]",
+        "form": "multi"
       },
       {
         "k": "ac",
+        "key": "ac",
         "label": "Air-conditioned",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "form": "toggle"
       },
       {
         "k": "count",
+        "key": "count",
         "label": "How many",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "req": true,
+        "form": "number"
       },
       {
         "k": "registration",
+        "key": "registration",
         "label": "Registration number (private)",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "text"
       },
       {
         "k": "photos",
+        "key": "photos",
         "label": "Photos",
-        "type": "TEXT[]"
+        "type": "TEXT[]",
+        "form": "photos"
       }
     ]
   },
   "photography": {
+    "screens": [
+      {
+        "id": "profile",
+        "title": "Your photography",
+        "sub": "What you shoot and how you deliver."
+      }
+    ],
+    "catalogue": {
+      "key": "packages",
+      "title": "Your coverage",
+      "noun": "coverage package",
+      "nounPlural": "coverage packages"
+    },
     "table": "partner_photography_profiles",
     "itemsTable": "partner_photography_items",
     "columns": [
       {
         "k": "specialties",
+        "key": "specialties",
         "label": "Specialties",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "events",
+        "key": "events",
         "label": "Event categories",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "styles",
+        "key": "styles",
         "label": "Styles",
-        "type": "TEXT[]"
+        "type": "TEXT[]",
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "years",
+        "key": "years",
         "label": "Years of experience",
         "type": "NUMERIC",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "number"
       },
       {
         "k": "portfolio",
+        "key": "portfolio",
         "label": "Portfolio",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "photos"
       },
       {
         "k": "gallery_link",
+        "key": "gallery_link",
         "label": "Online gallery link",
-        "type": "TEXT"
+        "type": "TEXT",
+        "screen": "profile",
+        "form": "url"
       },
       {
         "k": "equipment",
+        "key": "equipment",
         "label": "Equipment",
-        "type": "TEXT[]"
+        "type": "TEXT[]",
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "formats",
+        "key": "formats",
         "label": "Delivery formats",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "service_radius_km",
+        "key": "service_radius_km",
         "label": "Service area radius",
         "type": "NUMERIC",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "number"
       }
     ],
     "itemColumns": [
       {
         "k": "coverage",
+        "key": "coverage",
         "label": "Coverage type",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
       },
       {
         "k": "hours",
+        "key": "hours",
         "label": "Hours of coverage",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "req": true,
+        "form": "number"
       },
       {
         "k": "photographers",
+        "key": "photographers",
         "label": "Photographers",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "req": true,
+        "form": "number"
       },
       {
         "k": "edited_images",
+        "key": "edited_images",
         "label": "Edited images delivered",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "req": true,
+        "form": "number"
       },
       {
         "k": "retouch",
+        "key": "retouch",
         "label": "Retouching level",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
       },
       {
         "k": "album",
+        "key": "album",
         "label": "Album / prints",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
       },
       {
         "k": "delivery_days",
+        "key": "delivery_days",
         "label": "Delivery timeline",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "req": true,
+        "form": "number"
       },
       {
         "k": "raw",
+        "key": "raw",
         "label": "RAW files included",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "form": "toggle"
       },
       {
         "k": "price",
+        "key": "price",
         "label": "Your price for this package",
-        "type": "BIGINT"
+        "type": "BIGINT",
+        "req": true,
+        "form": "money"
       }
     ]
   },
   "power_cooling": {
+    "screens": [
+      {
+        "id": "profile",
+        "title": "Your power & cooling",
+        "sub": "What you supply and support."
+      }
+    ],
+    "catalogue": {
+      "key": "items",
+      "title": "Your units",
+      "noun": "unit",
+      "nounPlural": "units"
+    },
     "table": "partner_power_cooling_profiles",
     "itemsTable": "partner_power_cooling_items",
     "columns": [
       {
         "k": "services",
+        "key": "services",
         "label": "What do you provide?",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "operators",
+        "key": "operators",
         "label": "You supply operators / technicians",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
       },
       {
         "k": "fuel_policy",
+        "key": "fuel_policy",
         "label": "Fuel policy",
         "type": "TEXT",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "single"
       },
       {
         "k": "service_radius_km",
+        "key": "service_radius_km",
         "label": "Service radius",
         "type": "NUMERIC",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "number"
       }
     ],
     "itemColumns": [
       {
         "k": "type",
+        "key": "type",
         "label": "Type",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
       },
       {
         "k": "model",
+        "key": "model",
         "label": "Make / model",
-        "type": "TEXT"
+        "type": "TEXT",
+        "form": "text"
       },
       {
         "k": "capacity",
+        "key": "capacity",
         "label": "Rated capacity",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "req": true,
+        "form": "number"
       },
       {
         "k": "quantity",
+        "key": "quantity",
         "label": "Quantity owned",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "req": true,
+        "form": "number"
       },
       {
         "k": "power_source",
+        "key": "power_source",
         "label": "Fuel / power",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
       },
       {
         "k": "runtime_hours",
+        "key": "runtime_hours",
         "label": "Runtime on one fill",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "form": "number"
       },
       {
         "k": "placement",
+        "key": "placement",
         "label": "Indoor / outdoor",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
       },
       {
         "k": "cabling",
+        "key": "cabling",
         "label": "Cabling included",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "form": "toggle"
       },
       {
         "k": "installation",
+        "key": "installation",
         "label": "Installation included",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "form": "toggle"
       },
       {
         "k": "rate",
+        "key": "rate",
         "label": "Rental rate",
-        "type": "BIGINT"
+        "type": "BIGINT",
+        "req": true,
+        "form": "money"
       },
       {
         "k": "rate_period",
+        "key": "rate_period",
         "label": "Per",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
       },
       {
         "k": "last_service",
+        "key": "last_service",
         "label": "Last maintenance",
-        "type": "DATE"
+        "type": "DATE",
+        "form": "date"
       },
       {
         "k": "photos",
+        "key": "photos",
         "label": "Photos",
-        "type": "TEXT[]"
+        "type": "TEXT[]",
+        "form": "photos"
       }
     ]
   },
   "priest_rituals": {
+    "screens": [
+      {
+        "id": "profile",
+        "title": "Your rituals",
+        "sub": "Ceremonies, traditions and languages."
+      }
+    ],
+    "catalogue": {
+      "key": "ceremonies",
+      "title": "Your ceremonies",
+      "noun": "ceremony",
+      "nounPlural": "ceremonies"
+    },
     "table": "partner_priest_rituals_profiles",
     "itemsTable": "partner_priest_rituals_items",
     "columns": [
       {
         "k": "ceremonies",
+        "key": "ceremonies",
         "label": "Ceremonies you perform",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "traditions",
+        "key": "traditions",
         "label": "Traditions",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "languages",
+        "key": "languages",
         "label": "Languages",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "customisation",
+        "key": "customisation",
         "label": "You customise rituals to family tradition",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
       },
       {
         "k": "muhurta",
+        "key": "muhurta",
         "label": "You fix muhurta (auspicious time)",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
       },
       {
         "k": "materials",
+        "key": "materials",
         "label": "Puja materials & offerings",
         "type": "TEXT",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "single"
       },
       {
         "k": "assistants",
+        "key": "assistants",
         "label": "Assistant priests available",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
       }
     ],
     "itemColumns": [
       {
         "k": "ceremony",
+        "key": "ceremony",
         "label": "Ceremony",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
       },
       {
         "k": "description",
+        "key": "description",
         "label": "Short description",
-        "type": "TEXT"
+        "type": "TEXT",
+        "form": "text"
       },
       {
         "k": "minutes",
+        "key": "minutes",
         "label": "Duration",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "req": true,
+        "form": "number"
       },
       {
         "k": "priests",
+        "key": "priests",
         "label": "Priests needed",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "req": true,
+        "form": "number"
       },
       {
         "k": "fee",
+        "key": "fee",
         "label": "Dakshina / fee",
-        "type": "BIGINT"
+        "type": "BIGINT",
+        "req": true,
+        "form": "money"
       },
       {
         "k": "materials_fee",
+        "key": "materials_fee",
         "label": "Materials (shown separately)",
-        "type": "BIGINT"
+        "type": "BIGINT",
+        "form": "money"
       }
     ]
   },
   "safety_facilities": {
+    "screens": [
+      {
+        "id": "subtype",
+        "title": "What exactly do you provide?",
+        "sub": "This decides what you are asked next and what needs verification."
+      },
+      {
+        "id": "capacity",
+        "title": "Capacity & kit",
+        "sub": null
+      }
+    ],
+    "catalogue": null,
     "table": "partner_safety_facilities_profiles",
     "itemsTable": null,
     "columns": [
       {
         "k": "subtype",
+        "key": "subtype",
         "label": "Service type",
         "type": "TEXT",
-        "req": true
+        "req": true,
+        "screen": "subtype",
+        "form": "single"
       },
       {
         "k": "description",
+        "key": "description",
         "label": "Describe the service",
         "type": "TEXT",
-        "req": true
+        "req": true,
+        "screen": "subtype",
+        "form": "textarea"
       },
       {
         "k": "sites",
+        "key": "sites",
         "label": "Sites / event types",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "subtype",
+        "form": "multi"
       },
       {
         "k": "max_attendees",
+        "key": "max_attendees",
         "label": "Largest event you can support",
         "type": "NUMERIC",
-        "req": true
+        "req": true,
+        "screen": "capacity",
+        "form": "number"
       },
       {
         "k": "staff",
+        "key": "staff",
         "label": "Staff available",
         "type": "NUMERIC",
-        "req": true
+        "req": true,
+        "screen": "capacity",
+        "form": "number"
       },
       {
         "k": "kit",
+        "key": "kit",
         "label": "Equipment",
-        "type": "TEXT[]"
+        "type": "TEXT[]",
+        "screen": "capacity",
+        "form": "multi"
       },
       {
         "k": "shift_hours",
+        "key": "shift_hours",
         "label": "Standard shift",
         "type": "NUMERIC",
-        "req": true
+        "req": true,
+        "screen": "capacity",
+        "form": "number"
       },
       {
         "k": "setup_included",
+        "key": "setup_included",
         "label": "Setup included",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "screen": "capacity",
+        "form": "toggle"
       },
       {
         "k": "emergency_response",
+        "key": "emergency_response",
         "label": "Emergency response capability",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "screen": "capacity",
+        "form": "toggle"
       },
       {
         "k": "restrictions",
+        "key": "restrictions",
         "label": "Restrictions",
-        "type": "TEXT"
+        "type": "TEXT",
+        "screen": "capacity",
+        "form": "textarea"
       }
     ],
     "itemColumns": []
   },
   "security_services": {
+    "screens": [
+      {
+        "id": "profile",
+        "title": "Your security services",
+        "sub": "What your guards do on site."
+      },
+      {
+        "id": "team",
+        "title": "Your team",
+        "sub": null
+      }
+    ],
+    "catalogue": null,
     "table": "partner_security_services_profiles",
     "itemsTable": null,
     "columns": [
       {
         "k": "services",
+        "key": "services",
         "label": "Services",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "other_service",
+        "key": "other_service",
         "label": "Anything else (reviewed before it is shown)",
-        "type": "TEXT"
+        "type": "TEXT",
+        "screen": "profile",
+        "form": "textarea"
       },
       {
         "k": "venues",
+        "key": "venues",
         "label": "Venue types",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "max_visitors",
+        "key": "max_visitors",
         "label": "Largest visitor volume handled",
         "type": "NUMERIC",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "number"
       },
       {
         "k": "guards",
+        "key": "guards",
         "label": "Guards available",
         "type": "NUMERIC",
-        "req": true
+        "req": true,
+        "screen": "team",
+        "form": "number"
       },
       {
         "k": "supervisors",
+        "key": "supervisors",
         "label": "Supervisors available",
         "type": "NUMERIC",
-        "req": true
+        "req": true,
+        "screen": "team",
+        "form": "number"
       },
       {
         "k": "shifts",
+        "key": "shifts",
         "label": "Shifts",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "team",
+        "form": "multi"
       },
       {
         "k": "uniform",
+        "key": "uniform",
         "label": "Uniform",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "team",
+        "form": "multi"
       },
       {
         "k": "equipment",
+        "key": "equipment",
         "label": "Equipment",
-        "type": "TEXT[]"
+        "type": "TEXT[]",
+        "screen": "team",
+        "form": "multi"
       },
       {
         "k": "briefing",
+        "key": "briefing",
         "label": "Pre-event briefing included",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "screen": "team",
+        "form": "toggle"
       },
       {
         "k": "relief",
+        "key": "relief",
         "label": "Break relief guards provided",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "screen": "team",
+        "form": "toggle"
       }
     ],
     "itemColumns": []
   },
   "sound_av": {
+    "screens": [
+      {
+        "id": "profile",
+        "title": "Your sound & AV",
+        "sub": "Which equipment groups you supply."
+      }
+    ],
+    "catalogue": {
+      "key": "items",
+      "title": "Your equipment",
+      "noun": "item",
+      "nounPlural": "items"
+    },
     "table": "partner_sound_av_profiles",
     "itemsTable": "partner_sound_av_items",
     "columns": [
       {
         "k": "groups",
+        "key": "groups",
         "label": "Equipment groups",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "capabilities",
+        "key": "capabilities",
         "label": "You can also handle",
-        "type": "TEXT[]"
+        "type": "TEXT[]",
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "max_audience",
+        "key": "max_audience",
         "label": "Largest audience you can cover",
         "type": "NUMERIC",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "number"
       }
     ],
     "itemColumns": [
       {
         "k": "group_value",
+        "key": "group",
         "label": "Group",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
       },
       {
         "k": "model",
+        "key": "model",
         "label": "Make / model",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "text"
       },
       {
         "k": "quantity",
+        "key": "quantity",
         "label": "Quantity",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "req": true,
+        "form": "number"
       },
       {
         "k": "condition",
+        "key": "condition",
         "label": "Condition",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
       },
       {
         "k": "power_watts",
+        "key": "power_watts",
         "label": "Power draw",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "form": "number"
       },
       {
         "k": "setup_minutes",
+        "key": "setup_minutes",
         "label": "Setup time",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "form": "number"
       },
       {
         "k": "rate",
+        "key": "rate",
         "label": "Rental rate",
-        "type": "BIGINT"
+        "type": "BIGINT",
+        "req": true,
+        "form": "money"
       },
       {
         "k": "rate_period",
+        "key": "rate_period",
         "label": "Per",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
       },
       {
         "k": "photos",
+        "key": "photos",
         "label": "Photo",
-        "type": "TEXT[]"
+        "type": "TEXT[]",
+        "form": "photos"
       }
     ]
   },
   "tent_furniture": {
+    "screens": [
+      {
+        "id": "profile",
+        "title": "Your tents & furniture",
+        "sub": "What you put up and furnish."
+      }
+    ],
+    "catalogue": {
+      "key": "items",
+      "title": "Your items",
+      "noun": "item",
+      "nounPlural": "items"
+    },
     "table": "partner_tent_furniture_profiles",
     "itemsTable": "partner_tent_furniture_items",
     "columns": [
       {
         "k": "groups",
+        "key": "groups",
         "label": "What do you supply?",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "surfaces",
+        "key": "surfaces",
         "label": "Surfaces you can install on",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "weatherproof",
+        "key": "weatherproof",
         "label": "Weather-proof tents available",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
       },
       {
         "k": "deposit",
+        "key": "deposit",
         "label": "Security deposit (refundable)",
-        "type": "BIGINT"
+        "type": "BIGINT",
+        "screen": "profile",
+        "form": "money"
       },
       {
         "k": "damage_policy",
+        "key": "damage_policy",
         "label": "Damage policy",
         "type": "TEXT",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "textarea"
       }
     ],
     "itemColumns": [
       {
         "k": "group_value",
+        "key": "group",
         "label": "Type",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
       },
       {
         "k": "name",
+        "key": "name",
         "label": "Name",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "text"
       },
       {
         "k": "size",
+        "key": "size",
         "label": "Dimensions",
-        "type": "JSONB"
+        "type": "JSONB",
+        "form": "dimensions"
       },
       {
         "k": "capacity",
+        "key": "capacity",
         "label": "Seats / people covered",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "form": "number"
       },
       {
         "k": "material",
+        "key": "material",
         "label": "Material",
-        "type": "TEXT"
+        "type": "TEXT",
+        "form": "text"
       },
       {
         "k": "quantity",
+        "key": "quantity",
         "label": "Quantity",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "req": true,
+        "form": "number"
       },
       {
         "k": "condition",
+        "key": "condition",
         "label": "Condition",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
       },
       {
         "k": "rate",
+        "key": "rate",
         "label": "Rental rate",
-        "type": "BIGINT"
+        "type": "BIGINT",
+        "req": true,
+        "form": "money"
       },
       {
         "k": "rate_period",
+        "key": "rate_period",
         "label": "Per",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
       },
       {
         "k": "assembly_minutes",
+        "key": "assembly_minutes",
         "label": "Assembly time",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "form": "number"
       },
       {
         "k": "photos",
+        "key": "photos",
         "label": "Photo",
-        "type": "TEXT[]"
+        "type": "TEXT[]",
+        "form": "photos"
       }
     ]
   },
   "transportation": {
+    "screens": [
+      {
+        "id": "scope",
+        "title": "What kind of transport do you run?",
+        "sub": "If you mainly operate one vehicle type, list it under its own trade."
+      }
+    ],
+    "catalogue": null,
     "table": "partner_transportation_profiles",
     "itemsTable": null,
     "columns": [
       {
         "k": "service_type",
+        "key": "service_type",
         "label": "Service type",
         "type": "TEXT",
-        "req": true
+        "req": true,
+        "screen": "scope",
+        "form": "single"
       },
       {
         "k": "other_description",
+        "key": "other_description",
         "label": "Describe it",
         "type": "TEXT",
-        "req": true
+        "req": true,
+        "screen": "scope",
+        "cond": "service_type in [other]",
+        "showWhen": {
+          "q": "service_type",
+          "in": [
+            "other"
+          ]
+        },
+        "form": "textarea"
       },
       {
         "k": "operation",
+        "key": "operation",
         "label": "How do you operate?",
         "type": "TEXT",
-        "req": true
+        "req": true,
+        "screen": "scope",
+        "form": "single"
       },
       {
         "k": "routes",
+        "key": "routes",
         "label": "Areas / routes you cover",
         "type": "TEXT",
-        "req": true
+        "req": true,
+        "screen": "scope",
+        "form": "textarea"
       },
       {
         "k": "vehicles",
+        "key": "vehicles",
         "label": "Vehicles you can arrange",
         "type": "NUMERIC",
-        "req": true
+        "req": true,
+        "screen": "scope",
+        "form": "number"
       }
     ],
     "itemColumns": []
   },
   "trousseau_gift_packing": {
+    "screens": [
+      {
+        "id": "profile",
+        "title": "Your packing work",
+        "sub": "What you pack and how."
+      }
+    ],
+    "catalogue": {
+      "key": "products",
+      "title": "Your packing options",
+      "noun": "option",
+      "nounPlural": "options"
+    },
     "table": "partner_trousseau_gift_packing_profiles",
     "itemsTable": "partner_trousseau_gift_packing_items",
     "columns": [
       {
         "k": "types",
+        "key": "types",
         "label": "What do you pack?",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "materials",
+        "key": "materials",
         "label": "Materials you use",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "customisation",
+        "key": "customisation",
         "label": "Customisation",
-        "type": "TEXT[]"
+        "type": "TEXT[]",
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "customer_materials",
+        "key": "customer_materials",
         "label": "You pack customer-supplied items",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
       },
       {
         "k": "proof",
+        "key": "proof",
         "label": "You share a sample / photo proof before the full order",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
       },
       {
         "k": "handover",
+        "key": "handover",
         "label": "Pickup / delivery",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       }
     ],
     "itemColumns": [
       {
         "k": "name",
+        "key": "name",
         "label": "Name",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "text"
       },
       {
         "k": "type",
+        "key": "type",
         "label": "Type",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
       },
       {
         "k": "size",
+        "key": "size",
         "label": "Dimensions",
-        "type": "JSONB"
+        "type": "JSONB",
+        "form": "dimensions"
       },
       {
         "k": "price",
+        "key": "price",
         "label": "Price",
-        "type": "BIGINT"
+        "type": "BIGINT",
+        "req": true,
+        "form": "money"
       },
       {
         "k": "price_unit",
+        "key": "price_unit",
         "label": "Per",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
       },
       {
         "k": "materials_included",
+        "key": "materials_included",
         "label": "Box / materials included in price",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "form": "toggle"
       },
       {
         "k": "photos",
+        "key": "photos",
         "label": "Photo",
-        "type": "TEXT[]"
+        "type": "TEXT[]",
+        "form": "photos"
       }
     ]
   },
   "valet_parking": {
+    "screens": [
+      {
+        "id": "profile",
+        "title": "Your valet service",
+        "sub": "What you run on the day."
+      }
+    ],
+    "catalogue": null,
     "table": "partner_valet_parking_profiles",
     "itemsTable": null,
     "columns": [
       {
         "k": "services",
+        "key": "services",
         "label": "Services",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "valets",
+        "key": "valets",
         "label": "Valet drivers available",
         "type": "NUMERIC",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "number"
       },
       {
         "k": "supervisors",
+        "key": "supervisors",
         "label": "Supervisors available",
         "type": "NUMERIC",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "number"
       },
       {
         "k": "cars_per_hour",
+        "key": "cars_per_hour",
         "label": "Cars your team can take per hour at peak",
         "type": "NUMERIC",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "number"
       },
       {
         "k": "insurance",
+        "key": "insurance",
         "label": "Vehicle damage insurance",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
       },
       {
         "k": "customer_duties",
+        "key": "customer_duties",
         "label": "What the host must provide",
-        "type": "TEXT"
+        "type": "TEXT",
+        "screen": "profile",
+        "form": "textarea"
       }
     ],
     "itemColumns": []
   },
   "venue": {
+    "screens": [
+      {
+        "id": "profile",
+        "title": "Your venue",
+        "sub": "The property as a whole."
+      },
+      {
+        "id": "rules",
+        "title": "House rules",
+        "sub": "What customers must know before they book."
+      }
+    ],
+    "catalogue": {
+      "key": "spaces",
+      "title": "Your spaces",
+      "noun": "space",
+      "nounPlural": "spaces"
+    },
     "table": "partner_venue_profiles",
     "itemsTable": "partner_venue_items",
     "columns": [
       {
         "k": "venue_name",
+        "key": "venue_name",
         "label": "Venue name",
         "type": "TEXT",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "text"
       },
       {
         "k": "venue_type",
+        "key": "venue_type",
         "label": "Venue type",
         "type": "TEXT",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "single"
       },
       {
         "k": "photos",
+        "key": "photos",
         "label": "Photos",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "photos"
       },
       {
         "k": "video",
+        "key": "video",
         "label": "Walkthrough video link",
-        "type": "TEXT"
+        "type": "TEXT",
+        "screen": "profile",
+        "form": "url"
       },
       {
         "k": "max_capacity",
+        "key": "max_capacity",
         "label": "Maximum capacity",
         "type": "NUMERIC",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "number"
       },
       {
         "k": "recommended_capacity",
+        "key": "recommended_capacity",
         "label": "Recommended capacity",
         "type": "NUMERIC",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "number"
       },
       {
         "k": "accessibility",
+        "key": "accessibility",
         "label": "Accessibility",
-        "type": "TEXT[]"
+        "type": "TEXT[]",
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "parking",
+        "key": "parking",
         "label": "Parking spaces",
         "type": "NUMERIC",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "number"
       },
       {
         "k": "rooms",
+        "key": "rooms",
         "label": "Rooms on site",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "screen": "profile",
+        "form": "number"
       },
       {
         "k": "facilities",
+        "key": "facilities",
         "label": "Included facilities",
-        "type": "TEXT[]"
+        "type": "TEXT[]",
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "catering_rule",
+        "key": "catering_rule",
         "label": "Catering",
         "type": "TEXT",
-        "req": true
+        "req": true,
+        "screen": "rules",
+        "form": "single"
       },
       {
         "k": "outside_catering_fee",
+        "key": "outside_catering_fee",
         "label": "Outside catering fee",
-        "type": "BIGINT"
+        "type": "BIGINT",
+        "screen": "rules",
+        "cond": "catering_rule in [outside_allowed_with_a_fee]",
+        "showWhen": {
+          "q": "catering_rule",
+          "in": [
+            "outside_allowed_with_a_fee"
+          ]
+        },
+        "form": "money"
       },
       {
         "k": "decor_rule",
+        "key": "decor_rule",
         "label": "Decoration",
         "type": "TEXT",
-        "req": true
+        "req": true,
+        "screen": "rules",
+        "form": "single"
       },
       {
         "k": "decor_restrictions",
+        "key": "decor_restrictions",
         "label": "Decoration restrictions (fire, nails, confetti…)",
-        "type": "TEXT"
+        "type": "TEXT",
+        "screen": "rules",
+        "form": "textarea"
       },
       {
         "k": "sound_cutoff",
+        "key": "sound_cutoff",
         "label": "Amplified sound must stop by",
         "type": "TIME",
-        "req": true
+        "req": true,
+        "screen": "rules",
+        "form": "time"
       },
       {
         "k": "alcohol",
+        "key": "alcohol",
         "label": "Alcohol permitted",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "screen": "rules",
+        "form": "toggle"
       },
       {
         "k": "setup_hours",
+        "key": "setup_hours",
         "label": "Setup time before the event",
         "type": "NUMERIC",
-        "req": true
+        "req": true,
+        "screen": "rules",
+        "form": "number"
       },
       {
         "k": "cleanup_hours",
+        "key": "cleanup_hours",
         "label": "Cleanup time after",
         "type": "NUMERIC",
-        "req": true
+        "req": true,
+        "screen": "rules",
+        "form": "number"
       },
       {
         "k": "setup_charging",
+        "key": "setup_charging",
         "label": "When does setup / cleanup time start being charged?",
         "type": "TEXT",
-        "req": true
+        "req": true,
+        "screen": "rules",
+        "form": "single"
       }
     ],
     "itemColumns": [
       {
         "k": "name",
+        "key": "name",
         "label": "Space name",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "text"
       },
       {
         "k": "setting",
+        "key": "setting",
         "label": "Indoor / outdoor",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
       },
       {
         "k": "capacity",
+        "key": "capacity",
         "label": "Capacity",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "req": true,
+        "form": "number"
       },
       {
         "k": "size",
+        "key": "size",
         "label": "Dimensions",
-        "type": "JSONB"
+        "type": "JSONB",
+        "form": "dimensions"
       },
       {
         "k": "layouts",
+        "key": "layouts",
         "label": "Layouts",
-        "type": "TEXT[]"
+        "type": "TEXT[]",
+        "req": true,
+        "form": "multi"
       },
       {
         "k": "slots",
+        "key": "slots",
         "label": "Bookable slots",
-        "type": "TEXT[]"
+        "type": "TEXT[]",
+        "req": true,
+        "form": "multi"
       },
       {
         "k": "combinable",
+        "key": "combinable",
         "label": "Booking",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
       },
       {
         "k": "amenities",
+        "key": "amenities",
         "label": "Amenities",
-        "type": "TEXT[]"
+        "type": "TEXT[]",
+        "form": "multi"
       },
       {
         "k": "base_rate",
+        "key": "base_rate",
         "label": "Base rate",
-        "type": "BIGINT"
+        "type": "BIGINT",
+        "req": true,
+        "form": "money"
       },
       {
         "k": "included_hours",
+        "key": "included_hours",
         "label": "Hours included",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "req": true,
+        "form": "number"
       },
       {
         "k": "photos",
+        "key": "photos",
         "label": "Photos",
-        "type": "TEXT[]"
+        "type": "TEXT[]",
+        "form": "photos"
       }
     ]
   },
   "videography": {
+    "screens": [
+      {
+        "id": "profile",
+        "title": "Your videography",
+        "sub": "What you film and how you deliver."
+      }
+    ],
+    "catalogue": {
+      "key": "offerings",
+      "title": "Your offerings",
+      "noun": "offering",
+      "nounPlural": "offerings"
+    },
     "table": "partner_videography_profiles",
     "itemsTable": "partner_videography_items",
     "columns": [
       {
         "k": "specialties",
+        "key": "specialties",
         "label": "Specialties",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "events",
+        "key": "events",
         "label": "Events",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "years",
+        "key": "years",
         "label": "Years of experience",
         "type": "NUMERIC",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "number"
       },
       {
         "k": "showreel",
+        "key": "showreel",
         "label": "Showreel link",
         "type": "TEXT",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "url"
       },
       {
         "k": "portfolio",
+        "key": "portfolio",
         "label": "Portfolio stills",
-        "type": "TEXT[]"
+        "type": "TEXT[]",
+        "screen": "profile",
+        "form": "photos"
       },
       {
         "k": "equipment",
+        "key": "equipment",
         "label": "Equipment",
-        "type": "TEXT[]"
+        "type": "TEXT[]",
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "service_radius_km",
+        "key": "service_radius_km",
         "label": "Service area radius",
         "type": "NUMERIC",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "number"
       }
     ],
     "itemColumns": [
       {
         "k": "service",
+        "key": "service",
         "label": "Service",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
       },
       {
         "k": "hours",
+        "key": "hours",
         "label": "Hours of filming",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "req": true,
+        "form": "number"
       },
       {
         "k": "videographers",
+        "key": "videographers",
         "label": "Videographers",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "req": true,
+        "form": "number"
       },
       {
         "k": "cameras",
+        "key": "cameras",
         "label": "Cameras",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "req": true,
+        "form": "number"
       },
       {
         "k": "resolution",
+        "key": "resolution",
         "label": "Resolution",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
       },
       {
         "k": "edit_level",
+        "key": "edit_level",
         "label": "Edit level",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
       },
       {
         "k": "highlight_minutes",
+        "key": "highlight_minutes",
         "label": "Highlight length",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "form": "number"
       },
       {
         "k": "full_film",
+        "key": "full_film",
         "label": "Full-length film included",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "form": "toggle"
       },
       {
         "k": "raw",
+        "key": "raw",
         "label": "Raw footage included",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "form": "toggle"
       },
       {
         "k": "delivery_days",
+        "key": "delivery_days",
         "label": "Delivery timeline",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "req": true,
+        "form": "number"
       },
       {
         "k": "revisions",
+        "key": "revisions",
         "label": "Revisions included",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "form": "number"
       },
       {
         "k": "price",
+        "key": "price",
         "label": "Price",
-        "type": "BIGINT"
+        "type": "BIGINT",
+        "req": true,
+        "form": "money"
       }
     ]
   },
   "warehouse_storage": {
+    "screens": [
+      {
+        "id": "profile",
+        "title": "What you store",
+        "sub": "Anything outside these is reviewed by hand."
+      },
+      {
+        "id": "facility",
+        "title": "Your facility",
+        "sub": null
+      }
+    ],
+    "catalogue": null,
     "table": "partner_warehouse_storage_profiles",
     "itemsTable": null,
     "columns": [
       {
         "k": "item_types",
+        "key": "item_types",
         "label": "Item types accepted",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "custom_category",
+        "key": "custom_category",
         "label": "Another category (reviewed before it is shown)",
-        "type": "TEXT"
+        "type": "TEXT",
+        "screen": "profile",
+        "form": "textarea"
       },
       {
         "k": "storage_kind",
+        "key": "storage_kind",
         "label": "Storage",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "climate",
+        "key": "climate",
         "label": "Climate-controlled area",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
       },
       {
         "k": "hazardous_excluded",
+        "key": "hazardous_excluded",
         "label": "Hazardous goods are refused",
         "type": "BOOLEAN",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "toggle"
       },
       {
         "k": "smallest",
+        "key": "smallest",
         "label": "Smallest item accepted",
-        "type": "TEXT"
+        "type": "TEXT",
+        "screen": "profile",
+        "form": "text"
       },
       {
         "k": "largest",
+        "key": "largest",
         "label": "Largest item accepted",
-        "type": "TEXT"
+        "type": "TEXT",
+        "screen": "profile",
+        "form": "text"
       },
       {
         "k": "area_sqft",
+        "key": "area_sqft",
         "label": "Usable area",
         "type": "NUMERIC",
-        "req": true
+        "req": true,
+        "screen": "facility",
+        "form": "number"
       },
       {
         "k": "pallet_positions",
+        "key": "pallet_positions",
         "label": "Pallet positions",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "screen": "facility",
+        "form": "number"
       },
       {
         "k": "available_sqft",
+        "key": "available_sqft",
         "label": "Area available to Sambramo customers",
         "type": "NUMERIC",
-        "req": true
+        "req": true,
+        "screen": "facility",
+        "form": "number"
       },
       {
         "k": "access_hours",
+        "key": "access_hours",
         "label": "Access hours",
         "type": "TEXT",
-        "req": true
+        "req": true,
+        "screen": "facility",
+        "form": "text"
       },
       {
         "k": "security",
+        "key": "security",
         "label": "Security",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "facility",
+        "form": "multi"
       },
       {
         "k": "equipment",
+        "key": "equipment",
         "label": "Loading equipment",
-        "type": "TEXT[]"
+        "type": "TEXT[]",
+        "screen": "facility",
+        "form": "multi"
       },
       {
         "k": "inspection",
+        "key": "inspection",
         "label": "Inbound inspection & photo log",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "screen": "facility",
+        "form": "toggle"
       },
       {
         "k": "min_period",
+        "key": "min_period",
         "label": "Minimum storage period",
         "type": "TEXT",
-        "req": true
+        "req": true,
+        "screen": "facility",
+        "form": "single"
       },
       {
         "k": "max_period",
+        "key": "max_period",
         "label": "Maximum storage period",
-        "type": "TEXT"
+        "type": "TEXT",
+        "screen": "facility",
+        "form": "single"
       },
       {
         "k": "collection",
+        "key": "collection",
         "label": "You collect and deliver",
-        "type": "BOOLEAN"
+        "type": "BOOLEAN",
+        "screen": "facility",
+        "form": "toggle"
       }
     ],
     "itemColumns": []
   },
   "wedding_planning": {
+    "screens": [
+      {
+        "id": "profile",
+        "title": "Your planning services",
+        "sub": "What you take on."
+      }
+    ],
+    "catalogue": {
+      "key": "packages",
+      "title": "Your planning packages",
+      "noun": "package",
+      "nounPlural": "packages"
+    },
     "table": "partner_wedding_planning_profiles",
     "itemsTable": "partner_wedding_planning_items",
     "columns": [
       {
         "k": "services",
+        "key": "services",
         "label": "Services",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "cities",
+        "key": "cities",
         "label": "Cities / destinations",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "years",
+        "key": "years",
         "label": "Years planning weddings",
         "type": "NUMERIC",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "number"
       },
       {
         "k": "portfolio",
+        "key": "portfolio",
         "label": "Weddings you planned",
         "type": "TEXT[]",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "photos"
       },
       {
         "k": "budget_band",
+        "key": "budget_band",
         "label": "Typical wedding budget you handle",
         "type": "TEXT",
-        "req": true
+        "req": true,
+        "screen": "profile",
+        "form": "single"
       }
     ],
     "itemColumns": [
       {
         "k": "name",
+        "key": "name",
         "label": "Package name",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "text"
       },
       {
         "k": "functions",
+        "key": "functions",
         "label": "Functions covered",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "req": true,
+        "form": "number"
       },
       {
         "k": "planning_months",
+        "key": "planning_months",
         "label": "Planning period",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "req": true,
+        "form": "number"
       },
       {
         "k": "onsite_days",
+        "key": "onsite_days",
         "label": "Onsite days",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "req": true,
+        "form": "number"
       },
       {
         "k": "onsite_hours",
+        "key": "onsite_hours",
         "label": "Onsite hours per day",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "form": "number"
       },
       {
         "k": "coordinators",
+        "key": "coordinators",
         "label": "Coordinators onsite",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "req": true,
+        "form": "number"
       },
       {
         "k": "vendor_categories",
+        "key": "vendor_categories",
         "label": "Vendors you coordinate",
-        "type": "TEXT[]"
+        "type": "TEXT[]",
+        "req": true,
+        "form": "multi"
       },
       {
         "k": "deliverables",
+        "key": "deliverables",
         "label": "Deliverables",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "textarea"
       },
       {
         "k": "exclusions",
+        "key": "exclusions",
         "label": "Not included",
-        "type": "TEXT"
+        "type": "TEXT",
+        "req": true,
+        "form": "textarea"
       },
       {
         "k": "change_limit",
+        "key": "change_limit",
         "label": "Scope changes included",
-        "type": "NUMERIC"
+        "type": "NUMERIC",
+        "form": "number"
       },
       {
         "k": "price",
+        "key": "price",
         "label": "Package fee",
-        "type": "BIGINT"
+        "type": "BIGINT",
+        "req": true,
+        "form": "money"
       }
     ]
   }

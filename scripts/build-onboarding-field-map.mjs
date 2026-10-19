@@ -116,18 +116,33 @@ for (const f of files) {
           : o.showWhen.includes ? `${o.showWhen.q} includes ${o.showWhen.includes}`
             : o.showWhen.truthy ? `${o.showWhen.q} is set` : o.showWhen.q)
         : null,
+      /* The rule itself, not just a sentence about it. The console has
+         to decide whether an unanswered question was skipped or was
+         never shown, and it cannot do that from prose. */
+      showWhen: o.showWhen ?? null,
       sensitive: SENSITIVE.test(question.id),
     })
   }
 
-  for (const s of spec.screens ?? []) for (const question of s.questions ?? []) push(s.id, 'screen', question)
+  const screens = []
+  for (const s of spec.screens ?? []) {
+    screens.push({ id: s.id, title: s.title, sub: s.sub ?? null, count: (s.questions ?? []).length })
+    for (const question of s.questions ?? []) push(s.id, 'screen', question)
+  }
   /* The catalogue is a repeating sub-form — a menu, a vehicle list, a
      package of beverages. One row per item, so it is a child table, not
      columns on the profile. Marked so the schema step does not flatten
      it into the parent. */
   if (spec.catalogue) for (const question of spec.catalogue.fields ?? []) push(spec.catalogue.key, 'catalogue', question)
 
-  trades.push({ id: spec.id, file: f, hasCatalogue: Boolean(spec.catalogue), rows })
+  trades.push({
+    id: spec.id, file: f, rows, screens,
+    serviceNoun: spec.serviceNoun ?? null,
+    hasCatalogue: Boolean(spec.catalogue),
+    catalogue: spec.catalogue
+      ? { key: spec.catalogue.key, title: spec.catalogue.title, noun: spec.catalogue.noun, nounPlural: spec.catalogue.nounPlural }
+      : null,
+  })
 }
 
 const all = trades.flatMap(t => t.rows)

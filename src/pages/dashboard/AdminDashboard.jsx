@@ -13,6 +13,7 @@ import AnchorListingAdmin from '../../components/admin/AnchorListingAdmin'
 import PartnerStoryUploads from '../../components/admin/PartnerStoryUploads'
 import TradeWorkspaces from '../../components/admin/TradeWorkspaces'
 import PartnerDirectory from '../../components/admin/PartnerDirectory'
+import OnboardingReview from '../../components/admin/OnboardingReview'
 
 export default function AdminDashboard() {
   const { profile } = useAuth()
@@ -57,6 +58,7 @@ export default function AdminDashboard() {
     : activeNav === 'story-uploads' ? <PartnerStoryUploads />
     : activeNav === 'trade-workspaces' ? <TradeWorkspaces />
     : activeNav === 'directory' ? <PartnerDirectory />
+    : activeNav === 'onboarding-review' ? <OnboardingReview />
     : activeNav === 'verification' ? <VerificationQueue />
     : activeNav === 'pricing-review' ? <PricingReviewQueue />
     : activeNav === 'listing-review' ? <AnchorListingAdmin />
