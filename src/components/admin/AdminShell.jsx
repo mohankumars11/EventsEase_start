@@ -69,7 +69,11 @@ export default function AdminShell({
   }
 
   return (
-    <div className="flex bg-[#FCFAFF]" style={{ minHeight: 'calc(100vh - 64px)' }}>
+    /* Pure white. #FCFAFF read as the cream tint being reported: the
+       console's own cards are white, so any wash behind them shows
+       through as a colour nobody chose. The 64px subtraction went with
+       the customer navbar that no longer sits above this. */
+    <div className="flex bg-white" style={{ minHeight: '100vh' }}>
       {sidebarOpen && (
         <div className="fixed inset-0 bg-black/50 z-30 md:hidden" onClick={() => setSidebarOpen(false)} />
       )}
@@ -83,10 +87,12 @@ export default function AdminShell({
           'md:sticky md:top-0 md:translate-x-0 md:z-auto',
         ].join(' ')}
         style={{
-          // Plum is the product's brand colour everywhere outside the shop.
-          // A vertical ramp rather than a flat fill so the rail has a top and
-          // a bottom — the founder block at the foot sits in the deepest part.
-          background: 'linear-gradient(175deg, #FAF7FE 0%, #F5F0FC 45%, #F1EAFA 100%)',
+          // White, with a hairline doing the separating. The plum ramp was
+          // the other half of the tint: a sidebar that is almost-white
+          // beside cards that are white reads as a mistake rather than a
+          // choice, and amethyst is more useful spent on the active item.
+          background: '#FFFFFF',
+          borderRight: '1px solid rgb(17 24 39 / 0.08)',
           maxHeight: '100vh',
         }}
       >
@@ -154,11 +160,17 @@ export default function AdminShell({
                         // The active item is a filled pill, not a coloured
                         // word: on a dark ground a colour change alone is far
                         // too quiet to find at a glance.
-                        background: on ? 'rgb(var(--accent) / 0.12)' : 'transparent',
-                        color: on ? 'rgb(var(--accent))' : 'rgb(var(--ink-soft))',
-                        fontWeight: on ? 600 : 500,
+                        /* Solid amethyst, not a 12% wash. On a white rail a
+                           tinted pill is nearly invisible at a glance, which
+                           is the one thing a nav item has to survive. The
+                           inset bar on the left gives the eye an anchor at
+                           the rail edge while scanning vertically. */
+                        background: on ? 'rgb(91 33 182)' : 'transparent',
+                        color: on ? '#FFFFFF' : 'rgb(var(--ink-soft))',
+                        fontWeight: on ? 650 : 500,
+                        boxShadow: on ? 'inset 3px 0 0 0 rgb(167 139 250)' : 'none',
                       }}
-                      onMouseEnter={e => { if (!on) e.currentTarget.style.background = 'rgb(var(--surface-sunk) / 0.06)' }}
+                      onMouseEnter={e => { if (!on) e.currentTarget.style.background = 'rgb(243 244 246)' }}
                       onMouseLeave={e => { if (!on) e.currentTarget.style.background = 'transparent' }}
                     >
                       <span className="text-[13px] shrink-0 w-[18px] text-center" aria-hidden="true">{item.emoji}</span>
@@ -204,7 +216,7 @@ export default function AdminShell({
 
       {/* ── The work ─────────────────────────────────────────────────── */}
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="bg-white/85 backdrop-blur-md border-b border-gray-200/70 sticky top-0 z-20">
+        <header className="bg-white border-b border-gray-200 sticky top-0 z-20">
           <div className="px-4 sm:px-7 py-3.5 flex items-start gap-3">
             <button
               onClick={() => setSidebarOpen(true)}

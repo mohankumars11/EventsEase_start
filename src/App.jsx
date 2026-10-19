@@ -322,6 +322,28 @@ function ScreenShell({ children }) {
  * launch in my city" form underneath it was addressed to a customer who is not
  * the person reading this screen.
  */
+/**
+ * The operator console draws its own chrome.
+ *
+ * DashboardShell puts the CUSTOMER Navbar above whatever it wraps —
+ * logo, Celebrations links, city picker and a "Plan a celebration"
+ * call to action. On the admin console that is a second navigation
+ * system stacked on top of AdminShell's sidebar, and the CTA invites
+ * an operator to go and book a party. The partner app was given its
+ * own shell for exactly this reason; admin never was.
+ *
+ * Pure white, because the console's own surfaces are white and the
+ * shell showing through between them as a tint was the "cream
+ * background" being reported.
+ */
+function AdminShellRoute({ children }) {
+  return (
+    <div className="min-h-screen bg-white">
+      <PageBoundary>{children}</PageBoundary>
+    </div>
+  )
+}
+
 function DashboardShell({ children }) {
   return (
     <div className="flex min-h-screen flex-col">
@@ -751,13 +773,13 @@ function AppRoutes() {
       {/* ── Admin ──────────────────────────────────── */}
       <Route path="/dashboard/admin" element={
         <ProtectedRoute allowedRoles={['admin']}>
-          <DashboardShell><AdminDashboard /></DashboardShell>
+          <AdminShellRoute><AdminDashboard /></AdminShellRoute>
         </ProtectedRoute>
       } />
 
       <Route path="/dashboard/admin/submissions/:submissionId" element={
         <ProtectedRoute allowedRoles={['admin']}>
-          <DashboardShell><BusinessSubmissionReview /></DashboardShell>
+          <AdminShellRoute><BusinessSubmissionReview /></AdminShellRoute>
         </ProtectedRoute>
       } />
 

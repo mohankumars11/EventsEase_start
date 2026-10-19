@@ -35,8 +35,6 @@ import { supabase } from '../../lib/supabase'
  * letting it read as a result.
  */
 
-const pct = (a, b) => (b ? Math.round((a / b) * 100) : null)
-
 function Metric({ label, value, definition, source, unavailable, reason }) {
   return (
     <div className="rounded-2xl bg-white p-4 ring-1 ring-gray-200">
@@ -221,11 +219,17 @@ export default function FounderAnalytics() {
         <Metric label="Custom inquiries" value={data.quoteRequests ?? 0}
           definition="Quote requests raised by customers."
           source="sambramo_quote_requests" />
-        <Metric label="Booking conversion" unavailable={noDemand}
-          value={`${pct(data.bookingLines, data.liveListings) ?? 0}%`}
-          reason="No bookings exist, so conversion has no numerator. It is not 0% — it is unmeasured."
-          definition="Booking lines against live listings."
-          source="booking_lines ÷ live listings" />
+        {/* Lines ÷ listings is not a conversion rate and rendered 200%,
+            which is the giveaway: a rate cannot exceed 100%. A real
+            conversion needs a funnel — requests raised against requests
+            that became bookings — and booking_requests carries no
+            outcome column to measure it with. Saying so beats printing
+            a confident number that means nothing. */}
+        <Metric label="Booking conversion" unavailable
+          value="—"
+          reason="Not measurable yet: there is no request-to-booking funnel. booking_requests records no outcome, so bookings cannot be divided by anything meaningful."
+          definition="Requests that became bookings."
+          source="needs an outcome on booking_requests" />
         <Metric label="Money in escrow" unavailable={!data.escrowRows} value="—"
           reason="escrow_ledger is empty. This fills the first time a customer pays."
           definition="Customer money captured and not yet released."
