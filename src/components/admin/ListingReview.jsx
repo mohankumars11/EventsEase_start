@@ -1,6 +1,12 @@
 /**
  * Admin: listing versions for every trade on the shared engine.
  *
+ * Named AnchorListingAdmin until 2026-10-19, which was misleading: the
+ * screen has always covered all 34 trades — Anchor & MC was simply the
+ * first trade onto the engine and the name stuck. The nav said
+ * "Listings & Anchor / MC", which read as an Anchor-only screen and
+ * invited the question of where the other 33 were reviewed.
+ *
  *   Review     submitted versions — the trade's own answers, pricing rules,
  *              catalogue, packages (recommended vs partner-edited), add-ons,
  *              declared charges, resources and licences — then approve
@@ -22,7 +28,7 @@ import { CONFIG_BY_ID, questionsOf } from '../../data/trades'
 const TABS = [['review', 'Listings to review'], ['dishes', 'Dish proposals'], ['seasons', 'Seasonal windows'], ['fees', 'Trade fees'], ['settings', 'Global settings'], ['decisions', 'Booking decisions']]
 const ruleName = r => (r.label ? `${RULE_KINDS[r.rule_kind ?? r.model]?.label ?? r.rule_kind} · ${r.label}` : RULE_KINDS[r.rule_kind ?? r.model]?.label ?? r.rule_kind)
 
-export default function AnchorListingAdmin() {
+export default function ListingReview() {
   const [tab, setTab] = useState('review')
   return (
     <div className="mx-auto max-w-4xl space-y-4 p-4">

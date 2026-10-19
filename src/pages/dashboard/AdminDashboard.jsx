@@ -9,7 +9,7 @@ import VerificationQueue from '../../components/admin/VerificationQueue'
 import MarketInterest from '../../components/admin/MarketInterest'
 import LiveOperations from '../../components/admin/LiveOperations'
 import PricingReviewQueue from '../../components/admin/PricingReviewQueue'
-import AnchorListingAdmin from '../../components/admin/AnchorListingAdmin'
+import ListingReview from '../../components/admin/ListingReview'
 import PartnerStoryUploads from '../../components/admin/PartnerStoryUploads'
 import TradeWorkspaces from '../../components/admin/TradeWorkspaces'
 import PartnerDirectory from '../../components/admin/PartnerDirectory'
@@ -73,7 +73,7 @@ export default function AdminDashboard() {
     : activeNav === 'founder-analytics' ? <FounderAnalytics />
     : activeNav === 'verification' ? <VerificationQueue />
     : activeNav === 'pricing-review' ? <PricingReviewQueue />
-    : activeNav === 'listing-review' ? <AnchorListingAdmin />
+    : activeNav === 'listing-review' ? <ListingReview />
     : <PartnerConsole />
 
   return (

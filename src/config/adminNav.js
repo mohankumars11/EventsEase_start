@@ -13,7 +13,7 @@ export const NAV = [
       { id: 'directory', label: 'Partner directory', emoji: '☰', description: 'Every partner, with server-side filters, saved views, sorting and column control.' },
       { id: 'partners', label: 'Partner 360 registry', emoji: '🤝', badge: 'vendors', description: 'Partner identity, onboarding, every listing card, documents, portfolio work, payout readiness and lifecycle history.' },
       { id: 'pricing-review', label: 'Pricing review', emoji: '₹', badge: 'pricing', description: 'Review submitted partner price revisions while protecting currently published prices.' },
-      { id: 'listing-review', label: 'Listings & Anchor / MC', emoji: '▦', description: 'Review and publish service cards, listing revisions and trade-specific pricing.' },
+      { id: 'listing-review', label: 'Listing review · all trades', emoji: '▦', description: 'Submitted listing versions for every trade — answers, pricing rules, catalogue, packages and add-ons — plus seasonal windows, per-trade fees and booking decisions.' },
       { id: 'onboarding-review', label: 'Onboarding review', emoji: '✓', description: 'The submitted form rebuilt question by question, with required gaps and the approve / reject / revise decision.' },
       { id: 'trade-workspaces', label: 'Trade workspaces', emoji: '▤', description: 'One typed table per trade — every onboarding answer in its own column, with legacy submissions shown separately.' },
       { id: 'verification', label: 'Identity verification', emoji: '▣', description: 'Partner applications, uploaded evidence, verification status and operator decisions.' },
