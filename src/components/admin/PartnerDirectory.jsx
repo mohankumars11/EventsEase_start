@@ -130,9 +130,15 @@ export default function PartnerDirectory({ onOpenPartner }) {
     const mine = ++seq.current
     setBusy(true); setError(null)
 
-    let qy = supabase.from('vendors').select('*', { count: 'exact' })
+    /* A partner's trade lives on their LISTINGS. vendors.category is
+       null or empty for every real partner, so filtering it returned
+       nothing and looked like "no partners in this trade". The inner
+       join is only added when a trade is chosen, so the unfiltered
+       list still includes partners who have no listing yet. */
+    let qy = trade
+      ? supabase.from('vendors').select('*, vendor_services!inner(category)', { count: 'exact' }).eq('vendor_services.category', trade)
+      : supabase.from('vendors').select('*', { count: 'exact' })
     if (!includeSynthetic) qy = qy.eq('is_synthetic', false)
-    if (trade) qy = qy.eq('category', trade)
     if (city) qy = qy.eq('city', city)
     if (verification) qy = qy.eq('verification_status', verification)
     if (accepting) qy = qy.eq('accepting_jobs', accepting === 'true')

@@ -3,6 +3,7 @@ export const NAV = [
   {
     id: 'executive', label: 'Executive', hint: 'Partner network health at a glance',
     items: [
+      { id: 'founder-analytics', label: 'Founder analytics', emoji: '◴', description: 'Supply, demand and where the marketplace is stuck — every figure with its definition and source.' },
       { id: 'overview', label: 'Partner control tower', emoji: '✦', description: 'Executive view of partner supply, live cards, listing quality, uploads, pricing and lifecycle risks.' },
     ],
   },

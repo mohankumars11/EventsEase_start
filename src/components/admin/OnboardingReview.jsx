@@ -124,19 +124,24 @@ export default function OnboardingReview() {
 
   useEffect(() => { loadQueue() }, [loadQueue])
 
+  /* The trade is on the LISTING. `vendors.category` is null or empty
+     for every real partner, so resolving the spec from it produced "no
+     question spec is defined for this trade" on exactly the partners
+     this screen exists to review. The listing's category is the real
+     signal; the vendor column is only a fallback for old rows. */
+  const [serviceCategory, setServiceCategory] = useState(null)
   const tradeId = useMemo(() => {
-    if (!selected) return null
-    const t = trades.find(x => x.name === selected.category)
-    return t?.id ?? null
-  }, [selected, trades])
+    const label = serviceCategory || selected?.category
+    if (!label) return null
+    return trades.find(x => x.name === label)?.id ?? null
+  }, [serviceCategory, selected, trades])
 
   const schema = tradeId ? schemaFor(tradeId) : null
 
   const open = useCallback(async (vendor) => {
-    setSelected(vendor); setProfile(null); setService(null); setNote(''); setDone(null); setError(null)
+    setSelected(vendor); setProfile(null); setService(null); setServiceCategory(null)
+    setNote(''); setDone(null); setError(null)
     setLoading(true)
-    const t = trades.find(x => x.name === vendor.category)
-    const sch = t ? schemaFor(t.id) : null
 
     /* The listing comes first: it carries the legacy blob and is the
        thing the typed row hangs off. */
@@ -148,6 +153,12 @@ export default function OnboardingReview() {
       .limit(1)
       .maybeSingle()
     if (!svc.error) setService(svc.data ?? null)
+
+    /* Resolve the spec from the listing now that we have it. */
+    const label = svc.data?.category || vendor.category
+    setServiceCategory(svc.data?.category ?? null)
+    const t = trades.find(x => x.name === label)
+    const sch = t ? schemaFor(t.id) : null
 
     if (sch) {
       const prof = await supabase
@@ -302,7 +313,7 @@ export default function OnboardingReview() {
                   <p className="mt-2 rounded-xl bg-gray-50 p-2.5 text-[12px] text-gray-600 ring-1 ring-gray-200">
                     {selected.category === 'Anchor & MC'
                       ? 'Anchor & MC runs the legacy flow and has no spec questions. Review it in the Partner console.'
-                      : 'No question spec is defined for this trade, so the form cannot be rebuilt.'}
+                      : `No question spec matches ${JSON.stringify(serviceCategory || selected.category || 'an unset trade')}, so the form cannot be rebuilt. The trade comes from the partner's listing.`}
                   </p>
                 )}
               </div>

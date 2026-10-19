@@ -19,6 +19,7 @@ import OrdersConsole from '../../components/admin/OrdersConsole'
 import RevenueConsole from '../../components/admin/RevenueConsole'
 import InquiriesConsole from '../../components/admin/InquiriesConsole'
 import PricingConsole from '../../components/admin/PricingConsole'
+import FounderAnalytics from '../../components/admin/FounderAnalytics'
 
 export default function AdminDashboard() {
   const { profile } = useAuth()
@@ -69,6 +70,7 @@ export default function AdminDashboard() {
     : activeNav === 'revenue' ? <RevenueConsole />
     : activeNav === 'inquiries' ? <InquiriesConsole />
     : activeNav === 'pricing-packages' ? <PricingConsole />
+    : activeNav === 'founder-analytics' ? <FounderAnalytics />
     : activeNav === 'verification' ? <VerificationQueue />
     : activeNav === 'pricing-review' ? <PricingReviewQueue />
     : activeNav === 'listing-review' ? <AnchorListingAdmin />
