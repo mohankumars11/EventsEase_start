@@ -109,7 +109,51 @@ Only 15 of 400 sampled `vendor_services` rows carry non-empty `specs`, and
 `sambramo_listing_drafts` holds 7 rows. So the backfill volume is small today —
 which makes this the cheapest moment to do it.
 
-## 6. Status
+## 6. Phase 2 finding: there is almost nothing to backfill
+
+The schema generated cleanly (57 tables, migrations 173-178). The backfill, dry-run
+against live data, did not.
+
+Of 514 `vendor_services` rows, **22 carry any `specs` at all**. Matching their stored
+keys against the current spec field keys:
+
+| Trade | Rows | Stored keys | Matched a column | Columns available |
+|---|---|---|---|---|
+| anchor_mc | 5 | 79 | **0** | 0 (legacy flow, no spec file) |
+| catering_food | 6 | 258 | 24 | 12 |
+| photography | 2 | 41 | 5 | 9 |
+| venue | 2 | 38 | 6 | 19 |
+| bridal_makeup_hair | 3 | 25 | **0** | 6 |
+| decoration_floral | 1 | 18 | **0** | 5 |
+| cake_desserts | 1 | 16 | **0** | 12 |
+| dj_music | 1 | 3 | **0** | 13 |
+| mini_truck_pickup | 1 | 3 | **0** | 5 |
+
+**35 of roughly 481 stored keys resolve to a typed column — about 7%.**
+
+The reason is not a bad mapping. The stored answers come from an **older
+questionnaire** than the one in `src/data/trades/`. Catering's blob carries
+`catering:fssai`, `cooks:team`, `ops:trust:years`, `ops:serving:servers_per_100` —
+a namespaced vocabulary that the current spec does not contain at all. 158 distinct
+stored keys have no column anywhere.
+
+So section 4.4's "backfill existing partner onboarding answers into their
+corresponding trade-specific columns" has almost no work to do, and claiming a
+successful migration would be claiming something false. What is true:
+
+- The typed schema is correct for **new** submissions; the engine writes current
+  field keys.
+- Historical answers stay in `vendor_services.specs`, untouched, and the whole blob
+  is also copied to `source_specs` on the profile row when one is created.
+- The admin console must therefore read the typed columns **and** fall back to
+  `specs` for legacy rows, or 22 partners appear blank.
+
+Hand-mapping 158 legacy keys across a since-replaced questionnaire, to recover
+answers for 22 listings, is not worth it. That is a recommendation, not a decision —
+it is reversible at any time by extending the resolver in
+`scripts/backfill-trade-profiles.mjs`.
+
+## 7. Status
 
 Phase 1 is complete: the system is audited and the field-mapping inventory exists
 as a regenerable artifact.
