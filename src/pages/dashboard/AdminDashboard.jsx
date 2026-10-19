@@ -11,6 +11,7 @@ import LiveOperations from '../../components/admin/LiveOperations'
 import PricingReviewQueue from '../../components/admin/PricingReviewQueue'
 import AnchorListingAdmin from '../../components/admin/AnchorListingAdmin'
 import PartnerStoryUploads from '../../components/admin/PartnerStoryUploads'
+import TradeWorkspaces from '../../components/admin/TradeWorkspaces'
 
 export default function AdminDashboard() {
   const { profile } = useAuth()
@@ -53,6 +54,7 @@ export default function AdminDashboard() {
     : activeNav === 'city-interest' ? <MarketInterest />
     : activeNav === 'live-ops' ? <LiveOperations />
     : activeNav === 'story-uploads' ? <PartnerStoryUploads />
+    : activeNav === 'trade-workspaces' ? <TradeWorkspaces />
     : activeNav === 'verification' ? <VerificationQueue />
     : activeNav === 'pricing-review' ? <PricingReviewQueue />
     : activeNav === 'listing-review' ? <AnchorListingAdmin />
