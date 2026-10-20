@@ -322,15 +322,23 @@ export const TRADE_PROFILE_SCHEMA = {
         "k": "deliverables",
         "key": "deliverables",
         "label": "What the customer gets",
-        "type": "TEXT",
-        "form": "textarea"
+        "type": "TEXT[]",
+        "req": true,
+        "form": "multi"
       },
       {
         "k": "materials_included",
         "key": "materials_included",
-        "label": "Products / materials included",
-        "type": "TEXT",
-        "form": "textarea"
+        "label": "Products included",
+        "type": "TEXT[]",
+        "form": "multi"
+      },
+      {
+        "k": "customisations",
+        "key": "customisations",
+        "label": "What can the customer ask you to change?",
+        "type": "TEXT[]",
+        "form": "multi"
       },
       {
         "k": "artists",

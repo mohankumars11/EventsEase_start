@@ -7,7 +7,7 @@ Do not edit by hand — re-run the script after changing a trade spec.
 
 - Trades: **34**
 - Onboarding questions (profile screens): **249**
-- Catalogue sub-form fields (repeating items): **241**
+- Catalogue sub-form fields (repeating items): **242**
 - Required questions: **152**
 - Conditional questions: **11**
 - Trades with a catalogue sub-form: **24**
@@ -67,7 +67,7 @@ onboarding answers.
 
 ### bridal_makeup_hair
 
-`bridal_makeup_hair.js` · 6 profile questions · 8 catalogue fields
+`bridal_makeup_hair.js` · 6 profile questions · 9 catalogue fields
 
 | Section | Field key | Label | Type | SQL | Req | Validation | Conditional |
 |---|---|---|---|---|---|---|---|
@@ -79,8 +79,9 @@ onboarding answers.
 | profile | `trial_available` | Do you provide a trial session? | toggle | `BOOLEAN` |  |  |  |
 | catalogue/services | `service` | Service | single | `TEXT` | yes | allows "other" |  |
 | catalogue/services | `duration_minutes` | How long it takes | number | `NUMERIC` | yes | min 10, max 600, unit minutes |  |
-| catalogue/services | `deliverables` | What the customer gets | textarea | `TEXT` |  | max 200 |  |
-| catalogue/services | `materials_included` | Products / materials included | textarea | `TEXT` |  | max 200 |  |
+| catalogue/services | `deliverables` | What the customer gets | multi | `TEXT[]` | yes | allows "other" |  |
+| catalogue/services | `materials_included` | Products included | multi | `TEXT[]` |  | allows "other" |  |
+| catalogue/services | `customisations` | What can the customer ask you to change? | multi | `TEXT[]` |  | allows "other" |  |
 | catalogue/services | `artists` | Artists needed | number | `NUMERIC` | yes | min 1, max 10 |  |
 | catalogue/services | `travel_applies` | Travel charge applies to this service? | toggle | `BOOLEAN` |  |  |  |
 | catalogue/services | `price` | Price | money | `BIGINT` | yes |  |  |

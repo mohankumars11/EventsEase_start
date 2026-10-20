@@ -1,15 +1,67 @@
 // Trade 3 — Bridal Makeup & Hair (spec Part 9, Trade 3)
 import { q, screen, catalogue } from './schema'
 
+/**
+ * Every service this trade actually sells, in one list.
+ *
+ * ═════════════════════════════════════════════════════════════════════
+ * WHY THE GROOM IS ON IT
+ * ═════════════════════════════════════════════════════════════════════
+ *
+ * The profile already asked whether the partner serves the groom, and
+ * then offered no groom service to list — so the answer went nowhere.
+ * An artist who does groom grooming had to type it into "Other".
+ *
+ * The same was true of the engagement, the reception and the mehendi
+ * day, which in practice are separate bookings at separate prices and
+ * are the ordinary way this trade is hired for a wedding.
+ *
+ * The profile list and the catalogue list are the same list on purpose:
+ * what a partner says they offer is what they must be able to price.
+ */
+const SERVICES = [
+  'Bridal makeup', 'Bridal hairstyle', 'Bridal makeup and hair combo',
+  'Engagement / pre-wedding look', 'Reception look', 'Mehendi / haldi day look',
+  'Bridesmaid / family makeup', 'Guest makeup', 'Hairstyling',
+  'Saree / dupatta draping', 'Groom makeup', 'Groom grooming',
+  'Groom hairstyling', 'Family / group booking',
+  'Touch-up service', 'Trial session', 'Extra look', 'Custom package',
+]
+
+/* What the customer gets, chosen rather than typed. A free-text box here
+   produced two words on most listings, and a family cannot compare two
+   artists on two words. */
+const INCLUSIONS = [
+  'Makeup application', 'Hairstyling', 'Saree / dupatta draping',
+  'False lashes', 'Hair extensions', 'Hair accessories fitted',
+  'Jewellery and accessories set', 'Skin prep before makeup',
+  'Touch-up kit to carry', 'On-site touch-ups during the function',
+  'Artist stays through the event', 'Photographs of the finished look',
+]
+
+/* The products, by what a customer would actually ask about — never the
+   kit itself, which is the partner's own equipment. */
+const MATERIALS = [
+  'HD products', 'Airbrush products', 'Waterproof products',
+  'Long-wear products', 'Branded professional products',
+  'Sensitive-skin / hypoallergenic products', 'Vegan / cruelty-free products',
+  'Premium lashes', 'Hair extensions', 'Fresh flowers for hair',
+  'Primer and setting spray',
+]
+
+const CUSTOMISATIONS = [
+  'Lighter or heavier coverage', 'A specific lipstick or shade',
+  'Matched to the outfit', 'Copied from a reference photograph',
+  "Hairstyle of the customer's choice", 'Jewellery-first styling',
+  'Fragrance-free products', 'No lashes / no extensions',
+]
+
 export default {
   id: 'bridal_makeup_hair',
   serviceNoun: 'makeup and hair service',
   screens: [
     screen('profile', 'Your makeup & hair work', 'What you offer and how you work.', [
-      q.multi('services_offered', 'What makeup and hair services do you offer?', [
-        'Bridal makeup', 'Bridal hairstyle', 'Bridal makeup and hair combo', 'Bridesmaid / family makeup',
-        'Guest makeup', 'Hairstyling', 'Draping', 'Touch-up service', 'Trial session', 'Extra look',
-      ], { required: true, other: true }),
+      q.multi('services_offered', 'What makeup and hair services do you offer?', SERVICES, { required: true, other: true }),
       q.multi('styles', 'Which styles can customers choose?', ['Traditional', 'Natural', 'Glam', 'HD', 'Airbrush', 'Editorial'], { required: true, other: true }),
       q.multi('who', 'Do you offer bridal, family and guest services?', ['Bride', 'Groom', 'Family', 'Guests'], { required: true }),
       q.number('people_per_day', 'How many people can you serve on the same day?', { required: true, min: 1, max: 100 }),
@@ -18,13 +70,11 @@ export default {
     ]),
   ],
   catalogue: catalogue('services', 'Your services', 'service', 'services', [
-    q.single('service', 'Service', [
-      'Bridal makeup', 'Bridal hairstyle', 'Bridal makeup and hair combo', 'Bridesmaid / family makeup', 'Guest makeup',
-      'Hairstyling', 'Draping', 'Touch-up service', 'Trial session', 'Extra look',
-    ], { required: true, other: true }),
+    q.single('service', 'Service', SERVICES, { required: true, other: true }),
     q.number('duration_minutes', 'How long it takes', { required: true, min: 10, max: 600, suffix: 'minutes' }),
-    q.textarea('deliverables', 'What the customer gets', { max: 200 }),
-    q.textarea('materials_included', 'Products / materials included', { max: 200 }),
+    q.multi('deliverables', 'What the customer gets', INCLUSIONS, { required: true, other: true }),
+    q.multi('materials_included', 'Products included', MATERIALS, { other: true }),
+    q.multi('customisations', 'What can the customer ask you to change?', CUSTOMISATIONS, { other: true }),
     q.number('artists', 'Artists needed', { required: true, min: 1, max: 10 }),
     q.toggle('travel_applies', 'Travel charge applies to this service?'),
     q.money('price', 'Price', { required: true }),

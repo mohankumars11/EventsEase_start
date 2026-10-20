@@ -6,6 +6,7 @@ import {
 import { supabase } from '../../lib/supabase'
 import { prepareImage } from '../../lib/imageUpload'
 import { useToast, friendlyError } from '../../context/ToastContext'
+import { tradeTakesAudio } from '../../data/workPrompts'
 
 /**
  * "Show them, do not describe it."
@@ -285,6 +286,11 @@ export default function WorkUpload({
       </div>
 
       {/* ── Voice, music and audio samples ──────────────────────────── */}
+      {/* Only for the trades hired for a sound. A makeup artist or a
+         florist has no audio sample, and asking for one reads as an app
+         that does not know its own trades. An existing upload still
+         shows, so nothing a partner already sent becomes unremovable. */}
+      {(tradeTakesAudio(trade) || audioSamples.length > 0) && (
       <div className="rounded-[20px] bg-white p-4 ring-1 ring-ink/[0.06]">
         <p className="text-[14px] font-extrabold leading-tight text-ink">
           {copy.audioTitle ?? 'Audio samples'}
@@ -319,6 +325,7 @@ export default function WorkUpload({
           </div>
         )}
       </div>
+      )}
 
       {/* ── What customers said ─────────────────────────────────────── */}
       <div className="rounded-[20px] bg-white p-4 ring-1 ring-ink/[0.06]">

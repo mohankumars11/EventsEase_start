@@ -274,3 +274,24 @@ export const workPromptsFor = trade => ({ ...DEFAULT, ...(BY_TRADE[trade] ?? {})
 
 /** Every trade with its own prompts, for the guard that checks coverage. */
 export const TRADES_WITH_PROMPTS = Object.keys(BY_TRADE)
+
+/**
+ * Which trades are asked for audio at all.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * WHY THIS IS A LIST AND NOT A DEFAULT
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * The upload screen offered "Add audio samples" to all 34 trades. For a
+ * makeup artist, a florist or a lorry owner there is no such thing as an
+ * audio sample, and a field that cannot be filled reads as an app that
+ * does not know what it sells.
+ *
+ * Three trades are hired for a sound: an anchor's voice, a DJ's mix, a
+ * singer's performance. Sound & AV is deliberately absent — it rents
+ * equipment; its work is photographed, not listened to.
+ */
+export const AUDIO_SAMPLE_TRADES = ['Anchor & MC', 'DJ & Music', 'Live Entertainment']
+
+/** Does this trade get the audio-sample block? */
+export const tradeTakesAudio = trade => AUDIO_SAMPLE_TRADES.includes(trade)
