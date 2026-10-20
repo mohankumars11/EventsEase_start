@@ -14,7 +14,7 @@
  * If step 3 fails the partner stays here with the reason. Until then the
  * answers live in a local draft, so closing the app loses nothing.
  */
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'motion/react'
 import { ArrowLeft, ArrowRight, Loader2, LogOut } from 'lucide-react'
@@ -108,21 +108,57 @@ export default function AnchorOnboardingFlow({
     if (s.has('pricing') && generated.length === 3 && seen.has('packages')) s.add('packages')
     if (availabilityDone(a.availability)) s.add('availability')
     if (rulesStageDone(a.rules)) s.add('rules')
-    if (seen.has('payout')) s.add('payout')
+    /* From the payout record, not from having rendered the screen.
+       See the same fix in ListingOnboardingFlow: a visit-based tick let
+       a partner submit with no payout destination on file. */
+    if (payout?.details || payout?.active) s.add('payout')
     if (STAGES.slice(0, -1).every(x => s.has(x.id))) s.add('review')
     return s
-  }, [a, generated, seen, hasHourlyOvertime])
+  }, [a, generated, seen, hasHourlyOvertime, payout])
 
   const idx = STAGES.findIndex(s => s.id === step)
   const isLast = idx === STAGES.length - 1
   const here = STAGES[idx]
   const canNext = done.has(step)
 
+  /* Anchor runs its own flow rather than the shared one, and carried
+     the same three bypasses: go() moved wherever it was told, the rail
+     was the only gate, and a caller's initialStep was taken on faith.
+     Same rule here — the furthest step earned is the first one not
+     done, and nothing past it opens. */
+  const reachIdx = useMemo(() => {
+    const firstUndone = STAGES.findIndex(s => !done.has(s.id))
+    return firstUndone === -1 ? STAGES.length - 1 : firstUndone
+  }, [done])
+
+  const canEnter = useCallback(to => {
+    const j = STAGES.findIndex(s => s.id === to)
+    return j !== -1 && j <= reachIdx
+  }, [reachIdx])
+
   function go(to) {
+    if (!canEnter(to)) {
+      const target = STAGES[reachIdx]
+      setTried(true)
+      if (target && target.id !== step) {
+        setDir(1); setSubmitError(''); setStep(target.id)
+        document.getElementById('anchor-scroll')?.scrollTo({ top: 0 })
+      }
+      return
+    }
     const j = STAGES.findIndex(s => s.id === to)
     setDir(j > idx ? 1 : -1); setTried(false); setSubmitError(''); setStep(to)
     document.getElementById('anchor-scroll')?.scrollTo({ top: 0 })
   }
+
+  /* Editing an approved listing opens every stage; a fresh flow with a
+     caller-supplied initialStep must not. */
+  useEffect(() => {
+    if (editing) return
+    const at = STAGES.findIndex(x => x.id === step)
+    if (at === -1) { setStep(STAGES[0].id); return }
+    if (at > reachIdx) setStep(STAGES[reachIdx].id)
+  }, [step, reachIdx, editing])
   function next() {
     if (!canNext) { setTried(true); return }
     if (isLast) return submit()

@@ -14,7 +14,7 @@ export default function RulesStage({ value, set }) {
   const rider = v.rider ?? []
   return (
     <>
-      <SectionTitle title="Booking & cancellation" sub="These make instant payment safe for you and the customer." />
+      <SectionTitle title="Booking & cancellation" sub="These make instant payment safe for you and the customer. The policy you pick applies once a booking is confirmed, and the customer sees its deadlines and refunds before they confirm and pay." />
 
       <Card>
         <div className="flex items-center justify-between gap-4">

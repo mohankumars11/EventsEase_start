@@ -19,7 +19,7 @@ export default function ExtrasStage({ value, set, hasHourlyOvertime }) {
   const put = (id, patch) => set({ ...v, on: { ...on, [id]: { ...on[id], ...patch } } })
   return (
     <>
-      <SectionTitle title="Extra services & charges" sub="Switch on what you offer and set its price. Customers add these to any package." />
+      <SectionTitle title="Extra services & charges" sub="Switch on what you offer and set your price for each. A customer can add these to any package when they book, and doing so raises what they pay — your rate for the extra is what you receive." />
 
       <div className="space-y-2.5">
         {ADDONS_V3.map(a => {

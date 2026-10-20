@@ -1,32 +1,47 @@
 #!/usr/bin/env node
 /**
- * Does the onboarding flow refuse a forward jump?
+ * Do the onboarding flows refuse a forward jump?
  *
  * Section D is explicit that a disabled tab is not enough: the state
  * must refuse invalid progression even when a request bypasses the UI.
- * This reads the source and asserts the guard exists where it has to
- * be — on go(), not only on the rail — and that step completion is not
- * granted merely by visiting a screen.
+ * This reads the source and asserts the guard is where it has to be —
+ * on go(), not only on the rail — and that a step is not completed
+ * merely by being visited.
  *
- * A source-level check, not a behavioural one. It cannot prove the
- * flow behaves correctly at runtime; it can prove the guard has not
- * been deleted or moved back behind the UI, which is how this
- * regresses.
+ * ══════════════════════════════════════════════════════════════════════
+ * BOTH FLOWS, BECAUSE ANCHOR RUNS ITS OWN
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * Anchor & MC predates the shared engine and has its own component. A
+ * fix applied only to the shared flow leaves the oldest and busiest
+ * trade ungated — which is what was found when this guard was pointed
+ * at it.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * IT READS CODE, NOT COMMENTS
+ * ══════════════════════════════════════════════════════════════════════
+ *
+ * The first version failed on correct code because the source explains
+ * WHY `seen.has('payout')` was removed, and the check matched the
+ * explanation. A guard that accepts its own documentation as evidence
+ * also passes on a comment claiming a fix that was never made.
+ *
+ * This is a source-level check. It cannot prove runtime behaviour; it
+ * proves the guard has not been deleted or pushed back behind the UI,
+ * which is how this regresses.
  */
 import { readFileSync } from 'node:fs'
-const FLOW = 'src/components/vendor/listing/ListingOnboardingFlow.jsx'
-const raw = readFileSync(FLOW, 'utf8')
 
-/* Comments are prose, not behaviour. The first version of this guard
-   failed because the code explains WHY `seen.has('payout')` was
-   removed, and the check matched the explanation. A guard that reads
-   its own documentation as evidence will go red on correct code and,
-   worse, green on a comment that claims a fix. */
-const src = raw
+const FLOWS = [
+  'src/components/vendor/listing/ListingOnboardingFlow.jsx',
+  'src/components/vendor/anchor/AnchorOnboardingFlow.jsx',
+]
+
+const codeOf = raw => raw
   .replace(/\/\*[\s\S]*?\*\//g, ' ')
   .replace(/(^|[^:])\/\/.*$/gm, '$1')
 
-const checks = [
+const checksFor = src => [
   ['go() consults canEnter before moving',
     /function go\(to\)\s*\{[\s\S]{0,400}?if \(!canEnter\(to\)\)/.test(src)],
   ['canEnter is bounded by the furthest earned step',
@@ -37,21 +52,28 @@ const checks = [
     /if \(at > reachIdx\) setStep\(STAGES\[reachIdx\]\.id\)/.test(src)],
   ['payout completion comes from data, not from a visit',
     /payout\?\.details \|\| payout\?\.active/.test(src) && !/seen\.has\('payout'\)/.test(src)],
-  ['Next is still gated on the current step being done',
-    /const canNext = done\.has\(here\.id\)/.test(src)],
+  ['Next is gated on the current step being done',
+    /const canNext = done\.has\((here\.id|step)\)/.test(src)],
 ]
 
 let bad = 0
-for (const [name, ok] of checks) {
-  console.log(`  ${ok ? 'PASS' : 'FAIL'}  ${name}`)
-  if (!ok) bad++
+for (const flow of FLOWS) {
+  const src = codeOf(readFileSync(flow, 'utf8'))
+  console.log()
+  console.log(flow.split('/').pop())
+  for (const [name, ok] of checksFor(src)) {
+    console.log(`  ${ok ? 'PASS' : 'FAIL'}  ${name}`)
+    if (!ok) bad++
+  }
+  /* Reported, not hidden: a step still ticked by being looked at. */
+  const visitBased = [...src.matchAll(/seen\.has\('([a-z]+)'\)/g)].map(m => m[1])
+  if (visitBased.length) {
+    console.log(`  note: still completed by visiting — ${[...new Set(visitBased)].join(', ')}`)
+  }
 }
 
-/* Visit-based completion that remains, reported rather than hidden. */
-const visitBased = [...src.matchAll(/seen\.has\('([a-z]+)'\)/g)].map(m => m[1])
-if (visitBased.length) {
-  console.log(`\n  still completed by visiting: ${[...new Set(visitBased)].join(', ')}`)
-}
-
-console.log(bad ? `\nFAIL — ${bad} gating check(s)` : '\nPASS — progression is enforced in state, not only in the rail')
+console.log()
+console.log(bad
+  ? `FAIL — ${bad} gating check(s)`
+  : 'PASS — both flows enforce progression in state, not only in the rail')
 process.exit(bad ? 1 : 0)
