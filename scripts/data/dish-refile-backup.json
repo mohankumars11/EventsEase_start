@@ -1,0 +1,987 @@
+[
+ {
+  "id": "SBM-CL-kootu-alasande-cabbage-kootu",
+  "name": "Alasande Cabbage Kootu",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-kootu-aloo-batani-gassi",
+  "name": "Aloo Batani Gassi",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-kootu-aloo-batani-kootu",
+  "name": "Aloo Batani Kootu",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-kootu-aloo-sagu",
+  "name": "Aloo Sagu",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-kootu-avarebele-sihi-kumbalakai-kootu",
+  "name": "Avarebele Sihi Kumbalakai Kootu",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-kootu-avarekalu-sagu",
+  "name": "Avarekalu Sagu",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-kootu-aviyal",
+  "name": "Aviyal",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-kootu-badhane-kai-kari-kootu",
+  "name": "Badhane Kai Kari Kootu",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-kootu-badhane-kai-yengai",
+  "name": "Badhane Kai Yengai",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-kootu-balekai-alasande-kootu",
+  "name": "Balekai Alasande Kootu",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-kootu-balekai-gassi",
+  "name": "Balekai Gassi",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-kootu-batani-sabakki-kootu",
+  "name": "Batani Sabakki Kootu",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-kootu-beens-hesarukalu-kootu",
+  "name": "Beens Hesarukalu Kootu",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-kootu-bombay-sagu",
+  "name": "Bombay Sagu",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-kootu-boodu-kumbala-avarekalu-kootu",
+  "name": "Boodu Kumbala Avarekalu Kootu",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-kootu-boodu-kumbalakai-hesarukalu-kootu",
+  "name": "Boodu Kumbalakai Hesarukalu Kootu",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-kootu-channa-gassi",
+  "name": "Channa Gassi",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-kootu-gorikayi-hesarukalu-kootu",
+  "name": "Gorikayi Hesarukalu Kootu",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-kootu-gorikayi-tomato-kootu",
+  "name": "Gorikayi Tomato Kootu",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-kootu-halasina-kai-kadalekalu-kootu",
+  "name": "Halasina Kai Kadalekalu Kootu",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-kootu-heerekai-kalu-kootu",
+  "name": "Heerekai Kalu Kootu",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-kootu-heerekai-parchukutu",
+  "name": "Heerekai Parchukutu",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-kootu-hitikida-bele-kurma-seasonal",
+  "name": "Hitikida Bele Kurma (Seasonal)",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-kootu-kadala-curry-kerala-style",
+  "name": "Kadala Curry (Kerala Style)",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-kootu-kadlebeeja-badane-kootu",
+  "name": "Kadlebeeja Badane Kootu",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-kootu-kadlekalu-seemebadane-kootu",
+  "name": "Kadlekalu Seemebadane Kootu",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-kootu-kalu-badane-kootu",
+  "name": "Kalu Badane Kootu",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-kootu-kalu-kootu",
+  "name": "Kalu Kootu",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-kootu-kempu-kumbalakai-hesarubele-kootu",
+  "name": "Kempu Kumbalakai Hesarubele Kootu",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-kootu-mangalore-cucumbar-kootu",
+  "name": "Mangalore Cucumbar Kootu",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-kootu-mix-kalu-bele-kootu",
+  "name": "Mix Kalu Bele Kootu",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-kootu-mix-veg-kootu",
+  "name": "Mix Veg Kootu",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-kootu-navil-kosu-hesarubele-kootu",
+  "name": "Navil Kosu Hesarubele Kootu",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-kootu-padavalakai-kadlebele-kootu",
+  "name": "Padavalakai Kadlebele Kootu",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-kootu-pumpkin-kootu",
+  "name": "Pumpkin Kootu",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-kootu-seemebadane-kootu",
+  "name": "Seemebadane Kootu",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-kootu-soppu-kalu-kootu",
+  "name": "Soppu Kalu Kootu",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-kootu-southekayi-hesaru-bele-kootu",
+  "name": "Southekayi Hesaru Bele Kootu",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-kootu-stuffed-brinjal-engai-north-karnataka-style",
+  "name": "Stuffed Brinjal Engai (North Karnataka Style)",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-kootu-suvarnagadde-channa-kootu",
+  "name": "Suvarnagadde Channa Kootu",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-kootu-suvarnagadde-huli-kootu",
+  "name": "Suvarnagadde Huli Kootu",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-kootu-suvarnagadde-puli-kootu",
+  "name": "Suvarnagadde Puli Kootu",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-kootu-veg-kurma",
+  "name": "Veg Kurma",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-kootu-veg-sagu",
+  "name": "Veg Sagu",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-thambuli-basale-thambuli",
+  "name": "Basale Thambuli",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-thambuli-beetroot-thambuli",
+  "name": "Beetroot Thambuli",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-thambuli-bittergourd-thambuli",
+  "name": "Bittergourd Thambuli",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-thambuli-curryleaves-thambuli",
+  "name": "Curryleaves Thambuli",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-thambuli-dodda-patre-thambuli",
+  "name": "Dodda Patre Thambuli",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-thambuli-drumstick-thambuli",
+  "name": "Drumstick Thambuli",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-thambuli-ginger-thambuli",
+  "name": "Ginger Thambuli",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-thambuli-jeera-thambuli",
+  "name": "Jeera Thambuli",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-thambuli-kaaki-sopina-thambuli",
+  "name": "Kaaki Sopina Thambuli",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-thambuli-keere-thambuli",
+  "name": "Keere Thambuli",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-thambuli-menthya-thambuli",
+  "name": "Menthya Thambuli",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-thambuli-palak-thambuli",
+  "name": "Palak Thambuli",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-thambuli-pumpkin-thambuli",
+  "name": "Pumpkin Thambuli",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-thambuli-ridgegourd-thambuli",
+  "name": "Ridgegourd Thambuli",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-CL-thambuli-shunti-thambuli",
+  "name": "Shunti Thambuli",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-aloo-ke-gutke",
+  "name": "Aloo Ke Gutke",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-aloo-phulkopir-dalna",
+  "name": "Aloo Phulkopir Dalna",
+  "was": "ml_bengali"
+ },
+ {
+  "id": "SBM-MD-aloo-pitika",
+  "name": "Aloo Pitika",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-aloo-posto",
+  "name": "Aloo Posto",
+  "was": "ml_bengali"
+ },
+ {
+  "id": "SBM-MD-alsande-ambat",
+  "name": "Alsande Ambat",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-amti",
+  "name": "Amti",
+  "was": "ml_maharashtrian"
+ },
+ {
+  "id": "SBM-MD-appe-huli",
+  "name": "Appe Huli",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-arisi-paruppu-sadam",
+  "name": "Arisi Paruppu Sadam",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-avarekalu-huli",
+  "name": "Avarekalu Huli",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-avarekalu-saaru",
+  "name": "Avarekalu Saaru",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-avial-tamil-style",
+  "name": "Avial (Tamil style)",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-avial-udupi-style",
+  "name": "Avial (Udupi style)",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-badanekayi-ennegayi",
+  "name": "Badanekayi Ennegayi",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-bajra-no-rotlo",
+  "name": "Bajra No Rotlo",
+  "was": "ml_gujarati"
+ },
+ {
+  "id": "SBM-MD-bal-mithai",
+  "name": "Bal Mithai",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-basanti-pulao",
+  "name": "Basanti Pulao",
+  "was": "ml_bengali"
+ },
+ {
+  "id": "SBM-MD-bassaru",
+  "name": "Bassaru",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-batata-bhaji",
+  "name": "Batata Bhaji",
+  "was": "ml_maharashtrian"
+ },
+ {
+  "id": "SBM-MD-beans-paruppu-usili",
+  "name": "Beans Paruppu Usili",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-begun-bhaja",
+  "name": "Begun Bhaja",
+  "was": "ml_bengali"
+ },
+ {
+  "id": "SBM-MD-bele-saaru",
+  "name": "Bele Saaru",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-bele-thovve",
+  "name": "Bele Thovve",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-bembla-curry",
+  "name": "Bembla Curry",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-bendekayi-huli",
+  "name": "Bendekayi Huli",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-bengali-khichuri",
+  "name": "Bengali Khichuri",
+  "was": "ml_bengali"
+ },
+ {
+  "id": "SBM-MD-besara",
+  "name": "Besara",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-bharli-vangi",
+  "name": "Bharli Vangi",
+  "was": "ml_maharashtrian"
+ },
+ {
+  "id": "SBM-MD-bhatt-ki-churkani",
+  "name": "Bhatt Ki Churkani",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-bhinda-nu-shaak",
+  "name": "Bhinda Nu Shaak",
+  "was": "ml_gujarati"
+ },
+ {
+  "id": "SBM-MD-bonda-pachadi",
+  "name": "Bonda Pachadi",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-chekke-curry",
+  "name": "Chekke Curry",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-chha-gosht",
+  "name": "Chha Gosht",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-chhanar-dalna",
+  "name": "Chhanar Dalna",
+  "was": "ml_bengali"
+ },
+ {
+  "id": "SBM-MD-chhena-jhili",
+  "name": "Chhena Jhili",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-chhena-poda",
+  "name": "Chhena Poda",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-chilka-roti",
+  "name": "Chilka Roti",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-cholar-dal",
+  "name": "Cholar Dal",
+  "was": "ml_bengali"
+ },
+ {
+  "id": "SBM-MD-dahi-bara-aloo-dum",
+  "name": "Dahi Bara Aloo Dum",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-dal-dhokli",
+  "name": "Dal Dhokli",
+  "was": "ml_gujarati"
+ },
+ {
+  "id": "SBM-MD-dal-pitha",
+  "name": "Dal Pitha",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-dalma",
+  "name": "Dalma",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-dhokar-dalna",
+  "name": "Dhokar Dalna",
+  "was": "ml_bengali"
+ },
+ {
+  "id": "SBM-MD-dhuska",
+  "name": "Dhuska",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-echorer-dalna",
+  "name": "Echorer Dalna",
+  "was": "ml_bengali"
+ },
+ {
+  "id": "SBM-MD-ghanta-tarkari",
+  "name": "Ghanta Tarkari",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-ghugni",
+  "name": "Ghugni",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-gojju-avalakki",
+  "name": "Gojju Avalakki",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-gujarati-dal",
+  "name": "Gujarati Dal",
+  "was": "ml_gujarati"
+ },
+ {
+  "id": "SBM-MD-gujarati-kadhi",
+  "name": "Gujarati Kadhi",
+  "was": "ml_gujarati"
+ },
+ {
+  "id": "SBM-MD-hesaru-kaalu-saaru",
+  "name": "Hesaru Kaalu Saaru",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-hittina-kadubu",
+  "name": "Hittina Kadubu",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-huli-thovve",
+  "name": "Huli Thovve",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-huruli-saaru",
+  "name": "Huruli Saaru",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-joha-rice",
+  "name": "Joha Rice",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-jonna-rotte",
+  "name": "Jonna Rotte",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-kadle-balyar",
+  "name": "Kadle Balyar",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-kadle-manoli",
+  "name": "Kadle Manoli",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-kadubu",
+  "name": "Kadubu",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-kafuli",
+  "name": "Kafuli",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-kaipakka",
+  "name": "Kaipakka",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-kattu-saaru",
+  "name": "Kattu Saaru",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-keerai-masiyal",
+  "name": "Keerai Masiyal",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-kesuvina-ele-patrode",
+  "name": "Kesuvina Ele Patrode",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-khaja-bihari",
+  "name": "Khaja (Bihari)",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-khaja-odia",
+  "name": "Khaja (Odia)",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-khar",
+  "name": "Khar",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-khichdi-kadhi",
+  "name": "Khichdi Kadhi",
+  "was": "ml_gujarati"
+ },
+ {
+  "id": "SBM-MD-kochuri-bengali",
+  "name": "Kochuri (Bengali)",
+  "was": "ml_bengali"
+ },
+ {
+  "id": "SBM-MD-kokum-saaru",
+  "name": "Kokum Saaru",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-kollu-rasam",
+  "name": "Kollu Rasam",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-kongunadu-kara-kuzhambu",
+  "name": "Kongunadu Kara Kuzhambu",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-kootu",
+  "name": "Kootu",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-kumbalakayi-huli",
+  "name": "Kumbalakayi Huli",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-kumm-curry",
+  "name": "Kumm Curry",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-labra",
+  "name": "Labra",
+  "was": "ml_bengali"
+ },
+ {
+  "id": "SBM-MD-lasaniya-bataka",
+  "name": "Lasaniya Bataka",
+  "was": "ml_gujarati"
+ },
+ {
+  "id": "SBM-MD-litti-chokha",
+  "name": "Litti Chokha",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-luchi",
+  "name": "Luchi",
+  "was": "ml_bengali"
+ },
+ {
+  "id": "SBM-MD-madra",
+  "name": "Madra",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-malenadu-akki-rotti",
+  "name": "Malenadu Akki Rotti",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-mandua-ki-roti",
+  "name": "Mandua Ki Roti",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-mangalore-rasam",
+  "name": "Mangalore Rasam",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-mangalore-southekayi-huli",
+  "name": "Mangalore Southekayi Huli",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-mangalore-southekayi-sambar",
+  "name": "Mangalore Southekayi Sambar",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-masale-bhat",
+  "name": "Masale Bhat",
+  "was": "ml_maharashtrian"
+ },
+ {
+  "id": "SBM-MD-masor-tenga-vegetarian",
+  "name": "Masor Tenga (vegetarian)",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-mavinakayi-saaru",
+  "name": "Mavinakayi Saaru",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-menasina-saaru",
+  "name": "Menasina Saaru",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-methi-thepla",
+  "name": "Methi Thepla",
+  "was": "ml_gujarati"
+ },
+ {
+  "id": "SBM-MD-misal-pav",
+  "name": "Misal Pav",
+  "was": "ml_maharashtrian"
+ },
+ {
+  "id": "SBM-MD-mixed-vegetable-kurma",
+  "name": "Mixed Vegetable Kurma",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-mochar-ghonto",
+  "name": "Mochar Ghonto",
+  "was": "ml_bengali"
+ },
+ {
+  "id": "SBM-MD-moode",
+  "name": "Moode",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-mor-kali",
+  "name": "Mor Kali",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-narikol-laru",
+  "name": "Narikol Laru",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-nuggekayi-huli",
+  "name": "Nuggekayi Huli",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-pachi-pulusu",
+  "name": "Pachi Pulusu",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-pakhala-bhata",
+  "name": "Pakhala Bhata",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-phodi",
+  "name": "Phodi",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-pithla-bhakri",
+  "name": "Pithla Bhakri",
+  "was": "ml_maharashtrian"
+ },
+ {
+  "id": "SBM-MD-poha-kanda-poha",
+  "name": "Poha (Kanda Poha)",
+  "was": "ml_maharashtrian"
+ },
+ {
+  "id": "SBM-MD-poricha-kootu",
+  "name": "Poricha Kootu",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-puran-poli-gujarati",
+  "name": "Puran Poli (Gujarati)",
+  "was": "ml_gujarati"
+ },
+ {
+  "id": "SBM-MD-radhaballavi",
+  "name": "Radhaballavi",
+  "was": "ml_bengali"
+ },
+ {
+  "id": "SBM-MD-ragi-kali",
+  "name": "Ragi Kali",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-ragi-mudde",
+  "name": "Ragi Mudde",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-ringan-no-olo",
+  "name": "Ringan No Olo",
+  "was": "ml_gujarati"
+ },
+ {
+  "id": "SBM-MD-rugra",
+  "name": "Rugra",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-sabudana-khichdi",
+  "name": "Sabudana Khichdi",
+  "was": "ml_maharashtrian"
+ },
+ {
+  "id": "SBM-MD-sakinalu-charu",
+  "name": "Sakinalu Charu",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-santula",
+  "name": "Santula",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-sattu-paratha",
+  "name": "Sattu Paratha",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-sev-tameta-nu-shaak",
+  "name": "Sev Tameta Nu Shaak",
+  "was": "ml_gujarati"
+ },
+ {
+  "id": "SBM-MD-shukto",
+  "name": "Shukto",
+  "was": "ml_bengali"
+ },
+ {
+  "id": "SBM-MD-siddu",
+  "name": "Siddu",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-singori",
+  "name": "Singori",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-sodhi",
+  "name": "Sodhi",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-sol-kadhi",
+  "name": "Sol Kadhi",
+  "was": "ml_maharashtrian"
+ },
+ {
+  "id": "SBM-MD-soppu-saaru",
+  "name": "Soppu Saaru",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-southekayi-huli",
+  "name": "Southekayi Huli",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-tambuli",
+  "name": "Tambuli",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-tendle-upkari",
+  "name": "Tendle Upkari",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-thalipeeth",
+  "name": "Thalipeeth",
+  "was": "ml_maharashtrian"
+ },
+ {
+  "id": "SBM-MD-thekua",
+  "name": "Thekua",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-thengai-paal-kuzhambu",
+  "name": "Thengai Paal Kuzhambu",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-thepla",
+  "name": "Thepla",
+  "was": "ml_gujarati"
+ },
+ {
+  "id": "SBM-MD-til-pitha",
+  "name": "Til Pitha",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-tili-saaru",
+  "name": "Tili Saaru",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-tirunelveli-sambar",
+  "name": "Tirunelveli Sambar",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-ulundhu-kali",
+  "name": "Ulundhu Kali",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-undhiyu",
+  "name": "Undhiyu",
+  "was": "ml_gujarati"
+ },
+ {
+  "id": "SBM-MD-undi",
+  "name": "Undi",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-usal-pav",
+  "name": "Usal Pav",
+  "was": "ml_maharashtrian"
+ },
+ {
+  "id": "SBM-MD-vaghareli-khichdi",
+  "name": "Vaghareli Khichdi",
+  "was": "ml_gujarati"
+ },
+ {
+  "id": "SBM-MD-varan-bhaat",
+  "name": "Varan Bhaat",
+  "was": "ml_maharashtrian"
+ },
+ {
+  "id": "SBM-MD-vazhakkai-podimas",
+  "name": "Vazhakkai Podimas",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-vegetable-sagu",
+  "name": "Vegetable Sagu",
+  "was": "ml_component"
+ },
+ {
+  "id": "SBM-MD-zunka-bhakar",
+  "name": "Zunka Bhakar",
+  "was": "ml_maharashtrian"
+ }
+]
