@@ -1,5 +1,6 @@
 // Trade 4 — Cake & Desserts (spec Part 9, Trade 4)
 import { q, screen, catalogue } from './schema'
+import { ALLERGEN_OPTIONS } from '../allergens'
 
 /**
  * The catalogue was three free-text boxes: flavour, size, allergens.
@@ -38,17 +39,6 @@ const SIZES = [
   'Tiered', 'Single servings', 'Box of 6', 'Box of 12', 'Per tray',
 ]
 
-/* The nine India names on a packaged-food label, plus the two a baker is
-   asked about most. "None of these" is a real answer and has to be
-   sayable — an empty list reads as "not answered". */
-const ALLERGENS = [
-  'Contains egg', 'Contains milk / dairy', 'Contains nuts',
-  'Contains peanuts', 'Contains wheat / gluten', 'Contains soy',
-  'Contains sesame', 'Contains fish or shellfish', 'Contains sulphites',
-  'Contains alcohol', 'Made in a kitchen that also handles nuts',
-  'Made in a kitchen that also handles egg',
-  'None of these',
-]
 
 export default {
   id: 'cake_desserts',
@@ -86,7 +76,7 @@ export default {
     q.money('price', 'Price', { required: true }),
     q.single('price_unit', 'Charged', ['Per cake', 'Per kg', 'Per piece', 'Per serving', 'Per dessert table'], { required: true }),
     q.number('min_order', 'Minimum order', { min: 1, max: 10000 }),
-    q.multi('allergens', 'Ingredients / allergens', ALLERGENS, { required: true, other: true }),
+    q.multi('allergens', 'Ingredients / allergens', ALLERGEN_OPTIONS, { required: true, other: true }),
     q.number('lead_days', 'Production lead time', { required: true, min: 0, max: 60, suffix: 'days' }),
     q.photos('photos', 'Photos', { min: 1, max: 4 }),
   ]),

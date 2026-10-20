@@ -28,18 +28,23 @@ function MasterSearch({ open, onClose, onPick, cuisines, have, tax }) {
   const [q, setQ] = useState('')
   const [cuisine, setCuisine] = useState(null)
   const [course, setCourse] = useState(null)
+  /* Reported from the app: picking veg or non-veg showed nothing. The
+     diet filter was applied to the thirty rows already fetched, so it
+     could only subtract from one page of a 2,238-dish catalogue. It is
+     a server filter now, like cuisine and course. */
+  const [diet, setDiet] = useState(null)
   const [rows, setRows] = useState([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(0)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
-  useEffect(() => { setPage(0) }, [q, cuisine, course])
+  useEffect(() => { setPage(0) }, [q, cuisine, course, diet])
   useEffect(() => {
     if (!open) return
     let live = true
     setBusy(true)
     const t = setTimeout(async () => {
-      const { data, error } = await supabase.rpc('search_master_dishes', { p_q: q || null, p_cuisine: cuisine, p_course: course, p_limit: 30, p_offset: page * 30 })
+      const { data, error } = await supabase.rpc('search_master_dishes', { p_q: q || null, p_cuisine: cuisine, p_course: course, p_diet: diet, p_limit: 30, p_offset: page * 30 })
       if (!live) return
       setBusy(false)
       if (error) { setErr('The food catalogue is not available right now — create your own dish instead.'); setRows([]); return }
@@ -47,9 +52,10 @@ function MasterSearch({ open, onClose, onPick, cuisines, have, tax }) {
       setRows(r => (page === 0 ? data : [...r, ...data]))
     }, 250)
     return () => { live = false; clearTimeout(t) }
-  }, [open, q, cuisine, course, page])
+  }, [open, q, cuisine, course, diet, page])
   const myCuisines = cuisines.filter(c => !c.startsWith('custom:'))
   const cname = id => tax.groups.flatMap(g => g.styles).find(s => s.id === id)?.name ?? id
+  const groupName = id => tax.groups.find(g => g.styles.some(s => s.id === id))?.name ?? 'the same region'
   return (
     <Sheet tall open={open} onOpenChange={o => { if (!o) onClose() }} title="Choose from Food Catalogue">
       <div className="flex items-center gap-2 rounded-2xl bg-[#f4f2f9] px-3">
@@ -70,6 +76,11 @@ function MasterSearch({ open, onClose, onPick, cuisines, have, tax }) {
         <button type="button" onClick={() => setCourse(null)} className={`shrink-0 rounded-full px-3 py-1.5 text-[12px] font-bold ${!course ? 'bg-ink text-white' : 'bg-[#f4f2f9] text-ink/70'}`}>All courses</button>
         {tax.courses.map(c => <button key={c.id} type="button" onClick={() => setCourse(c.id)} className={`shrink-0 rounded-full px-3 py-1.5 text-[12px] font-bold ${course === c.id ? 'bg-ink text-white' : 'bg-[#f4f2f9] text-ink/70'}`}>{c.name}</button>)}
       </div>
+      <div className="mt-1 flex gap-1.5 overflow-x-auto pb-1">
+        {[[null, 'Any diet'], ['veg', 'Veg'], ['non_veg', 'Non-veg'], ['egg', 'Egg'], ['vegan', 'Vegan'], ['jain', 'Jain']].map(([id, l]) => (
+          <button key={String(id)} type="button" onClick={() => setDiet(id)}
+            className={`shrink-0 rounded-full px-3 py-1.5 text-[12px] font-bold ${diet === id ? 'bg-forest-700 text-white' : 'bg-[#f4f2f9] text-ink/70'}`}>{l}</button>))}
+      </div>
       {err && <p className="mt-3 rounded-2xl bg-amber-50 p-3 text-[12.5px] font-bold text-amber-900">{err}</p>}
       {!err && <p className="mt-2 text-[12px] font-bold text-ink/45">{busy && !rows.length ? 'Searching…' : `${total} dishes`}</p>}
       <div className="mt-2 space-y-1.5">
@@ -84,6 +95,15 @@ function MasterSearch({ open, onClose, onPick, cuisines, have, tax }) {
                   {tax.categories.find(c => c.id === r.category_id)?.name ?? ''}{r.cuisine_ids?.length ? ` · ${r.cuisine_ids.slice(0, 2).map(cname).join(', ')}` : ''}
                   {r.aliases?.length ? ` · also “${r.aliases[0]}”` : ''}
                 </span>
+                {/* The search widens to the region when a sub-cuisine is
+                    thin (migration 183). Saying so is the difference
+                    between a helpful fallback and a quiet lie about what
+                    this dish is. */}
+                {cuisine && r.exact === false && (
+                  <span className="mt-0.5 block text-[11px] font-bold text-ink/40">
+                    From {groupName(cuisine)}, not {cname(cuisine)} specifically
+                  </span>
+                )}
               </span>
               {already ? <span className="flex items-center gap-1 text-[11.5px] font-extrabold text-forest-700"><Check size={13} /> Added</span>
                 : <Plus size={17} className="text-plum-700" />}

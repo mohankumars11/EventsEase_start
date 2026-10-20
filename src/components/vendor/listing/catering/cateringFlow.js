@@ -70,7 +70,12 @@ export function buildCateringPayload(config, a) {
       stock_qty: null, lead_days: d.standalone?.lead_days || 0, qty_bands: [],
       attributes: {
         master_dish_id: d.master_dish_id, category_id: d.category_id, cuisine_ids: d.cuisine_ids ?? [], description: d.description,
-        diet: d.diet, diet_note: d.diet_note, serving: d.serving, allergens: d.allergens ?? [], allergen_note: d.allergen_note,
+        diet: d.diet, diet_note: d.diet_note, serving: d.serving,
+        /* `?? []` here turned "nobody asked" into "declared none", which
+           is the one allergen bug that can hurt somebody. An undeclared
+           dish stays undeclared all the way to the screen; see
+           allergenLabel in data/allergens.js. */
+        allergens: Array.isArray(d.allergens) ? d.allergens : null, allergen_note: d.allergen_note,
         cross_contact: d.cross_contact, menu_eligible: d.menu_eligible !== false, standalone: d.standalone, increment: d.standalone?.increment ?? null,
         pricing_status: d.pricing_status, active: d.active !== false, legacy: d.legacy ?? null, sort: i,
       },

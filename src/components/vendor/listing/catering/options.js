@@ -25,8 +25,11 @@ export const MENU_DIETS = [['veg', 'Pure vegetarian'], ['non_veg', 'Non-vegetari
 export const SERVING_UNITS = [['g', 'grams'], ['kg', 'kg'], ['ml', 'ml'], ['l', 'litre'], ['piece', 'pieces'], ['cup', 'cup'], ['glass', 'glass'], ['portion', 'portion']]
 export const STANDALONE_UNITS = [['per_serving', 'Per serving / person'], ['per_piece', 'Per piece'], ['per_kg', 'Per kg'], ['per_100g', 'Per 100 g'],
   ['per_litre', 'Per litre'], ['per_cup', 'Per cup / glass'], ['per_tray', 'Per tray'], ['per_box', 'Per box / pack'], ['per_fixed_qty', 'Per fixed quantity']]
-export const ALLERGENS = ['Milk / dairy', 'Nuts (tree nuts)', 'Peanuts', 'Gluten / wheat', 'Soy', 'Egg', 'Fish', 'Shellfish', 'Sesame', 'Mustard',
-  'Celery', 'Sulphites', 'Coconut', 'Garlic', 'Onion']
+/* Moved to src/data/allergens.js so catering, cake and anything else
+   that serves food share one spelling — three vocabularies cannot be
+   filtered against each other. Re-exported because the catering screens
+   import it from here. */
+export { ALLERGENS, ALLERGEN_OPTIONS, NONE_OPTION, allergenLabel } from '../../../../data/allergens'
 
 export const EVENT_TYPES = ['Weddings', 'Receptions', 'Engagements', 'Corporate events', 'Birthday parties', 'House functions',
   'Religious ceremonies', 'Festivals', 'Conferences', 'Private parties']
