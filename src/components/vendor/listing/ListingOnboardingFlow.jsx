@@ -15,7 +15,7 @@
  * Answers live in a local draft per trade until submit, so one trade can be
  * half-done while another is live.
  */
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'motion/react'
 import { ArrowLeft, ArrowRight, Loader2, LogOut, Shuffle } from 'lucide-react'
@@ -141,17 +141,66 @@ export default function ListingOnboardingFlow({
     if (availabilityDone(a.availability, isTrip)) s.add('availability')
     if (seen.has('compliance')) s.add('compliance')
     if (bookingDone(a.booking)) s.add('booking')
-    if (seen.has('payout')) s.add('payout')
+    /* Completion from the DATA, not from having looked at the screen.
+       `seen.has('payout')` marked the step done the moment it rendered,
+       so a partner could scroll past it and submit with no payout
+       destination on file — and the review would pass. */
+    if (payout?.details || payout?.active) s.add('payout')
     if (STAGES.slice(0, -1).every(x => s.has(x.id))) s.add('review')
     return s
-  }, [a, config, seen, suggested, redirect, isTrip, STAGES, catering])
+  }, [a, config, seen, suggested, redirect, isTrip, STAGES, catering, payout])
 
   const idx = Math.max(0, STAGES.findIndex(s => s.id === step))
   const here = STAGES[idx]
   const isLast = idx === STAGES.length - 1
   const canNext = done.has(here.id)
 
+  /* The furthest step a partner has legitimately reached: the first one
+     that is not done. Everything up to and including it is open; nothing
+     beyond it is. */
+  const reachIdx = useMemo(() => {
+    const firstUndone = STAGES.findIndex(s => !done.has(s.id))
+    return firstUndone === -1 ? STAGES.length - 1 : firstUndone
+  }, [STAGES, done])
+
+  const canEnter = useCallback(to => {
+    const j = STAGES.findIndex(s => s.id === to)
+    if (j === -1) return false
+    return j <= reachIdx
+  }, [STAGES, reachIdx])
+
+  /* A step can arrive from outside the UI: `initialStep` from a caller,
+     a step id restored from a local draft, or one restored from the
+     remote draft. None of those were checked, so a stale or crafted
+     value dropped the partner straight into a later step with earlier
+     answers missing. Clamp whatever arrives to the furthest step they
+     have actually earned.
+
+     This runs after `done` is computed, so it corrects the restore
+     rather than fighting it — a partner who genuinely completed eight
+     steps still lands on step nine. */
+  useEffect(() => {
+    if (!STAGES.length) return
+    const at = STAGES.findIndex(x => x.id === step)
+    if (at === -1) { setStep(STAGES[0].id); return }
+    if (at > reachIdx) setStep(STAGES[reachIdx].id)
+  }, [step, reachIdx, STAGES])
+
   function go(to) {
+    /* The guard lives HERE, not only on the rail. A disabled tab is a
+       hint; this is the rule. The rail, the Next button, a restored
+       draft and a caller-supplied initialStep all route through go(),
+       so one check covers every entry point rather than each caller
+       being trusted to have checked first. */
+    if (!canEnter(to)) {
+      const target = STAGES[reachIdx]
+      setTried(true)
+      if (target && target.id !== step) {
+        setDir(1); setSubmitError(''); setStep(target.id)
+        document.getElementById('listing-scroll')?.scrollTo({ top: 0 })
+      }
+      return
+    }
     const j = STAGES.findIndex(s => s.id === to)
     setDir(j > idx ? 1 : -1); setTried(false); setSubmitError(''); setStep(to)
     document.getElementById('listing-scroll')?.scrollTo({ top: 0 })
