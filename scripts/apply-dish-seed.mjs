@@ -33,8 +33,13 @@ import esbuild from 'esbuild'
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const DRY = process.argv.includes('--dry')
 
+/* The seed file has to reach the checker too. The first version forgot,
+   so it validated a different tranche than the one it was about to
+   write — it failed safe, but for the wrong reason, which is its own
+   kind of broken. */
+const FILE_ARG = process.argv.find(a => a.startsWith('--file=')) ?? '--file=scripts/data/dish-seed-partJ.js'
 try {
-  execFileSync(process.execPath, [join(ROOT, 'scripts/check-dish-seed.mjs')], { stdio: 'inherit' })
+  execFileSync(process.execPath, [join(ROOT, 'scripts/check-dish-seed.mjs'), FILE_ARG], { stdio: 'inherit' })
 } catch {
   console.error('\nthe seed does not validate — nothing was written')
   process.exit(1)
@@ -47,7 +52,8 @@ const U = env.VITE_SUPABASE_URL, K = env.SUPABASE_SERVICE_ROLE_KEY
 const H = { apikey: K, authorization: `Bearer ${K}`, 'content-type': 'application/json' }
 
 const out = join(mkdtempSync(join(tmpdir(), 'seed-')), 'seed.mjs')
-await esbuild.build({ entryPoints: [join(ROOT, 'scripts/data/dish-seed-partJ.js')], bundle: true,
+const FILE = FILE_ARG.slice(7)
+await esbuild.build({ entryPoints: [join(ROOT, FILE)], bundle: true,
   format: 'esm', outfile: out, platform: 'node', logLevel: 'silent' })
 const { SEED } = await import(pathToFileURL(out).href)
 
@@ -60,12 +66,16 @@ for (let from = 0; ; from += 1000) {
   const j = await r.json(); j.forEach(x => existingIds.add(x.id))
   if (j.length < 1000) break
 }
+/* Each tranche gets its own id namespace: reusing one would hand an id
+   that already means something to a different dish. */
+const PREFIX = FILE.includes('supplies') ? 'SBM-SUP' : 'SBM-PJ'
+const PROV = FILE.includes('supplies') ? 'sambramo-curated:partJ-supplies' : 'sambramo-curated:partJ'
 const rows = SEED.map((row, i) => {
-  const id = `SBM-PJ-${String(i + 1).padStart(4, '0')}`
+  const id = `${PREFIX}-${String(i + 1).padStart(4, '0')}`
   if (existingIds.has(id)) throw new Error(`id collision: ${id}`)
   return { id, name: row.name, aliases: row.aliases ?? [], cuisine_ids: row.cuisine_ids,
     category_id: row.category_id, suggested_diet: row.suggested_diet,
-    provenance: 'sambramo-curated:partJ', review_status: 'needs_review', active: true }
+    provenance: PROV, review_status: 'needs_review', active: true }
 })
 
 console.log(`\n${DRY ? 'would insert' : 'inserting'}: ${rows.length} dishes`)
@@ -82,4 +92,4 @@ for (let i = 0; i < rows.length; i += 100) {
   done += batch.length
   console.log(`  ${done}/${rows.length}`)
 }
-console.log('\ndone. To undo: delete from sambramo_master_dishes where provenance = \'sambramo-curated:partJ\';')
+console.log(`\ndone. To undo: delete from sambramo_master_dishes where provenance = '${PROV}';`)

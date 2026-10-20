@@ -43,7 +43,8 @@ const all = async (t, sel) => {
 }
 
 const out = join(mkdtempSync(join(tmpdir(), 'seed-')), 'seed.mjs')
-await esbuild.build({ entryPoints: [join(ROOT, 'scripts/data/dish-seed-partJ.js')], bundle: true,
+const FILE = (process.argv.find(a => a.startsWith('--file=')) ?? '--file=scripts/data/dish-seed-partJ.js').slice(7)
+await esbuild.build({ entryPoints: [join(ROOT, FILE)], bundle: true,
   format: 'esm', outfile: out, platform: 'node', logLevel: 'silent' })
 const { SEED } = await import(pathToFileURL(out).href)
 
@@ -52,18 +53,20 @@ const cats = Object.fromEntries((await all('sambramo_food_categories', 'id,cours
 const existing = await all('sambramo_master_dishes', 'name,cuisine_ids')
 const DIETS = new Set(['veg', 'non_veg', 'vegan', 'jain', 'egg'])
 const norm = s => String(s).toLowerCase().replace(/[^a-z0-9]/g, '')
-const already = new Set(existing.flatMap(d => (d.cuisine_ids ?? []).map(c => `${c}|${norm(d.name)}`)))
+/* A universal item carries no cuisine, so it needs a key of its own or
+   every one of them would look like a duplicate of every other. */
+const keysOf = row => ((row.cuisine_ids ?? []).length ? row.cuisine_ids : ['(universal)']).map(c => `${c}|${norm(row.name)}`)
+const already = new Set(existing.flatMap(keysOf))
 
 const bad = []
 const seen = new Set()
 for (const row of SEED) {
-  for (const c of row.cuisine_ids) if (!cuisines.has(c)) bad.push(`${row.name}: no such cuisine "${c}"`)
+  for (const c of (row.cuisine_ids ?? [])) if (!cuisines.has(c)) bad.push(`${row.name}: no such cuisine "${c}"`)
   if (!cats[row.category_id]) bad.push(`${row.name}: no such category "${row.category_id}"`)
   if (!DIETS.has(row.suggested_diet)) bad.push(`${row.name}: bad diet "${row.suggested_diet}"`)
-  for (const c of row.cuisine_ids) {
-    const k = `${c}|${norm(row.name)}`
-    if (already.has(k)) bad.push(`${row.name}: already in the catalogue under ${c}`)
-    if (seen.has(k)) bad.push(`${row.name}: listed twice in this seed under ${c}`)
+  for (const k of keysOf(row)) {
+    if (already.has(k)) bad.push(`${row.name}: already in the catalogue under ${k.split('|')[0]}`)
+    if (seen.has(k)) bad.push(`${row.name}: listed twice in this seed under ${k.split('|')[0]}`)
     seen.add(k)
   }
 }
@@ -72,7 +75,7 @@ for (const row of SEED) {
 const fills = {}
 for (const row of SEED) {
   const course = cats[row.category_id]
-  for (const c of row.cuisine_ids) (fills[`${c} · ${course}`] ??= []).push(row.name)
+  for (const c of ((row.cuisine_ids ?? []).length ? row.cuisine_ids : ['(universal)'])) (fills[`${c} · ${course}`] ??= []).push(row.name)
 }
 console.log(`seed rows        : ${SEED.length}`)
 console.log(`cuisine-course cells touched: ${Object.keys(fills).length}`)
