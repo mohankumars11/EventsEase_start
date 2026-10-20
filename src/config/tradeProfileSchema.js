@@ -507,7 +507,6 @@ export const TRADE_PROFILE_SCHEMA = {
         "key": "name",
         "label": "Product name",
         "type": "TEXT",
-        "req": true,
         "form": "text"
       },
       {
@@ -522,9 +521,9 @@ export const TRADE_PROFILE_SCHEMA = {
         "k": "flavour",
         "key": "flavour",
         "label": "Flavour",
-        "type": "TEXT",
+        "type": "TEXT[]",
         "req": true,
-        "form": "text"
+        "form": "multi"
       },
       {
         "k": "size",
@@ -532,7 +531,7 @@ export const TRADE_PROFILE_SCHEMA = {
         "label": "Size or weight",
         "type": "TEXT",
         "req": true,
-        "form": "text"
+        "form": "single"
       },
       {
         "k": "servings",
@@ -569,9 +568,9 @@ export const TRADE_PROFILE_SCHEMA = {
         "k": "allergens",
         "key": "allergens",
         "label": "Ingredients / allergens",
-        "type": "TEXT",
+        "type": "TEXT[]",
         "req": true,
-        "form": "text"
+        "form": "multi"
       },
       {
         "k": "lead_days",

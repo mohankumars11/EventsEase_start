@@ -25,6 +25,21 @@ import { PayoutStage, usePayoutStatus } from '../anchor/stages/PayoutReviewStage
 import { Card, SectionTitle } from '../anchor/ui'
 import QuestionRenderer, { questionsDone } from './QuestionRenderer'
 import CatalogueEditor, { catalogueDone } from './CatalogueEditor'
+import MenuUpload from '../MenuUpload'
+
+/* What the printed thing is called in each trade. Anything not named
+   here is asked for a "price list", which is true of all of them. */
+const CATALOGUE_DOC = {
+  cake_desserts: 'price list',
+  invitation_printing: 'rate card',
+  gifts_favours: 'product list',
+  event_materials_supplier: 'stock list',
+  trousseau_gift_packing: 'catalogue',
+  event_equipment_rental: 'rental rate list',
+  tent_furniture: 'rental rate list',
+  sound_av: 'equipment rate list',
+  event_lighting: 'rate card',
+}
 import PricingRulesEditor from './PricingRulesEditor'
 import ComplianceStage from './ComplianceStage'
 import {
@@ -352,7 +367,25 @@ export default function ListingOnboardingFlow({
                   )}
                 </>
               )}
-              {here.id === 'catalogue' && <CatalogueEditor cat={config.catalogue} items={a.catalogue} set={put('catalogue')} trade={config.name} tried={tried} />}
+              {here.id === 'catalogue' && (
+                <>
+                  <CatalogueEditor cat={config.catalogue} items={a.catalogue} set={put('catalogue')} trade={config.name} tried={tried} />
+                  {/* The same argument MenuUpload makes for a caterer is
+                      true of every trade with a catalogue: a baker has a
+                      price list, a printer a rate card, a rental business
+                      a stock list, all of it already printed and on the
+                      phone they are holding. The ticks are what dispatch
+                      matches on; the file is what a coordinator opens.
+                      It lands in `catalogue_uploads`, which the submit
+                      carries into specs.trade_v1 with the rest of `a`. */}
+                  <div className="mt-3">
+                    <MenuUpload
+                      value={a.catalogue_uploads ?? []} onChange={put('catalogue_uploads')}
+                      title={`Have your ${CATALOGUE_DOC[config.id] ?? 'price list'} already?`}
+                      hint="Upload the PDF, or photograph it." />
+                  </div>
+                </>
+              )}
               {here.id === 'pricing' && <PricingRulesEditor config={config} rules={a.rules} setRules={put('rules')} answers={a.answers} setAnswers={answersSet} fee={fee} tried={tried} trade={config.name} />}
               {here.id === 'packages' && <PackagesStage config={config} value={a.packages} set={put('packages')} suggested={suggested} offered={a.addons} onRegenerate={() => put('packages')(suggested)} />}
               {here.id === 'extras' && <ExtrasStage config={config} value={a.addons} set={put('addons')} fee={fee} tried={tried} />}

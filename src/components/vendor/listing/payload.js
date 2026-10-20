@@ -38,14 +38,40 @@ const PRICE_IDS = ['price', 'unit_price', 'rate', 'base_rate', 'fee', 'per_piece
 const STOCK_IDS = ['total_qty', 'stock', 'quantity', 'qty_available', 'count']
 const MIN_IDS = ['min_order', 'min_qty', 'min_billable_guests', 'min_staff']
 const NAME_PICKS = ['service', 'ceremony', 'coverage', 'category', 'group', 'type', 'role', 'product_type']
+const VARIANT_PICKS = ['flavour', 'variant', 'style', 'finish']
+const SIZE_PICKS = ['size', 'weight', 'capacity']
 
 const optLabel = (field, id) => field?.options?.find(o => o.id === id)?.label ?? id
 
+/* One answer's label, following `other` to what the partner typed. */
+const labelOf = (cat, ans, id) => {
+  const f = cat.fields.find(x => x.id === id)
+  if (!f || !ans[id]) return ''
+  const one = v => (v === 'other' ? (ans[`${id}_other`] || '') : optLabel(f, v))
+  return Array.isArray(ans[id]) ? ans[id].map(one).filter(Boolean).join(' + ') : one(ans[id])
+}
+
+/**
+ * What this catalogue item is called.
+ *
+ * A typed name wins. Without one, the type alone used to be the answer,
+ * which gave a baker nine products all called "Celebration cake" and a
+ * customer no way to tell them apart. So the variant and the size join
+ * it when the catalogue asked for them: "Chocolate + vanilla celebration
+ * cake — 1 kg". Trades whose catalogue has neither are unaffected and
+ * still get the type on its own.
+ */
 export function itemName(cat, ans = {}) {
   if (ans.name) return ans.name
   for (const id of NAME_PICKS) {
     const f = cat.fields.find(x => x.id === id)
-    if (f && ans[id]) return ans[id] === 'other' ? (ans[`${id}_other`] || 'Other') : optLabel(f, ans[id])
+    if (f && ans[id]) {
+      const head = ans[id] === 'other' ? (ans[`${id}_other`] || 'Other') : optLabel(f, ans[id])
+      const variant = VARIANT_PICKS.map(k => labelOf(cat, ans, k)).find(Boolean)
+      const size = SIZE_PICKS.map(k => labelOf(cat, ans, k)).find(Boolean)
+      const base = variant ? `${variant} ${head.toLowerCase()}` : head
+      return size ? `${base} — ${size}` : base
+    }
   }
   return ans.model ?? ans.sku ?? ''
 }

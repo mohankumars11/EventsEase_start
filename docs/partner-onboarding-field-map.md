@@ -105,15 +105,15 @@ onboarding answers.
 | customisation | `tasting` | Is a tasting session available? | toggle | `BOOLEAN` |  |  |  |
 | customisation | `custom_design_fee` | Do you charge a custom design fee? | toggle | `BOOLEAN` |  |  |  |
 | customisation | `custom_design_fee_amount` | Custom design fee | money | `BIGINT` |  |  | custom_design_fee is set |
-| catalogue/products | `name` | Product name | text | `TEXT` | yes | max 60 |  |
+| catalogue/products | `name` | Product name | text | `TEXT` |  | max 60 |  |
 | catalogue/products | `product_type` | Type | single | `TEXT` | yes | allows "other" |  |
-| catalogue/products | `flavour` | Flavour | text | `TEXT` | yes | max 40 |  |
-| catalogue/products | `size` | Size or weight | text | `TEXT` | yes | max 30 |  |
+| catalogue/products | `flavour` | Flavour | multi | `TEXT[]` | yes | allows "other" |  |
+| catalogue/products | `size` | Size or weight | single | `TEXT` | yes | allows "other" |  |
 | catalogue/products | `servings` | Serves | number | `NUMERIC` | yes | min 1, max 5000, unit people |  |
 | catalogue/products | `price` | Price | money | `BIGINT` | yes |  |  |
 | catalogue/products | `price_unit` | Charged | single | `TEXT` | yes |  |  |
 | catalogue/products | `min_order` | Minimum order | number | `NUMERIC` |  | min 1, max 10000 |  |
-| catalogue/products | `allergens` | Ingredients / allergens | text | `TEXT` | yes | max 160 |  |
+| catalogue/products | `allergens` | Ingredients / allergens | multi | `TEXT[]` | yes | allows "other" |  |
 | catalogue/products | `lead_days` | Production lead time | number | `NUMERIC` | yes | min 0, max 60, unit days |  |
 | catalogue/products | `photos` | Photos | photos | `TEXT[]` |  | min 1, max 4 |  |
 

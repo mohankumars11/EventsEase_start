@@ -1,20 +1,63 @@
 // Trade 4 — Cake & Desserts (spec Part 9, Trade 4)
 import { q, screen, catalogue } from './schema'
 
+/**
+ * The catalogue was three free-text boxes: flavour, size, allergens.
+ *
+ * ═════════════════════════════════════════════════════════════════════
+ * WHY TYPING IS THE WRONG ASK HERE
+ * ═════════════════════════════════════════════════════════════════════
+ *
+ * A baker with twenty products typed twenty flavours, and no two bakers
+ * spelt butterscotch, black forest or rasmalai the same way. Nothing
+ * downstream could match on it: a customer filtering for eggless
+ * chocolate found whoever happened to type those words.
+ *
+ * Allergens matter more than matching. A free-text allergen box is a
+ * safety question answered in prose, which is the one form of that
+ * answer nobody can filter, warn on, or act on.
+ */
+const PRODUCT_TYPES = [
+  'Celebration cake', 'Wedding cake', 'Bento / mini cake', 'Photo cake',
+  'Fondant cake', 'Pull-me-up cake', 'Tiered cake', 'Cupcakes',
+  'Jar cakes', 'Brownies', 'Pastries', 'Cheesecake', 'Dessert jars',
+  'Cookies', 'Macarons', 'Donuts', 'Muffins', 'Tarts',
+  'Chocolates', 'Indian sweets / mithai', 'Dessert tables', 'Hampers',
+]
+
+const FLAVOURS = [
+  'Chocolate', 'Dark chocolate', 'Truffle', 'Vanilla', 'Red velvet',
+  'Butterscotch', 'Black forest', 'White forest', 'Pineapple', 'Mango',
+  'Strawberry', 'Blueberry', 'Coffee', 'Caramel', 'Dry fruit',
+  'Tender coconut', 'Rasmalai', 'Nutella / hazelnut', 'Lotus Biscoff',
+  'Oreo', 'Cheesecake', 'Fruit / mixed fruit',
+]
+
+const SIZES = [
+  '0.5 kg', '1 kg', '1.5 kg', '2 kg', '3 kg', '5 kg', 'Above 5 kg',
+  'Tiered', 'Single servings', 'Box of 6', 'Box of 12', 'Per tray',
+]
+
+/* The nine India names on a packaged-food label, plus the two a baker is
+   asked about most. "None of these" is a real answer and has to be
+   sayable — an empty list reads as "not answered". */
+const ALLERGENS = [
+  'Contains egg', 'Contains milk / dairy', 'Contains nuts',
+  'Contains peanuts', 'Contains wheat / gluten', 'Contains soy',
+  'Contains sesame', 'Contains fish or shellfish', 'Contains sulphites',
+  'Contains alcohol', 'Made in a kitchen that also handles nuts',
+  'Made in a kitchen that also handles egg',
+  'None of these',
+]
+
 export default {
   id: 'cake_desserts',
   serviceNoun: 'cake and dessert business',
   screens: [
     screen('profile', 'Your cakes & desserts', 'What you bake and how much notice you need.', [
-      q.multi('product_types', 'What types of cakes and desserts do you make?', [
-        'Celebration cakes', 'Wedding cakes', 'Cupcakes', 'Pastries', 'Dessert jars', 'Cookies', 'Dessert tables',
-      ], { required: true, other: true }),
-      q.multi('flavours', 'Which flavours do you offer?', [
-        'Chocolate', 'Vanilla', 'Red velvet', 'Butterscotch', 'Black forest', 'Fruit', 'Coffee', 'Pineapple',
-      ], { required: true, other: true }),
-      q.multi('sizes', 'Which sizes or serving counts can customers order?', [
-        '0.5 kg', '1 kg', '1.5 kg', '2 kg', '3 kg', '5 kg', 'Tiered', 'Single servings',
-      ], { required: true, other: true }),
+      q.multi('product_types', 'What types of cakes and desserts do you make?', PRODUCT_TYPES, { required: true, other: true }),
+      q.multi('flavours', 'Which flavours do you offer?', FLAVOURS, { required: true, other: true }),
+      q.multi('sizes', 'Which sizes or serving counts can customers order?', SIZES, { required: true, other: true }),
       q.multi('dietary', 'Which dietary options can you support?', [
         'Eggless', 'Vegan', 'Gluten-free, where safely supported', 'Sugar-reduced',
       ], { other: true }),
@@ -31,15 +74,19 @@ export default {
     ]),
   ],
   catalogue: catalogue('products', 'Your products', 'product', 'products', [
-    q.text('name', 'Product name', { required: true, max: 60 }),
-    q.single('product_type', 'Type', ['Celebration cake', 'Wedding cake', 'Cupcakes', 'Pastries', 'Dessert jar', 'Cookies', 'Dessert table'], { required: true, other: true }),
-    q.text('flavour', 'Flavour', { required: true, max: 40 }),
-    q.text('size', 'Size or weight', { required: true, max: 30, placeholder: 'e.g. 1 kg, 12 pieces' }),
+    /* Optional: type, flavour and size already name the product, and
+       payload.js composes exactly that when this is blank. A baker with
+       twenty products should not have to invent twenty names, but one
+       who calls a cake "Ammas Special" must be able to say so. */
+    q.text('name', 'Product name', { max: 60, placeholder: 'Leave blank and we will name it from the details below' }),
+    q.single('product_type', 'Type', PRODUCT_TYPES, { required: true, other: true }),
+    q.multi('flavour', 'Flavour', FLAVOURS, { required: true, other: true }),
+    q.single('size', 'Size or weight', SIZES, { required: true, other: true }),
     q.number('servings', 'Serves', { required: true, min: 1, max: 5000, suffix: 'people' }),
     q.money('price', 'Price', { required: true }),
     q.single('price_unit', 'Charged', ['Per cake', 'Per kg', 'Per piece', 'Per serving', 'Per dessert table'], { required: true }),
     q.number('min_order', 'Minimum order', { min: 1, max: 10000 }),
-    q.text('allergens', 'Ingredients / allergens', { required: true, max: 160 }),
+    q.multi('allergens', 'Ingredients / allergens', ALLERGENS, { required: true, other: true }),
     q.number('lead_days', 'Production lead time', { required: true, min: 0, max: 60, suffix: 'days' }),
     q.photos('photos', 'Photos', { min: 1, max: 4 }),
   ]),

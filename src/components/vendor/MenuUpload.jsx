@@ -49,7 +49,14 @@ import { useToast, friendlyError } from '../../context/ToastContext'
 
 const MAX = 6
 
-export default function MenuUpload({ value = [], onChange }) {
+export default function MenuUpload({
+  value = [], onChange,
+  /* A caterer has a menu card; a baker has a price list, a printer has a
+     rate card, a rental business has a stock list. Same screen, same
+     storage — only the words differ. */
+  title = 'Have your menu card already?',
+  hint = 'Upload the PDF, or photograph it on the counter.',
+}) {
   const toast = useToast()
   const [busy, setBusy] = useState(false)
   const fileRef = useRef(null)
@@ -104,11 +111,17 @@ export default function MenuUpload({ value = [], onChange }) {
   return (
     <div className="rounded-[20px] bg-white p-4 ring-1 ring-ink/[0.06]">
       <p className="text-[13.5px] font-extrabold text-ink">
-        Have your menu card already?
+        {title}
       </p>
+      {/* This used to promise "we read it and fill in anything you have
+          not ticked". Nothing reads it — there is no OCR call anywhere
+          in this flow — so the promise was false, and a partner who
+          relied on it would have submitted a half-filled listing
+          believing the upload had completed it. What the file is
+          actually for is true and worth saying. */}
       <p className="mt-0.5 text-[12.5px] leading-relaxed text-ink-soft">
-        Upload the PDF, or photograph it on the counter. We read it and
-        fill in anything you have not ticked.
+        {hint} A coordinator opens it when a customer asks something the
+        form never thought to ask. It does not fill the form in for you.
       </p>
 
       {value.length > 0 && (
