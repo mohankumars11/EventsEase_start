@@ -22,7 +22,6 @@ import { rupees } from '../../../lib/tierPackages'
 import { supabase } from '../../../lib/supabase'
 import { useToast, friendlyError } from '../../../context/ToastContext'
 import SambramoTradePictogram from '../SambramoTradePictogram'
-import PartnerMediaLinks from './PartnerMediaLinks'
 
 const MODEL_UNIT = { hour: '/hr', multi_day: '/day' }
 const MODEL_LABEL = { hour: 'Per hour', session: 'Per session', event: 'Per event', half_day: 'Half-day', full_day: 'Full-day', multi_day: 'Multi-day' }

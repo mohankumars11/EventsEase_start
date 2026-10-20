@@ -28,7 +28,6 @@ import {
 import WorkLibrary from './WorkLibrary'
 import { SAMBRAMO_EVENT_OPTIONS, readSupportedEvents } from './SambramoPartnerPreviewCard'
 import { buildLegacyTradeListing, default as TradeCustomerPreviewScreen } from './pricing/TradeCustomerPreviewScreen'
-import PartnerMediaLinks from './pricing/PartnerMediaLinks'
 import StorefrontReadiness from './pricing/StorefrontReadiness'
 import './pricing/StorefrontReadiness.css'
 import { transactionLaneFor, transactionLaneCopy, TRANSACTION_LANES } from '../../lib/sambramoTransactionLane'

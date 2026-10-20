@@ -14,7 +14,6 @@ import {
 } from '../../data/cateringPricing'
 import { CUISINE_BY_ID } from '../../data/cuisineMenus'
 import { SOURCING_MODES } from '../../data/cateringModel'
-import PartnerMediaLinks from './pricing/PartnerMediaLinks'
 import TradeCustomerPreviewScreen, { buildCateringTradeListing } from './pricing/TradeCustomerPreviewScreen'
 
 const sectionForCourse = courseId => ({

@@ -5,11 +5,12 @@
  * specific to one trade — the trade config decides what each shows.
  */
 import { useRef, useState } from 'react'
-import { CalendarDays, ChevronRight, Camera, Lock, Users, Truck, Boxes, Building2, Gauge, Briefcase, Check } from 'lucide-react'
+import { CalendarDays, ChevronRight, Camera, Lock, Users, Truck, Boxes, Building2, Gauge, Briefcase, Check, ExternalLink, Globe, Instagram, Music, Youtube } from 'lucide-react'
 import { motion } from 'motion/react'
 import { Card, Label, TextField, ChipRow, Segmented, Toggle, OptionCard, SectionTitle, Sheet } from '../anchor/ui'
 import { ADVANCE, CANCELLATION_V3, SLA_V3, NOTICE_DAYS, HORIZON_MONTHS, TRAVEL_MODELS } from '../anchor/options'
 import WorkUpload from '../WorkUpload'
+import { tradeTakesAudio, tradeTakesVideoLink, workPromptsFor } from '../../../data/workPrompts'
 import QuestionRenderer, { questionsDone } from './QuestionRenderer'
 import { resourcesFor } from './payload'
 import PackageCarousel from '../packages/PackageCarousel'
@@ -22,6 +23,36 @@ const toP = r => (r === '' ? undefined : Math.round(Number(r) * 100))
 const inr = p => `₹${Math.round((Number(p) || 0) / 100).toLocaleString('en-IN')}`
 
 /* ── About your service (shared profile, per-trade override) ─────────── */
+
+/* -- Links a partner already has --------------------------------------
+   Anchor & MC has had these since it was written; the other 33 trades
+   had nowhere to put an Instagram handle or a reel they already publish,
+   and a videographer asked to re-upload a 2 GB film instead of pasting a
+   link is a partner lost on the last screen.
+
+   What is offered is per trade: everyone has a profile and a site, only
+   the reel-publishing trades get a video link, and only the three trades
+   hired for a sound get an audio link. See data/workPrompts.js.
+
+   These land in `basics`, which payload.js spreads into `profile`, so
+   nothing a partner types here is discarded. */
+const URL_RE = /^https?:\/\/[^\s.]+\.[^\s]+$/i
+
+function LinkRow({ icon: Icon, value, onChange, placeholder }) {
+  const ok = URL_RE.test(value ?? '')
+  return (
+    <div className="mb-2.5 flex items-center gap-2">
+      <span className="flex h-[50px] w-11 shrink-0 items-center justify-center rounded-2xl bg-[#f4f2f9] text-plum-700"><Icon size={18} /></span>
+      <div className="min-w-0 flex-1">
+        <TextField value={value} onChange={x => onChange(x.trim())} placeholder={placeholder} inputMode="url" valid={ok} />
+      </div>
+      {ok && (
+        <a href={value} target="_blank" rel="noreferrer" aria-label="Open link"
+          className="flex h-[50px] w-11 shrink-0 items-center justify-center rounded-2xl bg-plum-50 text-plum-700"><ExternalLink size={16} /></a>
+      )}
+    </div>
+  )
+}
 
 export const basicsDone = v => !!v?.display_name?.trim() && (v?.bio ?? '').trim().length >= 40 && !!v?.legal_name?.trim()
 
@@ -71,9 +102,30 @@ export function BasicsStage({ value, set, vendorId, config }) {
           hint="Your name or business name as on your documents. Never shown to customers.">Legal name</Label>
         <TextField value={v.legal_name} onChange={x => set({ ...v, legal_name: x })} max={80} />
       </Card>
+      <Card className="mt-3">
+        <Label hint="Optional. Anything you already have — it saves you uploading it again.">Links</Label>
+        <LinkRow icon={Instagram} value={v.instagram} placeholder="Instagram profile link"
+          onChange={x => set({ ...v, instagram: x })} />
+        <LinkRow icon={Globe} value={v.catalog_url} placeholder="Website or catalogue link"
+          onChange={x => set({ ...v, catalog_url: x })} />
+        {tradeTakesVideoLink(config.name) && (
+          <LinkRow icon={Youtube} value={v.video_url} placeholder="https://youtube.com/watch?v=…"
+            onChange={x => set({ ...v, video_url: x })} />
+        )}
+        {tradeTakesAudio(config.name) && (
+          <LinkRow icon={Music} value={v.audio_url} placeholder="Audio sample link (SoundCloud, Drive…)"
+            onChange={x => set({ ...v, audio_url: x })} />
+        )}
+      </Card>
       <div className="mt-3">
+        {/* workPrompts.js writes the shots trade by trade and argues, at
+            length, that a generic prompt is useless. This screen then
+            overrode it with "Photos of your work" for all 34, so the
+            whole file reached only the legacy AddItemFlow. A
+            videographer was being asked for "a short video" instead of
+            his showreel. */}
         <WorkUpload value={v.work ?? []} onChange={w => set({ ...v, work: w })} trade={config.name}
-          copy={{ photoTitle: 'Photos of your work', photoHint: 'Real work, not stock photos.' }} />
+          copy={workPromptsFor(config.name)} />
       </div>
     </>
   )

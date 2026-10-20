@@ -5,7 +5,8 @@
  * WHY THE COPY IS PER TRADE AND NOT ONE SENTENCE
  * ══════════════════════════════════════════════════════════════════════
  *
- * "Add photographs of your work" is true for all 26 and useful to none.
+ * "Add photographs of your work" is true for all 34 and useful to none.
+ * scripts/check-work-prompts.mjs refuses to let a trade fall back to it.
  * A venue owner reading it photographs the front gate; a family choosing
  * a hall wants the room full, the parking, and where the bride changes.
  * A transporter photographs a lorry; what wins them the job is the load
@@ -267,6 +268,100 @@ const BY_TRADE = {
     videoHint: 'Optional. Under 40 MB.',
     captionHint: 'What is this? (optional)',
   },
+  /* ────────────────────────────────────────────────────────────────────
+     The eight logistics trades.
+
+     This file was written when there were 26 trades, and said so. The
+     eight added with the logistics side inherited DEFAULT — "Add
+     photographs of your work" — which is the exact sentence the comment
+     at the top of this file argues is useless. A transporter reading it
+     photographs a parked lorry; what wins him the job is a load tied
+     down and a crew who did it.
+     ──────────────────────────────────────────────────────────────────── */
+
+  'Mini Truck / Pickup': {
+    photoTitle: 'Your vehicle, and a load on it',
+    photoHint: 'The pickup empty, and then loaded and roped for a real '
+      + 'trip. A photograph of a tied load says more about you than the '
+      + 'make of the vehicle does.',
+    videoTitle: 'A short video',
+    videoHint: 'Optional. A load going on, or the vehicle walked around. '
+      + 'Under 40 MB.',
+    captionHint: 'What was this trip? (optional)',
+  },
+
+  'Medium / Large Goods Vehicle': {
+    photoTitle: 'Your vehicles and what you have carried',
+    photoHint: 'Each vehicle you own, the open bed or the container, and a '
+      + 'loaded trip. If you carry chairs, tents or sound gear, show that '
+      + 'stacked — a customer is judging whether their things will arrive '
+      + 'whole.',
+    videoTitle: 'A short video',
+    videoHint: 'Optional. Under 40 MB.',
+    captionHint: 'Which vehicle, and what load? (optional)',
+  },
+
+  'Passenger Transport': {
+    photoTitle: 'Inside and outside your vehicles',
+    photoHint: 'The seats, clean and from inside — this is what a family '
+      + 'is actually buying, and almost nobody photographs it. Then the '
+      + 'outside, and your driver in uniform if you have one.',
+    videoTitle: 'A short video',
+    videoHint: 'Optional. Under 40 MB.',
+    captionHint: 'Which vehicle is this? (optional)',
+  },
+
+  'Loading & Unloading Crew': {
+    photoTitle: 'Your crew working',
+    photoHint: 'Men lifting, wrapping, stacking — at a real job, not posed. '
+      + 'Trolleys, straps, blankets and gloves if you carry them. A crowd '
+      + 'standing still proves nothing.',
+    videoTitle: 'A short video',
+    videoHint: 'Optional. Thirty seconds of a load being moved. Under 40 MB.',
+    captionHint: 'What job was this? (optional)',
+  },
+
+  'Warehouse / Storage': {
+    photoTitle: 'Photographs of the godown',
+    photoHint: 'The racks, the floor, the shutter and the lock. Show it '
+      + 'dry, swept and stacked properly. A customer leaving their goods '
+      + 'with you for a week decides on these.',
+    videoTitle: 'A walk-through video',
+    videoHint: 'Walk in from the shutter and down the aisles. It answers '
+      + 'more than ten photographs. Under 40 MB.',
+    captionHint: 'Which part of the godown? (optional)',
+  },
+
+  'Event Equipment Rental': {
+    photoTitle: 'Your stock, and it in use',
+    photoHint: 'What you actually rent out, photographed clearly, and the '
+      + 'same items set up at a function. Show the condition honestly — a '
+      + 'customer who is surprised on the day does not come back.',
+    videoTitle: 'A short video',
+    videoHint: 'Optional. Under 40 MB.',
+    captionHint: 'What is this item? (optional)',
+  },
+
+  'Event Materials Supplier': {
+    photoTitle: 'What you supply',
+    photoHint: 'Your actual stock on the shelf or in the godown, and a '
+      + 'packed order ready to go out. Quantities visible, so a buyer can '
+      + 'judge whether you can fill their order.',
+    videoTitle: 'A short video',
+    videoHint: 'Optional. Under 40 MB.',
+    captionHint: 'What is this? (optional)',
+  },
+
+  'End-to-End Event Logistics': {
+    photoTitle: 'A whole job you ran',
+    photoHint: 'The same event across the day — goods loaded, the vehicles, '
+      + 'your crew on site, the setup finished. This trade is hired on '
+      + 'coordination, and a sequence shows it where single photographs '
+      + 'cannot.',
+    videoTitle: 'A short video',
+    videoHint: 'Optional. Under 40 MB.',
+    captionHint: 'Which event was this? (optional)',
+  },
 }
 
 /** The prompts for a trade, falling back to something honest. */
@@ -295,3 +390,23 @@ export const AUDIO_SAMPLE_TRADES = ['Anchor & MC', 'DJ & Music', 'Live Entertain
 
 /** Does this trade get the audio-sample block? */
 export const tradeTakesAudio = trade => AUDIO_SAMPLE_TRADES.includes(trade)
+
+/**
+ * Which trades are asked for a video LINK as well as an upload.
+ *
+ * A caterer's video is a counter running, and he will film it on his
+ * phone — he has nothing on YouTube. A videographer, a photographer, a
+ * DJ and a troupe already publish their reels, and asking them to
+ * re-upload a 2 GB film they have a link for is the fastest way to lose
+ * them on the last screen.
+ *
+ * Every trade can still UPLOAD a video. This list is only about offering
+ * the link field beside it.
+ */
+export const VIDEO_LINK_TRADES = [
+  'Anchor & MC', 'Photography', 'Videography', 'DJ & Music',
+  'Live Entertainment', 'Wedding Planning', 'Decoration & Floral',
+]
+
+/** Does this trade get the YouTube / Vimeo link field? */
+export const tradeTakesVideoLink = trade => VIDEO_LINK_TRADES.includes(trade)
