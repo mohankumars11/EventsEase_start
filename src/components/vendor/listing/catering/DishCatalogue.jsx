@@ -51,10 +51,16 @@ function MasterSearch({ open, onClose, onPick, cuisines, have, tax }) {
   const myCuisines = cuisines.filter(c => !c.startsWith('custom:'))
   const cname = id => tax.groups.flatMap(g => g.styles).find(s => s.id === id)?.name ?? id
   return (
-    <Sheet open={open} onOpenChange={o => { if (!o) onClose() }} title="Choose from Food Catalogue">
+    <Sheet tall open={open} onOpenChange={o => { if (!o) onClose() }} title="Choose from Food Catalogue">
       <div className="flex items-center gap-2 rounded-2xl bg-[#f4f2f9] px-3">
         <Search size={16} className="text-ink/40" />
-        <input autoFocus value={q} onChange={e => setQ(e.target.value)} placeholder="Search — e.g. bisi bele, halwa, kosambari" className="h-11 w-full bg-transparent text-[14px] font-semibold outline-none" />
+        {/* No autoFocus. It opened the Android keyboard the instant the
+            catalogue appeared, which shrank the dvh-sized sheet and
+            scrolled the cuisine and course filters out of view — the
+            cropped half-screen in the report. This screen is for
+            browsing first; the partner taps the field when they want
+            to type. */}
+        <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search — e.g. bisi bele, halwa, kosambari" className="h-11 w-full bg-transparent text-[14px] font-semibold outline-none" />
       </div>
       {myCuisines.length > 0 && <div className="mt-2 flex gap-1.5 overflow-x-auto pb-1">
         <button type="button" onClick={() => setCuisine(null)} className={`shrink-0 rounded-full px-3 py-1.5 text-[12px] font-bold ${!cuisine ? 'bg-plum-700 text-white' : 'bg-[#f4f2f9] text-ink/70'}`}>All cuisines</button>

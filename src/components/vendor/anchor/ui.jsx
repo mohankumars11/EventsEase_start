@@ -190,7 +190,13 @@ export function StopSlider({ stops, value, onChange, format = x => x }) {
  *  the end of a long form, where on a small screen it is several swipes
  *  past the last field and reads as missing. It is outside the scroll
  *  container, so it cannot cover a field or a validation message. */
-export function Sheet({ open, onOpenChange, title, children, footer }) {
+/* `tall` is for sheets whose job is BROWSING — a catalogue of 2,000
+   dishes, a trade picker. Those want a predictable near-full-screen
+   working area, not a height derived from however much content happens
+   to have loaded: a content-sized sheet opens short on the first page,
+   then jumps as more rows arrive. Short confirmation sheets keep the
+   content-height behaviour, which is right for them. */
+export function Sheet({ open, onOpenChange, title, children, footer, tall = false }) {
   return (
     <Drawer.Root open={open} onOpenChange={onOpenChange}>
       <Drawer.Portal>
@@ -201,7 +207,7 @@ export function Sheet({ open, onOpenChange, title, children, footer }) {
             min-h-0 flex-1 or it is sized by its content instead of by the
             cap, and overscroll-contain stops a flick at the end of the list
             from scrolling the page behind the sheet. */}
-        <Drawer.Content className="fixed inset-x-0 bottom-0 z-[121] mx-auto flex max-h-[88dvh] max-w-lg flex-col rounded-t-[28px] bg-white outline-none">
+        <Drawer.Content className={`fixed inset-x-0 bottom-0 z-[121] mx-auto flex max-w-lg flex-col rounded-t-[28px] bg-white outline-none ${tall ? 'h-[92dvh]' : 'max-h-[88dvh]'}`}>
           <div className="mx-auto mt-3 h-1.5 w-11 rounded-full bg-ink/15" />
           <Drawer.Title className="px-5 pt-4 text-[17px] font-extrabold text-ink">{title}</Drawer.Title>
           <div className={`min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pt-3 ${footer ? 'pb-3' : 'pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))]'}`}>{children}</div>

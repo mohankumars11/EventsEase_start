@@ -123,11 +123,29 @@ function RuleCard({ kind, r = {}, set, fee, unitLabels, tried, noun }) {
                   onChange={x => set({ ...r, amount_paise: toP(x.replace(/\D/g, '').slice(0, 9)) })} />
               </div>
               {amt > 0 && (
+                /* PARTNER PRICE ONLY.
+                   This read "You earn ₹5,000 · customer pays ₹5,435 (8%
+                   Sambramo fee)". The customer total is computed by the
+                   marketplace pricing layer from the rate, the market and
+                   the booking; echoing a fee-adjusted figure here states a
+                   customer price the partner does not set and cannot rely
+                   on, on the screen where they are deciding their own rate.
+                   It is this one component for all 34 trades on the engine.
+
+                   The two modes stay, because they are two ways for a
+                   partner to express their own number:
+                     target_net  they typed their take  -> confirm the take
+                     customer    they typed the customer-facing figure, so
+                                 the useful partner-facing answer is what
+                                 that leaves them, and the fee explains it.
+                   Neither branch now shows a total derived FOR the
+                   customer. */
                 <p className="mt-2 rounded-xl bg-forest-50 px-3 py-2 text-[12.5px] font-bold text-forest-800">
                   {mode === 'customer'
-                    ? <>Your rate {inr(takeFrom(amt, fee))}</>
-                    : <>You earn {inr(amt)} · customer pays {inr(customerFrom(amt, fee))}</>}
-                  <span className="font-semibold text-forest-700/70"> ({Math.round(fee * 100)}% Sambramo fee)</span>
+                    ? <>Your rate {inr(takeFrom(amt, fee))}
+                      <span className="font-semibold text-forest-700/70"> (after the {Math.round(fee * 100)}% Sambramo fee)</span></>
+                    : <>You earn {inr(amt)}
+                      <span className="font-semibold text-forest-700/70"> — this is your rate</span></>}
                 </p>
               )}
               {(lim || inc) && (

@@ -30,7 +30,7 @@ function DishPicker({ open, onClose, dishes, menu, tax, onAdd }) {
     && (!q || d.name.toLowerCase().includes(q.toLowerCase())) && (!course || courseOf(d) === course) && (!diet || d.diet === diet))
   const close = () => { setPicked([]); onClose() }
   return (
-    <Sheet open={open} onOpenChange={o => { if (!o) close() }} title="Add dishes from my catalogue">
+    <Sheet tall open={open} onOpenChange={o => { if (!o) close() }} title="Add dishes from my catalogue">
       <div className="flex items-center gap-2 rounded-2xl bg-[#f4f2f9] px-3"><Search size={16} className="text-ink/40" />
         <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search my dishes" className="h-11 w-full bg-transparent text-[14px] font-semibold outline-none" /></div>
       <div className="mt-2 flex gap-1.5 overflow-x-auto pb-1">
