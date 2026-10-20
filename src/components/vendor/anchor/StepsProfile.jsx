@@ -253,7 +253,7 @@ export function PricingStep({ value, set }) {
         <div className="mt-3 rounded-xl bg-white/10 px-3 py-2 text-[12.5px] font-semibold text-plum-50">
           {take > 0
             ? <>Your rate <b className="text-white">₹{take.toLocaleString('en-IN')}</b>/hr</>
-            : 'Sambramo adds its 8% fee on top. You always receive this amount.'}
+            : 'Enter the amount you want to receive per hour.'}
         </div>
       </Card>
 

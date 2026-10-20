@@ -3,13 +3,17 @@
  * (its config's pricing.kinds), each switched on with an exact amount and
  * its limits, plus the trade's own pricing questions (minimums, fees…).
  *
- * The partner chooses whether they type what they EARN or what the
- * CUSTOMER PAYS; the other number is shown live from the trade's fee and
- * the server computes it again on submit.
+ * The partner types what they EARN. That is the only number this screen
+ * asks for and the only one it shows back. What a customer pays is the
+ * marketplace's to compute — from the rate, the market and the booking —
+ * and it is computed on the server at submit, never asserted here.
+ *
+ * Rules are written with price_mode 'target_net' so the server keeps
+ * reading the amount as the partner's take.
  */
 import { motion, AnimatePresence } from 'motion/react'
 import { Plus, Trash2 } from 'lucide-react'
-import { Card, Label, TextField, ChipRow, Segmented, Toggle, SectionTitle } from '../anchor/ui'
+import { Card, Label, TextField, ChipRow, Toggle, SectionTitle } from '../anchor/ui'
 import QuestionRenderer from './QuestionRenderer'
 import { RULE_KINDS } from '../../../data/trades/schema'
 
@@ -19,7 +23,6 @@ const inr = p => `₹${Math.round((Number(p) || 0) / 100).toLocaleString('en-IN'
 const num = x => { const c = String(x).replace(/[^\d.]/g, ''); return c === '' ? null : Number(c) }
 
 /** Customer price from take-home, and back — same rounding as the server. */
-export const customerFrom = (take, fee) => Math.round(take / (1 - fee) / 10) * 10
 export const takeFrom = (cust, fee) => Math.floor((cust * (1 - fee)) / 10) * 10
 
 /* What the limits mean for each kind. */
@@ -93,7 +96,6 @@ function RuleCard({ kind, r = {}, set, fee, unitLabels, tried, noun }) {
     )
   }
   const on = !!r.on
-  const mode = r.price_mode ?? 'target_net'
   const amt = Number(r.amount_paise) || 0
   const lim = LIMITS[kind], inc = INCLUDED[kind]
   const bad = tried && on && kind !== 'quote' && !(amt > 0)
@@ -116,36 +118,23 @@ function RuleCard({ kind, r = {}, set, fee, unitLabels, tried, noun }) {
                   <ChipRow size="sm" options={unitLabels} value={r.label} onChange={x => set({ ...r, label: x })} />
                 </div>
               )}
-              <Segmented id={`mode-${kind}`} value={mode} onChange={x => set({ ...r, price_mode: x })}
-                options={[{ value: 'target_net', label: 'I enter what I earn' }, { value: 'customer', label: 'I enter customer price' }]} />
+              {/* THE PARTNER ENTERS THEIR OWN PRICE. FULL STOP.
+                  There used to be a switch between "I enter what I earn"
+                  and "I enter customer price". The second asked a partner
+                  to state a number they do not control — the customer
+                  price is the marketplace's, derived from the rate, the
+                  market and the booking — and it forced the fee into this
+                  screen to explain what the figure left them.
+                  All 10 saved rate rules were already target_net, so
+                  nothing is reinterpreted by removing the choice. */}
               <div className="mt-3">
                 <TextField prefix="₹" inputMode="numeric" value={toR(r.amount_paise)} placeholder="0"
-                  onChange={x => set({ ...r, amount_paise: toP(x.replace(/\D/g, '').slice(0, 9)) })} />
+                  onChange={x => set({ ...r, price_mode: 'target_net', amount_paise: toP(x.replace(/\D/g, '').slice(0, 9)) })} />
               </div>
               {amt > 0 && (
-                /* PARTNER PRICE ONLY.
-                   This read "You earn ₹5,000 · customer pays ₹5,435 (8%
-                   Sambramo fee)". The customer total is computed by the
-                   marketplace pricing layer from the rate, the market and
-                   the booking; echoing a fee-adjusted figure here states a
-                   customer price the partner does not set and cannot rely
-                   on, on the screen where they are deciding their own rate.
-                   It is this one component for all 34 trades on the engine.
-
-                   The two modes stay, because they are two ways for a
-                   partner to express their own number:
-                     target_net  they typed their take  -> confirm the take
-                     customer    they typed the customer-facing figure, so
-                                 the useful partner-facing answer is what
-                                 that leaves them, and the fee explains it.
-                   Neither branch now shows a total derived FOR the
-                   customer. */
                 <p className="mt-2 rounded-xl bg-forest-50 px-3 py-2 text-[12.5px] font-bold text-forest-800">
-                  {mode === 'customer'
-                    ? <>Your rate {inr(takeFrom(amt, fee))}
-                      <span className="font-semibold text-forest-700/70"> (after the {Math.round(fee * 100)}% Sambramo fee)</span></>
-                    : <>You earn {inr(amt)}
-                      <span className="font-semibold text-forest-700/70"> — this is your rate</span></>}
+                  You earn {inr(amt)}
+                  <span className="font-semibold text-forest-700/70"> — this is your rate</span>
                 </p>
               )}
               {(lim || inc) && (

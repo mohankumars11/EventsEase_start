@@ -34,6 +34,11 @@ export default function QuoteEditor({ request, lines: lines0, expiresAt, advance
   useEffect(() => { if (now0) return; const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t) }, [now0])
   const ms = new Date(expiresAt).getTime() - now
   const t = quoteTotals(lines, advancePct)
+  /* quoteTotals computes the advance as a share of the CUSTOMER total.
+     This screen now shows the partner's own figure, so the advance has
+     to be the same share of that — otherwise the split shown would not
+     add up to the number above it. */
+  const advanceOfPartner = Math.round(t.partner * advancePct / 100 / 10) * 10
   const missing = lines.filter(l => l.needs && !(Number(l.unit_paise) > 0)).length
   const put = (i, patch) => setLines(ls => ls.map((l, j) => j === i ? { ...l, ...patch } : l))
 
@@ -85,14 +90,18 @@ export default function QuoteEditor({ request, lines: lines0, expiresAt, advance
           className="flex w-full items-center justify-center gap-1.5 border-t border-ink/[0.05] py-3 text-[13px] font-extrabold text-forest-700"><Plus size={15} /> Add a discount</button>
       </div>
 
+      {/* The advance was a share of the customer total; against the
+          partner's own figure it has to be a share of that. */}
       <div className="rounded-[22px] bg-gradient-to-br from-plum-800 to-plum-950 p-4 text-white">
-        {[['You receive', t.partner], ['Sambramo platform fee', t.fee]].map(([k, v]) => (
-          <div key={k} className="flex justify-between py-0.5 text-[12.5px] text-plum-100"><span>{k}</span><span className="font-bold">{rupees(v)}</span></div>
-        ))}
-        <div className="mt-1.5 flex items-baseline justify-between border-t border-white/15 pt-2">
-          <span className="text-[13px] font-bold">Customer pays</span><span className="text-[22px] font-extrabold">{rupees(t.customer)}</span>
+        {/* The partner's own total, and nothing else. This listed
+            "Sambramo platform fee" and a "Customer pays" headline —
+            a commission figure and a customer price on the screen
+            where a partner is quoting their own work. */}
+        <div className="flex items-baseline justify-between">
+          <span className="text-[13px] font-bold">You receive</span>
+          <span className="text-[22px] font-extrabold">{rupees(t.partner)}</span>
         </div>
-        <p className="mt-1 text-right text-[11.5px] text-plum-200">{advancePct}% advance {rupees(t.advance)} · balance {rupees(t.balance)}</p>
+        <p className="mt-1 text-right text-[11.5px] text-plum-200">{advancePct}% advance {rupees(advanceOfPartner)} · balance {rupees(t.partner - advanceOfPartner)}</p>
       </div>
 
       <div className={`grid gap-2 ${onAsk ? 'grid-cols-[1fr_1fr_1.6fr]' : 'grid-cols-[1fr_1.8fr]'}`}>
