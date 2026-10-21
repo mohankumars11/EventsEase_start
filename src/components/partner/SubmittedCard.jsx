@@ -30,7 +30,7 @@ const VERSION_TEXT = {
   DRAFT: 'Draft',
 }
 
-export default function SubmittedCard({ vendorId, services = [] }) {
+export default function SubmittedCard({ vendorId, services = [], reviewShownElsewhere = false }) {
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const trade = params.get('submitted')
@@ -60,6 +60,10 @@ export default function SubmittedCard({ vendorId, services = [] }) {
   const service = services.find(s => s.id === version?.vendor_service_id)
   const name = service?.category ?? trade
   const have = new Set(services.map(s => s.category))
+  /* ── The review line is somebody else's job on this tab ─────────
+     ReviewCountdown owns it. When it is on screen this card says only
+     what it alone knows: which listing just went in, and what the
+     partner queued after it. */
   const next = pendingTrades().find(t => t !== name && !have.has(t)) ?? null
   const dismiss = () => setParams(prev => {
     const q = new URLSearchParams(prev); q.delete('submitted'); q.delete('version'); return q
@@ -73,8 +77,12 @@ export default function SubmittedCard({ vendorId, services = [] }) {
       <div className="flex items-start gap-3 pr-8">
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-forest-600 text-white"><CheckCircle2 size={22} /></span>
         <div className="min-w-0">
-          <p className="text-[15.5px] font-extrabold leading-tight text-ink">Your service has been submitted for review.</p>
-          <p className="mt-1 text-[12.5px] leading-snug text-ink/60">Your listing is now under review. You can track its status in the app.</p>
+          <p className="text-[15.5px] font-extrabold leading-tight text-ink">
+            {name ? `${name} has been submitted.` : 'Your service has been submitted for review.'}
+          </p>
+          {!reviewShownElsewhere && (
+            <p className="mt-1 text-[12.5px] leading-snug text-ink/60">Your listing is now under review. You can track its status in the app.</p>
+          )}
           <p className="mt-2 flex flex-wrap items-center gap-1.5 text-[12px] font-bold text-ink/70">
             {name}
             {version?.status && <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10.5px] font-extrabold text-amber-800 ring-1 ring-amber-200">{VERSION_TEXT[version.status] ?? version.status}</span>}
@@ -113,10 +121,20 @@ export default function SubmittedCard({ vendorId, services = [] }) {
 
       <div className="mt-3 flex flex-col gap-2">
         {next && (
-          <button type="button" data-cta="continue-next" onClick={() => navigate(onboardPath(next))}
-            className="flex min-h-[46px] items-center justify-center gap-2 rounded-full bg-gradient-to-r from-plum-700 to-fuchsia-600 text-[13.5px] font-extrabold text-white">
-            Continue Setting Up Another Service · {next} <ArrowRight size={15} />
-          </button>
+          <>
+            {/* ── The one they already chose ────────────────────────
+                A partner who picked three trades has told us what they
+                want next; asking "add another service?" generically
+                throws that away and sends them back to the picker to
+                choose it a second time. */}
+            <p className="text-[12.5px] font-bold leading-snug text-ink/60">
+              You picked {next} as well — carry on with it now while your details are fresh?
+            </p>
+            <button type="button" data-cta="continue-next" onClick={() => navigate(onboardPath(next))}
+              className="flex min-h-[46px] items-center justify-center gap-2 rounded-full bg-gradient-to-r from-plum-700 to-fuchsia-600 text-[13.5px] font-extrabold text-white">
+              Continue with {next} <ArrowRight size={15} />
+            </button>
+          </>
         )}
         <button type="button" data-cta="add-another" onClick={() => navigate('/partner/services')}
           className="flex min-h-[42px] items-center justify-center gap-1.5 rounded-full bg-white text-[13px] font-extrabold text-plum-700 ring-1 ring-plum-200">

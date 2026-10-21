@@ -17,6 +17,8 @@ import { ensureListing } from '../../lib/partnerListings'
 import { queueTrades } from '../../lib/tradeQueue'
 import { IDENTITY_TEXT, PAYOUT_TEXT } from '../../lib/partnerAccountStatus'
 import { onboardPath } from '../../lib/tradeRoutes'
+import { MAX_TRADES, capMessage } from '../../config/listingCap'
+import { Sheet } from '../../components/vendor/anchor/ui'
 
 /**
  * "What services do you offer?" — the partner's way in.
@@ -98,6 +100,7 @@ export default function ServiceSelector() {
 
   const [q, setQ] = useState('')
   const [picked, setPicked] = useState([])
+  const [capOpen, setCapOpen] = useState(false)
   const [drafts, setDrafts] = useState([])
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -125,8 +128,17 @@ export default function ServiceSelector() {
   const resumable = drafts.filter(t => !listed[t])
   const list = useMemo(() => matchTrades(q), [q])
 
+  /* ── The cap is on the total, not on this screen ────────────────
+     A partner with two listings already may pick one more, not three.
+     Counting only what is on this screen would let somebody reach six
+     in two visits, which is the case the cap exists for. */
+  const alreadyListed = Object.keys(listed ?? {}).length
+  const remaining = Math.max(0, MAX_TRADES - alreadyListed)
+  const atCap = picked.length >= remaining
+
   const toggle = name => {
     if (listed[name]) { navigate(onboardPath(name)); return }
+    if (!picked.includes(name) && atCap) { setCapOpen(true); return }
     setPicked(p => (p.includes(name) ? p.filter(x => x !== name) : [...p, name]))
   }
   /* In the order the partner picked them: the first one they tapped is set up first. */
@@ -264,7 +276,11 @@ export default function ServiceSelector() {
           <motion.p key={picked.length ? 'n' : 'z'} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
             data-testid="selected-count"
             className={`mb-2 text-center text-[12.5px] font-extrabold ${picked.length ? 'text-plum-700' : 'text-ink/45'}`}>
-            {picked.length ? `${picked.length} service${picked.length === 1 ? '' : 's'} selected` : 'Select at least one service to continue.'}
+            {picked.length
+              ? `${picked.length} selected · ${Math.max(0, remaining - picked.length)} more you can add`
+              : remaining === 0
+                ? `You have ${alreadyListed} services — that is the limit`
+                : `Select at least one service to continue · up to ${remaining}`}
           </motion.p>
         </AnimatePresence>
         {/* ── Straight into setup ───────────────────────────────────
@@ -286,6 +302,33 @@ export default function ServiceSelector() {
         </button>
       </div>
 
+      {/* ── Why, and where to go instead ──────────────────────────────
+          A refusal that only refuses teaches nothing. A partner hitting
+          this is usually a real event company, and there is a right
+          answer for them: list once under the trade that describes the
+          whole job, instead of competing with themselves across cards. */}
+      <Sheet open={capOpen} onOpenChange={o => !o && setCapOpen(false)} title={capMessage(alreadyListed).title}>
+        <p className="text-[13px] leading-relaxed text-ink/70">{capMessage(alreadyListed).body}</p>
+        <p className="mt-3 text-[13px] leading-relaxed text-ink/70">{capMessage(alreadyListed).suggestion}</p>
+        <div className="mt-4 space-y-2">
+          {capMessage(alreadyListed).options.map(o => (
+            <button key={o.id} type="button"
+              onClick={() => { setCapOpen(false); navigate(onboardPath(o.name)) }}
+              className="flex w-full items-center gap-3 rounded-2xl bg-[#f8f6fd] p-3 text-left ring-1 ring-plum-100">
+              <SambramoTradePictogram trade={o.name} size={40} />
+              <span className="min-w-0 flex-1">
+                <span className="block text-[13.5px] font-extrabold text-plum-950">{o.name}</span>
+                <span className="block text-[12px] leading-snug text-ink/55">{o.why}</span>
+              </span>
+              <ChevronRight size={17} className="shrink-0 text-plum-700" />
+            </button>
+          ))}
+        </div>
+        <button type="button" onClick={() => setCapOpen(false)}
+          className="mt-4 min-h-[48px] w-full rounded-full bg-ink/[0.05] text-[13.5px] font-extrabold text-ink">
+          Keep my current selection
+        </button>
+      </Sheet>
     </div>
   )
 }

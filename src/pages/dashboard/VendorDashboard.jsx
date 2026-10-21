@@ -490,8 +490,24 @@ export default function VendorDashboard() {
           "we are reading it" directly above each other, with different
           icons and different tones, every time a partner submitted a
           trade -- which is precisely the moment they are watching. */}
-      {tab === 'offers' && vendor?.verification_status !== 'submitted' && (
-        <SubmittedCard vendorId={vendor?.id} services={services} />
+      {/* ── It was hidden at exactly the moment it was needed ──────
+          This was gated on the account NOT being under review, to stop
+          two review cards stacking. But submitting your first listing
+          is what puts the account under review — so a partner who
+          picked Photography, Videography and Decoration submitted the
+          first one and the card carrying "continue with Videography"
+          vanished on the same render. The queue survived; the only
+          thing that ever offered it did not.
+
+          It renders whenever there is a submission to confirm, and is
+          told that ReviewCountdown owns the review line so it does not
+          repeat it. */}
+      {tab === 'offers' && (
+        <SubmittedCard
+          vendorId={vendor?.id}
+          services={services}
+          reviewShownElsewhere={vendor?.verification_status === 'submitted'}
+        />
       )}
 
       {/* ── The review clock, in full ─────────────────────────────────
