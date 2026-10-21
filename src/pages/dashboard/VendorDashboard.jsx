@@ -519,7 +519,15 @@ export default function VendorDashboard() {
           listingCount={services?.length ?? 0}
           listingNames={(services ?? [])
             .map(l => l.title || l.category).filter(Boolean).join(' · ') || null}
-          onOpenListing={() => openAccount('services')}
+          /* ── The listing clock, not the account clock ───────────
+             This used to open My services, which is organised around
+             what a partner sells rather than what is being decided, and
+             it showed one countdown for the whole account. A partner
+             with five listings sent over three weeks saw a single clock
+             started by the first of them. The review screen reads
+             partner_listings.submitted_at, so every listing carries its
+             own timestamp and its own wait. */
+          onOpenListing={() => openAccount('review-listings')}
           onHowItWorks={() => setHowItWorksOpen(true)}
         />
       )}
@@ -756,16 +764,25 @@ export default function VendorDashboard() {
 
                §29: submitted is not live, and the screen has to say which
                of the two it is without ever implying approval. */
+            /* ── One review card on this tab, not two ──────────────
+               A partner under review saw ReviewCountdown at the top —
+               the clock, the listings, the calendar button — and then
+               this panel at the bottom saying the same thing again in
+               different words with its own UNDER REVIEW badge. Two
+               cards telling one piece of news reads as two pieces of
+               news, and the second one carried no clock and no way to
+               act.
+
+               The countdown owns the review state. This panel now only
+               answers the question it is actually standing in for:
+               there are no jobs here yet. */
             <div className="rounded-[22px] bg-white p-8 text-center ring-1 ring-ink/[0.06]">
               {vendor?.verification_status === 'submitted' ? (
                 <>
-                  <p className="text-[14px] font-extrabold text-ink">Your profile is under review</p>
+                  <p className="text-[14px] font-extrabold text-ink">No jobs yet</p>
                   <p className="mx-auto mt-1 max-w-xs text-[12.5px] leading-snug text-ink-mute">
-                    Setup complete. A person at Sambramo is reading it now — we will
-                    tell you the moment it is done, and jobs open then.
-                  </p>
-                  <p className="mt-3 inline-block rounded-full bg-amber-50 px-3 py-1 text-[11px] font-extrabold uppercase tracking-wide text-amber-800">
-                    Under review
+                    They start arriving the moment your review finishes. The card at
+                    the top of this tab is where that progress lives.
                   </p>
                 </>
               ) : (

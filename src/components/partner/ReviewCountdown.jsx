@@ -132,11 +132,43 @@ export default function ReviewCountdown({
 }) {
   const { left, elapsed, dial } = useReviewClock({ dueAt, submittedAt, extended })
 
+  /* ── The moment it is over ────────────────────────────────────────
+     The clock, the listings and the calendar button all belong to a
+     wait that has ended, so none of them render here. What replaces
+     them has to be unmistakable: a partner who refreshed this screen
+     for a day should not have to work out from a tone change that the
+     answer arrived. It says approved, it says jobs are open, and the
+     compact header variant says the same thing in one line. */
   if (status === 'approved') {
+    if (compact) {
+      return (
+        <div className="flex items-center gap-2 rounded-[18px] bg-forest-50 px-3 py-2 ring-1 ring-forest-200">
+          <BadgeCheck size={15} className="shrink-0 text-forest-700" />
+          <p className="text-[12px] font-extrabold text-forest-900">Approved · you are live</p>
+        </div>
+      )
+    }
     return (
-      <div className={`flex items-center gap-2.5 rounded-[18px] bg-forest-50 px-3.5 py-3 ring-1 ring-forest-200 ${compact ? '' : 'mb-4'}`}>
-        <BadgeCheck size={16} className="shrink-0 text-forest-700" />
-        <p className="text-[12.5px] font-extrabold leading-snug text-forest-900">You are approved and live. Jobs will start reaching you.</p>
+      <div className="mb-4 overflow-hidden rounded-[22px] bg-gradient-to-br from-forest-600 to-forest-800 p-4 text-white">
+        <div className="flex items-start gap-3">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-white/15">
+            <BadgeCheck size={20} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-forest-100">Review complete</p>
+            <p className="mt-0.5 text-[17px] font-black leading-tight">You are live on Sambramo</p>
+            <p className="mt-1 text-[12.5px] leading-snug text-white/75">
+              Your listings are approved and you can be booked. Jobs will arrive on this
+              tab — keep your calendar up to date so you only get asked about days you can work.
+            </p>
+            {onOpenCalendar && (
+              <button type="button" onClick={onOpenCalendar}
+                className="mt-3 inline-flex min-h-[40px] items-center gap-1.5 rounded-full bg-white px-4 text-[12.5px] font-extrabold text-forest-800">
+                <CalendarDays size={14} /> Update calendar
+              </button>
+            )}
+          </div>
+        </div>
       </div>
     )
   }

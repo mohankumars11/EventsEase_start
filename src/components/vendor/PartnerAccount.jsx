@@ -22,6 +22,7 @@ import { requirementsFor } from '../../data/compliance'
 import Fold from './Fold'
 import { Group, Row } from '../ui/SettingsList'
 import MyServices from './MyServices'
+import ListingsUnderReview from '../partner/review/ListingsUnderReview'
 import { fetchListings } from '../../lib/partnerListings'
 import PayoutDetails from './PayoutDetails'
 import VendorDocuments from './VendorDocuments'
@@ -364,6 +365,13 @@ export default function PartnerAccount({
         />
         <ContactDetails vendor={vendor} onUpdateVendor={onUpdateVendor} />
       </div>
+    ) },
+    /* Where "See the listing being reviewed" lands. Separate from My
+       services on purpose: that screen is organised around what a
+       partner sells, this one around what is being decided, and each
+       row carries its own clock. */
+    'review-listings': { title: 'Listings being reviewed', render: () => (
+      <ListingsUnderReview vendorId={vendor?.id} onOpenTrade={onOpenTrade} />
     ) },
     services:     { title: 'My services',            render: () => (
       <MyServices vendorId={vendor?.id} initialRows={listings} onOpenTrade={onOpenTrade} />
