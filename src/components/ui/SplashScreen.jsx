@@ -91,6 +91,13 @@ export default function SplashScreen() {
           name. See the CSS for why the arc is the light end of the
           amethyst ramp rather than amethyst itself. */}
       <div className="app-splash-loader" role="status" aria-label="Loading">
+        {/* Three circles, not one. The two echoes expand and fade out
+            from under the spinning arc, which is what makes a loader
+            read as a pulse rather than a widget. They are behind it and
+            staggered, so at any moment there is one ring leaving and
+            one arriving. */}
+        <span className="app-splash-echo" />
+        <span className="app-splash-echo app-splash-echo-2" />
         <span className="app-splash-ring" />
       </div>
     </div>

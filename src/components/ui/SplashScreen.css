@@ -148,6 +148,7 @@
    legible on the purple. On a light surface the same component should
    take the deep end instead. */
 .app-splash-loader {
+  position: relative;
   position: absolute;
   bottom: calc(env(safe-area-inset-bottom, 0px) + clamp(38px, 11vh, 86px));
   left: 0;
@@ -158,7 +159,35 @@
   animation: app-splash-fade-up 500ms ease 1250ms forwards;
 }
 
+/* ── The echoes ───────────────────────────────────────────────────────
+   Two concentric rings expanding from the centre and fading as they go,
+   1.1s apart so one is always on its way out as the next starts. Both
+   sit behind the arc and neither is interactive.
+
+   In the light amethyst, not the ground's #5B21A8: a ring painted in
+   the background colour is a ring nobody can see. #C4A7FF is the same
+   family, three stops up, which is what makes it read as brand purple
+   while remaining visible on brand purple. */
+.app-splash-echo {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  border-radius: 9999px;
+  border: 2px solid rgba(196, 167, 255, .55);
+  animation: app-splash-echo 2.2s cubic-bezier(.22, 1, .36, 1) infinite;
+  pointer-events: none;
+}
+
+.app-splash-echo-2 { animation-delay: 1.1s; }
+
+@keyframes app-splash-echo {
+  0%   { transform: scale(1); opacity: .55; }
+  70%  { opacity: .10; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+
 .app-splash-ring {
+  position: relative;
   width: 26px;
   height: 26px;
   border-radius: 9999px;
@@ -176,7 +205,8 @@
   .app-splash { transition: none; }
   .app-splash-wordmark span,
   .app-splash-tagline,
-  .app-splash-loader {
+  .app-splash-loader,
+  .app-splash-echo {
     animation: none;
     opacity: 1;
     transform: none;

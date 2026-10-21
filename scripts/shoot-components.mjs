@@ -153,6 +153,35 @@ const server = createServer((req, res) => {
     return res.end(Buffer.concat([readFileSync(cssPath), ...chunks]))
   }
   if (url === '/bundle.js') { res.setHeader('content-type', 'text/javascript'); return res.end(readFileSync(bundle)) }
+  /* -- Everything else dist/ actually has -----------------------------
+     This used to answer every other path with the HTML page. A request
+     for /fonts/ArchivoBlack-Regular.woff2 therefore received a document,
+     the @font-face failed to parse, and the wordmark rendered in a
+     FALLBACK face -- in the harness only.
+
+     That is the worst shape a testing tool can take: screenshots that
+     look plausible and are not what ships. Caught by asserting
+     document.fonts rather than trusting fonts.ready, which resolves
+     happily on a failed face.
+
+     Paths resolve inside dist/ and are refused if they escape it. */
+  const SAFE = { '.woff2': 'font/woff2', '.woff': 'font/woff', '.ttf': 'font/ttf',
+    '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
+    '.webp': 'image/webp', '.svg': 'image/svg+xml', '.avif': 'image/avif',
+    '.json': 'application/json', '.ico': 'image/x-icon' }
+  const ext = url.slice(url.lastIndexOf('.')).toLowerCase()
+  if (SAFE[ext]) {
+    const root = join(ROOT, 'dist')
+    const asked = resolve(root, '.' + url)
+    if (asked.startsWith(root) && existsSync(asked) && statSync(asked).isFile()) {
+      res.setHeader('content-type', SAFE[ext])
+      res.setHeader('cache-control', 'no-store')
+      return res.end(readFileSync(asked))
+    }
+    res.statusCode = 404
+    return res.end('')
+  }
+
   res.setHeader('content-type', 'text/html'); res.end(html)
 })
 

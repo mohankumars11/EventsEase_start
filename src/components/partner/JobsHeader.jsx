@@ -71,10 +71,16 @@ export default function JobsHeader({
             <span
               aria-label="Sambramo"
               className="brand-wordmark-sans shrink-0 rounded-[11px] px-3 py-[7px] text-[15px] uppercase leading-none tracking-[0.055em] text-white"
-              /* #2A085C — sampled from the reference artwork, which
-                 measures #29075D. Not the gradient's darkest stop
-                 (#1B0240), which reads as navy at this size. */
-              style={{ background: '#2A085C' }}
+              /* #5B21A8 — the same light royal amethyst the splash
+                 paints, and the native launch ground with it. One
+                 purple across the whole brand: the screen that opens
+                 the app and the chip at the top of every session are
+                 the same colour, which is the point of a brand colour.
+
+                 It was #2A085C, sampled from the first reference. That
+                 is four times darker and reads as near-black at this
+                 size rather than as the brand's purple. */
+              style={{ background: '#5B21A8' }}
             >
               Sambramo
             </span>
