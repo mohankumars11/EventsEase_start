@@ -225,19 +225,24 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
     <div className="space-y-3 pb-5 pt-1">
       {!selectedService ? (
         <>
-          <section className="relative overflow-hidden rounded-[26px] bg-gradient-to-br from-plum-800 via-plum-700 to-[#321067] px-4 pb-4 pt-4 text-white sm:px-5">
-            <div className="pointer-events-none absolute -right-12 -top-10 h-44 w-44 rounded-full border border-white/10 bg-white/[0.04]" />
-            <div className="relative flex items-start justify-between gap-3">
+          {/* ── Shorter by a third, and nothing was lost ──────────────
+              The header ran title, subtitle and a four-tile scoreboard
+              over 26px padding, and took the top third of a phone
+              before a single listing appeared. The subtitle restated
+              the title, and the tiles are the filter — so they stay and
+              everything around them tightened. */}
+          <section className="relative overflow-hidden rounded-[22px] bg-gradient-to-br from-plum-800 via-plum-700 to-[#321067] px-4 pb-3 pt-3 text-white sm:px-5">
+            <div className="pointer-events-none absolute -right-12 -top-10 h-36 w-36 rounded-full border border-white/10 bg-white/[0.04]" />
+            <div className="relative flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <h1 className="text-[clamp(1.55rem,6vw,1.85rem)] font-extrabold leading-tight tracking-tight">Pricing & Listings</h1>
-                <p className="mt-1 text-[14px] font-medium text-white/80">Manage your services, packages and rates.</p>
+                <h1 className="text-[clamp(1.2rem,4.6vw,1.4rem)] font-extrabold leading-tight tracking-tight">Pricing & Listings</h1>
               </div>
               <button type="button" onClick={() => setHelpOpen(true)} aria-label="Pricing help and setup guidance" title="Pricing help"
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/25 bg-white/10 text-white shadow-sm backdrop-blur transition hover:bg-white/15 active:scale-95">
-                <CircleHelp size={21} />
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/25 bg-white/10 text-white shadow-sm backdrop-blur transition hover:bg-white/15 active:scale-95">
+                <CircleHelp size={19} />
               </button>
             </div>
-            <div className="relative mt-4 grid grid-cols-4 gap-1 rounded-[22px] bg-white p-2 text-plum-950 shadow-[0_12px_30px_rgba(20,0,50,0.18)]">
+            <div className="relative mt-2.5 grid grid-cols-4 gap-1 rounded-[18px] bg-white p-1.5 text-plum-950 shadow-[0_10px_24px_rgba(20,0,50,0.18)]">
               <StatusMetric label="Live" count={counts.live} glyph="✓" tone="text-emerald-700 bg-emerald-50" active={filterStatus === 'live'} onClick={() => setFilterStatus('live')} />
               <StatusMetric label="In review" count={counts.review} glyph="◷" tone="text-amber-700 bg-amber-50" active={filterStatus === 'review'} onClick={() => setFilterStatus('review')} />
               <StatusMetric label="Drafts" count={counts.draft} glyph="▤" tone="text-violet-700 bg-violet-50" active={filterStatus === 'draft'} onClick={() => setFilterStatus('draft')} />
@@ -249,39 +254,32 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
             if (listingMeta.nextPriceServiceId) setSelectedServiceId(listingMeta.nextPriceServiceId)
             else setPriceWindowOpen(true)
           }} aria-haspopup="dialog" aria-label="Price update window details"
-            className="flex w-full items-center gap-2.5 rounded-[18px] bg-gradient-to-r from-plum-50 via-white to-violet-50 px-3 py-2.5 text-left ring-1 ring-plum-100 transition active:scale-[0.995]">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-plum-100 text-plum-700"><CalendarClock size={20} /></span>
+            className="flex w-full items-center gap-2.5 rounded-[16px] bg-gradient-to-r from-plum-50 via-white to-violet-50 px-3 py-2 text-left ring-1 ring-plum-100 transition active:scale-[0.995]">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-plum-100 text-plum-700"><CalendarClock size={18} /></span>
             <span className="min-w-0 flex-1">
-              <span className="block text-[12.5px] font-extrabold text-plum-950">Price update window</span>
-              <span className="mt-0.5 block text-[12.5px] font-extrabold leading-snug text-plum-800">{listingMeta.nextPriceDate ? `Next eligible price change in ${daysUntil(listingMeta.nextPriceDate)} day${daysUntil(listingMeta.nextPriceDate) === 1 ? '' : 's'}` : 'Price-update dates appear here after a listing is published'}</span>
-              <span className="mt-0.5 block text-[10.5px] leading-snug text-ink/55">Regular prices follow the 15-day policy. Approved seasonal windows appear here when available.</span>
+              {/* The 15-day policy sentence moved into the sheet this
+                  row opens: it is an explanation, and it was being
+                  carried on every render of a row that is a status. */}
+              <span className="block text-[12px] font-extrabold text-plum-950">Price update window</span>
+              <span className="mt-0.5 block text-[12.5px] font-extrabold leading-snug text-plum-800">{listingMeta.nextPriceDate ? `Next change in ${daysUntil(listingMeta.nextPriceDate)} day${daysUntil(listingMeta.nextPriceDate) === 1 ? '' : 's'}` : 'Appears once a listing is published'}</span>
             </span>
             <ChevronRight size={18} className="shrink-0 text-plum-700" />
           </button>
 
           <div className="flex items-center justify-between gap-3 px-1">
             <div className="min-w-0">
-              <h2 className="text-[22px] font-extrabold tracking-tight text-plum-950">Your listings</h2>
-              <p className="text-[12px] leading-snug text-ink/55">{services.length} services · live status from saved listing data</p>
+              <h2 className="text-[17px] font-extrabold tracking-tight text-plum-950">Your listings</h2>
+              <p className="text-[11.5px] leading-snug text-ink/55">{services.length} service{services.length === 1 ? '' : 's'}{filterStatus === 'all' ? '' : ` · showing ${filterStatus === 'review' ? 'in review' : filterStatus}`}</p>
             </div>
             <button type="button" onClick={() => setManageOpen(true)} className="flex h-10 shrink-0 items-center gap-1.5 rounded-full border border-plum-200 bg-white px-3 text-[12.5px] font-extrabold text-plum-700 shadow-sm">
               <SlidersHorizontal size={15} /> Manage
             </button>
           </div>
 
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {[
-              ['all', `All · ${services.length}`],
-              ['live', `Live · ${counts.live}`],
-              ['review', `In review · ${counts.review}`],
-              ['draft', `Draft · ${counts.draft}`],
-            ].map(([key, label]) => (
-              <button key={key} type="button" onClick={() => setFilterStatus(key)}
-                className={`min-h-10 shrink-0 rounded-full px-4 py-2.5 text-[12px] font-extrabold leading-none ring-1 transition ${filterStatus === key ? 'bg-plum-700 text-white ring-plum-700' : 'bg-white text-ink/65 ring-ink/[0.09]'}`}>
-                {label}
-              </button>
-            ))}
-          </div>
+          {/* ── The chips were the tiles again ───────────────────────
+              All / Live / In review / Draft sat here as a second row of
+              filters, under a scoreboard whose four tiles set the same
+              state. One filter, one place: the tiles. */}
 
           {services.length ? (
             <div className="space-y-3">

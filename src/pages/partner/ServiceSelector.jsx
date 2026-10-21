@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'motion/react'
 import { ArrowLeft, ArrowRight, Check, Loader2, Search, X, ShieldCheck, Landmark, Sparkles, ChevronRight, RotateCcw } from 'lucide-react'
 import SambramoTradePictogram from '../../components/vendor/SambramoTradePictogram'
 import { scanForTrade } from '../../components/vendor/TradeGrid'
-import { Sheet } from '../../components/vendor/anchor/ui'
 import { usePayoutStatus } from '../../components/vendor/anchor/stages/PayoutReviewStages'
 import RazorpayBadge from '../../components/partner/payout/RazorpayBadge'
 import InviteCodeEntry from '../../components/partner/referrals/InviteCodeEntry'
@@ -100,7 +99,6 @@ export default function ServiceSelector() {
   const [q, setQ] = useState('')
   const [picked, setPicked] = useState([])
   const [drafts, setDrafts] = useState([])
-  const [summary, setSummary] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
@@ -269,41 +267,25 @@ export default function ServiceSelector() {
             {picked.length ? `${picked.length} service${picked.length === 1 ? '' : 's'} selected` : 'Select at least one service to continue.'}
           </motion.p>
         </AnimatePresence>
-        <button type="button" data-cta="continue" disabled={!picked.length || busy} onClick={() => setSummary(true)}
+        {/* ── Straight into setup ───────────────────────────────────
+            This used to open a summary sheet first: the services in
+            order, identity and payout status, a Razorpay badge, and a
+            second button that started the thing the first button had
+            already asked for. Two taps and a wall of pending-status
+            text stood between picking a trade and answering its first
+            question, every single time.
+
+            Identity and payout are asked inside the flow, at the step
+            that needs them, which is where a partner can act on them.
+            Nothing is lost by not previewing them here. */}
+        {error && <p className="mb-2 rounded-2xl bg-rose-50 px-3 py-2 text-[12.5px] font-bold text-rose-700">{error}</p>}
+        <button type="button" data-cta="continue" disabled={!picked.length || busy} onClick={() => start()}
           className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-plum-700 to-fuchsia-600 text-[15.5px] font-extrabold text-white shadow-[0_12px_28px_rgba(91,33,182,0.28)] transition active:scale-[0.99] disabled:bg-none disabled:bg-ink/15 disabled:shadow-none">
-          Continue with Selected Services <ArrowRight size={17} />
+          {busy && <Loader2 size={16} className="animate-spin" />}
+          {picked.length > 1 ? `Start with ${ordered[0]}` : 'Continue'} <ArrowRight size={17} />
         </button>
       </div>
 
-      {/* ── "Let's set up your 3 services" ────────────────────────── */}
-      <Sheet open={summary} onOpenChange={o => !o && setSummary(false)}
-        title={`Let's set up your ${ordered.length} service${ordered.length === 1 ? '' : 's'}`}>
-        <p data-testid="summary-names" className="text-[13.5px] font-bold leading-relaxed text-plum-800">{ordered.join(' · ')}</p>
-        <p className="mt-2 text-[12.5px] leading-relaxed text-ink/60">
-          Each service opens its own setup, one at a time. Your business details carry over, and you can submit each one as soon as it is ready.
-        </p>
-        <div className="mt-4 rounded-[20px] bg-[#f8f6fd] p-3.5 ring-1 ring-plum-100">
-          <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">Shared by all your services</p>
-          {[
-            { I: ShieldCheck, label: 'Identity verification', t: idText, key: 'identity' },
-            { I: Landmark, label: 'Payout setup', t: poText, key: 'payout' },
-          ].map(r => (
-            <div key={r.key} data-account-status={r.key}
-              className="mt-2 flex w-full items-center gap-3 rounded-2xl bg-white p-2.5 text-left ring-1 ring-ink/[0.05]">
-              <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${TONE[r.t.tone]}`}><r.I size={17} /></span>
-              <span className="min-w-0 flex-1"><span className="block text-[13px] font-extrabold text-ink">{r.label} · {r.t.label}</span>
-                <span className="block text-[11.5px] text-ink/55">{r.t.note}</span></span>
-            </div>
-          ))}
-          <RazorpayBadge className="mt-2.5" />
-          <p className="mt-1.5 text-[11.5px] leading-snug text-ink/50">You complete these once, in the Identity & bank details step of your first service — the next services reuse them. Licences a service needs are asked inside that service.</p>
-        </div>
-        {error && <p className="mt-3 rounded-2xl bg-rose-50 px-3 py-2 text-[12.5px] font-bold text-rose-700">{error}</p>}
-        <button type="button" data-cta="start" disabled={busy} onClick={() => start()}
-          className="mt-4 flex min-h-[54px] w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-plum-700 to-fuchsia-600 text-[15px] font-extrabold text-white disabled:opacity-60">
-          {busy && <Loader2 size={16} className="animate-spin" />} Start with {ordered[0]} <ArrowRight size={17} />
-        </button>
-      </Sheet>
     </div>
   )
 }

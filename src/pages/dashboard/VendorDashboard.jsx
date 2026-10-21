@@ -813,7 +813,9 @@ export default function VendorDashboard() {
             <PricingTab
               vendor={vendor}
               services={services}
-              onOpenListings={() => setTab('list')}
+              /* Straight to Pricing rather than bouncing off the old
+                 route's redirect. */
+              onOpenListings={() => setTab('pricing')}
               onEditListing={s => navigate('/dashboard/vendor?tab=list&edit=' + encodeURIComponent(s.id))}
               onOpenPayout={() => (import.meta.env.VITE_FF_PAYOUT_FULLSCREEN === 'false'
                 ? openAccount('bank') : navigate('/partner/payouts'))}
@@ -840,24 +842,32 @@ export default function VendorDashboard() {
           />
         )}
 
-        {tab === 'list' && (
+        {/* ══════════════════════════════════════════════════════
+            THE OLD LISTINGS SCREEN IS GONE; THE ROUTE IS NOT
+            ══════════════════════════════════════════════════════
+
+            "What you offer" — the storefront-preview banner, the
+            guide-price card, the Edit / Hide / Delete rows — was a
+            second listings screen living beside Pricing & Listings, and
+            it was the older of the two. Two screens for one thing means
+            half a partner's listings get managed somewhere the other
+            half does not.
+
+            The route stays because the trade questionnaire is hosted
+            here: onboarding ends at ?tab=list&start=<trade> and Edit
+            arrives at ?tab=list&edit=<id>. So this renders the flow and
+            nothing else, and anybody arriving without one of those
+            parameters is sent to Pricing, which is the screen that
+            survived. */}
+        {tab === 'list' && !params.get('start') && !params.get('edit') && (
+          <Navigate to="/dashboard/vendor?tab=pricing" replace />
+        )}
+
+        {tab === 'list' && (params.get('start') || params.get('edit')) && (
           <div className="space-y-3">
-            <button
-              type="button"
-              onClick={() => navigate('/partner/setup/preview')}
-              className="group flex w-full items-center gap-3 rounded-[22px] bg-gradient-to-br from-plum-950 via-plum-900 to-plum-700 p-4 text-left text-white shadow-[0_14px_36px_rgba(42,8,92,0.18)]"
-            >
-              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white/10 ring-1 ring-white/10">
-                <Store size={18} className="text-saffron-300" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-[10px] font-extrabold uppercase tracking-[0.14em] text-plum-200">High-priority launch tool</span>
-                <span className="mt-0.5 block text-[15px] font-black">Preview your customer storefront</span>
-                <span className="mt-1 block text-[11.5px] leading-snug text-white/65">Review cards, pricing lanes, add-ons and trade details before Sambramo publishes them.</span>
-              </span>
-              <Eye size={17} className="shrink-0 transition-transform group-active:scale-90" />
-            </button>
             <VendorServiceList
+            flowOnly
+            onFlowDone={() => setTab('pricing')}
             vendor={vendor}
             services={services}
             onAdd={addService}

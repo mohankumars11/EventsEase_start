@@ -51,6 +51,20 @@ const VENUE_TRADE = TRADE_FOR_SERVICE.venue
 
 export default function VendorServiceList({
   vendor, services, onAdd, onUpdate, onRemove, onOpenCalendar, onOpenJobs,
+  /* ── The browse UI is gone; this is a host for the flow ─────────
+     "What you offer" — the guide-price card, the Edit / Hide / Delete
+     rows, the storefront-preview banner — was a second listings screen
+     living beside Pricing & Listings, and it was the older of the two.
+     Two screens for one thing means half a partner's listings are
+     managed in a place the other half is not.
+
+     The route survives because the trade questionnaire is hosted here:
+     onboarding ends at ?tab=list&start=<trade> and Edit arrives at
+     ?tab=list&edit=<id>. With `flowOnly` this renders the flow and
+     nothing else, and the dashboard sends anybody who arrives without
+     one of those parameters to Pricing instead. */
+  flowOnly = false,
+  onFlowDone,
   startTrade = null, onStartConsumed,
   /* Exact row to edit when Step 1 sends the partner back to Listing.
      This is an id, never a trade/category, so Edit opens the saved row's
@@ -160,6 +174,52 @@ export default function VendorServiceList({
     await afterSubmission(navigate, trade, result)
   }
 
+  if (flowOnly) {
+    return (
+      <>
+        {picking && (
+          <AddItemFlow
+            existing={services}
+            startTrade={typeof picking === 'string' ? picking : null}
+            vendorId={vendor?.id}
+            onAdd={onAdd}
+            onClose={(next, result) => {
+              if (result) { onSubmitted(typeof picking === 'string' ? picking : null, result); return }
+              if (typeof next === 'string') { setPicking(next); return }
+              setPicking(false)
+              if (returnTo) {
+                const sep = returnTo.includes('?') ? '&' : '?'
+                navigate(`${returnTo}${sep}serviceAdded=1`)
+                return
+              }
+              onFlowDone?.()
+            }}
+          />
+        )}
+        {typeof editing === 'string' && services.some(x => x.id === editing) && (
+          <AddItemFlow
+            existing={services}
+            editing={services.find(x => x.id === editing)}
+            vendorId={vendor?.id}
+            onUpdate={onUpdate}
+            onClose={(next, result) => {
+              const row = services.find(x => x.id === editing)
+              if (result) { onSubmitted(row?.category ?? null, result); return }
+              setEditing(null)
+              onEditConsumed?.()
+              if (returnTo) {
+                const sep = returnTo.includes('?') ? '&' : '?'
+                navigate(`${returnTo}${sep}serviceAdded=1`)
+                return
+              }
+              onFlowDone?.()
+            }}
+          />
+        )}
+      </>
+    )
+  }
+
   return (
     <div className="space-y-4">
       <header className="flex flex-wrap items-end justify-between gap-3">
@@ -253,7 +313,11 @@ export default function VendorServiceList({
             if (returnTo) {
               const sep = returnTo.includes('?') ? '&' : '?'
               navigate(`${returnTo}${sep}serviceAdded=1`)
+              return
             }
+            /* Nothing to fall back TO any more — closing the flow used
+               to reveal the old browse screen behind it. */
+            if (flowOnly) onFlowDone?.()
           }}
         />
       )}
