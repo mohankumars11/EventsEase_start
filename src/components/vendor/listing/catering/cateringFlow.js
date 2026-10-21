@@ -83,6 +83,11 @@ export function buildCateringPayload(config, a) {
     })),
     menus: menus.map((m, i) => ({
       menu_key: m.menu_key, sort_order: i, name: m.name, description: m.description, cuisine_ids: m.cuisine_ids ?? [], diet: m.diet,
+      /* Undefined travels as null and is stored as NULL: nobody was
+         asked. An empty array is a real answer — "none of these". The
+         writer in migration 182 keeps them apart with jsonb_typeof,
+         which coalesce(..., '{}') would have destroyed. */
+      allergens: Array.isArray(m.allergens) ? m.allergens : null, allergen_note: m.allergen_note ?? null,
       service_style: m.service_style, event_types: m.event_types ?? [], min_guests: m.min_guests, max_guests: m.max_guests, lead_days: m.lead_days || 0,
       price_model: m.price_model, take_home_paise: m.price_model === 'quote' ? null : m.price_paise,
       child_take_home_paise: m.child_price_paise ?? null, extra_guest_take_home_paise: m.extra_guest_paise ?? null,

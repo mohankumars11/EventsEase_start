@@ -12,6 +12,10 @@ import { useMemo, useState } from 'react'
 import { motion } from 'motion/react'
 import { Plus, Pencil, Copy, Archive, ArchiveRestore, Eye, ChevronUp, ChevronDown, X, ArrowLeft, Check, Search, Utensils, AlertTriangle } from 'lucide-react'
 import { Card, Label, TextField, ChipRow, Segmented, Toggle, Sheet, SectionTitle, OptionCard } from '../../anchor/ui'
+import { ALLERGEN_OPTIONS, allergenLabel } from '../../../../data/allergens'
+
+/* Undefined and [] are different answers and must look different. */
+const allergenState = v => allergenLabel(v ?? null).state
 import { MENU_DIETS, DIET_LABEL, EVENT_TYPES, INCLUDED_SERVICES, SERVICE_STYLES, useFoodTaxonomy, slugKey, toR, toP, inr, customer } from './options'
 import { menuProblems, menusDone } from './rules'
 export { menuProblems, menusDone }
@@ -172,6 +176,38 @@ function MenuEditor({ menu: initial, dishes, tax, cuisines, fee, onSave, onCance
           <div className="flex-1"><Label>Maximum guests</Label><TextField inputMode="numeric" value={m.max_guests ?? ''} onChange={x => put({ max_guests: Number(x.replace(/\D/g, '')) || null })} /></div>
           <div className="flex-1"><Label>Lead time</Label><TextField inputMode="numeric" value={m.lead_days ?? ''} onChange={x => put({ lead_days: Number(x.replace(/\D/g, '')) || 0 })} /></div>
         </div>
+      </Card>
+
+      {/* ── What is in this menu that somebody cannot eat ──────────────
+          Diet is a preference; an allergen is a hospital visit, and
+          until now the two were the same question. Declared on the menu
+          rather than the dish because a master dish is shared by every
+          caterer in the country and whether it contains nuts depends on
+          the kitchen cooking it.
+
+          Not answering is a real state and is kept as one: `allergens`
+          stays undefined until the partner touches this, which the
+          payload sends as null and migration 182 stores as NULL. An
+          empty array means they were asked and said "none of these".
+          Telling a customer "no allergens" about a menu nobody was
+          asked about is the one failure here that can hurt somebody. */}
+      <Card className="mt-3">
+        <Label hint="Tick everything a guest might react to. If none apply, tick “None of these” — leaving it blank is not the same answer.">
+          Allergens in this menu
+        </Label>
+        <ChipRow multi size="sm" options={ALLERGEN_OPTIONS} value={m.allergens ?? []}
+          onChange={x => put({ allergens: x })} />
+        <div className="mt-3" />
+        <Label hint="Anything a customer should ask about — “nut-free on request”, “cooked in the same kitchen as fish”.">
+          Note beside the list
+        </Label>
+        <TextField value={m.allergen_note} onChange={x => put({ allergen_note: x })} max={160} />
+        <p className={`mt-2 rounded-xl px-3 py-2 text-[12px] font-bold ${
+          allergenState(m.allergens) === 'undeclared' ? 'bg-amber-50 text-amber-900'
+            : allergenState(m.allergens) === 'none' ? 'bg-forest-50 text-forest-800'
+            : 'bg-ink/[0.04] text-ink'}`}>
+          {allergenLabel(m.allergens ?? null).text}
+        </p>
       </Card>
 
       <div className="mt-4 flex items-baseline justify-between px-1">
