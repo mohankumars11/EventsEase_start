@@ -44,6 +44,10 @@ const CARDS = [
        + 'decorations and florists, beauty and wellness, logistics and transport, '
        + 'venues and equipment, priests and traditional services.',
     cta: 'Join as a Partner',
+    /* Measured from the artwork: the painted button is y 1515-1624 of
+       1844. The old fixed tap area covered 30% of it — tap the top of
+       the button and nothing happened. */
+    hit: { top: 81.6, height: 7.0 },
   },
   {
     id: 'services',
@@ -51,6 +55,7 @@ const CARDS = [
     alt: 'Every event needs experts like you. List your services and get bookings '
        + 'across multiple event categories.',
     cta: 'See How It Works',
+    hit: { top: 84.0, height: 6.7 },   // painted y 1559-1662: the old area covered 69%
   },
   {
     id: 'earnings',
@@ -58,6 +63,7 @@ const CARDS = [
     alt: 'More bookings, more earnings, greater opportunities. Get discovered by '
        + 'customers, manage bookings and grow your event business with secure payments.',
     cta: 'Join as a Partner',
+    hit: { top: 85.8, height: 6.6 },   // painted y 1592-1693
   },
 ]
 
@@ -83,7 +89,7 @@ const SIGN_IN = '/partner/login'
 
 /* Long enough to read a headline and its line beneath, short enough
    that a partner who is not reading is not kept waiting. */
-const AUTO_ADVANCE_MS = 4200
+const AUTO_ADVANCE_MS = 3500
 
 export default function PartnerOnboarding() {
   const navigate = useNavigate()
@@ -177,42 +183,50 @@ export default function PartnerOnboarding() {
               type="button"
               onClick={() => onCta(i)}
               aria-label={c.cta === 'See How It Works' ? `${c.cta}, next card` : `${c.cta}, continue to sign in`}
-              className="absolute inset-x-[6%] bottom-[6.5%] h-[7.2%] rounded-full
+              /* ── Each card's own button, not one shared position ─────
+                 The tap areas were one fixed rectangle for all three
+                 cards, which was right while the artwork put every
+                 button in the same place. The regenerated cards did not:
+                 measured against that rectangle, card 1's button was
+                 only 30% tappable and card 2's 69%. Each card now
+                 carries the position measured from its own pixels, with
+                 10px of slack either side, so the whole painted button
+                 works. Re-measure if the artwork changes. */
+              style={{ top: `${c.hit.top}%`, height: `${c.hit.height}%` }}
+              className="absolute inset-x-[5.5%] rounded-full
                          focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
             />
 
-            {/* Over the painted "Skip". Sits inside the safe area so it
-                is never under the status bar on a notched device. */}
-            <button
-              type="button"
-              /* Skip means "skip the introduction", so it goes where Join
-                 goes rather than into a location prompt the partner never
-                 asked for. */
-              onClick={() => navigate(SIGN_IN)}
-              aria-label="Skip the introduction and continue to sign in"
-              className="safe-top absolute right-0 top-0 h-[7%] w-[30%]
-                         focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
-            />
           </section>
         ))}
       </div>
 
-      {/* ── How long until the next card ───────────────────────────────
-          The artwork paints its own dots, so this is not pagination — it
-          is the timer, a hairline at the very top that fills while a card
-          waits to move on. Without it the advance arrives as a surprise.
-          Nothing renders on the last card, which does not move. */}
-      {!reduced && index < CARDS.length - 1 && (
-        <div className="safe-top pointer-events-none absolute inset-x-0 top-0 z-10 px-4">
-          <div className="mt-1 h-[3px] overflow-hidden rounded-full bg-white/20">
-            <div
-              key={index}
-              className="partner-intro-timer h-full rounded-full bg-white"
-              style={{ animationDuration: `${AUTO_ADVANCE_MS}ms`, animationPlayState: held ? 'paused' : 'running' }}
-            />
-          </div>
-        </div>
-      )}
+      {/* ── One Skip, drawn by the app, on every card ─────────────────
+          The regenerated artwork paints "Skip" on card 3 only, so it
+          could no longer be trusted to show one. This is real text,
+          outside the rail so it does not scroll away, inside the safe
+          area so it is never under the status bar. Card 3's painted
+          Skip is removed from the image when it is rendered — see
+          scripts/render-onboarding-cards.mjs — so there are never two.
+
+          Skip means "skip the introduction", so it goes where Join goes
+          rather than into a location prompt nobody asked for.
+
+          The timer line that used to sit here is gone: the artwork
+          already paints the position dots, and a second indicator at
+          the top was one more thing moving on a screen that should be
+          about the picture. */}
+      <div className="safe-top pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-end px-4">
+        <button
+          type="button"
+          onClick={() => navigate(SIGN_IN)}
+          aria-label="Skip the introduction and continue to sign in"
+          className="pointer-events-auto mt-2 rounded-full bg-black/20 px-4 py-1.5 text-[15px] font-semibold text-white backdrop-blur-sm
+                     focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+        >
+          Skip
+        </button>
+      </div>
     </div>
   )
 }

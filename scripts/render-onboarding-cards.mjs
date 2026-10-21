@@ -46,7 +46,19 @@ const QUALITY = 0.92
 const CARDS = [
   { src: 'partner-card-1-grow.png',     out: 'card-1-grow' },
   { src: 'partner-card-2-services.png', out: 'card-2-services' },
-  { src: 'partner-card-3-earnings.png', out: 'card-3-earnings' },
+  /* ── Card 3 arrived with a phone status bar painted into it ────────
+     The artwork was regenerated from a screenshot, and the image model
+     copied that screenshot's status bar into the picture: "5:9:41",
+     app icons, signal, battery 50. On a phone it would sit beneath the
+     REAL status bar — two clocks. It also has a painted "Skip", which
+     cards 1 and 2 do not, so the app draws one real Skip for all three.
+
+     Measured text bands at the top of the source: 28-49 (the fake bar),
+     87-107 (the painted Skip), 125-162 (the headline). Row 116 is clean
+     sky between the last two, so it is stretched up over 0-112. The
+     headline is untouched. Source is not edited; this is applied on the
+     way out, so the master stays exactly as supplied. */
+  { src: 'partner-card-3-earnings.png', out: 'card-3-earnings', cleanTop: { upTo: 112, fromRow: 116 } },
 ]
 
 for (const c of CARDS) {
@@ -111,6 +123,26 @@ for (const card of CARDS) {
       cx.imageSmoothingEnabled = true
       cx.imageSmoothingQuality = 'high'
       cx.drawImage(img, 0, 0, w, h)
+      const clean = ${JSON.stringify(card.cleanTop ?? null)}
+      if (clean) {
+        const k = w / img.naturalWidth
+        /* One row stretched upward is a column of identical pixels per
+           x, so anywhere that row crosses a cloud the band shows vertical
+           streaks — it did, on the left of card 3. Blurred, and drawn
+           wider and taller than the canvas so the blur has real pixels to
+           pull from at the edges instead of fading them to black. */
+        const bandH = Math.ceil(clean.upTo * k)
+        cx.save()
+        cx.beginPath(); cx.rect(0, 0, w, bandH); cx.clip()
+        cx.filter = 'blur(' + Math.round(14 * k) + 'px)'
+        /* Drawn 60px past the clip on every side. A blur softens the
+           edges of whatever it draws, and with only 10px below the band
+           the bottom edge went semi-transparent right where the painted
+           Skip sits — it showed through as a ghost. The clip still stops
+           the band at bandH, so the extra never lands on the headline. */
+        cx.drawImage(img, 0, clean.fromRow, img.naturalWidth, 1, -60, -60, w + 120, bandH + 120)
+        cx.restore()
+      }
       out[w] = { h, data: c.toDataURL('image/webp', ${QUALITY}) }
     }
     return out
