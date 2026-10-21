@@ -44,10 +44,19 @@
   opacity: 1;
   transition: opacity 260ms ease;
   padding-bottom: env(safe-area-inset-bottom, 0px);
-  /* Optically centred, not mathematically. A lockup at exactly 50%
-     reads as low, which is why both reference splashes sit a little
-     above the middle. */
-  transform: translateY(-3.5vh);
+  /* ── Full bleed, always ──────────────────────────────────────────
+     This carried `transform: translateY(-3.5vh)` to centre the lockup
+     optically. On the GROUND that moves the entire full-screen layer
+     up by 3.5% of the screen, leaving a strip at the bottom where the
+     tab bar showed through — reported from a phone, with Jobs, Pricing
+     and Calendar visible under the splash. The offset belongs to the
+     lockup, so it is on the lockup now and the ground never moves.
+
+     inset 0 plus an explicit min-height in dvh: on Android the address
+     and gesture bars can make 100vh taller or shorter than the visible
+     area, and either way a fixed layer sized by vh can leave a seam. */
+  inset: 0;
+  min-height: 100dvh;
 }
 
 .app-splash.app-splash-is-leaving { opacity: 0; }
@@ -66,6 +75,11 @@
 .app-splash-wordmark {
   position: relative;
   z-index: 2;
+  /* The optical lift, on the lockup rather than the ground. A lockup
+     at exactly 50% reads as low; both reference splashes sit a little
+     above the middle. The tagline carries the same offset so the two
+     move as one. */
+  transform: translateY(-3.5vh);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -114,6 +128,7 @@
 .app-splash-tagline {
   position: relative;
   z-index: 2;
+  translate: 0 -3.5vh;
   margin: clamp(8px, 2.2vw, 14px) 0 0;
   padding: 0 24px;
   color: rgba(255, 255, 255, .94);
