@@ -113,9 +113,20 @@ const STORY_CSS = `
 .partner-story-image { animation: partnerStoryImageDrift 14s linear both; }
 .partner-story-rise { animation: partnerStoryRise .55s cubic-bezier(.2,.75,.25,1) both; }
 .partner-story-sweep { animation: partnerStorySweep 5s ease-in-out infinite; }
-.partner-story-pulse { animation: partnerStoryPulse 3s ease-in-out infinite; }
+.partner-story-pulse { animation: partnerStoryPulse 2.8s ease-in-out infinite; }
+.partner-story-ring { position: relative; }
+.partner-story-ring::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 9999px;
+  background: conic-gradient(#C4A7FF, #6D28D9, #4B0082, #C4A7FF);
+  animation: partnerStoryRing 3.4s linear infinite;
+  z-index: -1;
+}
 @media (prefers-reduced-motion: reduce) {
   .partner-story-image,.partner-story-rise,.partner-story-sweep,.partner-story-pulse { animation: none !important; }
+  .partner-story-ring::before { animation: none !important; }
 }
 `
 
@@ -280,7 +291,7 @@ export default function PartnerStories() {
           </div>
           <span className="text-[10px] font-semibold text-[#81758F]">{STORIES.length} stories</span>
         </div>
-        <div className="grid grid-cols-4 gap-2 px-1">
+        <div className="grid grid-cols-4 gap-2.5 px-1">
           {STORIES.map((story, index) => {
             const Icon = story.icon
             const hasViewed = viewed.includes(index)
@@ -290,9 +301,9 @@ export default function PartnerStories() {
                 type="button"
                 onClick={() => open(index)}
                 aria-label={`Watch story: ${story.shortTitle}`}
-                className="min-w-0 flex flex-col items-center gap-1.5 text-center active:scale-[0.97] transition-transform"
+                className="min-w-0 flex flex-col items-center gap-2 text-center active:scale-[0.97] transition-transform"
               >
-                <span className={`relative block w-full max-w-[76px] aspect-square rounded-full p-[3px] ${hasViewed ? 'bg-[#16A34A]' : 'bg-gradient-to-br from-[#BFA0FF] via-[#6D28D9] to-[#4B0082]'} partner-story-pulse`}>
+                <span className={`relative block w-full max-w-[76px] aspect-square rounded-full p-[3px] ${hasViewed ? 'bg-[#16A34A]' : 'bg-gradient-to-br from-[#BFA0FF] via-[#6D28D9] to-[#4B0082] partner-story-ring partner-story-pulse'}`}>
                   <span className="flex h-full w-full rounded-full bg-white p-[3px]">
                     <span className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-[#4B0082]">
                       <img src={deckFor(story)[0]?.media_type === 'image' ? deckFor(story)[0].media_url : story.image} alt="" className="absolute inset-0 h-full w-full object-cover opacity-55" />
@@ -311,7 +322,11 @@ export default function PartnerStories() {
                     </span>
                   )}
                 </span>
-                <span className="line-clamp-2 min-h-[25px] w-full text-[9px] font-bold leading-tight text-[#393044]">{story.shortTitle}</span>
+                {/* 9px semi-bold grey was the reported "not even
+                    visible". 11px, heavier, and in the body ink —
+                    these are the names of the things on the rail, and
+                    a label nobody can read is a tile nobody taps. */}
+                <span className="line-clamp-2 min-h-[28px] w-full text-[11px] font-extrabold leading-[1.2] tracking-[-0.01em] text-[#17152B]">{story.shortTitle}</span>
               </button>
             )
           })}

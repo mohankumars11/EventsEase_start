@@ -467,7 +467,19 @@ export default function VendorDashboard() {
       {/* ── The scoreboard ───────────────────────────────────────────
           Four counts, each traceable to rows, riding up over the
           header's bottom edge the way the reference design has them. */}
-      {tab === 'offers' && (
+      {/* ── Four zeroes are not a scoreboard ──────────────────────────
+          New jobs 0 · Accepted 0 · Confirmed 0 · Messages 0, shown to
+          every partner from the day they sign up. None of those numbers
+          can be anything but zero before approval — jobs do not reach a
+          partner who is not live — so the row was four tiles of nothing,
+          above the card explaining why, taking the space where the
+          review clock should be.
+
+          It appears when the account is approved, which is also the
+          moment the first of those numbers can move. A partner still
+          under review sees the clock and the stories; a partner who has
+          not started sees what to do next. */}
+      {tab === 'offers' && vendor?.verification_status === 'approved' && (
         <div className="mb-4">
           <JobsStats
             vendorId={vendor?.id}
