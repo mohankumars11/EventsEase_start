@@ -16,7 +16,9 @@ export default {
     q.text('name', 'Act name', { required: true, max: 60 }),
     q.textarea('description', 'Description', { required: true, max: 300 }),
     q.number('performers', 'Performers', { required: true, min: 1, max: 100 }),
-    q.multi('durations', 'Duration options', ['15 min', '30 min', '45 min', '1 hour', '2 hours'], { required: true }),
+    /* Extended rather than given an "Other", for the same reason as
+       DJ & Music: a duration feeds the pricing and must stay priceable. */
+    q.multi('durations', 'Duration options', ['10 min', '15 min', '30 min', '45 min', '1 hour', '90 min', '2 hours', '3 hours', '4 hours'], { required: true }),
     q.single('format', 'Performance format', ['On stage', 'Roaming', 'Interactive', 'Background'], { required: true }),
     q.number('setup_minutes', 'Setup / soundcheck', { min: 0, max: 300, suffix: 'minutes' }),
     q.dimensions('stage_space', 'Stage space needed', { unit: 'ft' }),

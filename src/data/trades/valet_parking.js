@@ -6,7 +6,7 @@ export default {
   serviceNoun: 'valet service',
   screens: [
     screen('profile', 'Your valet service', 'What you run on the day.', [
-      q.multi('services', 'Services', ['Valet drivers', 'Parking management', 'Signage', 'Marshals', 'Supervisors', 'Digital / app ticketing', 'Paper ticketing'], { required: true }),
+      q.multi('services', 'Services', ['Valet drivers', 'Parking management', 'Signage', 'Marshals', 'Supervisors', 'Digital / app ticketing', 'Paper ticketing'], { required: true, other: true }),
       q.number('valets', 'Valet drivers available', { required: true, min: 1, max: 1000 }),
       q.number('supervisors', 'Supervisors available', { required: true, min: 0, max: 200 }),
       q.number('cars_per_hour', 'Cars your team can take per hour at peak', { required: true, min: 5, max: 5000 }),

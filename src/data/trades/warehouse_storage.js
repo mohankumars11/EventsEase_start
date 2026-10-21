@@ -6,7 +6,7 @@ export default {
   serviceNoun: 'storage',
   screens: [
     screen('profile', 'What you store', 'Anything outside these is reviewed by hand.', [
-      q.multi('item_types', 'Item types accepted', ['Event equipment', 'Furniture', 'Decor', 'Cartons', 'Pallets', 'Exhibition stands', 'Vehicles'], { required: true }),
+      q.multi('item_types', 'Item types accepted', ['Event equipment', 'Furniture', 'Decor', 'Cartons', 'Pallets', 'Exhibition stands', 'Vehicles'], { required: true, other: true }),
       q.textarea('custom_category', 'Another category (reviewed before it is shown)'),
       q.multi('storage_kind', 'Storage', ['Indoor', 'Covered', 'Open yard'], { required: true }),
       q.toggle('climate', 'Climate-controlled area'),

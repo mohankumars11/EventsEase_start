@@ -18,7 +18,9 @@ export default {
     ]),
     screen('performance', 'Performance details', 'What a booking includes.', [
       q.multi('formats', 'Performance format', ['Solo DJ set', 'DJ + percussionist', 'DJ + singer', 'Live band set', 'Acoustic set'], { required: true, other: true }),
-      q.multi('duration_options', 'Duration options', ['1 hour', '2 hours', '3 hours', '4 hours', '6 hours'], { required: true }),
+      /* Extended rather than given an "Other": a duration feeds the
+         hourly pricing, and a typed one would be unpriceable. */
+      q.multi('duration_options', 'Duration options', ['1 hour', '2 hours', '3 hours', '4 hours', '5 hours', '6 hours', '8 hours', '10 hours', 'Full night'], { required: true }),
       q.number('setup_minutes', 'Setup / soundcheck time', { required: true, min: 0, max: 300, suffix: 'minutes' }),
       q.textarea('equipment_included', 'Equipment included', { max: 300 }),
       q.text('power_needs', 'Power requirements', { placeholder: 'e.g. 2 × 15A sockets', max: 80 }),

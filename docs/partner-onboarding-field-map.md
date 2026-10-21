@@ -393,7 +393,7 @@ onboarding answers.
 | catalogue/vehicles | `category` | Vehicle type | single | `TEXT` | yes | allows "other" |  |
 | catalogue/vehicles | `payload_kg` | Load capacity | number | `NUMERIC` | yes | min 500, max 50000, unit kg |  |
 | catalogue/vehicles | `load_dimensions` | Load space (L × W × H) | dimensions | `JSONB` | yes |  |  |
-| catalogue/vehicles | `body` | Body type | single | `TEXT` | yes |  |  |
+| catalogue/vehicles | `body` | Body type | single | `TEXT` | yes | allows "other" |  |
 | catalogue/vehicles | `features` | Loading features | multi | `TEXT[]` |  | allows "other" |  |
 | catalogue/vehicles | `driver_included` | Driver included | toggle | `BOOLEAN` |  |  |  |
 | catalogue/vehicles | `registration` | Registration number (private) | text | `TEXT` | yes | max 15 |  |
@@ -643,7 +643,7 @@ onboarding answers.
 
 | Section | Field key | Label | Type | SQL | Req | Validation | Conditional |
 |---|---|---|---|---|---|---|---|
-| profile | `services` | Services | multi | `TEXT[]` | yes |  |  |
+| profile | `services` | Services | multi | `TEXT[]` | yes | allows "other" |  |
 | profile | `valets` | Valet drivers available | number | `NUMERIC` | yes | min 1, max 1000 |  |
 | profile | `supervisors` | Supervisors available | number | `NUMERIC` | yes | min 0, max 200 |  |
 | profile | `cars_per_hour` | Cars your team can take per hour at peak | number | `NUMERIC` | yes | min 5, max 5000 |  |
@@ -719,7 +719,7 @@ onboarding answers.
 
 | Section | Field key | Label | Type | SQL | Req | Validation | Conditional |
 |---|---|---|---|---|---|---|---|
-| profile | `item_types` | Item types accepted | multi | `TEXT[]` | yes |  |  |
+| profile | `item_types` | Item types accepted | multi | `TEXT[]` | yes | allows "other" |  |
 | profile | `custom_category` | Another category (reviewed before it is shown) | textarea | `TEXT` |  |  |  |
 | profile | `storage_kind` | Storage | multi | `TEXT[]` | yes |  |  |
 | profile | `climate` | Climate-controlled area | toggle | `BOOLEAN` |  |  |  |

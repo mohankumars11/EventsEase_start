@@ -19,7 +19,7 @@ export default {
     q.single('category', 'Vehicle type', ['14 ft truck', '17 ft truck', '19 ft truck', '22 ft truck', '24 ft container', '32 ft container', 'Trailer'], { required: true, other: true }),
     q.number('payload_kg', 'Load capacity', { required: true, min: 500, max: 50000, suffix: 'kg' }),
     q.dimensions('load_dimensions', 'Load space (L × W × H)', { unit: 'ft', required: true }),
-    q.single('body', 'Body type', ['Open', 'Closed', 'Container', 'Flatbed'], { required: true }),
+    q.single('body', 'Body type', ['Open', 'Closed', 'Container', 'Flatbed', 'Tipper', 'Tanker', 'Refrigerated', 'Car carrier', 'Trailer'], { required: true, other: true }),
     q.multi('features', 'Loading features', ['Tail lift', 'Ramps', 'Tie-down points', 'GPS tracking'], { other: true }),
     q.toggle('driver_included', 'Driver included'),
     q.text('registration', 'Registration number (private)', { required: true, max: 15, private: true }),
