@@ -175,6 +175,37 @@ export default function VendorServiceList({
   }
 
   if (flowOnly) {
+    /* -- Never a blank screen ------------------------------------
+       This renders the flow and nothing else, so if neither opens
+       there is nothing on the page at all. That happens while services
+       are still loading, and permanently if the id in the URL matches
+       no row -- a stale link, or a listing removed on another device.
+       Loading says so; an id that cannot be resolved hands back rather
+       than leaving the partner looking at nothing. */
+    const resolving = !!editListing && !services.length
+    const unresolvable = !!editListing && services.length > 0
+      && !services.some(x => x.id === editListing) && !editing
+    if (unresolvable) {
+      return (
+        <div className="rounded-[22px] bg-white p-6 text-center ring-1 ring-ink/[0.06]">
+          <p className="text-[14px] font-extrabold text-ink">That listing could not be opened</p>
+          <p className="mx-auto mt-1 max-w-xs text-[12.5px] leading-snug text-ink-mute">
+            It may have been removed. Your other listings are on the Pricing tab.
+          </p>
+          <button type="button" onClick={() => onFlowDone?.()}
+            className="mt-4 min-h-[44px] rounded-full bg-plum-700 px-5 text-[13px] font-extrabold text-white">
+            Go to Pricing &amp; Listings
+          </button>
+        </div>
+      )
+    }
+    if (resolving && !picking) {
+      return (
+        <div className="rounded-[22px] bg-white p-6 text-center ring-1 ring-ink/[0.06]">
+          <p className="text-[13px] font-bold text-ink/55">Opening your listing…</p>
+        </div>
+      )
+    }
     return (
       <>
         {picking && (

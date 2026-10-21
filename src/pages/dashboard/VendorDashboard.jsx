@@ -98,6 +98,24 @@ export default function VendorDashboard() {
      later drive a tab badge without a second query. */
   const [unreadAlerts, setUnreadAlerts] = useState(0)
   const [howItWorksOpen, setHowItWorksOpen] = useState(false)
+  /* ── Is the trade questionnaire open on the list route? ───────────
+     Latched from ?start= / ?edit= and NOT read from them afterwards:
+     VendorServiceList deletes both the moment it opens the flow, so
+     anything still testing the URL sees them vanish mid-flow. Started
+     true when the page is entered with one, because the first render
+     is already inside the flow. */
+  const [listFlowOpen, setListFlowOpen] = useState(
+    () => !!(params.get('start') || params.get('edit')))
+
+  /* Edit listing navigates within this same page, so the component does
+     not remount and the initialiser above never runs again. Without
+     this, tapping Edit from Pricing set the URL, VendorServiceList
+     consumed the parameter, and the redirect fired before anything
+     latched — which is the bug exactly as reported: "it goes to the
+     pricing tab again". */
+  useEffect(() => {
+    if (params.get('start') || params.get('edit')) setListFlowOpen(true)
+  }, [params])
 
   const account = useVendorAccount()
   const {
@@ -875,15 +893,26 @@ export default function VendorDashboard() {
             nothing else, and anybody arriving without one of those
             parameters is sent to Pricing, which is the screen that
             survived. */}
-        {tab === 'list' && !params.get('start') && !params.get('edit') && (
+        {/* ── The redirect must not read a parameter that is deleted ──
+            First version of this tested `params.get('start')` and
+            `params.get('edit')` on every render. Both are consumed the
+            instant the flow opens — VendorServiceList deletes them so
+            that reopening the tab cannot re-trigger the flow — so the
+            redirect fired one render after the flow appeared and threw
+            the partner out to Pricing. It broke Edit listing and the
+            last step of onboarding, which both arrive this way.
+
+            The flow being open is state, not a URL parameter, so it is
+            held as state and the parameter only ever starts it. */}
+        {tab === 'list' && !listFlowOpen && (
           <Navigate to="/dashboard/vendor?tab=pricing" replace />
         )}
 
-        {tab === 'list' && (params.get('start') || params.get('edit')) && (
+        {tab === 'list' && listFlowOpen && (
           <div className="space-y-3">
             <VendorServiceList
             flowOnly
-            onFlowDone={() => setTab('pricing')}
+            onFlowDone={() => { setListFlowOpen(false); setTab('pricing') }}
             vendor={vendor}
             services={services}
             onAdd={addService}
