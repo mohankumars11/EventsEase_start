@@ -36,7 +36,7 @@ const rows = [
   ['E17','Sound & AV','Catalog AV package + scope',['Large PA','LED','projection','rigging/site engineering']],
   ['E18','Valet Parking','Vehicle volume + attendants + hours',['Complex traffic','parking layout']],
   ['E19','Security Services','Guard count + hours + standard event profile',['High-risk','special protection','crowd plan']],
-  ['E20','Bar & Beverages','Structured non-regulated beverage package',['Alcohol','permits','custom stock','regulated operation']],
+  ['E20','Beverages, Ice Cream & Cold Storage','Beverages, ice cream and cold storage, priced per serving or per unit',['Cold chain beyond the hold time','custom stock','bulk cold storage']],
   ['E21','Guest Services','Staff count + shift + standard role',['Specialist support','complex guest care']],
   ['E22','Power & Cooling','Known kVA + catalog unit + duration',['Unknown load','cable routing','site engineering']],
   ['E23','Safety & Facilities','Catalog facility package + quantity',['Medical','fire','emergency','site-specific plan']],

@@ -242,14 +242,17 @@ const BY_TRADE = {
     captionHint: 'Which unit? (optional)',
   },
 
-  'Bar & Beverages': {
-    photoTitle: 'Your counters',
-    photoHint: 'A set-up bar, your glassware, your bartenders working.',
+  'Beverages, Ice Cream & Cold Storage': {
+    photoTitle: 'Your counters, your stock and your cold chain',
+    photoHint: 'A counter running at a real function, your freezer or '
+      + 'chiller, and the ice cream or drinks as they are served. A '
+      + 'customer is deciding whether their falooda will still be cold '
+      + 'at nine in the evening, and your cold storage is the answer.',
     videoTitle: 'A short video',
-    videoHint: 'Flair, if you do it — it does not read as a photograph. '
-      + 'Under 40 MB.',
-    captionHint: 'Which event? (optional)',
+    videoHint: 'A counter in service, or your setup going in. Under 40 MB.',
+    captionHint: 'What event was this? (optional)',
   },
+
 
   'Anchor & MC': {
     photoTitle: 'You, hosting',

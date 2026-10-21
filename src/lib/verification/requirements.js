@@ -71,7 +71,7 @@ export const TIER_WHY = {
  */
 export const TRADE_TIERS = {
   'Anchor & MC':              [TIER.BASELINE],
-  'Bar & Beverages':          [TIER.BASELINE, TIER.FOOD],
+  'Beverages, Ice Cream & Cold Storage':          [TIER.BASELINE, TIER.FOOD],
   'Bridal Makeup & Hair':     [TIER.BASELINE, TIER.ALONE_WITH_CUSTOMER],
   'Cake & Desserts':          [TIER.BASELINE, TIER.FOOD],
   'Catering & Food':          [TIER.BASELINE, TIER.FOOD],

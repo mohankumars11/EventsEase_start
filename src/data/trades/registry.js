@@ -32,7 +32,7 @@ const t = (order, id, code, name, archetype, extra = {}) => ({
 
 export const TRADE_REGISTRY = [
   t(1, 'anchor_mc', 'E16', 'Anchor & MC', 'TIME_PERFORMER', { tiers: true }),
-  t(2, 'bar_beverages', 'E20', 'Bar & Beverages', 'PER_GUEST_FOOD', { regulated: true }),
+  t(2, 'bar_beverages', 'E20', 'Beverages, Ice Cream & Cold Storage', 'PER_GUEST_FOOD', { regulated: true }),
   t(3, 'bridal_makeup_hair', 'E08', 'Bridal Makeup & Hair', 'PERSONAL_SERVICE', { tiers: true }),
   t(4, 'cake_desserts', 'E14', 'Cake & Desserts', 'CATALOGUE_PRODUCT'),
   t(5, 'catering_food', 'E01', 'Catering & Food', 'PER_GUEST_FOOD', { tiers: true }),

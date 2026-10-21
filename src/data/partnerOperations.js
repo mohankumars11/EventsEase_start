@@ -577,7 +577,7 @@ export const TRADE_OPERATIONS = {
     ])],
   },
 
-  'Bar & Beverages': {
+  'Beverages, Ice Cream & Cold Storage': {
     scale: [GUESTS('Most guests you can serve'), PER_DAY],
     notice: [NOTICE],
     where: [TRAVEL, VENUES],

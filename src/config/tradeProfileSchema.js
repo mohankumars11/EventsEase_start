@@ -9,20 +9,20 @@ export const TRADE_PROFILE_SCHEMA = {
     "screens": [
       {
         "id": "profile",
-        "title": "Your bar & beverage service",
-        "sub": "What you serve and how much you can handle."
+        "title": "What you supply",
+        "sub": "Drinks, ice cream, cold storage, or all three."
       },
       {
-        "id": "bar_setup",
-        "title": "Bar configuration",
-        "sub": "What comes with your bar."
+        "id": "setup",
+        "title": "Counters and equipment",
+        "sub": "What arrives at the venue."
       }
     ],
     "catalogue": {
-      "key": "beverages",
-      "title": "Your beverage menu",
-      "noun": "beverage",
-      "nounPlural": "beverages"
+      "key": "items",
+      "title": "What you sell",
+      "noun": "item",
+      "nounPlural": "items"
     },
     "table": "partner_bar_beverages_profiles",
     "itemsTable": "partner_bar_beverages_items",
@@ -30,16 +30,16 @@ export const TRADE_PROFILE_SCHEMA = {
       {
         "k": "display_name",
         "key": "display_name",
-        "label": "What name should customers see for your bar or beverage service?",
+        "label": "What name should customers see?",
         "type": "TEXT",
         "req": true,
         "screen": "profile",
         "form": "text"
       },
       {
-        "k": "beverage_types",
-        "key": "beverage_types",
-        "label": "What types of beverages do you provide?",
+        "k": "service_lines",
+        "key": "service_lines",
+        "label": "Which of these do you provide?",
         "type": "TEXT[]",
         "req": true,
         "screen": "profile",
@@ -48,7 +48,7 @@ export const TRADE_PROFILE_SCHEMA = {
       {
         "k": "supply_scope",
         "key": "supply_scope",
-        "label": "Do you supply drinks, serving staff, bar equipment, or a combination?",
+        "label": "Do you supply the goods, the staff, the equipment, or a combination?",
         "type": "TEXT",
         "req": true,
         "screen": "profile",
@@ -88,37 +88,29 @@ export const TRADE_PROFILE_SCHEMA = {
         "form": "number"
       },
       {
-        "k": "mobile_bar",
-        "key": "mobile_bar",
-        "label": "Do you provide a mobile bar counter?",
-        "type": "BOOLEAN",
-        "screen": "bar_setup",
-        "form": "toggle"
-      },
-      {
-        "k": "bar_stations",
-        "key": "bar_stations",
-        "label": "How many bar stations can you supply?",
+        "k": "counters",
+        "key": "counters",
+        "label": "How many counters or stations can you supply?",
         "type": "NUMERIC",
         "req": true,
-        "screen": "bar_setup",
+        "screen": "setup",
         "form": "number"
       },
       {
-        "k": "bartenders",
-        "key": "bartenders",
-        "label": "How many bartenders can you provide?",
+        "k": "staff",
+        "key": "staff",
+        "label": "How many staff can you provide?",
         "type": "NUMERIC",
         "req": true,
-        "screen": "bar_setup",
+        "screen": "setup",
         "form": "number"
       },
       {
         "k": "glassware_included",
         "key": "glassware_included",
-        "label": "Is glassware included?",
+        "label": "Are glasses, cups or bowls included?",
         "type": "BOOLEAN",
-        "screen": "bar_setup",
+        "screen": "setup",
         "form": "toggle"
       },
       {
@@ -126,15 +118,15 @@ export const TRADE_PROFILE_SCHEMA = {
         "key": "ice_included",
         "label": "Is ice included?",
         "type": "BOOLEAN",
-        "screen": "bar_setup",
+        "screen": "setup",
         "form": "toggle"
       },
       {
         "k": "garnish_included",
         "key": "garnish_included",
-        "label": "Is garnish included?",
+        "label": "Are garnishes or toppings included?",
         "type": "BOOLEAN",
-        "screen": "bar_setup",
+        "screen": "setup",
         "form": "toggle"
       },
       {
@@ -142,7 +134,7 @@ export const TRADE_PROFILE_SCHEMA = {
         "key": "setup_teardown_included",
         "label": "Is setup and teardown included?",
         "type": "BOOLEAN",
-        "screen": "bar_setup",
+        "screen": "setup",
         "form": "toggle"
       },
       {
@@ -150,17 +142,53 @@ export const TRADE_PROFILE_SCHEMA = {
         "key": "needs_water_power",
         "label": "Is a water supply or power source required at the venue?",
         "type": "BOOLEAN",
-        "screen": "bar_setup",
+        "screen": "setup",
         "form": "toggle"
+      },
+      {
+        "k": "own_cold_storage",
+        "key": "own_cold_storage",
+        "label": "Do you have your own cold storage facility?",
+        "type": "BOOLEAN",
+        "screen": "setup",
+        "form": "toggle"
+      },
+      {
+        "k": "freezer_capacity_litres",
+        "key": "freezer_capacity_litres",
+        "label": "Freezer capacity you can bring",
+        "type": "NUMERIC",
+        "screen": "setup",
+        "cond": "own_cold_storage is set",
+        "showWhen": {
+          "q": "own_cold_storage",
+          "truthy": true
+        },
+        "form": "number"
+      },
+      {
+        "k": "backup_power",
+        "key": "backup_power",
+        "label": "Do you bring backup power for the cold chain?",
+        "type": "BOOLEAN",
+        "screen": "setup",
+        "form": "toggle"
+      },
+      {
+        "k": "cold_hold_hours",
+        "key": "cold_hold_hours",
+        "label": "How long can you hold goods cold at a venue?",
+        "type": "NUMERIC",
+        "screen": "setup",
+        "form": "number"
       }
     ],
     "itemColumns": [
       {
         "k": "name",
         "key": "name",
-        "label": "Beverage name",
+        "label": "Item name",
         "type": "TEXT",
-        "req": true,
         "form": "text"
       },
       {
@@ -181,7 +209,7 @@ export const TRADE_PROFILE_SCHEMA = {
       {
         "k": "serving_size",
         "key": "serving_size",
-        "label": "Serving size",
+        "label": "Serving or unit size",
         "type": "TEXT",
         "req": true,
         "form": "text"
@@ -189,7 +217,7 @@ export const TRADE_PROFILE_SCHEMA = {
       {
         "k": "unit_price",
         "key": "unit_price",
-        "label": "Price per serving",
+        "label": "Price per serving or unit",
         "type": "BIGINT",
         "req": true,
         "form": "money"
@@ -197,7 +225,7 @@ export const TRADE_PROFILE_SCHEMA = {
       {
         "k": "min_order",
         "key": "min_order",
-        "label": "Minimum order (servings)",
+        "label": "Minimum order",
         "type": "NUMERIC",
         "form": "number"
       },
@@ -205,20 +233,20 @@ export const TRADE_PROFILE_SCHEMA = {
         "k": "allergens",
         "key": "allergens",
         "label": "Ingredients / allergens",
-        "type": "TEXT",
-        "form": "text"
+        "type": "TEXT[]",
+        "form": "multi"
       },
       {
         "k": "qty_available",
         "key": "qty_available",
-        "label": "Servings you can supply per event",
+        "label": "How many you can supply per event",
         "type": "NUMERIC",
         "form": "number"
       },
       {
         "k": "prep_minutes",
         "key": "prep_minutes",
-        "label": "Preparation / serving time (minutes)",
+        "label": "Preparation or serving time",
         "type": "NUMERIC",
         "form": "number"
       },
@@ -226,6 +254,13 @@ export const TRADE_PROFILE_SCHEMA = {
         "k": "staff_equipment_included",
         "key": "staff_equipment_included",
         "label": "Staff and equipment included in this price?",
+        "type": "BOOLEAN",
+        "form": "toggle"
+      },
+      {
+        "k": "needs_freezer",
+        "key": "needs_freezer",
+        "label": "Does this item need freezing or chilling at the venue?",
         "type": "BOOLEAN",
         "form": "toggle"
       }

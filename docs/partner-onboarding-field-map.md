@@ -6,10 +6,10 @@ Do not edit by hand — re-run the script after changing a trade spec.
 ## Totals
 
 - Trades: **34**
-- Onboarding questions (profile screens): **249**
-- Catalogue sub-form fields (repeating items): **242**
+- Onboarding questions (profile screens): **252**
+- Catalogue sub-form fields (repeating items): **243**
 - Required questions: **152**
-- Conditional questions: **11**
+- Conditional questions: **12**
 - Trades with a catalogue sub-form: **24**
 
 ## Where answers live today
@@ -36,34 +36,38 @@ onboarding answers.
 
 ### bar_beverages
 
-`bar_beverages.js` · 14 profile questions · 10 catalogue fields
+`bar_beverages.js` · 17 profile questions · 11 catalogue fields
 
 | Section | Field key | Label | Type | SQL | Req | Validation | Conditional |
 |---|---|---|---|---|---|---|---|
-| profile | `display_name` | What name should customers see for your bar or beverage service? | text | `TEXT` | yes | max 60 |  |
-| profile | `beverage_types` | What types of beverages do you provide? | multi | `TEXT[]` | yes | allows "other" |  |
-| profile | `supply_scope` | Do you supply drinks, serving staff, bar equipment, or a combination? | single | `TEXT` | yes |  |  |
+| profile | `display_name` | What name should customers see? | text | `TEXT` | yes | max 60 |  |
+| profile | `service_lines` | Which of these do you provide? | multi | `TEXT[]` | yes | allows "other" |  |
+| profile | `supply_scope` | Do you supply the goods, the staff, the equipment, or a combination? | single | `TEXT` | yes |  |  |
 | profile | `supply_scope_custom` | Describe your combination | textarea | `TEXT` |  | max 300 | supply_scope in [custom_combination] |
 | profile | `events` | Which events do you serve? | multi | `TEXT[]` | yes | allows "other" |  |
 | profile | `guests_per_hour` | How many guests can you serve per hour? | number | `NUMERIC` | yes | min 10, max 5000, unit guests / hour |  |
-| bar_setup | `mobile_bar` | Do you provide a mobile bar counter? | toggle | `BOOLEAN` |  |  |  |
-| bar_setup | `bar_stations` | How many bar stations can you supply? | number | `NUMERIC` | yes | min 0, max 50 |  |
-| bar_setup | `bartenders` | How many bartenders can you provide? | number | `NUMERIC` | yes | min 0, max 200 |  |
-| bar_setup | `glassware_included` | Is glassware included? | toggle | `BOOLEAN` |  |  |  |
-| bar_setup | `ice_included` | Is ice included? | toggle | `BOOLEAN` |  |  |  |
-| bar_setup | `garnish_included` | Is garnish included? | toggle | `BOOLEAN` |  |  |  |
-| bar_setup | `setup_teardown_included` | Is setup and teardown included? | toggle | `BOOLEAN` |  |  |  |
-| bar_setup | `needs_water_power` | Is a water supply or power source required at the venue? | toggle | `BOOLEAN` |  |  |  |
-| catalogue/beverages | `name` | Beverage name | text | `TEXT` | yes | max 60 |  |
-| catalogue/beverages | `category` | Category | single | `TEXT` | yes | allows "other" |  |
-| catalogue/beverages | `description` | Description | textarea | `TEXT` |  | max 200 |  |
-| catalogue/beverages | `serving_size` | Serving size | text | `TEXT` | yes | max 40 |  |
-| catalogue/beverages | `unit_price` | Price per serving | money | `BIGINT` | yes |  |  |
-| catalogue/beverages | `min_order` | Minimum order (servings) | number | `NUMERIC` |  | min 0, max 100000 |  |
-| catalogue/beverages | `allergens` | Ingredients / allergens | text | `TEXT` |  | max 160 |  |
-| catalogue/beverages | `qty_available` | Servings you can supply per event | number | `NUMERIC` |  | min 1, max 1000000 |  |
-| catalogue/beverages | `prep_minutes` | Preparation / serving time (minutes) | number | `NUMERIC` |  | min 0, max 240 |  |
-| catalogue/beverages | `staff_equipment_included` | Staff and equipment included in this price? | toggle | `BOOLEAN` |  |  |  |
+| setup | `counters` | How many counters or stations can you supply? | number | `NUMERIC` | yes | min 0, max 50 |  |
+| setup | `staff` | How many staff can you provide? | number | `NUMERIC` | yes | min 0, max 200 |  |
+| setup | `glassware_included` | Are glasses, cups or bowls included? | toggle | `BOOLEAN` |  |  |  |
+| setup | `ice_included` | Is ice included? | toggle | `BOOLEAN` |  |  |  |
+| setup | `garnish_included` | Are garnishes or toppings included? | toggle | `BOOLEAN` |  |  |  |
+| setup | `setup_teardown_included` | Is setup and teardown included? | toggle | `BOOLEAN` |  |  |  |
+| setup | `needs_water_power` | Is a water supply or power source required at the venue? | toggle | `BOOLEAN` |  |  |  |
+| setup | `own_cold_storage` | Do you have your own cold storage facility? | toggle | `BOOLEAN` |  |  |  |
+| setup | `freezer_capacity_litres` | Freezer capacity you can bring | number | `NUMERIC` |  | min 0, max 100000, unit litres | own_cold_storage is set |
+| setup | `backup_power` | Do you bring backup power for the cold chain? | toggle | `BOOLEAN` |  |  |  |
+| setup | `cold_hold_hours` | How long can you hold goods cold at a venue? | number | `NUMERIC` |  | min 0, max 72, unit hours |  |
+| catalogue/items | `name` | Item name | text | `TEXT` |  | max 60 |  |
+| catalogue/items | `category` | Category | single | `TEXT` | yes | allows "other" |  |
+| catalogue/items | `description` | Description | textarea | `TEXT` |  | max 200 |  |
+| catalogue/items | `serving_size` | Serving or unit size | text | `TEXT` | yes | max 40 |  |
+| catalogue/items | `unit_price` | Price per serving or unit | money | `BIGINT` | yes |  |  |
+| catalogue/items | `min_order` | Minimum order | number | `NUMERIC` |  | min 0, max 100000 |  |
+| catalogue/items | `allergens` | Ingredients / allergens | multi | `TEXT[]` |  | allows "other" |  |
+| catalogue/items | `qty_available` | How many you can supply per event | number | `NUMERIC` |  | min 1, max 1000000 |  |
+| catalogue/items | `prep_minutes` | Preparation or serving time | number | `NUMERIC` |  | min 0, max 240, unit minutes |  |
+| catalogue/items | `staff_equipment_included` | Staff and equipment included in this price? | toggle | `BOOLEAN` |  |  |  |
+| catalogue/items | `needs_freezer` | Does this item need freezing or chilling at the venue? | toggle | `BOOLEAN` |  |  |  |
 
 ### bridal_makeup_hair
 

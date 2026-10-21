@@ -22,7 +22,7 @@ export const SAMBRAMO_TRADE_REGISTRY_V2 = {
   E17:{pillar:'Events',internalName:'Sound & AV',customerLabel:'Sound & AV',boundary:'Audio, projection, LED/video and technical AV production; decorative lighting belongs to E13.'},
   E18:{pillar:'Events',internalName:'Valet Parking',customerLabel:'Valet Parking',boundary:'Managed parking/valet operation, attendants and key/damage process.'},
   E19:{pillar:'Events',internalName:'Security Services',customerLabel:'Security Services',boundary:'Security staffing, access control and crowd protection; not valet or guest registration.'},
-  E20:{pillar:'Events',internalName:'Bar & Beverages',customerLabel:'Bar & Beverages',boundary:'Beverage/mocktail/bar service; alcohol capability is conditional on compliance.'},
+  E20:{pillar:'Events',internalName:'Beverages, Ice Cream & Cold Storage',customerLabel:'Beverages, Ice Cream & Cold Storage',boundary:'Non-alcoholic beverages, ice cream and the cold chain for both. Alcohol service is out of scope for this trade.'},
   E21:{pillar:'Events',internalName:'Guest Services',customerLabel:'Guest Services',boundary:'Ushers, registration, cloakroom/helpdesk and guest-support staffing.'},
   E22:{pillar:'Events',internalName:'Power & Cooling',customerLabel:'Power & Cooling',boundary:'Generators, distribution, cooling/heating and operators.'},
   E23:{pillar:'Events',internalName:'Safety & Facilities',customerLabel:'Safety & Facilities',boundary:'Toilets, first aid, barriers, waste and safety/facility equipment.'},

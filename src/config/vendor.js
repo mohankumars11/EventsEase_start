@@ -47,7 +47,7 @@ export const VENDOR_CATEGORIES = [
      trucks; a purohit is not an entertainer. Folding any of them into
      a neighbouring trade would broadcast their jobs to people who
      cannot do them, which is how partners learn to ignore alerts. */
-  'Bar & Beverages',
+  'Beverages, Ice Cream & Cold Storage',
   'Guest Services',
   'Power & Cooling',
   'Safety & Facilities',
@@ -434,7 +434,7 @@ export const TRADE_FOR_SERVICE = {
 
   // Drinks. A bar supplier holds a licence and carries stock; a caterer
   // generally does neither, which is why this is not 'Catering & Food'.
-  bar:            'Bar & Beverages',
+  bar:            'Beverages, Ice Cream & Cold Storage',
 
   // Performers. 'drum' already covered dhol; nadaswaram and shehnai are a
   // different tradition with different players, and a wedding that wants

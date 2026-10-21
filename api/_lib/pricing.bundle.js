@@ -14,7 +14,7 @@
 // forgotten regeneration is a broken build rather than a price that is
 // quietly out of date.
 //
-// inputs: 7740a92af4862351
+// inputs: fe426fe5431e71f5
 // src/data/servicePricing.js
 var SIZE_BANDS = [
   { upTo: 30, factor: 0.45 },
@@ -4565,7 +4565,7 @@ var TRADE_FOR_SERVICE = {
   nanny: "Guest Services",
   // Drinks. A bar supplier holds a licence and carries stock; a caterer
   // generally does neither, which is why this is not 'Catering & Food'.
-  bar: "Bar & Beverages",
+  bar: "Beverages, Ice Cream & Cold Storage",
   // Performers. 'drum' already covered dhol; nadaswaram and shehnai are a
   // different tradition with different players, and a wedding that wants
   // one will not accept the other.

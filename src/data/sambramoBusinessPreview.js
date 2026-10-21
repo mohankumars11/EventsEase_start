@@ -91,7 +91,7 @@ export const TRADE_PREVIEW_CONFIG = [
   trade('E19', 'Security Services', 'Events', 'HYBRID',
     [['SEC_BASIC', 'Basic Event Security'], ['SEC_WEDDING', 'Wedding Security'], ['SEC_CROWD', 'Crowd Control'], ['SEC_PREMIUM', 'Premium Security Team']],
     [F('guards', 'Guards', 'number'), F('supervisors', 'Supervisors', 'number'), F('shift_hours', 'Shift hours', 'number'), F('entry_points', 'Entry points', 'number')]),
-  trade('E20', 'Bar & Beverages', 'Events', 'HYBRID',
+  trade('E20', 'Beverages, Ice Cream & Cold Storage', 'Events', 'HYBRID',
     [['BAR_MOCKTAIL', 'Mocktail Package'], ['BAR_WELCOME', 'Welcome Drinks'], ['BAR_JUICE', 'Juice Package'], ['BAR_COUNTER', 'Live Beverage Counter'], ['BAR_NONALCOHOLIC', 'Non-Alcoholic Bar']],
     [F('menu', 'Menu'), F('guests', 'Guests', 'number'), F('servings', 'Servings / person', 'number'), F('bartenders', 'Bartenders', 'number'), F('compliance', 'Compliance status')],
     { sections: ['hero', 'offerings', 'menu', 'addons', 'compliance', 'service_area', 'availability', 'pricing_readiness'] }),

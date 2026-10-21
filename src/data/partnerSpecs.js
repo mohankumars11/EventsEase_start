@@ -902,11 +902,11 @@ export const SPECS_BY_TRADE = {
      the same change that creates them, rather than in a follow-up
      nobody schedules. */
 
-  /* ── Bar & Beverages ─────────────────────────────────────────────
+  /* ── Beverages, Ice Cream & Cold Storage ─────────────────────────────────────────────
      Licensing is the first question and the one that disqualifies. A
      mocktail counter and a licensed bar are different bookings, and
      sending a dry supplier a cocktail reception wastes both parties. */
-  'Bar & Beverages': [
+  'Beverages, Ice Cream & Cold Storage': [
     {
       id: 'licence',
       question: 'What can you serve?',

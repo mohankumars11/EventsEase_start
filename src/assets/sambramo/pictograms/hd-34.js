@@ -1,7 +1,7 @@
 // Sambramo HD 3D trade pictograms — 34 individually-addressable, trade-matched vector assets.
 // Each icon is a standalone 1024px SVG data URI. The artwork is intentionally bold, high-contrast and silhouette-led so every trade remains clear at small Android card sizes.
 export const SAMBRAMO_TRADES = [
-  'Anchor & MC','Bar & Beverages','Bridal Makeup & Hair','Cake & Desserts','Catering & Food',
+  'Anchor & MC','Beverages, Ice Cream & Cold Storage','Bridal Makeup & Hair','Cake & Desserts','Catering & Food',
   'DJ & Music','Decoration & Floral','End-to-End Event Logistics','Event Equipment Rental',
   'Event Lighting','Event Materials Supplier','Gifts & Favours','Guest Services',
   'Invitation & Printing','Live Entertainment','Loading & Unloading Crew',
