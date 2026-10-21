@@ -186,6 +186,7 @@ export default function AddItemFlow(props) {
         trade={trade}
         vendorId={props.vendorId}
         editing={props.editing}
+        initialStep={props.editing ? 'review' : null}
         onAdd={props.onAdd}
         onUpdate={props.onUpdate}
         onClose={props.onClose}
@@ -214,6 +215,18 @@ export default function AddItemFlow(props) {
         trade={trade}
         vendorId={props.vendorId}
         editing={props.editing}
+        /* -- Edit lands on the review, not on step one ---------------
+           A partner editing a listing they had already submitted was put
+           back at "About your service", ten screens from the thing they
+           wanted to change, and read it as being sent to a different
+           form. The review screen shows every section with an Edit
+           beside it and Submit underneath -- the screen that was asked
+           for.
+
+           Safe for an incomplete listing: the flow clamps a requested
+           step back to the first unfinished one, so this cannot skip a
+           gap. */
+        initialStep={props.editing ? 'review' : null}
         onAdd={props.onAdd}
         onUpdate={props.onUpdate}
         onClose={props.onClose}

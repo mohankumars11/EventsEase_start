@@ -14,6 +14,7 @@
  * If step 3 fails the partner stays here with the reason. Until then the
  * answers live in a local draft, so closing the app loses nothing.
  */
+import ResubmitNotice from '../listing/ResubmitNotice'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'motion/react'
@@ -310,6 +311,8 @@ export default function AnchorOnboardingFlow({
                 className="mb-2 text-center text-[12.5px] font-bold text-rose-600">{submitError || missing}</motion.p>
             )}
           </AnimatePresence>
+          {/* At the button, where the decision is made. See ResubmitNotice. */}
+          {isLast && editing && <ResubmitNotice status={editing.review_status} />}
           <motion.button type="button" onClick={next} disabled={busy} whileTap={{ scale: 0.98 }}
             className={`flex h-[54px] w-full items-center justify-center gap-2 rounded-full text-[15.5px] font-extrabold text-white transition-all ${
               canNext ? (isLast ? 'bg-gradient-to-r from-forest-600 to-emerald-500 shadow-[0_10px_24px_-10px_rgba(18,105,76,0.8)]' : 'bg-gradient-to-r from-plum-700 to-fuchsia-600 shadow-[0_10px_24px_-10px_rgba(91,33,182,0.8)]') : 'bg-ink/20'
