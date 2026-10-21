@@ -398,7 +398,8 @@ export default function ListingOnboardingFlow({
               {here.id === 'compliance' && <ComplianceStage config={config} answers={a.answers} vendorId={vendorId} />}
               {here.id === 'booking' && <BookingStage value={a.booking} set={put('booking')} />}
               {here.id === 'payout' && <PayoutStage status={payout} vendorId={embedded ? null : vendorId} />}
-              {!catering && here.id === 'review' && <ReviewStage config={config} a={a} done={done} stages={STAGES} go={go} fee={fee} suggested={suggested} />}
+              {!catering && here.id === 'review' && <ReviewStage config={config} a={a} done={done} stages={STAGES} go={go} fee={fee} suggested={suggested}
+                reviewing={editing?.review_status === 'under_review'} />}
             </motion.div>
           </AnimatePresence>
         </div>
@@ -427,7 +428,7 @@ export default function ListingOnboardingFlow({
 }
 
 /* ── Review: every section with Edit, a customer preview, and what is left ── */
-function ReviewStage({ config, a, done, stages, go, fee, suggested }) {
+function ReviewStage({ config, a, done, stages, go, fee, suggested, reviewing = false }) {
   const items = (a.catalogue ?? []).slice(0, 4)
   const pkgs = a.packages?.length ? a.packages : suggested
   /* The partner's own rate, not a fee-inflated customer price.
@@ -444,6 +445,24 @@ function ReviewStage({ config, a, done, stages, go, fee, suggested }) {
   return (
     <>
       <SectionTitle title="Review & submit" sub="Your listing goes live once Sambramo approves it. Prices are protected for 15 days after that." />
+
+      {/* ── What resubmitting actually does ──────────────────────────
+          Editing during a review is allowed, and it is safe: each
+          submit writes a NEW version and archives the one in the
+          queue, so nobody can approve something you have since
+          changed. What the partner could not know is that it also
+          sends the read back to the start — so they are told, here,
+          before they press the button rather than after. */}
+      {reviewing && (
+        <div className="mt-3 rounded-2xl bg-amber-50 p-3 ring-1 ring-amber-200">
+          <p className="text-[12.5px] font-extrabold text-amber-900">This listing is being read right now</p>
+          <p className="mt-1 text-[12px] leading-snug text-amber-900/80">
+            You can change anything you like. Sending it again replaces what we are
+            reading and starts the 24-hour read afresh — so if it is nearly done, it
+            may be quicker to wait and change it after.
+          </p>
+        </div>
+      )}
       <div className="rounded-[22px] bg-gradient-to-br from-plum-700 to-plum-950 p-4 text-white">
         <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-plum-200">Your listing</p>
         <p className="mt-1.5 text-[19px] font-extrabold">{a.basics.display_name || 'Your service'}</p>

@@ -167,7 +167,25 @@ function VersionCard({ v, cfg, onDone }) {
     setBusy(true); setErr('')
     const { error } = await supabase.rpc('review_sambramo_listing_version', { p_version_id: v.id, p_decision: decision, p_note: note.trim() || null })
     setBusy(false)
-    if (error) setErr(error.message); else onDone()
+    if (error) {
+      /* ── The partner edited while this was open ─────────────────
+         Editing during a review is allowed and is safe: a submit
+         archives the version in the queue and writes a new one, and
+         the RPC refuses to act on an archived one. That refusal is
+         the system working, but it arrived here as a raw SQL string
+         on a screen that had just shown the operator a listing. It
+         now says what happened and sends them back to a queue that
+         holds the version the partner actually wants read. */
+      if (/not waiting for review/i.test(error.message ?? '')) {
+        setErr('The partner changed this listing while you had it open, so this version '
+          + 'has been replaced. Nothing was approved. Their new version is in the queue.')
+        onDone?.()
+        return
+      }
+      setErr(error.message)
+      return
+    }
+    onDone()
   }
 
   return (
