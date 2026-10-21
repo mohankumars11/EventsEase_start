@@ -433,7 +433,10 @@ try {
     const res = join(ROOT, 'android', 'app', 'src', APPS[app].dir, 'res')
     console.log(`\n  ${app}`)
 
-    for (const d of LAUNCHER) {
+    /* The partner launcher is the mascot artwork now, rendered by
+       scripts/render-partner-icon.mjs. Writing the wordmark tile here
+       as well would silently put the old icon back on the next run. */
+    if (app !== 'partner') for (const d of LAUNCHER) {
       await shoot(iconPage({ size: d.px, app, shape: 'square', safeRatio: 0.80 }),
         d.px, d.px, join(res, d.dir, 'ic_launcher.png')); n++
       await shoot(iconPage({ size: d.px, app, shape: 'round', safeRatio: 0.62 }),
@@ -442,7 +445,7 @@ try {
       await shoot(iconPage({ size: d.fg, app, shape: 'adaptive', safeRatio: 0.56 }),
         d.fg, d.fg, join(res, d.dir, 'ic_launcher_foreground.png')); n++
     }
-    console.log(`    launcher   ${LAUNCHER.length * 3} files`)
+    console.log(app === 'partner' ? '    launcher   skipped (render-partner-icon.mjs)' : `    launcher   ${LAUNCHER.length * 3} files`)
 
     for (const s of SPLASH) {
       await shoot(splashPage({ w: s.w, h: s.h, app }), s.w, s.h,
