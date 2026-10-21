@@ -1,15 +1,69 @@
-.splash-ground {
+/* ══════════════════════════════════════════════════════════════════════
+   THE SPLASH
+   ══════════════════════════════════════════════════════════════════════
+
+   Sizes are in px and vw, never rem. Nothing here depends on the root
+   font-size: this paints before the app's own type scale has
+   necessarily settled, and a splash rendering at the wrong size is the
+   first thing anybody sees.
+
+   This file was rewritten whole after a surgical edit left an orphaned
+   declaration block in it. CSS error recovery swallowed every rule from
+   that point on, so .app-splash-wordmark (declared above the damage) worked
+   while .app-splash-tagline (below it) did not exist in the CSSOM at all —
+   which is why the tagline rendered at 6px in the corner and no
+   font-size rule could be found matching it.
+   ══════════════════════════════════════════════════════════════════════ */
+
+.app-splash {
   overflow: hidden;
   isolation: isolate;
-  background: #2A085C !important;
+  /* ── Why this is #5B21A8 and not #2A085C ──────────────────────────
+     Measured, because "a bit lighter" is not a colour:
+
+       #2A085C   1.44% luminance   white 16.3:1   near-black
+       #5B21A8   6.14% luminance   white  9.4:1   unmistakably purple
+       Zomato    19.3% luminance   white  4.3:1   (for reference)
+       Uber      0.00% luminance   white 21.0:1   (for reference)
+
+     The old ground sat at 1.44% — four times darker than this, and
+     close enough to black that it read as darkness rather than as the
+     brand's colour. What makes a wordmark look lit on Zomato, Blinkit
+     and Rapido is a SATURATED ground, not a dark one: the eye reads the
+     colour first and the white type sits on top of it.
+
+     #5B21A8 is the brand's lighter amethyst, four times brighter than
+     what was here, and white on it is still 9.4:1 — comfortably past
+     AAA (7:1). Going further to #6D28D9 is 7.1:1, which only just
+     clears it and starts reading as a UI accent rather than a royal.
+
+     Flat, with no gradient or vignette: all four references are flat,
+     and a gradient under a wordmark is the thing that dates a splash. */
+  background: #5B21A8 !important;
   background-image: none !important;
   opacity: 1;
-  transition: opacity 220ms ease;
+  transition: opacity 260ms ease;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  /* Optically centred, not mathematically. A lockup at exactly 50%
+     reads as low, which is why both reference splashes sit a little
+     above the middle. */
+  transform: translateY(-3.5vh);
 }
 
-.splash-ground.splash-is-leaving { opacity: 0; }
+.app-splash.app-splash-is-leaving { opacity: 0; }
 
-.splash-wordmark {
+/* ── The name, in the brand's own face ────────────────────────────────
+
+   This was Manrope 900. Manrope is the UI face; the brand face is
+   'Sambramo Display', and it is what the wordmark is set in everywhere
+   else — the Jobs header, the tab chip, the auth panels. A splash in a
+   different typeface means the first sighting of the name and every
+   later one are two different objects.
+
+   Same stack as .brand-wordmark-sans, deliberately repeated rather than
+   @applied: this ships with the splash and must not wait on the
+   Tailwind layer to resolve a utility. */
+.app-splash-wordmark {
   position: relative;
   z-index: 2;
   display: flex;
@@ -17,36 +71,124 @@
   justify-content: center;
   width: min(88vw, 760px);
   color: #fff;
-  font-family: Manrope, Inter, system-ui, sans-serif;
-  font-size: clamp(2.65rem, 10.8vw, 5.2rem);
+  font-family: 'Sambramo Display', 'Arial Black', Manrope, system-ui, sans-serif;
+  font-weight: 400;
+  font-size: clamp(40px, 10.2vw, 80px);
   line-height: 1;
-  font-weight: 900;
-  letter-spacing: .045em;
+  letter-spacing: .035em;
   text-align: center;
   white-space: nowrap;
-  text-shadow: 0 0 1px rgba(255,255,255,.9), 0 5px 24px rgba(255,255,255,.08);
 }
 
-.splash-wordmark span {
+.app-splash-wordmark span {
   display: inline-block;
   opacity: 0;
-  transform: translateY(22px) scale(.72);
-  filter: blur(5px);
-  animation: splash-letter-in 420ms cubic-bezier(.16,1,.3,1) forwards;
-  animation-delay: calc(var(--i) * 105ms + 70ms);
+  transform: translateY(26px) scale(.78);
+  filter: blur(6px);
+  animation: app-splash-letter-in 520ms cubic-bezier(.16, 1, .3, 1) forwards;
+  animation-delay: calc(var(--i) * 85ms + 90ms);
 }
 
-@keyframes splash-letter-in {
-  0% { opacity: 0; transform: translateY(22px) scale(.72); filter: blur(5px); }
-  65% { opacity: 1; transform: translateY(-2px) scale(1.035); filter: blur(0); }
+@keyframes app-splash-letter-in {
+  0%   { opacity: 0; transform: translateY(26px) scale(.78); filter: blur(6px); }
+  62%  { opacity: 1; transform: translateY(-2px) scale(1.03); filter: blur(0); }
   100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
 }
 
+/* ── The tagline ──────────────────────────────────────────────────────
+
+   Set the way the reference sets it: sentence case, ordinary weight,
+   sized against the wordmark, tight underneath so the two read as one
+   lockup — "India's Last Minute App" under blinkit.
+
+   An earlier attempt made it small spaced capitals. That is the
+   treatment both references use for the company signature at the BOTTOM
+   of the lockup, not for the product line. Capitals at 13px with .14em
+   tracking is a footnote; this sentence says what the app does and
+   should be read, not squinted at.
+
+   It starts at 950ms. The eighth letter lands at about 790ms, so it
+   arrives in the gap rather than competing with the name. That delay is
+   the point: two things animating together are two things nobody
+   reads. */
+.app-splash-tagline {
+  position: relative;
+  z-index: 2;
+  margin: clamp(8px, 2.2vw, 14px) 0 0;
+  padding: 0 24px;
+  color: rgba(255, 255, 255, .94);
+  font-family: Manrope, Inter, system-ui, sans-serif;
+  font-size: clamp(16px, 4.6vw, 25px);
+  font-weight: 500;
+  letter-spacing: -.005em;
+  line-height: 1.22;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(10px);
+  animation: app-splash-fade-up 620ms cubic-bezier(.16, 1, .3, 1) 950ms forwards;
+}
+
+@keyframes app-splash-fade-up {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── The loader ───────────────────────────────────────────────────────
+
+   Neither reference has one: Zomato and Blinkit show the lockup and
+   nothing else. Asked for one, so it is here — bottom edge, in last,
+   small. A spinner in the middle of a splash says "waiting"; this
+   screen is meant to say "arriving".
+
+   ── On the colour ────────────────────────────────────────────────────
+   Asked for a royal amethyst loading circle. Amethyst (#2A085C) is the
+   GROUND here, so an arc painted in it would be invisible, and a
+   spinner nobody can see is worse than no spinner. The arc runs the
+   light end of the same ramp — #C4A7FF, the amethyst used across the
+   app — on a faint white track. Unmistakably the brand purple, and
+   legible on the purple. On a light surface the same component should
+   take the deep end instead. */
+.app-splash-loader {
+  position: absolute;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + clamp(38px, 11vh, 86px));
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  opacity: 0;
+  animation: app-splash-fade-up 500ms ease 1250ms forwards;
+}
+
+.app-splash-ring {
+  width: 26px;
+  height: 26px;
+  border-radius: 9999px;
+  border: 2.5px solid rgba(255, 255, 255, .16);
+  border-top-color: #C4A7FF;
+  border-right-color: #A78BFA;
+  animation: app-splash-spin 780ms linear infinite;
+}
+
+@keyframes app-splash-spin {
+  to { transform: rotate(360deg); }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .splash-ground { transition: none; }
-  .splash-wordmark span { animation: none; opacity: 1; transform: none; filter: none; }
+  .app-splash { transition: none; }
+  .app-splash-wordmark span,
+  .app-splash-tagline,
+  .app-splash-loader {
+    animation: none;
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+  /* The ring keeps turning: it is the one piece of motion here that
+     carries meaning rather than decoration, and a frozen spinner reads
+     as a hung app. Slowed to a heartbeat rather than a strobe. */
+  .app-splash-ring { animation: app-splash-spin 2.4s linear infinite; }
 }
 
 @media (max-width: 360px) {
-  .splash-wordmark { font-size: 2.45rem; letter-spacing: .035em; }
+  .app-splash-wordmark { font-size: 38px; letter-spacing: .028em; }
+  .app-splash-tagline { font-size: 15px; }
 }

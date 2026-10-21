@@ -46,7 +46,7 @@
       The separate ic_launcher_background.xml files stay #2A085C: the icon
       is a tile in a launcher, not part of this handoff.
     -->
-    <color name="splash_background">#25034B</color>
+    <color name="splash_background">#5B21A8</color>
 
     <!--
       The glyph on the launch ground. White on both flavours, which is the

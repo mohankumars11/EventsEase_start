@@ -172,11 +172,10 @@ const config = {
     // start does not flash white — the same reasoning vite.config.js
     // gives for `background_color` in the PWA manifest.
     //
-    // #25034B rather than the brand's #2A085C: this is one link in the
-    // chain that ends at brand/splash-source.png, and every link matches
-    // the artwork rather than the nominal hex. See the long note in
-    // android/app/src/main/res/values/colors.xml.
-    backgroundColor: '#25034B',
+    // #5B21A8: the same purple the native launch screen and the in-app
+    // splash both paint. It was #25034B, matched to launch artwork the
+    // theme never actually draws — see the note in colors.xml.
+    backgroundColor: '#5B21A8',
     contentInset: 'always',
     // A pull-to-refresh gesture inside a WebView reloads the whole app
     // mid-booking, which loses the matching screen a customer is
@@ -187,8 +186,9 @@ const config = {
 
   android: {
     // Same value as the iOS block above, and as splash_background in
-    // android/app/src/main/res/values/colors.xml.
-    backgroundColor: '#25034B',
+    // android/app/src/main/res/values/colors.xml. All three are one
+    // colour on purpose: native launch, WebView, React splash.
+    backgroundColor: '#5B21A8',
     allowMixedContent: false,
     captureInput: true,
     webContentsDebuggingEnabled: false,
