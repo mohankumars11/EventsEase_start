@@ -8,14 +8,18 @@ const CARDS = [
     title: 'GROW BEYOND\nYOUR NEIGHBOURHOOD.',
     body: 'Your next customer could be one event away.',
     cta: 'Grow with SAMBRAMO',
-    className: 'bg-gradient-to-br from-yellow-300 via-amber-300 to-yellow-400 text-plum-950',
+    /* Was yellow. The brand ground is light royal amethyst now -- the
+       splash, the launch screen and the header chip are all #5B21A8 --
+       so this card starts there and lifts towards violet, which keeps
+       it distinct from the Build Your Profile card beside it. */
+    className: 'bg-gradient-to-br from-[#5B21A8] via-[#6D28D9] to-[#8B5CF6] text-white',
     icon: TrendingUp,
     accent: 'bg-plum-900/10',
   },
   {
     id: 'invite',
     eyebrow: 'KNOW SOMEONE GOOD?',
-    title: 'TRADE CHAMPION\n26.',
+    title: 'TRADE CHAMPION\n34.',
     body: 'Invite event professionals across 34 trades. Help grow the Sambramo partner network.',
     cta: 'Trade Champion 34',
     className: 'bg-gradient-to-br from-red-500 via-rose-500 to-orange-400 text-white',
@@ -28,7 +32,7 @@ const CARDS = [
     title: 'THINK BIG.',
     body: 'Build your name in Bengaluru today. Be ready for celebrations across India tomorrow.',
     cta: 'Build Your Profile',
-    className: 'bg-gradient-to-br from-violet-700 via-purple-700 to-fuchsia-600 text-white',
+    className: 'bg-gradient-to-br from-[#3B0F77] via-[#5B21A8] to-[#A21CAF] text-white',
     icon: MapPin,
     accent: 'bg-white/15',
   },
@@ -38,10 +42,10 @@ function CardArt({ id, Icon }) {
   if (id === 'grow') {
     return (
       <div aria-hidden="true" className="absolute right-3 top-7 h-20 w-20 opacity-95">
-        <div className="absolute bottom-1 left-1 h-10 w-10 rounded-xl bg-plum-800/90 rotate-[-8deg]" />
-        <div className="absolute bottom-1 left-12 h-16 w-9 rounded-xl bg-plum-700/90 rotate-[8deg]" />
-        <TrendingUp className="absolute right-0 top-0 h-12 w-12 text-fuchsia-600" strokeWidth={2.8} />
-        <div className="absolute bottom-0 right-0 h-6 w-6 rounded-full bg-fuchsia-600 ring-4 ring-yellow-200/70" />
+        <div className="absolute bottom-1 left-1 h-10 w-10 rounded-xl bg-white/25 rotate-[-8deg]" />
+        <div className="absolute bottom-1 left-12 h-16 w-9 rounded-xl bg-white/35 rotate-[8deg]" />
+        <TrendingUp className="absolute right-0 top-0 h-12 w-12 text-white" strokeWidth={2.8} />
+        <div className="absolute bottom-0 right-0 h-6 w-6 rounded-full bg-[#C4A7FF] ring-4 ring-white/25" />
       </div>
     )
   }
@@ -73,7 +77,6 @@ export default function PartnerGrowthCarousel({ onGrow, onInvite, onProfile }) {
   return (
     <section className="mb-4" aria-label="Your Sambramo growth">
       <div className="mb-2 flex items-end gap-2 px-0.5">
-        <Sparkles size={17} className="text-fuchsia-600" fill="currentColor" />
         <div>
           <p className="text-[14px] font-black uppercase tracking-[0.14em] text-plum-900">Your SAMBRAMO growth</p>
           <p className="text-[11px] font-semibold text-ink-mute">More events. More connections. More opportunities.</p>
@@ -104,7 +107,10 @@ export default function PartnerGrowthCarousel({ onGrow, onInvite, onProfile }) {
               <button
                 type="button"
                 onClick={() => actions[id]?.()}
-                className="mt-3 inline-flex min-h-[34px] items-center gap-1.5 rounded-full bg-plum-950 px-3.5 text-[10.5px] font-black text-white shadow-sm transition active:scale-[0.98]"
+                /* White on the purple cards. It was plum-950, the near-navy
+                   end of the ramp, which on a purple card is a dark hole
+                   rather than a button. */
+                className="mt-3 inline-flex min-h-[34px] items-center gap-1.5 rounded-full bg-white px-3.5 text-[10.5px] font-black text-[#3B0F77] shadow-sm transition active:scale-[0.98]"
               >
                 {cta}
                 <ArrowRight size={14} />

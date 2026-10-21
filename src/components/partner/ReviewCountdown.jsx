@@ -210,10 +210,16 @@ export default function ReviewCountdown({
        moment the review is decided — approved above, or changes
        requested — there is nothing to stop, because the element
        carrying it is gone. */
-    <section aria-label="Profile review status" className={`review-running-light mb-3 overflow-hidden rounded-[20px] border border-amber-200 bg-[#FFFCF4] px-3 py-3 text-[#17152B] shadow-[0_3px_12px_rgba(65,42,0,.035)] sm:px-4 sm:py-4 ${compact ? 'mb-0' : ''}`}>
+    /* Light amethyst, not yellow. The splash, the launch screen and the
+       header chip are all the brand's royal amethyst now, and a cream
+       and amber card in the middle of the Jobs tab was the one place a
+       partner met a different colour scheme. The tint is the palest
+       step of the same ramp, so the timer and the type stay readable on
+       it. */
+    <section aria-label="Profile review status" className={`review-running-light mb-3 overflow-hidden rounded-[20px] border border-[#DDD0FF] bg-[#F7F3FF] px-3 py-3 text-[#17152B] shadow-[0_3px_14px_rgba(91,33,168,.08)] sm:px-4 sm:py-4 ${compact ? 'mb-0' : ''}`}>
       <div className="flex items-start justify-between gap-2">
-        <p className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-[0.12em] text-amber-700"><Clock3 size={15} className="shrink-0" />With our team</p>
-        <span className="shrink-0 rounded-full bg-amber-100 px-2.5 py-1 text-[9px] font-black uppercase tracking-wide text-amber-800">Under review</span>
+        <p className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-[0.12em] text-[#5B21A8]"><Clock3 size={15} className="shrink-0" />With our team</p>
+        <span className="shrink-0 rounded-full bg-[#EDE4FF] px-2.5 py-1 text-[9px] font-black uppercase tracking-wide text-[#4A1A8F]">Under review</span>
       </div>
       <h2 className="mt-1.5 text-[21px] font-black leading-[1.04] tracking-[-0.045em] sm:text-[24px]">
         {overdue ? 'We need a little more time.' : 'We’re reviewing your profile'}
@@ -223,9 +229,9 @@ export default function ReviewCountdown({
       </p>
 
       <div className="mt-3 flex items-center justify-center gap-3 rounded-[17px] border border-slate-100 bg-white px-3 py-3 sm:gap-5 sm:py-4">
-        <div className="relative flex h-[66px] w-[66px] shrink-0 items-center justify-center rounded-full bg-amber-50 sm:h-[76px] sm:w-[76px]">
+        <div className="relative flex h-[66px] w-[66px] shrink-0 items-center justify-center rounded-full bg-[#F1EAFF] sm:h-[76px] sm:w-[76px]">
           <ReviewDial {...dial} label={null} size={66} />
-          <span className="pointer-events-none absolute inset-0 flex items-center justify-center"><Clock3 size={22} className="text-amber-600" strokeWidth={2} /></span>
+          <span className="pointer-events-none absolute inset-0 flex items-center justify-center"><Clock3 size={22} className="text-[#5B21A8]" strokeWidth={2} /></span>
         </div>
         <div className="min-w-0">
           <p className="whitespace-nowrap text-[29px] font-black leading-none tracking-[-0.045em] tabular-nums text-[#21124E] sm:text-[36px]">{timerText}</p>
@@ -233,8 +239,8 @@ export default function ReviewCountdown({
         </div>
       </div>
 
-      <div className="mt-2.5 flex items-start gap-2 rounded-[15px] border border-amber-100 bg-amber-50/70 px-3 py-2.5">
-        <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white text-amber-600"><Info size={15} /></span>
+      <div className="mt-2.5 flex items-start gap-2 rounded-[15px] border border-[#E7DDFF] bg-[#F1EAFF]/70 px-3 py-2.5">
+        <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white text-[#5B21A8]"><Info size={15} /></span>
         <p className="text-[11px] font-semibold leading-snug text-[#4E466A] sm:text-[12px]">
           {extendedReview
             ? <>We needed a little longer on yours. <strong>The timer above shows your current review window.</strong> Nothing more is needed from you.</>

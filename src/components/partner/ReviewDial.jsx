@@ -74,13 +74,13 @@ export default function ReviewDial({
         <circle
           cx={size / 2} cy={size / 2} r={r}
           fill="none" stroke="currentColor" strokeWidth={stroke}
-          className="text-amber-100"
+          className="text-[#E7DDFF]"
         />
         <circle
           cx={size / 2} cy={size / 2} r={r}
           fill="none" strokeWidth={stroke} strokeLinecap="round"
           stroke="currentColor"
-          className={`${over ? 'text-amber-500' : 'text-amber-400'} motion-safe:transition-[stroke-dashoffset] motion-safe:duration-700`}
+          className={`${over ? 'text-[#6D28D9]' : 'text-[#8B5CF6]'} motion-safe:transition-[stroke-dashoffset] motion-safe:duration-700`}
           strokeDasharray={circumference}
           strokeDashoffset={offset}
         />
@@ -93,7 +93,7 @@ export default function ReviewDial({
       <span
         aria-hidden="true"
         className={`absolute inset-1 rounded-full motion-safe:animate-pulse ${
-          over ? 'bg-amber-400/10' : 'bg-amber-300/10'
+          over ? 'bg-[#6D28D9]/10' : 'bg-[#8B5CF6]/10'
         }`}
       />
 

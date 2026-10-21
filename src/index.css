@@ -5215,13 +5215,13 @@
   padding: 2px;
   background: conic-gradient(
     from var(--sb-review-angle),
-    rgba(245, 158, 11, 0) 0deg,
-    rgba(245, 158, 11, 0) 232deg,
-    rgba(252, 211, 77, 0.85) 288deg,
-    #f59e0b 320deg,
+    rgba(139, 92, 246, 0) 0deg,
+    rgba(139, 92, 246, 0) 232deg,
+    rgba(196, 167, 255, 0.85) 288deg,
+    #8B5CF6 320deg,
     #ffffff 344deg,
-    #f59e0b 352deg,
-    rgba(245, 158, 11, 0) 360deg
+    #6D28D9 352deg,
+    rgba(139, 92, 246, 0) 360deg
   );
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
           mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
@@ -5239,13 +5239,13 @@
 @supports not (background: conic-gradient(from var(--sb-review-angle), red, blue)) {
   .review-running-light::before {
     background: conic-gradient(
-      rgba(245, 158, 11, 0) 0deg,
-      rgba(245, 158, 11, 0) 232deg,
-      rgba(252, 211, 77, 0.85) 288deg,
-      #f59e0b 320deg,
+      rgba(139, 92, 246, 0) 0deg,
+      rgba(139, 92, 246, 0) 232deg,
+      rgba(196, 167, 255, 0.85) 288deg,
+      #8B5CF6 320deg,
       #ffffff 344deg,
-      #f59e0b 352deg,
-      rgba(245, 158, 11, 0) 360deg
+      #6D28D9 352deg,
+      rgba(139, 92, 246, 0) 360deg
     );
     animation: sb-spin-layer 2.6s linear infinite;
   }
