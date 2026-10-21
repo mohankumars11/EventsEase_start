@@ -759,14 +759,19 @@ export const TRADE_PROFILE_SCHEMA = {
       {
         "id": "profile",
         "title": "Your decoration work",
-        "sub": "What you decorate and how."
+        "sub": "What you decorate, and in what style."
+      },
+      {
+        "id": "scale",
+        "title": "What you can take on",
+        "sub": "The size of job you can handle, and where."
       }
     ],
     "catalogue": {
       "key": "packages",
-      "title": "Your decoration packages",
-      "noun": "package",
-      "nounPlural": "packages"
+      "title": "Your decoration items & packages",
+      "noun": "item",
+      "nounPlural": "items"
     },
     "table": "partner_decoration_floral_profiles",
     "itemsTable": "partner_decoration_floral_items",
@@ -774,7 +779,7 @@ export const TRADE_PROFILE_SCHEMA = {
       {
         "k": "services",
         "key": "services",
-        "label": "What decoration services do you provide?",
+        "label": "What decoration work do you take on?",
         "type": "TEXT[]",
         "req": true,
         "screen": "profile",
@@ -790,6 +795,15 @@ export const TRADE_PROFILE_SCHEMA = {
         "form": "multi"
       },
       {
+        "k": "events",
+        "key": "events",
+        "label": "Which events do you decorate?",
+        "type": "TEXT[]",
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
+      },
+      {
         "k": "flowers",
         "key": "flowers",
         "label": "Do you use fresh flowers, artificial flowers or both?",
@@ -797,6 +811,47 @@ export const TRADE_PROFILE_SCHEMA = {
         "req": true,
         "screen": "profile",
         "form": "single"
+      },
+      {
+        "k": "flower_types",
+        "key": "flower_types",
+        "label": "Which flowers do you work with?",
+        "type": "TEXT[]",
+        "screen": "profile",
+        "cond": "flowers in [fresh|both]",
+        "showWhen": {
+          "q": "flowers",
+          "in": [
+            "fresh",
+            "both"
+          ]
+        },
+        "form": "multi"
+      },
+      {
+        "k": "flower_sourcing",
+        "key": "flower_sourcing",
+        "label": "Where do your flowers come from?",
+        "type": "TEXT",
+        "screen": "profile",
+        "cond": "flowers in [fresh|both]",
+        "showWhen": {
+          "q": "flowers",
+          "in": [
+            "fresh",
+            "both"
+          ]
+        },
+        "form": "single"
+      },
+      {
+        "k": "props",
+        "key": "props",
+        "label": "What do you build with?",
+        "type": "TEXT[]",
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "custom_designs",
@@ -813,45 +868,157 @@ export const TRADE_PROFILE_SCHEMA = {
         "type": "BOOLEAN",
         "screen": "profile",
         "form": "toggle"
+      },
+      {
+        "k": "site_visit",
+        "key": "site_visit",
+        "label": "Do you do a site visit before the event?",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
+      },
+      {
+        "k": "design_mockup",
+        "key": "design_mockup",
+        "label": "Do you share a design or mock-up before the day?",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
+      },
+      {
+        "k": "venues",
+        "key": "venues",
+        "label": "Which venues do you work in?",
+        "type": "TEXT[]",
+        "req": true,
+        "screen": "scale",
+        "form": "multi"
+      },
+      {
+        "k": "max_area_sqft",
+        "key": "max_area_sqft",
+        "label": "Largest area you can decorate",
+        "type": "NUMERIC",
+        "req": true,
+        "screen": "scale",
+        "form": "number"
+      },
+      {
+        "k": "max_stage_sqft",
+        "key": "max_stage_sqft",
+        "label": "Largest stage you can build",
+        "type": "NUMERIC",
+        "screen": "scale",
+        "form": "number"
+      },
+      {
+        "k": "max_height_ft",
+        "key": "max_height_ft",
+        "label": "Tallest structure you can put up",
+        "type": "NUMERIC",
+        "screen": "scale",
+        "form": "number"
+      },
+      {
+        "k": "install_hours_before",
+        "key": "install_hours_before",
+        "label": "How long before the event do you need the venue?",
+        "type": "NUMERIC",
+        "req": true,
+        "screen": "scale",
+        "form": "number"
+      },
+      {
+        "k": "overnight_install",
+        "key": "overnight_install",
+        "label": "Can you install overnight?",
+        "type": "BOOLEAN",
+        "screen": "scale",
+        "form": "toggle"
+      },
+      {
+        "k": "same_day_turnaround",
+        "key": "same_day_turnaround",
+        "label": "Can you set up and clear on the same day?",
+        "type": "BOOLEAN",
+        "screen": "scale",
+        "form": "toggle"
+      },
+      {
+        "k": "access_needs",
+        "key": "access_needs",
+        "label": "What do you need at the venue?",
+        "type": "TEXT[]",
+        "screen": "scale",
+        "form": "multi"
+      },
+      {
+        "k": "travel_radius_km",
+        "key": "travel_radius_km",
+        "label": "How far do you travel?",
+        "type": "NUMERIC",
+        "screen": "scale",
+        "form": "number"
+      },
+      {
+        "k": "outstation",
+        "key": "outstation",
+        "label": "Do you take outstation and destination events?",
+        "type": "BOOLEAN",
+        "screen": "scale",
+        "form": "toggle"
       }
     ],
     "itemColumns": [
       {
         "k": "name",
         "key": "name",
-        "label": "Package name",
+        "label": "Name",
+        "type": "TEXT",
+        "form": "text"
+      },
+      {
+        "k": "kind",
+        "key": "kind",
+        "label": "What is this?",
         "type": "TEXT",
         "req": true,
-        "form": "text"
+        "form": "single"
       },
       {
         "k": "areas",
         "key": "areas",
         "label": "Areas included",
         "type": "TEXT[]",
+        "form": "multi"
+      },
+      {
+        "k": "includes",
+        "key": "includes",
+        "label": "What the customer gets",
+        "type": "TEXT[]",
         "req": true,
         "form": "multi"
       },
       {
-        "k": "items",
-        "key": "items",
-        "label": "Items included",
-        "type": "TEXT",
-        "req": true,
-        "form": "textarea"
-      },
-      {
         "k": "flowers",
         "key": "flowers",
-        "label": "Flowers",
+        "label": "Flowers used",
         "type": "TEXT",
         "req": true,
         "form": "single"
       },
       {
-        "k": "stage_size",
-        "key": "stage_size",
-        "label": "Stage size covered",
+        "k": "flower_types",
+        "key": "flower_types",
+        "label": "Which flowers",
+        "type": "TEXT[]",
+        "form": "multi"
+      },
+      {
+        "k": "size",
+        "key": "size",
+        "label": "Size",
         "type": "JSONB",
         "form": "dimensions"
       },
@@ -865,10 +1032,25 @@ export const TRADE_PROFILE_SCHEMA = {
       {
         "k": "price",
         "key": "price",
-        "label": "Package price",
+        "label": "Price",
         "type": "BIGINT",
         "req": true,
         "form": "money"
+      },
+      {
+        "k": "price_unit",
+        "key": "price_unit",
+        "label": "Charged",
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
+      },
+      {
+        "k": "min_order",
+        "key": "min_order",
+        "label": "Minimum order",
+        "type": "NUMERIC",
+        "form": "number"
       },
       {
         "k": "setup_hours",
@@ -877,6 +1059,27 @@ export const TRADE_PROFILE_SCHEMA = {
         "type": "NUMERIC",
         "req": true,
         "form": "number"
+      },
+      {
+        "k": "crew_needed",
+        "key": "crew_needed",
+        "label": "Crew needed",
+        "type": "NUMERIC",
+        "form": "number"
+      },
+      {
+        "k": "lead_days",
+        "key": "lead_days",
+        "label": "Notice you need for this",
+        "type": "NUMERIC",
+        "form": "number"
+      },
+      {
+        "k": "dismantle_included",
+        "key": "dismantle_included",
+        "label": "Dismantling included in this price?",
+        "type": "BOOLEAN",
+        "form": "toggle"
       },
       {
         "k": "photos",

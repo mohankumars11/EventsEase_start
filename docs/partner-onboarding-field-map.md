@@ -6,10 +6,10 @@ Do not edit by hand — re-run the script after changing a trade spec.
 ## Totals
 
 - Trades: **34**
-- Onboarding questions (profile screens): **252**
-- Catalogue sub-form fields (repeating items): **243**
-- Required questions: **152**
-- Conditional questions: **12**
+- Onboarding questions (profile screens): **268**
+- Catalogue sub-form fields (repeating items): **250**
+- Required questions: **157**
+- Conditional questions: **16**
 - Trades with a catalogue sub-form: **24**
 
 ## Where answers live today
@@ -142,23 +142,46 @@ onboarding answers.
 
 ### decoration_floral
 
-`decoration_floral.js` · 5 profile questions · 9 catalogue fields
+`decoration_floral.js` · 21 profile questions · 16 catalogue fields
 
 | Section | Field key | Label | Type | SQL | Req | Validation | Conditional |
 |---|---|---|---|---|---|---|---|
-| profile | `services` | What decoration services do you provide? | multi | `TEXT[]` | yes | allows "other" |  |
+| profile | `services` | What decoration work do you take on? | multi | `TEXT[]` | yes | allows "other" |  |
 | profile | `themes` | Which themes and styles do you offer? | multi | `TEXT[]` | yes | allows "other" |  |
+| profile | `events` | Which events do you decorate? | multi | `TEXT[]` | yes | allows "other" |  |
 | profile | `flowers` | Do you use fresh flowers, artificial flowers or both? | single | `TEXT` | yes |  |  |
+| profile | `flower_types` | Which flowers do you work with? | multi | `TEXT[]` |  | allows "other" | flowers in [fresh\|both] |
+| profile | `flower_sourcing` | Where do your flowers come from? | single | `TEXT` |  |  | flowers in [fresh\|both] |
+| profile | `props` | What do you build with? | multi | `TEXT[]` | yes | allows "other" |  |
 | profile | `custom_designs` | Do you offer custom designs? | toggle | `BOOLEAN` |  |  |  |
 | profile | `setup_dismantle` | Do you handle setup and dismantling? | toggle | `BOOLEAN` |  |  |  |
-| catalogue/packages | `name` | Package name | text | `TEXT` | yes | max 60 |  |
-| catalogue/packages | `areas` | Areas included | multi | `TEXT[]` | yes | allows "other" |  |
-| catalogue/packages | `items` | Items included | textarea | `TEXT` | yes | max 400 |  |
-| catalogue/packages | `flowers` | Flowers | single | `TEXT` | yes |  |  |
-| catalogue/packages | `stage_size` | Stage size covered | dimensions | `JSONB` |  |  |  |
+| profile | `site_visit` | Do you do a site visit before the event? | toggle | `BOOLEAN` |  |  |  |
+| profile | `design_mockup` | Do you share a design or mock-up before the day? | toggle | `BOOLEAN` |  |  |  |
+| scale | `venues` | Which venues do you work in? | multi | `TEXT[]` | yes | allows "other" |  |
+| scale | `max_area_sqft` | Largest area you can decorate | number | `NUMERIC` | yes | min 100, max 500000, unit sq ft |  |
+| scale | `max_stage_sqft` | Largest stage you can build | number | `NUMERIC` |  | min 0, max 20000, unit sq ft |  |
+| scale | `max_height_ft` | Tallest structure you can put up | number | `NUMERIC` |  | min 0, max 200, unit ft |  |
+| scale | `install_hours_before` | How long before the event do you need the venue? | number | `NUMERIC` | yes | min 1, max 120, unit hours |  |
+| scale | `overnight_install` | Can you install overnight? | toggle | `BOOLEAN` |  |  |  |
+| scale | `same_day_turnaround` | Can you set up and clear on the same day? | toggle | `BOOLEAN` |  |  |  |
+| scale | `access_needs` | What do you need at the venue? | multi | `TEXT[]` |  | allows "other" |  |
+| scale | `travel_radius_km` | How far do you travel? | number | `NUMERIC` |  | min 0, max 2000, unit km |  |
+| scale | `outstation` | Do you take outstation and destination events? | toggle | `BOOLEAN` |  |  |  |
+| catalogue/packages | `name` | Name | text | `TEXT` |  | max 60 |  |
+| catalogue/packages | `kind` | What is this? | single | `TEXT` | yes | allows "other" |  |
+| catalogue/packages | `areas` | Areas included | multi | `TEXT[]` |  | allows "other" | kind in [full_package] |
+| catalogue/packages | `includes` | What the customer gets | multi | `TEXT[]` | yes | allows "other" |  |
+| catalogue/packages | `flowers` | Flowers used | single | `TEXT` | yes |  |  |
+| catalogue/packages | `flower_types` | Which flowers | multi | `TEXT[]` |  | allows "other" | flowers in [fresh\|mixed] |
+| catalogue/packages | `size` | Size | dimensions | `JSONB` |  |  |  |
 | catalogue/packages | `guest_capacity` | Suits up to | number | `NUMERIC` |  | min 10, max 100000, unit guests |  |
-| catalogue/packages | `price` | Package price | money | `BIGINT` | yes |  |  |
+| catalogue/packages | `price` | Price | money | `BIGINT` | yes |  |  |
+| catalogue/packages | `price_unit` | Charged | single | `TEXT` | yes |  |  |
+| catalogue/packages | `min_order` | Minimum order | number | `NUMERIC` |  | min 1, max 10000 |  |
 | catalogue/packages | `setup_hours` | Setup time | number | `NUMERIC` | yes | min 1, max 72, unit hours |  |
+| catalogue/packages | `crew_needed` | Crew needed | number | `NUMERIC` |  | min 1, max 200 |  |
+| catalogue/packages | `lead_days` | Notice you need for this | number | `NUMERIC` |  | min 0, max 90, unit days |  |
+| catalogue/packages | `dismantle_included` | Dismantling included in this price? | toggle | `BOOLEAN` |  |  |  |
 | catalogue/packages | `photos` | Photos of this setup | photos | `TEXT[]` |  | min 1, max 6 |  |
 
 ### dj_music
