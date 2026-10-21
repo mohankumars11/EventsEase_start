@@ -61,8 +61,29 @@ const CARDS = [
   },
 ]
 
-/* Where the flow goes when onboarding is done or skipped. */
-const NEXT = '/partner/location-permission'
+/* ── Where "Join as a Partner" goes: straight to sign-in ─────────────
+
+   It used to go to location permission, then location capture, then a
+   confirmation, then a city check, and only then to sign-in — seven
+   screens and a dozen taps before a partner could say yes.
+
+   Every partner app worth copying does the opposite. Uber Driver,
+   Rapido Captain and Porter Partner take the phone number first, because
+   signing up IS the commitment, and ask for city and location inside
+   onboarding where the reason is obvious. Swiggy and Zomato ask for
+   location up front only because their CUSTOMER apps need it to show
+   anything at all; a partner does not.
+
+   Nothing downstream needed those screens to run first: sign-in and
+   setup read nothing they stored, and every listing asks for its own
+   service location. What the city check did that is lost here is
+   recording interest from cities we are not in yet — said in the commit,
+   because it is a real trade. */
+const SIGN_IN = '/partner/login'
+
+/* Long enough to read a headline and its line beneath, short enough
+   that a partner who is not reading is not kept waiting. */
+const AUTO_ADVANCE_MS = 4200
 
 export default function PartnerOnboarding() {
   const navigate = useNavigate()
@@ -84,10 +105,27 @@ export default function PartnerOnboarding() {
     el.scrollTo({ left: i * el.clientWidth, behavior: reduced ? 'auto' : 'smooth' })
   }, [reduced])
 
-  /* The CTA advances, and on the last card it leaves. Both cards one and
-     three say "Join as a Partner", so the label cannot decide this --
-     position does. */
-  const onCta = () => (index >= CARDS.length - 1 ? navigate(NEXT) : goTo(index + 1))
+  /* ── What the painted button promises, it does ─────────────────────
+     Cards one and three say "Join as a Partner", and that now goes to
+     sign-in from wherever it is pressed — one tap, not three. Card two
+     says "See How It Works"; sending that to a sign-in form would make
+     the label a lie, so it moves on to the card that does the showing. */
+  const onCta = i => (CARDS[i].cta === 'See How It Works' ? goTo(i + 1) : navigate(SIGN_IN))
+
+  /* ── The cards move on their own ───────────────────────────────────
+     A partner had to tap three times to see three cards. They advance
+     every few seconds now, stop on the last (an intro that loops is one
+     nobody can finish reading), and pause for as long as a finger is on
+     the screen so a partner who is reading is not dragged off the card.
+
+     Under reduced motion they do not advance at all: that is the setting
+     saying do not move things for me, and swiping still works. */
+  const [held, setHeld] = useState(false)
+  useEffect(() => {
+    if (reduced || held || index >= CARDS.length - 1) return
+    const t = setTimeout(() => goTo(index + 1), AUTO_ADVANCE_MS)
+    return () => clearTimeout(t)
+  }, [index, held, reduced, goTo])
 
   /* Preload the next card so a swipe does not land on a blank slide.
      Only the neighbour: fetching all three at once on a cold start costs
@@ -100,8 +138,17 @@ export default function PartnerOnboarding() {
   }, [index])
 
   return (
-    <div className="native-screen relative bg-[#16012E]">
-      <div ref={railRef} onScroll={onScroll} className="native-rail">
+    /* #5B21A8 behind the artwork, not #16012E. That near-navy is what a
+       partner saw for the moment before each card painted, and it is the
+       colour the brand is moving away from. This is the same purple the
+       splash ends on, so the handover from splash to first card is one
+       continuous ground and the card fades in over it. */
+    <div className="native-screen relative bg-[#5B21A8]">
+      <div ref={railRef} onScroll={onScroll} className="native-rail"
+        onPointerDown={() => setHeld(true)}
+        onPointerUp={() => setHeld(false)}
+        onPointerCancel={() => setHeld(false)}
+        onPointerLeave={() => setHeld(false)}>
         {CARDS.map((c, i) => (
           <section
             key={c.id}
@@ -120,7 +167,7 @@ export default function PartnerOnboarding() {
               /* cover, centred. The aspect is within about a percent of
                  every target handset, so this crops a few pixels off the
                  sides and nothing that matters. */
-              className="absolute inset-0 h-full w-full select-none object-cover object-center"
+              className="partner-intro-card absolute inset-0 h-full w-full select-none object-cover object-center"
             />
 
             {/* Over the CTA drawn into the artwork. Transparent: the
@@ -128,8 +175,8 @@ export default function PartnerOnboarding() {
                 thing that makes it work. */}
             <button
               type="button"
-              onClick={onCta}
-              aria-label={i >= CARDS.length - 1 ? `${c.cta}, continue to location access` : c.cta}
+              onClick={() => onCta(i)}
+              aria-label={c.cta === 'See How It Works' ? `${c.cta}, next card` : `${c.cta}, continue to sign in`}
               className="absolute inset-x-[6%] bottom-[6.5%] h-[7.2%] rounded-full
                          focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
             />
@@ -138,14 +185,34 @@ export default function PartnerOnboarding() {
                 is never under the status bar on a notched device. */}
             <button
               type="button"
-              onClick={() => navigate(NEXT)}
-              aria-label="Skip onboarding and continue to location access"
+              /* Skip means "skip the introduction", so it goes where Join
+                 goes rather than into a location prompt the partner never
+                 asked for. */
+              onClick={() => navigate(SIGN_IN)}
+              aria-label="Skip the introduction and continue to sign in"
               className="safe-top absolute right-0 top-0 h-[7%] w-[30%]
                          focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
             />
           </section>
         ))}
       </div>
+
+      {/* ── How long until the next card ───────────────────────────────
+          The artwork paints its own dots, so this is not pagination — it
+          is the timer, a hairline at the very top that fills while a card
+          waits to move on. Without it the advance arrives as a surprise.
+          Nothing renders on the last card, which does not move. */}
+      {!reduced && index < CARDS.length - 1 && (
+        <div className="safe-top pointer-events-none absolute inset-x-0 top-0 z-10 px-4">
+          <div className="mt-1 h-[3px] overflow-hidden rounded-full bg-white/20">
+            <div
+              key={index}
+              className="partner-intro-timer h-full rounded-full bg-white"
+              style={{ animationDuration: `${AUTO_ADVANCE_MS}ms`, animationPlayState: held ? 'paused' : 'running' }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

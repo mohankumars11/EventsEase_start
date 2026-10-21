@@ -5259,3 +5259,24 @@
   .partner-wave { animation: none; }
   .review-running-light::before { animation: none; opacity: 0.55; }
 }
+
+/* ── The partner intro cards ──────────────────────────────────────────
+   The artwork fades in over the #5B21A8 ground rather than snapping on,
+   so the handover from the splash to the first card is one continuous
+   purple. The timer is a hairline that fills while a card waits to move
+   on; its duration is set inline from AUTO_ADVANCE_MS so the two cannot
+   drift apart. */
+@keyframes partner-intro-in { from { opacity: 0; } to { opacity: 1; } }
+.partner-intro-card { animation: partner-intro-in 420ms ease-out both; }
+
+@keyframes partner-intro-timer { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.partner-intro-timer {
+  transform-origin: left center;
+  animation-name: partner-intro-timer;
+  animation-timing-function: linear;
+  animation-fill-mode: both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .partner-intro-card { animation: none; }
+}
