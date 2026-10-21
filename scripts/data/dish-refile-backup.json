@@ -983,5 +983,335 @@
   "id": "SBM-MD-zunka-bhakar",
   "name": "Zunka Bhakar",
   "was": "ml_maharashtrian"
+ },
+ {
+  "id": "SBM-MD-agase-chutney",
+  "name": "Agase Chutney",
+  "was": "ml_north_karnataka"
+ },
+ {
+  "id": "SBM-MD-avial",
+  "name": "Avial",
+  "was": "ml_sadya"
+ },
+ {
+  "id": "SBM-MD-bai-mizo",
+  "name": "Bai (Mizo)",
+  "was": "gr_other"
+ },
+ {
+  "id": "SBM-MD-bajre-ki-roti",
+  "name": "Bajre Ki Roti",
+  "was": "ml_rajasthani"
+ },
+ {
+  "id": "SBM-MD-bamboo-shoot-fry",
+  "name": "Bamboo Shoot Fry",
+  "was": "gr_other"
+ },
+ {
+  "id": "SBM-MD-banana-chips-kerala",
+  "name": "Banana Chips (Kerala)",
+  "was": "ml_sadya"
+ },
+ {
+  "id": "SBM-MD-beans-thoran",
+  "name": "Beans Thoran",
+  "was": "ml_sadya"
+ },
+ {
+  "id": "SBM-MD-bikaneri-bhujia",
+  "name": "Bikaneri Bhujia",
+  "was": "ml_rajasthani"
+ },
+ {
+  "id": "SBM-MD-chak-hao-kheer",
+  "name": "Chak-hao Kheer",
+  "was": "gr_other"
+ },
+ {
+  "id": "SBM-MD-chicken-steak",
+  "name": "Chicken Steak",
+  "was": "gr_other"
+ },
+ {
+  "id": "SBM-MD-cottage-cheese-steak",
+  "name": "Cottage Cheese Steak",
+  "was": "gr_other"
+ },
+ {
+  "id": "SBM-MD-ennegayi-palya",
+  "name": "Ennegayi Palya",
+  "was": "ml_north_karnataka"
+ },
+ {
+  "id": "SBM-MD-eromba",
+  "name": "Eromba",
+  "was": "gr_other"
+ },
+ {
+  "id": "SBM-MD-fish-and-chips",
+  "name": "Fish and Chips",
+  "was": "gr_other"
+ },
+ {
+  "id": "SBM-MD-galho",
+  "name": "Galho",
+  "was": "gr_other"
+ },
+ {
+  "id": "SBM-MD-gatte-ki-sabzi",
+  "name": "Gatte Ki Sabzi",
+  "was": "ml_rajasthani"
+ },
+ {
+  "id": "SBM-MD-girmit",
+  "name": "Girmit",
+  "was": "ml_north_karnataka"
+ },
+ {
+  "id": "SBM-MD-grilled-chicken-with-herb-sauce",
+  "name": "Grilled Chicken with Herb Sauce",
+  "was": "gr_other"
+ },
+ {
+  "id": "SBM-MD-grilled-fish-with-lemon-butter",
+  "name": "Grilled Fish with Lemon Butter",
+  "was": "gr_other"
+ },
+ {
+  "id": "SBM-MD-grilled-vegetables",
+  "name": "Grilled Vegetables",
+  "was": "gr_other"
+ },
+ {
+  "id": "SBM-MD-gurellu-chutney",
+  "name": "Gurellu Chutney",
+  "was": "ml_north_karnataka"
+ },
+ {
+  "id": "SBM-MD-huggi",
+  "name": "Huggi",
+  "was": "ml_north_karnataka"
+ },
+ {
+  "id": "SBM-MD-jadoh",
+  "name": "Jadoh",
+  "was": "gr_other"
+ },
+ {
+  "id": "SBM-MD-jhunka",
+  "name": "Jhunka",
+  "was": "ml_north_karnataka"
+ },
+ {
+  "id": "SBM-MD-kalu-palya",
+  "name": "Kalu Palya",
+  "was": "ml_north_karnataka"
+ },
+ {
+  "id": "SBM-MD-kalu-saaru",
+  "name": "Kalu Saaru",
+  "was": "ml_north_karnataka"
+ },
+ {
+  "id": "SBM-MD-ker-sangri",
+  "name": "Ker Sangri",
+  "was": "ml_rajasthani"
+ },
+ {
+  "id": "SBM-MD-kerala-sambar",
+  "name": "Kerala Sambar",
+  "was": "ml_sadya"
+ },
+ {
+  "id": "SBM-MD-kichadi-kerala",
+  "name": "Kichadi (Kerala)",
+  "was": "ml_sadya"
+ },
+ {
+  "id": "SBM-MD-kootu-curry",
+  "name": "Kootu Curry",
+  "was": "ml_sadya"
+ },
+ {
+  "id": "SBM-MD-lamb-chops",
+  "name": "Lamb Chops",
+  "was": "gr_other"
+ },
+ {
+  "id": "SBM-MD-madali",
+  "name": "Madali",
+  "was": "ml_north_karnataka"
+ },
+ {
+  "id": "SBM-MD-mandakki-oggarane",
+  "name": "Mandakki Oggarane",
+  "was": "ml_north_karnataka"
+ },
+ {
+  "id": "SBM-MD-mango-pickle-kerala",
+  "name": "Mango Pickle (Kerala)",
+  "was": "ml_sadya"
+ },
+ {
+  "id": "SBM-MD-mashed-potatoes",
+  "name": "Mashed Potatoes",
+  "was": "gr_other"
+ },
+ {
+  "id": "SBM-MD-methi-dana-sabzi",
+  "name": "Methi Dana Sabzi",
+  "was": "ml_rajasthani"
+ },
+ {
+  "id": "SBM-MD-mirchi-bajji-north-karnataka",
+  "name": "Mirchi Bajji (North Karnataka)",
+  "was": "ml_north_karnataka"
+ },
+ {
+  "id": "SBM-MD-mirchi-vada-jodhpur",
+  "name": "Mirchi Vada (Jodhpur)",
+  "was": "ml_rajasthani"
+ },
+ {
+  "id": "SBM-MD-missi-roti-rajasthani",
+  "name": "Missi Roti (Rajasthani)",
+  "was": "ml_rajasthani"
+ },
+ {
+  "id": "SBM-MD-momos-northeast",
+  "name": "Momos (Northeast)",
+  "was": "gr_other"
+ },
+ {
+  "id": "SBM-MD-moru-curry",
+  "name": "Moru Curry",
+  "was": "ml_sadya"
+ },
+ {
+  "id": "SBM-MD-mui-borok",
+  "name": "Mui Borok",
+  "was": "gr_other"
+ },
+ {
+  "id": "SBM-MD-pachadi-pineapple",
+  "name": "Pachadi (Pineapple)",
+  "was": "ml_sadya"
+ },
+ {
+  "id": "SBM-MD-panchkuta",
+  "name": "Panchkuta",
+  "was": "ml_rajasthani"
+ },
+ {
+  "id": "SBM-MD-papad-ki-sabzi",
+  "name": "Papad Ki Sabzi",
+  "was": "ml_rajasthani"
+ },
+ {
+  "id": "SBM-MD-parippu-curry",
+  "name": "Parippu Curry",
+  "was": "ml_sadya"
+ },
+ {
+  "id": "SBM-MD-pika-pila",
+  "name": "Pika Pila",
+  "was": "gr_other"
+ },
+ {
+  "id": "SBM-MD-potato-wedges",
+  "name": "Potato Wedges",
+  "was": "gr_other"
+ },
+ {
+  "id": "SBM-MD-pulissery",
+  "name": "Pulissery",
+  "was": "ml_sadya"
+ },
+ {
+  "id": "SBM-MD-pundi-palle",
+  "name": "Pundi Palle",
+  "was": "ml_north_karnataka"
+ },
+ {
+  "id": "SBM-MD-pyaz-kachori",
+  "name": "Pyaz Kachori",
+  "was": "ml_rajasthani"
+ },
+ {
+  "id": "SBM-MD-rajasthani-kadhi",
+  "name": "Rajasthani Kadhi",
+  "was": "ml_rajasthani"
+ },
+ {
+  "id": "SBM-MD-roast-chicken",
+  "name": "Roast Chicken",
+  "was": "gr_other"
+ },
+ {
+  "id": "SBM-MD-sauteed-vegetables",
+  "name": "Sauteed Vegetables",
+  "was": "gr_other"
+ },
+ {
+  "id": "SBM-MD-sharkara-varatti",
+  "name": "Sharkara Varatti",
+  "was": "ml_sadya"
+ },
+ {
+  "id": "SBM-MD-shenga-chutney-pudi",
+  "name": "Shenga Chutney Pudi",
+  "was": "ml_north_karnataka"
+ },
+ {
+  "id": "SBM-MD-singju",
+  "name": "Singju",
+  "was": "gr_other"
+ },
+ {
+  "id": "SBM-MD-smoked-pork-with-axone",
+  "name": "Smoked Pork with Axone",
+  "was": "gr_other"
+ },
+ {
+  "id": "SBM-MD-som-tam",
+  "name": "Som Tam",
+  "was": "gr_other"
+ },
+ {
+  "id": "SBM-MD-stir-fried-vegetables",
+  "name": "Stir-Fried Vegetables",
+  "was": "gr_other"
+ },
+ {
+  "id": "SBM-MD-thai-basil-fried-rice",
+  "name": "Thai Basil Fried Rice",
+  "was": "gr_other"
+ },
+ {
+  "id": "SBM-MD-thai-jasmine-rice",
+  "name": "Thai Jasmine Rice",
+  "was": "gr_other"
+ },
+ {
+  "id": "SBM-MD-thoran-cabbage",
+  "name": "Thoran (Cabbage)",
+  "was": "ml_sadya"
+ },
+ {
+  "id": "SBM-MD-thukpa",
+  "name": "Thukpa",
+  "was": "gr_other"
+ },
+ {
+  "id": "SBM-MD-tom-kha-gai",
+  "name": "Tom Kha Gai",
+  "was": "gr_other"
+ },
+ {
+  "id": "SBM-MD-wahan-mosdeng",
+  "name": "Wahan Mosdeng",
+  "was": "gr_other"
  }
 ]

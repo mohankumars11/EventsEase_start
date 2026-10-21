@@ -170,4 +170,96 @@ export const BY_NAME = {
   'Masor Tenga (vegetarian)': 'sp_regional',
   'Khar': 'sp_regional',
   'Bassaru': 'sp_rasam',
+
+  /* ────────────────────────────────────────────────────────────────────
+     SECOND PASS
+     ────────────────────────────────────────────────────────────────────
+     The first pass named four ml_* categories and there are seventeen.
+     54 dishes were left behind in ml_sadya, ml_rajasthani,
+     ml_north_karnataka, ml_banana_leaf and ml_component.
+
+     A correction to what the first pass claimed: meal_components IS a
+     chip, called "Traditional Meal Components". So these were reachable,
+     under a chip that does not describe them. A caterer tapping Indian
+     Breads still did not find Luchi, which is the part that mattered,
+     but "no chip at all" was wrong.
+
+     The thalis, sadyas and ootas STAY in meal_components. A Kerala Sadya
+     is a whole banana-leaf meal, not a course, and that chip is exactly
+     where somebody selling one would look. */
+
+  'Kerala Sambar': 'gr_sambar',
+  'Parippu Curry': 'gr_dal',
+  'Kootu Curry': 'gr_dal',
+  'Moru Curry': 'gr_kerala',
+  'Pulissery': 'gr_kerala',
+  'Avial': 'gr_south',
+  'Thoran (Cabbage)': 'dr_poriyal',
+  'Beans Thoran': 'dr_poriyal',
+  'Kichadi (Kerala)': 'ac_pachadi',
+  'Pachadi (Pineapple)': 'ac_pachadi',
+  'Sharkara Varatti': 'ac_papad',
+  'Banana Chips (Kerala)': 'ac_papad',
+  'Mango Pickle (Kerala)': 'ac_pickle',
+
+  'Gatte Ki Sabzi': 'gr_vegetable',
+  'Ker Sangri': 'gr_vegetable',
+  'Panchkuta': 'gr_vegetable',
+  'Papad Ki Sabzi': 'gr_vegetable',
+  'Methi Dana Sabzi': 'gr_vegetable',
+  'Rajasthani Kadhi': 'ac_yogurt',
+  'Bajre Ki Roti': 'br_rotti',
+  'Missi Roti (Rajasthani)': 'br_chapati',
+  'Pyaz Kachori': 'st_crispy',
+  'Mirchi Vada (Jodhpur)': 'st_crispy',
+  'Bikaneri Bhujia': 'ac_other',
+  'Dal Baati Churma': 'ml_rajasthani',
+
+  'Ennegayi Palya': 'dr_poriyal',
+  'Kalu Palya': 'dr_poriyal',
+  'Jhunka': 'dr_regional_fry',
+  'Huggi': 'rc_khichdi',
+  'Girmit': 'ch_regional',
+  'Mandakki Oggarane': 'ch_regional',
+  'Mirchi Bajji (North Karnataka)': 'ch_bajji',
+  'Madali': 'ds_festival',
+  'Pundi Palle': 'bf_regional',
+  'Agase Chutney': 'ac_chutney',
+  'Gurellu Chutney': 'ac_chutney',
+  'Shenga Chutney Pudi': 'ac_podi',
+  'Kalu Saaru': 'sp_rasam',
+
+  /* gr_other is the right COURSE for a gravy and the wrong one for a
+     salad, a rice, a soup or a side. These are the ones that are not
+     gravies at all. */
+  'Som Tam': 'ac_salad',
+  'Singju': 'ac_salad',
+  'Eromba': 'ac_salad',
+  'Thai Jasmine Rice': 'rc_steamed',
+  'Thai Basil Fried Rice': 'rc_fried_rice',
+  'Jadoh': 'rc_regional',
+  'Galho': 'rc_regional',
+  'Chak-hao Kheer': 'ds_payasam',
+  'Thukpa': 'sp_asian',
+  'Tom Kha Gai': 'sp_asian',
+  'Bai (Mizo)': 'sp_vegetable',
+  'Momos (Northeast)': 'st_regional',
+  'Potato Wedges': 'st_crispy',
+  'Mashed Potatoes': 'ac_other',
+  'Grilled Vegetables': 'dr_other',
+  'Sauteed Vegetables': 'dr_other',
+  'Stir-Fried Vegetables': 'dr_other',
+  'Bamboo Shoot Fry': 'dr_other',
+  'Fish and Chips': 'st_fish',
+  'Chicken Steak': 'dr_chicken',
+  'Lamb Chops': 'dr_mutton',
+  'Roast Chicken': 'dr_chicken',
+  'Grilled Chicken with Herb Sauce': 'dr_chicken',
+  'Grilled Fish with Lemon Butter': 'dr_fish',
+  'Cottage Cheese Steak': 'dr_paneer',
+  'Smoked Pork with Axone': 'dr_other',
+  'Wahan Mosdeng': 'ac_salad',
+  'Pika Pila': 'ac_pickle',
+  'Mui Borok': 'ac_other',
+  'Dohneiiong': 'gr_other',
 }

@@ -78,7 +78,15 @@ const dishes = await all('sambramo_master_dishes', 'id,name,category_id')
    a sensible shelf is left alone even if a family rule would match it —
    this pass is for the ones nobody can reach, not a re-think of the
    whole catalogue. */
-const STUCK = ['ml_component', 'ml_bengali', 'ml_gujarati', 'ml_maharashtrian']
+/* Every meal_components category, not the four the first pass happened
+   to name — there are seventeen — plus gr_other, which is the right
+   course for a gravy and the wrong one for a salad or a soup. A dish is
+   only moved if the mapping names it or a family rule matches, so
+   widening the net here cannot sweep anything along with it. */
+const STUCK = ['ml_component', 'ml_bengali', 'ml_gujarati', 'ml_maharashtrian',
+  'ml_andhra', 'ml_banana_leaf', 'ml_festival', 'ml_karnataka', 'ml_north_indian',
+  'ml_north_karnataka', 'ml_other', 'ml_rajasthani', 'ml_sadya', 'ml_tamil',
+  'ml_telangana', 'ml_udupi', 'ml_wedding', 'gr_other']
 
 const moves = []
 const unknownTarget = []
@@ -112,7 +120,16 @@ for (const [k, names] of Object.entries(byCourse).sort((a, b) => b[1].length - a
 
 if (DRY) { console.log('\n--dry: nothing written'); process.exit(0) }
 
-writeFileSync(BACKUP, JSON.stringify(moves.map(m => ({ id: m.id, name: m.name, was: m.was })), null, 1))
+/* The backup ACCUMULATES. A second pass that overwrote the first would
+   quietly destroy the only record of where 197 dishes used to live, so
+   earlier entries are kept and the oldest `was` for an id wins — that is
+   the category it had before any of this started, which is what an undo
+   has to restore. */
+const prior = existsSync(BACKUP) ? JSON.parse(readFileSync(BACKUP, 'utf8')) : []
+const seenIds = new Set(prior.map(p => p.id))
+const merged = [...prior, ...moves.filter(m => !seenIds.has(m.id)).map(m => ({ id: m.id, name: m.name, was: m.was }))]
+writeFileSync(BACKUP, JSON.stringify(merged, null, 1))
+console.log(`backup now holds ${merged.length} rows (${prior.length} from earlier passes)`)
 console.log(`\nbackup written: ${BACKUP}`)
 let n = 0
 for (const m of moves) { await patch(m.id, m.to); if (++n % 25 === 0) console.log(`  ${n}/${moves.length}`) }
