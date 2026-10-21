@@ -286,7 +286,14 @@ export default function TradeCustomerPreviewScreen({
       }
       setMediaState({ loading: true, rows: [] })
       try {
-        const result = await fetchWork(vendor.id)
+        /* ── This listing's work, not the whole business's ────────
+           The preview showed every photograph the partner had ever
+           uploaded on every listing they own, so a decorator who also
+           shoots weddings saw one gallery presented three times as
+           though each trade had its own. Scoped to this service —
+           which still includes anything uploaded outside a listing,
+           because that is what an unscoped row means. */
+        const result = await fetchWork(vendor.id, service?.id ?? null)
         const rows = (result.rows || []).filter(row => ['photo', 'video'].includes(row.kind))
         const signed = await signedUrlsFor(rows.map(row => row.storage_path), 600)
         if (alive) setMediaState({
@@ -299,7 +306,7 @@ export default function TradeCustomerPreviewScreen({
     }
     load()
     return () => { alive = false }
-  }, [vendor?.id, suppliedMedia])
+  }, [vendor?.id, service?.id, suppliedMedia])
   const media = mediaState.rows
   const profileName = listing?.profile?.business_name || listing?.profile?.stage_name || listing?.profile?.name || vendor?.business_name || vendor?.name || 'Your business'
   const finalLive = isLive != null ? isLive : listing?.is_live === true

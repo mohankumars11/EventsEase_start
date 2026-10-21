@@ -47,17 +47,43 @@ const BUCKET = 'partner-uploads'
 const isMissingTable = err =>
   err?.code === '42P01' || /relation .* does not exist/i.test(err?.message ?? '')
 
-/** Everything a partner has uploaded, in the order they arranged it. */
-export async function fetchWork(vendorId) {
+/**
+ * Everything a partner has uploaded, in the order they arranged it.
+ *
+ * ── `serviceId` scopes it to one listing ────────────────────────────
+ *
+ * Without it this returns the whole body of work, which is what every
+ * caller wanted while a partner had one trade. With it, a listing gets
+ * its own uploads PLUS anything unscoped: a decorator's mandap photos
+ * on the decoration card, their general work everywhere, and their
+ * showreel nowhere near either.
+ *
+ * `service_id` arrived in migration 186. On a database where it has not
+ * been pasted the filter would fail as an unknown column, so the query
+ * falls back to the unscoped read rather than returning an empty
+ * gallery — a partner seeing no photographs would reasonably conclude
+ * the app had lost them.
+ */
+export async function fetchWork(vendorId, serviceId = null) {
   if (!vendorId) return { rows: [], unavailable: false }
 
-  const { data, error } = await supabase
+  const base = () => supabase
     .from('partner_work')
     .select('*')
     .eq('vendor_id', vendorId)
     .order('sort_order', { ascending: true })
     .order('created_at', { ascending: true })
 
+  if (serviceId) {
+    const { data, error } = await base().or(`service_id.is.null,service_id.eq.${serviceId}`)
+    if (!error) return { rows: data ?? [], unavailable: false }
+    if (!/service_id/.test(error?.message ?? '')) {
+      return { rows: [], unavailable: isMissingTable(error) }
+    }
+    /* 186 not applied here — fall through to the unscoped read. */
+  }
+
+  const { data, error } = await base()
   if (error) return { rows: [], unavailable: isMissingTable(error) }
   return { rows: data ?? [], unavailable: false }
 }
@@ -100,11 +126,15 @@ export async function signedUrlsFor(paths, seconds = 600) {
  * `sort_order` continues from what they already have, so adding to a
  * portfolio appends rather than shuffling it.
  */
-export async function addWork(vendorId, items, startAt = 0) {
+export async function addWork(vendorId, items, startAt = 0, serviceId = null) {
   if (!vendorId || !items?.length) return { added: 0, error: null }
 
   const rows = items.map((w, i) => ({
     vendor_id: vendorId,
+    /* Stamped only when the upload happened inside a listing. Undefined
+       rather than null when there is none, so the column is simply not
+       sent and this still works where 186 is unapplied. */
+    ...(serviceId ? { service_id: serviceId } : {}),
     kind: w.kind,
     storage_path: w.path ?? null,
     caption: w.caption?.trim() || null,

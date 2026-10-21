@@ -269,7 +269,11 @@ export default function ListingOnboardingFlow({
 
       const work = a.basics.work ?? []
       if (vendorId && work.length) {
-        const { error } = await addWork(vendorId, work)
+        /* Stamped with the listing it was uploaded inside, so the
+           customer preview for THIS trade shows this trade's work. An
+           upload made outside a listing stays unscoped and shows
+           everywhere. Migration 186. */
+        const { error } = await addWork(vendorId, work, 0, serviceId)
         if (error) toast.error('Your listing saved, but the photos did not. Add them again from Your work.')
       }
 
