@@ -9,7 +9,7 @@ import { Card, Sheet, SectionTitle } from '../../anchor/ui'
 import { MenuPreview } from './MenuBuilder'
 import { menuProblems, dishProblems, counterProblems, packageProblems, foodSafetyDone } from './rules'
 import { CATERING_STAGES } from './cateringFlow'
-import { useFoodTaxonomy, inr, customer, ADDON_UNIT_LABEL } from './options'
+import { useFoodTaxonomy, inr, partnerRate, ADDON_UNIT_LABEL } from './options'
 
 function Section({ id, title, ok, lines, missing, go }) {
   return (
@@ -61,16 +61,16 @@ export default function CateringReview({ a, done, go, fee, payout }) {
           `${dishes.filter(d => d.standalone?.on).length} sold separately · ${dishes.filter(d => d.diet === 'veg').length} vegetarian`]}
         missing={[...dishes.filter(d => dishProblems(d).length).map(d => `${d.name || 'Unnamed'}: ${dishProblems(d)[0]}`), ...unpricedDishes.map(d => `${d.name}: ${d.legacy?.needs_review ? 'review old value' : 'price'}`)].slice(0, 4)} />
       <Section id="cat_menus" title={`Menus · ${menus.length}`} ok={done.has('cat_menus')} go={go}
-        lines={menus.map(m => `${m.name} — ${m.price_model === 'quote' ? 'custom quote' : `${inr(customer(m.price_paise, fee))} ${m.price_model === 'per_person' ? 'per guest' : 'fixed'}`} · ${(m.items ?? []).length} dishes · min ${m.min_guests ?? '—'}`)}
+        lines={menus.map(m => `${m.name} — ${m.price_model === 'quote' ? 'custom quote' : `${inr(partnerRate(m.price_paise))} ${m.price_model === 'per_person' ? 'per guest' : 'fixed'}`} · ${(m.items ?? []).length} dishes · min ${m.min_guests ?? '—'}`)}
         missing={menus.filter(m => menuProblems(m, a.dishes).length).map(m => `${m.name || 'Untitled'}: ${menuProblems(m, a.dishes)[0]}`)} />
       <Section id="cat_counters" title={`Live counters · ${counters.length}`} ok={done.has('cat_counters')} go={go}
-        lines={counters.length ? counters.map(c => `${c.name} — ${c.price_model === 'quote' ? 'quote' : inr(customer(c.price_paise, fee))} · ${c.duration_hours ?? '—'} h · ${c.included_servings ?? '—'} servings`) : ['No counters (optional)']}
+        lines={counters.length ? counters.map(c => `${c.name} — ${c.price_model === 'quote' ? 'quote' : inr(partnerRate(c.price_paise))} · ${c.duration_hours ?? '—'} h · ${c.included_servings ?? '—'} servings`) : ['No counters (optional)']}
         missing={counters.filter(c => counterProblems(c).length).map(c => `${c.name}: ${counterProblems(c)[0]}`)} />
       <Section id="cat_packages" title={`Catering packages · ${packages.length}`} ok={done.has('cat_packages')} go={go}
-        lines={packages.length ? packages.map(p => `${p.name} — ${inr(customer(p.price_paise, fee))} ${p.price_model === 'per_guest' ? 'per guest' : 'fixed'} · ${p.guest_min}–${p.guest_max ?? '∞'} guests`) : ['No packages (optional)']}
+        lines={packages.length ? packages.map(p => `${p.name} — ${inr(partnerRate(p.price_paise))} ${p.price_model === 'per_guest' ? 'per guest' : 'fixed'} · ${p.guest_min}–${p.guest_max ?? '∞'} guests`) : ['No packages (optional)']}
         missing={packages.filter(p => packageProblems(p, a).length).map(p => `${p.name}: ${packageProblems(p, a)[0]}`)} />
       <Section id="cat_extras" title={`Extras · ${extras.length}`} ok={done.has('cat_extras')} go={go}
-        lines={extras.map(x => `${x.label} — ${inr(customer(x.take_home_paise, fee))} ${ADDON_UNIT_LABEL[x.unit] ?? ''}`)} />
+        lines={extras.map(x => `${x.label} — ${inr(partnerRate(x.take_home_paise))} ${ADDON_UNIT_LABEL[x.unit] ?? ''}`)} />
       <Section id="cat_pricing" title="Pricing & booking rules" ok={done.has('cat_pricing')} go={go}
         lines={[`Minimum billable guests: ${s.min_billable_guests ?? '—'}`, `Children: ${s.child_policy === 'per_menu' ? 'price per menu' : 'same as adults'}`,
           `Advance ${b.advance_pct ?? '—'}% · ${b.cancellation ?? '—'} cancellation · instant ${b.instant === false ? 'off' : 'on'}`]} />
@@ -86,10 +86,10 @@ export default function CateringReview({ a, done, go, fee, payout }) {
         {a.basics?.tagline && <p className="mb-3 text-[12.5px] text-ink/60">{a.basics.tagline}</p>}
         {packages.map(p => (
           <div key={p.key} className="mb-2 flex justify-between rounded-2xl bg-plum-50 p-3"><span className="text-[13.5px] font-extrabold">{p.name}</span>
-            <span className="text-[13.5px] font-extrabold">{inr(customer(p.price_paise, fee))}{p.price_model === 'per_guest' ? '/guest' : ''}</span></div>))}
+            <span className="text-[13.5px] font-extrabold">{inr(partnerRate(p.price_paise))}{p.price_model === 'per_guest' ? '/guest' : ''}</span></div>))}
         {menus.map(m => <div key={m.menu_key} className="mb-3"><MenuPreview menu={m} dishes={a.dishes ?? []} tax={tax} fee={fee} /></div>)}
         {counters.length > 0 && <><p className="mt-2 text-[12px] font-extrabold uppercase tracking-[0.12em] text-plum-600">Live counters</p>
-          {counters.map(c => <p key={c.counter_key} className="text-[13px]">{c.name} · {c.price_model === 'quote' ? 'on request' : inr(customer(c.price_paise, fee))}</p>)}</>}
+          {counters.map(c => <p key={c.counter_key} className="text-[13px]">{c.name} · {c.price_model === 'quote' ? 'on request' : inr(partnerRate(c.price_paise))}</p>)}</>}
       </Sheet>
       <Sheet open={ready} onOpenChange={o => !o && setReady(false)} title="Booking readiness">
         {checks.map(([l, okk]) => (

@@ -426,25 +426,35 @@ export default function ListingOnboardingFlow({
 function ReviewStage({ config, a, done, stages, go, fee, suggested }) {
   const items = (a.catalogue ?? []).slice(0, 4)
   const pkgs = a.packages?.length ? a.packages : suggested
+  /* The partner's own rate, not a fee-inflated customer price.
+     The pricing editor asks for one number and calls it what the partner
+     earns; a review screen that then showed a bigger figure under "what
+     customers see" re-introduced the markup the rest of the flow had
+     stopped mentioning, and left the partner unable to tell which of the
+     two numbers was theirs. */
   const from = [
-    ...Object.values(a.rules ?? {}).filter(r => r?.on && r.amount_paise > 0).map(r => (r.price_mode === 'customer' ? r.amount_paise : Math.round(r.amount_paise / (1 - fee) / 10) * 10)),
-    ...items.map(it => Math.round(itemPricePaise(config.catalogue, it.answers) / (1 - fee) / 10) * 10).filter(x => x > 0),
-    ...pkgs.map(p => Math.round(p.take_home_paise / (1 - fee) / 10) * 10),
+    ...Object.values(a.rules ?? {}).filter(r => r?.on && r.amount_paise > 0).map(r => r.amount_paise),
+    ...items.map(it => itemPricePaise(config.catalogue, it.answers)).filter(x => x > 0),
+    ...pkgs.map(p => p.take_home_paise),
   ].filter(x => x > 0)
   return (
     <>
       <SectionTitle title="Review & submit" sub="Your listing goes live once Sambramo approves it. Prices are protected for 15 days after that." />
       <div className="rounded-[22px] bg-gradient-to-br from-plum-700 to-plum-950 p-4 text-white">
-        <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-plum-200">What customers see</p>
+        <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-plum-200">Your listing</p>
         <p className="mt-1.5 text-[19px] font-extrabold">{a.basics.display_name || 'Your service'}</p>
         {a.basics.tagline && <p className="text-[12.5px] text-plum-100">{a.basics.tagline}</p>}
-        {from.length > 0 && <p className="mt-2 text-[14px] font-extrabold">From {inr(Math.min(...from))}</p>}
+        {from.length > 0 && (
+          <p className="mt-2 text-[14px] font-extrabold">
+            You earn from {inr(Math.min(...from))}
+          </p>
+        )}
         {items.length > 0 && (
           <div className="mt-3 space-y-1.5">
             {items.map(it => (
               <div key={it.item_key} className="flex justify-between rounded-xl bg-white/10 px-3 py-2 text-[12.5px]">
                 <span className="truncate font-bold">{itemName(config.catalogue, it.answers)}</span>
-                <span className="font-extrabold">{itemPricePaise(config.catalogue, it.answers) ? inr(Math.round(itemPricePaise(config.catalogue, it.answers) / (1 - fee) / 10) * 10) : 'On request'}</span>
+                <span className="font-extrabold">{itemPricePaise(config.catalogue, it.answers) ? inr(itemPricePaise(config.catalogue, it.answers)) : 'On request'}</span>
               </div>
             ))}
           </div>

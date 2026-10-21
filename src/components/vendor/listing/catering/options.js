@@ -91,4 +91,10 @@ export const slugKey = (prefix) => `${prefix}_${Date.now().toString(36)}${Math.r
 export const toR = p => (p === undefined || p === null || p === '' ? '' : String(Math.round(Number(p) / 100)))
 export const toP = r => (r === '' || r === undefined ? null : Math.round(Number(String(r).replace(/[^\d.]/g, '')) * 100) || null)
 export const inr = p => `₹${Math.round((Number(p) || 0) / 100).toLocaleString('en-IN')}`
-export const customer = (take, fee) => Math.round(Number(take || 0) / (1 - fee) / 10) * 10
+/* What the partner earns, which is the only price any onboarding screen
+   shows them. This used to gross the take-home up by the platform fee
+   and was called `customer`; eight catering screens then quoted a number
+   the partner never typed, next to the one they did, with nothing to say
+   which was theirs. The earnings screens still show the commission,
+   because that is money actually deducted and hiding it would be worse. */
+export const partnerRate = take => Math.round(Number(take || 0))

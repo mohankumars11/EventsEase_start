@@ -16,7 +16,7 @@ import { ALLERGEN_OPTIONS, allergenLabel } from '../../../../data/allergens'
 
 /* Undefined and [] are different answers and must look different. */
 const allergenState = v => allergenLabel(v ?? null).state
-import { MENU_DIETS, DIET_LABEL, EVENT_TYPES, INCLUDED_SERVICES, SERVICE_STYLES, useFoodTaxonomy, slugKey, toR, toP, inr, customer } from './options'
+import { MENU_DIETS, DIET_LABEL, EVENT_TYPES, INCLUDED_SERVICES, SERVICE_STYLES, useFoodTaxonomy, slugKey, toR, toP, inr, partnerRate } from './options'
 import { menuProblems, menusDone } from './rules'
 export { menuProblems, menusDone }
 
@@ -108,8 +108,8 @@ export function MenuPreview({ menu, dishes, tax, fee }) {
         <p className="mt-1 text-[19px] font-extrabold">{menu.name || 'Untitled menu'}</p>
         {menu.description && <p className="mt-0.5 text-[12.5px] text-plum-100">{menu.description}</p>}
         <p className="mt-2 text-[15px] font-extrabold">
-          {menu.price_model === 'per_person' && menu.price_paise ? `${inr(customer(menu.price_paise, fee))} per guest`
-            : menu.price_model === 'fixed' && menu.price_paise ? `${inr(customer(menu.price_paise, fee))} for up to ${menu.fixed_scope?.guests} guests` : 'Price on request'}
+          {menu.price_model === 'per_person' && menu.price_paise ? `${inr(partnerRate(menu.price_paise))} per guest`
+            : menu.price_model === 'fixed' && menu.price_paise ? `${inr(partnerRate(menu.price_paise))} for up to ${menu.fixed_scope?.guests} guests` : 'Price on request'}
         </p>
         <p className="text-[11.5px] text-plum-200">Minimum {menu.min_guests ?? '—'} guests{menu.lead_days ? ` · book ${menu.lead_days} days ahead` : ''}</p>
       </div>
@@ -121,7 +121,7 @@ export function MenuPreview({ menu, dishes, tax, fee }) {
               <div key={i.dish_key} className="flex items-start justify-between gap-2 py-1">
                 <div><p className="text-[13.5px] font-bold text-ink"><span className={`mr-1.5 inline-block h-2.5 w-2.5 rounded-sm border-2 ${d.diet === 'non_veg' || d.diet === 'egg' ? 'border-rose-600' : 'border-forest-600'}`} />{d.name}{i.choice_group ? <span className="ml-1 text-[11px] font-bold text-ink/45">({i.choice_group})</span> : null}</p>
                   {d.allergens?.length > 0 && <p className="text-[11px] text-ink/45">Contains: {d.allergens.join(', ')}</p>}</div>
-                {i.included === false && <span className="shrink-0 text-[12px] font-bold text-ink/60">+{inr(customer(i.extra_paise, fee))}/guest</span>}
+                {i.included === false && <span className="shrink-0 text-[12px] font-bold text-ink/60">+{inr(partnerRate(i.extra_paise))}/guest</span>}
               </div>) })}
           </div>
         ))}
@@ -293,7 +293,7 @@ export default function MenuBuilder({ a, put, fee, tried }) {
               <div className="min-w-0">
                 <p className="truncate text-[15px] font-extrabold text-ink">{m.name || 'Untitled menu'}</p>
                 <p className="text-[12px] font-bold text-ink/55">{MENU_DIETS.find(d => d[0] === m.diet)?.[1]}{m.cuisine_ids?.length ? ` · ${m.cuisine_ids.map(cname).slice(0, 2).join(', ')}` : ''} · {(m.items ?? []).length} dishes</p>
-                <p className="mt-1 text-[13px] font-extrabold text-ink">{m.price_model === 'quote' ? 'Custom quote' : m.price_paise ? `${inr(customer(m.price_paise, fee))} ${m.price_model === 'per_person' ? 'per guest' : 'fixed'}` : 'No price yet'}
+                <p className="mt-1 text-[13px] font-extrabold text-ink">{m.price_model === 'quote' ? 'Custom quote' : m.price_paise ? `${inr(partnerRate(m.price_paise))} ${m.price_model === 'per_person' ? 'per guest' : 'fixed'}` : 'No price yet'}
                   <span className="font-bold text-ink/50"> · min {m.min_guests ?? '—'} guests</span></p>
               </div>
               <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-extrabold ${m.status === 'archived' ? 'bg-ink/10 text-ink/60' : probs.length ? 'bg-amber-100 text-amber-800' : 'bg-forest-50 text-forest-700'}`}>

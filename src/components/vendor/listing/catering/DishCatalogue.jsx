@@ -14,7 +14,7 @@ import { Plus, Pencil, Archive, ArchiveRestore, Search, BookOpen, PenLine, Alert
 import { Card, Label, TextField, ChipRow, Segmented, Toggle, Sheet, SectionTitle } from '../../anchor/ui'
 import { supabase } from '../../../../lib/supabase'
 import WorkUpload from '../../WorkUpload'
-import { DIETS, DIET_LABEL, SERVING_UNITS, STANDALONE_UNITS, ALLERGENS, useFoodTaxonomy, slugKey, toR, toP, inr, customer } from './options'
+import { DIETS, DIET_LABEL, SERVING_UNITS, STANDALONE_UNITS, ALLERGENS, useFoodTaxonomy, slugKey, toR, toP, inr, partnerRate } from './options'
 import { dishProblems, dishesDone } from './rules'
 export { dishProblems, dishesDone }
 
@@ -291,7 +291,7 @@ export default function DishCatalogue({ a, put, fee, legacyDishes = [] }) {
             const probs = dishProblems(d)
             const status = d.legacy?.needs_review ? ['Review needed', 'text-amber-700']
               : probs.length ? [`Needs: ${probs[0].toLowerCase()}`, 'text-rose-600']
-              : d.standalone?.on ? [`${inr(customer(d.standalone.price_paise, fee))} ${STANDALONE_UNITS.find(u => u[0] === d.standalone.unit)?.[1].toLowerCase()}`, 'text-ink/60']
+              : d.standalone?.on ? [`${inr(partnerRate(d.standalone.price_paise))} ${STANDALONE_UNITS.find(u => u[0] === d.standalone.unit)?.[1].toLowerCase()}`, 'text-ink/60']
               : ['In menus only', 'text-ink/50']
             return (
               <Card key={d.item_key} className="mb-2">

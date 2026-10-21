@@ -12,7 +12,7 @@ import { useState } from 'react'
 import { motion } from 'motion/react'
 import { Plus, Pencil, Archive, ArchiveRestore, ChefHat, Package, Sparkles, AlertTriangle } from 'lucide-react'
 import { Card, Label, TextField, ChipRow, Segmented, Toggle, Sheet, SectionTitle, OptionCard } from '../../anchor/ui'
-import { COUNTER_TEMPLATES, COUNTER_PRICE_MODELS, EVENT_TYPES, INCLUDED_SERVICES, ADDON_TEMPLATES, ADDON_UNIT_LABEL, slugKey, toR, toP, inr, customer } from './options'
+import { COUNTER_TEMPLATES, COUNTER_PRICE_MODELS, EVENT_TYPES, INCLUDED_SERVICES, ADDON_TEMPLATES, ADDON_UNIT_LABEL, slugKey, toR, toP, inr, partnerRate } from './options'
 import { counterProblems, countersDone, packageProblems, packagesDone, extrasDone } from './rules'
 export { counterProblems, countersDone, packageProblems, packagesDone, extrasDone }
 
@@ -99,7 +99,7 @@ export function CounterBuilder({ a, put, fee }) {
           <div className="flex items-center gap-3">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-plum-50 text-plum-700"><ChefHat size={18} /></span>
             <div className="min-w-0 flex-1"><p className="truncate text-[14px] font-extrabold">{c.name}</p>
-              <p className="truncate text-[12px] font-bold text-ink/55">{c.price_model === 'quote' ? 'Custom quote' : c.price_paise ? `${inr(customer(c.price_paise, fee))} ${COUNTER_PRICE_MODELS.find(x => x[0] === c.price_model)?.[1].toLowerCase()}` : 'No price'}
+              <p className="truncate text-[12px] font-bold text-ink/55">{c.price_model === 'quote' ? 'Custom quote' : c.price_paise ? `${inr(partnerRate(c.price_paise))} ${COUNTER_PRICE_MODELS.find(x => x[0] === c.price_model)?.[1].toLowerCase()}` : 'No price'}
                 {c.duration_hours ? ` · ${c.duration_hours} h` : ''}{c.included_servings ? ` · ${c.included_servings} servings` : ''}</p>
               {p.length > 0 && c.status !== 'archived' && <p className="text-[11.5px] font-bold text-amber-700">Needs: {p[0]}</p>}</div>
             <button type="button" aria-label="Edit" onClick={() => { setOpen({ ...c }); setTried(false) }} className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f4f2f9] text-plum-700"><Pencil size={15} /></button>
@@ -178,7 +178,7 @@ export function PackageBuilder({ a, put, fee }) {
           <div className="flex items-center gap-3">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-plum-50 text-plum-700">{p.tier ? <Sparkles size={18} /> : <Package size={18} />}</span>
             <div className="min-w-0 flex-1"><p className="truncate text-[14px] font-extrabold">{p.name}{p.tier ? <span className="ml-1.5 rounded-full bg-plum-100 px-2 py-0.5 text-[10.5px] text-plum-700">{TIERS.find(t => t[0] === p.tier)?.[1]}</span> : null}</p>
-              <p className="truncate text-[12px] font-bold text-ink/55">{p.price_paise ? `${inr(customer(p.price_paise, fee))} ${p.price_model === 'per_guest' ? 'per guest' : 'fixed'}` : 'No price'} · {p.guest_min ?? '—'}–{p.guest_max ?? '∞'} guests · {(p.menu_keys ?? []).length} menus · {(p.counter_keys ?? []).length} counters</p>
+              <p className="truncate text-[12px] font-bold text-ink/55">{p.price_paise ? `${inr(partnerRate(p.price_paise))} ${p.price_model === 'per_guest' ? 'per guest' : 'fixed'}` : 'No price'} · {p.guest_min ?? '—'}–{p.guest_max ?? '∞'} guests · {(p.menu_keys ?? []).length} menus · {(p.counter_keys ?? []).length} counters</p>
               {q.length > 0 && p.status !== 'archived' && <p className="text-[11.5px] font-bold text-amber-700">Needs: {q[0]}</p>}</div>
             <button type="button" aria-label="Edit" onClick={() => { setOpen({ ...p }); setTried(false) }} className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f4f2f9] text-plum-700"><Pencil size={15} /></button>
             <button type="button" aria-label="Archive" onClick={() => put('packages')(packages.map(x => (x.key === p.key ? { ...x, status: x.status === 'archived' ? 'active' : 'archived' } : x)))}
