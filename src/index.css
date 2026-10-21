@@ -5144,3 +5144,118 @@
   text-transform:none;
   text-align:center;
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   THE WAVE, AND THE LIGHT THAT RUNS WHILE SOMEBODY IS READING
+   ══════════════════════════════════════════════════════════════════════
+
+   Two pieces of motion on the Jobs tab, both saying the same thing in
+   different places: this screen is live, somebody is at the other end.
+
+   Both stop completely under prefers-reduced-motion. A partner who has
+   asked for no motion has asked for no motion, and a slower wave is
+   still a wave. */
+
+@keyframes partner-wave {
+  /* Long still stretch, short wave. A hand that never stops waving is
+     a hand you stop seeing, and then it is just noise beside a name. */
+   0%, 72%, 100% { transform: rotate(0deg); }
+  76%            { transform: rotate(13deg); }
+  80%            { transform: rotate(-9deg); }
+  84%            { transform: rotate(13deg); }
+  88%            { transform: rotate(-7deg); }
+  92%            { transform: rotate(6deg); }
+}
+
+.partner-wave { animation: partner-wave 4.2s ease-in-out infinite; }
+
+/* ── The review card's running light ──────────────────────────────────
+
+   A border that travels, for exactly as long as a listing is being
+   read. The partner's complaint behind this is that a card which says
+   "we are reading it" looks identical whether anybody is or not — so
+   the light runs while the review is open and is simply not rendered
+   once it is decided.
+
+   Drawn as a conic gradient rotating behind the card, with the card's
+   own background sitting on top inset by the border width. That keeps
+   it to two painted layers and no JavaScript, which matters on the
+   phones this app runs on. */
+
+@property --sb-review-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes sb-review-run {
+  to { --sb-review-angle: 360deg; }
+}
+
+.review-running-light {
+  position: relative;
+}
+
+/* ── Only the ring is painted ─────────────────────────────────────────
+   The first version put the gradient on a ::before at z-index -1 with
+   `isolation: isolate`. Isolation makes the card its own stacking
+   context, which means a negative z-index child paints ABOVE the card's
+   own background rather than behind it — so the glow washed across the
+   whole card and sat under the text. Photographed, obvious, fixed.
+
+   The mask is the standard way to do this: paint the gradient over the
+   full box, then cut out everything except a 2px ring using two masks
+   composited with xor. Nothing can bleed inward because the inside is
+   literally not painted. */
+.review-running-light::before {
+  content: '';
+  position: absolute;
+  inset: -1.5px;
+  border-radius: inherit;
+  padding: 2px;
+  background: conic-gradient(
+    from var(--sb-review-angle),
+    rgba(245, 158, 11, 0) 0deg,
+    rgba(245, 158, 11, 0) 232deg,
+    rgba(252, 211, 77, 0.85) 288deg,
+    #f59e0b 320deg,
+    #ffffff 344deg,
+    #f59e0b 352deg,
+    rgba(245, 158, 11, 0) 360deg
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  animation: sb-review-run 2.6s linear infinite;
+  pointer-events: none;
+}
+
+/* Safari and older Chrome have no @property, so --sb-review-angle cannot
+   be animated there and the gradient would sit frozen at 0deg — a bright
+   wedge parked on one corner, which reads as a rendering fault rather
+   than a still card. Rotating the layer gets the same travel with a
+   transform, which every engine animates. */
+@supports not (background: conic-gradient(from var(--sb-review-angle), red, blue)) {
+  .review-running-light::before {
+    background: conic-gradient(
+      rgba(245, 158, 11, 0) 0deg,
+      rgba(245, 158, 11, 0) 232deg,
+      rgba(252, 211, 77, 0.85) 288deg,
+      #f59e0b 320deg,
+      #ffffff 344deg,
+      #f59e0b 352deg,
+      rgba(245, 158, 11, 0) 360deg
+    );
+    animation: sb-spin-layer 2.6s linear infinite;
+  }
+}
+
+@keyframes sb-spin-layer {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .partner-wave { animation: none; }
+  .review-running-light::before { animation: none; opacity: 0.55; }
+}

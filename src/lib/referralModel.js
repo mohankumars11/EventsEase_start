@@ -144,6 +144,6 @@ export function referralScreenMeta(view = {}, tradeName = null) {
   if (view.rid) {
     return { title: 'Referral', parent: view.trade ? { screen: 'referral', trade: view.trade } : { screen: 'referral' } }
   }
-  if (view.trade) return { title: tradeName ?? 'Trade Champion 26', parent: { screen: 'referral' } }
-  return { title: 'Trade Champion 26', parent: null }
+  if (view.trade) return { title: tradeName ?? 'Trade Champion 34', parent: { screen: 'referral' } }
+  return { title: 'Trade Champion 34', parent: null }
 }

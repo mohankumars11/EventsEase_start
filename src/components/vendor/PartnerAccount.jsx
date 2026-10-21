@@ -332,7 +332,7 @@ export default function PartnerAccount({
     /* ── Three destinations, and they are not the same screen ───────
        Grow is the business view (can you be sent work, what is your
        listing doing), Build Your Profile is the checklist, and Trade
-       Champion 26 is referrals. Each used to be a list of links to the
+       Champion 34 is referrals. Each used to be a list of links to the
        others, so every one of them felt like the same page. */
     growth: { title: 'Grow with Sambramo', render: () => (
       <GrowHub checklist={checklist} vendor={vendor} listings={listings}

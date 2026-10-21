@@ -274,7 +274,7 @@ const BY_TRADE = {
   /* ────────────────────────────────────────────────────────────────────
      The eight logistics trades.
 
-     This file was written when there were 26 trades, and said so. The
+     This file was written when there were 34 trades, and said so. The
      eight added with the logistics side inherited DEFAULT — "Add
      photographs of your work" — which is the exact sentence the comment
      at the top of this file argues is useless. A transporter reading it

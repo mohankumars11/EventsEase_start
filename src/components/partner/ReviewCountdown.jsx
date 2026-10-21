@@ -203,7 +203,14 @@ export default function ReviewCountdown({
       : 'TIME REMAINING · 24 HOUR WINDOW'
 
   return (
-    <section aria-label="Profile review status" className={`mb-3 overflow-hidden rounded-[20px] border border-amber-200 bg-[#FFFCF4] px-3 py-3 text-[#17152B] shadow-[0_3px_12px_rgba(65,42,0,.035)] sm:px-4 sm:py-4 ${compact ? 'mb-0' : ''}`}>
+    /* ── The light runs while somebody is reading ──────────────────
+       A card that says "we are reading it" looked identical whether
+       anybody was or not. The light travels the border for exactly as
+       long as this state lasts: it is on this branch only, so the
+       moment the review is decided — approved above, or changes
+       requested — there is nothing to stop, because the element
+       carrying it is gone. */
+    <section aria-label="Profile review status" className={`review-running-light mb-3 overflow-hidden rounded-[20px] border border-amber-200 bg-[#FFFCF4] px-3 py-3 text-[#17152B] shadow-[0_3px_12px_rgba(65,42,0,.035)] sm:px-4 sm:py-4 ${compact ? 'mb-0' : ''}`}>
       <div className="flex items-start justify-between gap-2">
         <p className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-[0.12em] text-amber-700"><Clock3 size={15} className="shrink-0" />With our team</p>
         <span className="shrink-0 rounded-full bg-amber-100 px-2.5 py-1 text-[9px] font-black uppercase tracking-wide text-amber-800">Under review</span>

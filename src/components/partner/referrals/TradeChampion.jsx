@@ -11,9 +11,9 @@ import ReferralDetail from './ReferralDetail'
 import PartnerCodeCard from './PartnerCodeCard'
 
 /**
- * Trade Champion 26: the one referral destination.
+ * Trade Champion 34: the one referral destination.
  *
- * More → Referral & rewards, Earnings → Trade Champion 26, the Jobs card
+ * More → Referral & rewards, Earnings → Trade Champion 34, the Jobs card
  * and Grow with Sambramo all open this, with the same URL, so there is
  * one screen to fix and one to test.
  *
@@ -46,7 +46,7 @@ function Dashboard({ view, onView }) {
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
         <p className="text-[12px] leading-snug text-ink-mute">
-          Invite professionals from any of the 26 trades and follow each one from sign-up to their first event.
+          Invite professionals from any of the 34 trades and follow each one from sign-up to their first event.
         </p>
         {s && <RefreshButton onClick={() => summary.reload()} busy={summary.status === 'refreshing'} />}
       </div>
@@ -118,11 +118,11 @@ function CampaignCard({ campaign }) {
   )
 }
 
-/** The 26 trades, each a button to its own screen. */
+/** The 34 trades, each a button to its own screen. */
 function TradeGrid({ summary, onOpen }) {
   return (
     <Card>
-      <h2 className="text-[13px] font-extrabold text-ink">Trade Champion 26</h2>
+      <h2 className="text-[13px] font-extrabold text-ink">Trade Champion 34</h2>
       <p className="mt-1 text-[11px] text-ink-mute">Tap a trade to invite a partner for it and follow their progress.</p>
       <div className="mt-3 grid grid-cols-2 gap-2" data-testid="trade-grid">
         {PARTNER_TRADES.map((t, i) => {

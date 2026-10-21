@@ -12,7 +12,7 @@ import { Card, ListCard, DetailRow } from './parts'
  * Grow with Sambramo: what stands between this partner and more work.
  *
  * Not the profile checklist (that is Build Your Profile) and not the
- * referral screen (that is Trade Champion 26). This is the business
+ * referral screen (that is Trade Champion 34). This is the business
  * view: can you be sent a job today, what is your listing doing, where
  * do you reach — each row a real value and a door to the screen that
  * changes it. No percentages that nothing computes, no growth numbers
@@ -103,10 +103,10 @@ export default function GrowHub({ checklist, vendor, listings, onGo, onRefresh }
       <section className="space-y-1.5">
         <h2 className="px-1 font-mono text-[10.5px] font-bold uppercase tracking-[0.12em] text-ink-mute">Grow your network</h2>
         <ListCard>
-          <DetailRow testId="grow-referral" icon={Gift} label="Trade Champion 26"
+          <DetailRow testId="grow-referral" icon={Gift} label="Trade Champion 34"
             detail={referrals
               ? `${referrals.registered} signed up · ${referrals.live} live · ${referrals.invited} invitations`
-              : 'Invite partners for any of the 26 trades'}
+              : 'Invite partners for any of the 34 trades'}
             onClick={() => onGo({ screen: 'referral' })} />
         </ListCard>
       </section>

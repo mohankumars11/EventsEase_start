@@ -470,7 +470,7 @@ export default function VendorServiceList({
             q={q}
             setQ={setQ}
             onPick={t => navigate(onboardPath(t))}
-            placeholder="Search 26 trades — catering, generator, mehendi…"
+            placeholder="Search 34 trades — catering, generator, mehendi…"
           />
         </>
       )}

@@ -19,7 +19,7 @@
  * ── What it does not do ────────────────────────────────────────────
  * It does not compute quantities. The earlier design rolled a Bill of
  * Materials against the guest count; that needed a recipe authored for
- * 26 trades and none exists. The bill the partner actually paid is a
+ * 34 trades and none exists. The bill the partner actually paid is a
  * better number than any recipe, and it arrives with evidence attached.
  */
 import { useCallback, useEffect, useState } from 'react'

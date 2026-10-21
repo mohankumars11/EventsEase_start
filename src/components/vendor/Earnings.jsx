@@ -212,9 +212,9 @@ export default function Earnings({ vendorId, vendor, onAddPayout, onOpenReferral
         <EarningsChart series={series.series} range={range} />
 
         <button type="button" onClick={onOpenReferral} data-testid="earnings-trade-champion" className="group relative w-full overflow-hidden rounded-[22px] bg-gradient-to-br from-violet-700 via-purple-700 to-fuchsia-600 p-4 text-left text-white shadow-[0_10px_28px_rgba(42,8,92,0.16)] ring-1 ring-purple-300/30">
-          <span className="inline-flex rounded-full border border-white/30 bg-white/15 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.12em]">Partner growth • 26 trades</span>
-          <span className="mt-2 block text-[20px] font-black leading-tight tracking-[-0.03em]">Trade Champion 26</span>
-          <span className="mt-1 block max-w-[290px] text-[11px] font-semibold leading-snug text-white/90">Invite event professionals for any of 26 trades and follow each one from sign-up to their first event.</span>
+          <span className="inline-flex rounded-full border border-white/30 bg-white/15 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.12em]">Partner growth • 34 trades</span>
+          <span className="mt-2 block text-[20px] font-black leading-tight tracking-[-0.03em]">Trade Champion 34</span>
+          <span className="mt-1 block max-w-[290px] text-[11px] font-semibold leading-snug text-white/90">Invite event professionals for any of 34 trades and follow each one from sign-up to their first event.</span>
           <span className="mt-3 inline-flex min-h-[34px] items-center gap-2 rounded-full bg-white px-4 text-[11px] font-extrabold text-violet-800">See your referrals <span aria-hidden="true">→</span></span>
         </button>
 
