@@ -38,6 +38,7 @@ import PricingReviewQueue from '../../src/components/admin/PricingReviewQueue'
 import LiveOperations from '../../src/components/admin/LiveOperations'
 import MarketInterest from '../../src/components/admin/MarketInterest'
 import PartnerStoryUploads from '../../src/components/admin/PartnerStoryUploads'
+import FoodCatalogueReview from '../../src/components/admin/FoodCatalogueReview'
 
 const now = new Date().toISOString()
 const soon = new Date(Date.now() + 9 * 3600e3).toISOString()
@@ -169,6 +170,7 @@ const SCREENS = {
   'live-ops': LiveOperations,
   'city-interest': MarketInterest,
   'story-uploads': PartnerStoryUploads,
+  'food-catalogue': FoodCatalogueReview,
 }
 
 export default function Scene() {

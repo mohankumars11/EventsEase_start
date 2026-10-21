@@ -22,6 +22,10 @@ import { Loader2, Check, X, AlertTriangle, Sparkles } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { rupees } from '../../lib/tierPackages'
 import { TRADE_REGISTRY } from '../../data/trades/registry'
+/* An operator could not tell "no allergens" from "nobody was asked":
+   the old line rendered nothing at all when the list was empty OR
+   absent. allergenLabel is the one place that decides. */
+import { allergenLabel } from '../../data/allergens'
 import { RULE_KINDS } from '../../data/trades/schema'
 import { CONFIG_BY_ID, questionsOf } from '../../data/trades'
 
@@ -222,7 +226,7 @@ function VersionCard({ v, cfg, onDone }) {
         )}
         {v.items.length > 0 && (
           <Box title={`${config?.catalogue?.title ?? 'Catalogue'} (${v.items.length})`}>
-            {v.items.map(i => <p key={i.id} className="text-[12.5px]"><b>{i.name}</b>{i.attributes?.diet ? ` · ${i.attributes.diet}` : ''}{i.attributes?.allergens?.length ? ` · allergens: ${i.attributes.allergens.join(', ')}` : ''}{i.attributes?.legacy?.needs_review ? ' · ⚠ old value needs review' : ''} {i.take_home_paise != null ? `${rupees(i.take_home_paise)} → ${rupees(i.customer_paise)} / ${i.unit}` : (i.attributes?.menu_eligible ? 'in menus' : 'quote only')}
+            {v.items.map(i => <p key={i.id} className="text-[12.5px]"><b>{i.name}</b>{i.attributes?.diet ? ` · ${i.attributes.diet}` : ''}{` · ${allergenLabel(i.attributes?.allergens ?? null).text}`}{i.attributes?.legacy?.needs_review ? ' · ⚠ old value needs review' : ''} {i.take_home_paise != null ? `${rupees(i.take_home_paise)} → ${rupees(i.customer_paise)} / ${i.unit}` : (i.attributes?.menu_eligible ? 'in menus' : 'quote only')}
               {i.stock_qty != null ? ` · stock ${i.stock_qty}` : ''}{i.min_qty > 1 ? ` · min ${i.min_qty}` : ''}{i.lead_days ? ` · ${i.lead_days}d lead` : ''}</p>)}
           </Box>
         )}
