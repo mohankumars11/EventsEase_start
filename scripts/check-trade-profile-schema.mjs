@@ -121,4 +121,26 @@ show('TYPE MISMATCHES', typeMismatch)
 
 const bad = missingTables.length + missingCols.length + typeMismatch.length
 console.log(bad ? `\nFAIL — ${bad} problem(s)` : '\nPASS — every onboarding question has a typed column')
-process.exit(bad ? 1 : 0)
+/* ── Why this closes its sockets before exiting ───────────────────────
+ *
+ * This script makes ~120 fetches and then called process.exit() with
+ * undici's keep-alive sockets still open. On this box that intermittently
+ * tripped a libuv teardown assertion AFTER the verdict had printed:
+ *
+ *     Assertion failed: !(handle->flags & UV_HANDLE_CLOSING) … async.c
+ *
+ * leaving a non-zero exit code on a run whose answer was PASS. The
+ * output said one thing and the exit code said the other, and the exit
+ * code is what a chained command or CI reads. Measured at one run in
+ * eight, always under memory pressure — which is exactly when nobody is
+ * looking closely.
+ *
+ * Closing the dispatcher first lets the handles shut down in order, and
+ * exitCode rather than exit() lets the loop drain instead of being
+ * killed mid-teardown. */
+try {
+  const undici = await import('undici').catch(() => null)
+  await undici?.getGlobalDispatcher?.()?.close?.()
+} catch { /* nothing to close; the code below is what matters */ }
+
+process.exitCode = bad ? 1 : 0
