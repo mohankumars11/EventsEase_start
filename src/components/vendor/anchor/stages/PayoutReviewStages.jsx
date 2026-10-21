@@ -25,7 +25,7 @@
  */
 import { useCallback, useEffect, useState } from 'react'
 import { ShieldCheck, Landmark, Sparkles, RefreshCw, Check, Clock3, AlertTriangle, ChevronDown, CreditCard, Smartphone } from 'lucide-react'
-import { SectionTitle } from '../ui'
+import { SectionTitle, Card } from '../ui'
 import ReadinessChecklist from '../../pricing/ReadinessChecklist'
 import RazorpayBadge from '../../../partner/payout/RazorpayBadge'
 import PayoutOnboardingForm from '../../bank/PayoutOnboardingForm'
@@ -223,7 +223,20 @@ function ContactFix({ onSaved }) {
   )
 }
 
-export function ReviewStage({ items, state, quotesOk, tiers, name, langs }) {
+/**
+ * ── Every step, with a way back into it ───────────────────────────────
+ *
+ * The engine's review screen lists each stage with a tick and an Edit,
+ * so a partner on the last step can correct the fourth without walking
+ * backwards through the flow. Anchor & MC — the oldest flow, and the
+ * one most partners meet first — had a readiness checklist and a
+ * package summary and no way to reach any step from here at all: the
+ * only route back was the rail at the top, or Back eleven times.
+ *
+ * `stages`, `done` and `onEdit` are optional so this still renders
+ * anywhere it is used without them.
+ */
+export function ReviewStage({ items, state, quotesOk, tiers, name, langs, stages = null, done = null, onEdit = null }) {
   return (
     <>
       <SectionTitle title="Review & publish" sub="Submit for review. Your profile goes live once Sambramo approves it." />
@@ -242,6 +255,22 @@ export function ReviewStage({ items, state, quotesOk, tiers, name, langs }) {
           ))}
         </div>
       </div>
+
+      {stages && onEdit && (
+        <Card className="mt-3">
+          {stages.slice(0, -1).map(st => (
+            <button key={st.id} type="button" onClick={() => onEdit(st.id)}
+              className="flex w-full items-center gap-3 border-t border-ink/[0.05] py-2.5 text-left first:border-0">
+              <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[12px] font-extrabold ${
+                done?.has?.(st.id) ? 'bg-forest-600 text-white' : 'bg-amber-100 text-amber-700'}`}>
+                {done?.has?.(st.id) ? <Check size={13} strokeWidth={3} /> : '!'}
+              </span>
+              <span className="flex-1 text-[13px] font-bold text-ink">{st.label}</span>
+              <span className="text-[12px] font-extrabold text-plum-700">Edit</span>
+            </button>
+          ))}
+        </Card>
+      )}
     </>
   )
 }

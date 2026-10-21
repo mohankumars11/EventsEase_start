@@ -290,7 +290,12 @@ export default function AnchorOnboardingFlow({
               {step === 'review' && (
                 <ReviewStage items={readiness.items} state={readiness.state} quotesOk={false}
                   tiers={finalPackages(generated, a.overrides, offered)} name={a.about.stage_name}
-                  langs={(a.languages.languages ?? []).map(l => l.name).join(' · ')} />
+                  langs={(a.languages.languages ?? []).map(l => l.name).join(' · ')}
+                  /* Every step, with a way back into it — the same thing
+                     the engine's review does. `go` is the guarded
+                     navigator, so an Edit cannot jump past an unfinished
+                     step any more than the rail can. */
+                  stages={STAGES} done={done} onEdit={go} />
               )}
             </motion.div>
           </AnimatePresence>
