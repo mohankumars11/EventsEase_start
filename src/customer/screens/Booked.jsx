@@ -10,6 +10,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { CheckCircle2, Clock3, HandCoins, Loader2, RefreshCw, XCircle, Zap } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { payLines } from '../../lib/payLines'
+import { supabase } from '../../lib/supabase'
 import { myBookings, acceptQuote, confirmPaid, LINE_STATE } from '../lib/bookings'
 import { dayLabel, plural, rupees } from '../lib/format'
 import SignInSheet from './SignInSheet'
@@ -31,11 +32,23 @@ export default function Booked() {
     try { setData(await myBookings(user.id)) } catch (e) { setData({ lines: [], quotes: [], error: e.message }) }
   }, [user])
   useEffect(() => { load() }, [load])
+  /* Live: Supabase realtime on the three tables a reply or a payment
+     touches (RLS decides which events reach this customer), plus a quiet
+     15-second re-read while the screen is visible, for any table that is
+     not in the realtime publication. And a re-read on return from a
+     notification. */
   useEffect(() => {
+    if (!user) return
+    const ch = supabase.channel(`cx-booked-${user.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'booking_lines' }, () => load())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sambramo_quote_requests', filter: `customer_id=eq.${user.id}` }, () => load())
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'sambramo_quote_responses' }, () => load())
+      .subscribe()
+    const tick = setInterval(() => document.visibilityState === 'visible' && load(), 15000)
     const v = () => document.visibilityState === 'visible' && load()
     document.addEventListener('visibilitychange', v)
-    return () => document.removeEventListener('visibilitychange', v)
-  }, [load])
+    return () => { supabase.removeChannel(ch); clearInterval(tick); document.removeEventListener('visibilitychange', v) }
+  }, [load, user])
 
   async function pay(lineIds, label) {
     setBusy(lineIds[0]); setMsg('')

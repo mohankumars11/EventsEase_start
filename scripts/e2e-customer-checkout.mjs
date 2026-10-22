@@ -74,6 +74,26 @@ for (const l of lines) {
     ['INSTANT', 'QUOTE'].includes(r.path), r)
 }
 
+/* --partner <email>: can customers find and instantly book this real partner? */
+const pIdx = process.argv.indexOf('--partner')
+if (pIdx > 0) {
+  const email = process.argv[pIdx + 1]
+  console.log(`\n── Real partner: ${email}`)
+  const { data: users } = await admin.auth.admin.listUsers({ perPage: 1000 })
+  const u = users.users.find(x => x.email?.toLowerCase() === email.toLowerCase())
+  const { data: v } = await admin.from('vendors').select('id, business_name').eq('profile_id', u.id).single()
+  const { data: svcs } = await admin.from('vendor_services').select('id, category, sambramo_listing_versions!inner(status)').eq('vendor_id', v.id).eq('sambramo_listing_versions.status', 'LIVE')
+  const { TRADE_BY_NAME } = await import(pathToFileURL(join(ROOT, 'src/data/trades/registry.js')).href)
+  for (const sv of svcs ?? []) {
+    const tradeId = TRADE_BY_NAME[sv.category]?.id
+    const found = (await C.partnersFor(tradeId, { lat: place.lat, lng: place.lng, limit: 100 })).find(p => p.serviceId === sv.id)
+    if (!ok(`${sv.category}: a customer finds ${v.business_name} in the app`, !!found)) continue
+    const l = { key: sv.id, occasionId: null, tradeId, serviceId: sv.id, fromRef: found.fromRef, fromKind: found.fromKind, fromUnit: found.fromUnit, fromLabel: found.fromLabel, qty: null }
+    const r = (await call(book, { vendorServiceId: sv.id, request: C.requestFor(l, { ...event, occasionId: null }, place), preview: true })).json ?? {}
+    ok(`${sv.category}: ${r.path}${r.customer_paise ? ` ₹${Math.round(r.customer_paise / 100).toLocaleString('en-IN')}` : ''}${r.reasons_text?.length ? ` (${r.reasons_text.join(' ')})` : ''}`, r.path === 'INSTANT', r)
+  }
+}
+
 const created = { lines: [], requests: [], quotes: [] }
 let token = null
 if (BOOK || OFFER) {

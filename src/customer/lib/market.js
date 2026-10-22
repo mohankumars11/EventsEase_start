@@ -109,6 +109,10 @@ export function partnersFor(tradeId, { lat = BLR.lat, lng = BLR.lng, limit = 40 
     }
     for (const x of pk.data ?? []) offer(x.listing_version_id, 0, x.trade_inputs?.customer_paise, 'package', 'package', x.name, { type: 'package', key: x.commercial_inputs?.tier ?? null, hours: Number(x.trade_inputs?.duration_hours) || null })
     for (const x of mn.data ?? []) offer(x.listing_version_id, 1, x.customer_paise, 'plate', 'per plate', x.name, { type: 'menu', key: x.menu_key, minQty: x.min_guests })
+    /* A vehicle is priced by the trip but booked as a vehicle: remember the first one,
+       priced or not, so the request can name it (the engine asks "choose a vehicle"). */
+    const firstItem = {}
+    for (const x of ct.data ?? []) if (!firstItem[x.listing_version_id]) firstItem[x.listing_version_id] = x.item_key
     for (const x of ct.data ?? []) offer(x.listing_version_id, 2, x.customer_paise, unitKind(x.unit, tradeId), unitLabel(x.unit, tradeId), x.name, { type: 'item', key: x.item_key, minQty: Number(x.min_qty) || 1 })
     for (const x of rr.data ?? []) offer(x.listing_version_id, 3, x.customer_paise, RULE_KIND[x.rule_kind]?.[0] ?? 'unit', RULE_KIND[x.rule_kind]?.[1] ?? 'onwards', null, { type: 'rule', key: x.rule_kind })
     return rows.map(r => {
@@ -117,6 +121,7 @@ export function partnersFor(tradeId, { lat = BLR.lat, lng = BLR.lng, limit = 40 
       const b = v && best[v.id]
       if (b) Object.assign(p, { fromPaise: b.paise, fromKind: b.kind, fromUnit: b.unit, fromLabel: b.label, fromRef: b.ref })
       else Object.assign(p, { fromKind: 'unit', fromUnit: 'onwards', fromLabel: null, fromRef: null })
+      if (TRADE[tradeId]?.archetype === 'TRIP_VEHICLE' && v && firstItem[v.id]) p.fromRef = { ...(p.fromRef ?? { type: 'rule', key: null }), vehicle: firstItem[v.id] }
       return p
     })
   })()

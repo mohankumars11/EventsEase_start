@@ -1,0 +1,21 @@
+{
+ "vendor": {
+  "is_verified": false,
+  "verification_status": "submitted",
+  "status": "PENDING_REVIEW",
+  "accepting_jobs": true
+ },
+ "approved": [
+  "ac6f3990-1aed-4acf-bdb1-4fe948e91b22",
+  "43e01fd2-fd7d-4509-b1e7-79d1a6b8fb77",
+  "9a5f3f3c-cb60-4c0b-ad76-ce2fb7d853d5",
+  "227e269e-55c4-4a0c-8784-c39fc5eb2b37"
+ ],
+ "docs": [
+  "a2dbe238-e45d-49a3-83b4-9839a915c98d",
+  "b0ca8981-8bb5-4419-b7b1-3915b9aecb64",
+  "8de18f51-4d6c-4614-a689-a057becb2324",
+  "64a3dc2c-49b6-43ea-87cf-ca82ef641c55"
+ ],
+ "payoutCreated": true
+}

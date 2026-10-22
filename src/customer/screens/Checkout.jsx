@@ -29,6 +29,7 @@ import { TRADE } from '../data/trades'
 import { OCCASION } from '../data/occasions'
 import { plural, rupees, whenLabel } from '../lib/format'
 import { previewLine, bookLine } from '../lib/booking'
+import { partnersFor } from '../lib/market'
 import { confirmPaid } from '../lib/bookings'
 import { ActionBar, BackHeader, Photo, Sheet } from '../ui/kit'
 import SignInSheet from './SignInSheet'
@@ -49,8 +50,25 @@ export default function Checkout() {
   const lines = plan.basket
   const eventFor = l => (l.occasionId && l.occasionId === ev.occasionId ? ev : { ...ev, guests: ev.guests ?? 50 })
   const place = plan.place
-  const ready = !!(ev.date && ev.time && place?.lat)
+  const ready = !!(ev.date && ev.time && place?.lat) && lines.every(l => l.fromRef)
   useEffect(() => { if (profile?.phone && !phone) setPhone(profile.phone.replace(/^\+91/, '')) }, [profile?.phone]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* A line saved by an older build may not say what its price was FOR
+     (no fromRef) — asking the engine then prices the wrong thing (no
+     package → per person × every guest). Refresh it from the live listing
+     first; the partner and the occasion stay the same. */
+  useEffect(() => {
+    const stale = lines.filter(l => !l.fromRef)
+    if (!stale.length) return
+    ;(async () => {
+      for (const l of stale) {
+        const found = (await partnersFor(l.tradeId).catch(() => [])).find(p => p.serviceId === l.serviceId)
+        /* No priced item, or no longer live: mark it checked so checkout can
+           proceed and the engine says what is wrong in its own words. */
+        plan.add(found ? (found.fromRef ? found : { ...found, fromRef: { type: 'none' } }) : { ...l, fromRef: { type: 'none' } }, l.occasionId)
+      }
+    })()
+  }, [lines.map(l => `${l.key}:${!!l.fromRef}`).join('|')]) // eslint-disable-line react-hooks/exhaustive-deps
 
   /* The reveal: ask the engine about every line whenever the facts change. */
   const sig = JSON.stringify([ev.date, ev.time, ev.hours, ev.guests, place?.lat, place?.lng, lines.map(l => [l.key, l.serviceId, l.qty])])

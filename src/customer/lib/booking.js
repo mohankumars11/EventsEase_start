@@ -67,7 +67,7 @@ export function requestFor(line, event = {}, place = {}) {
       const r = { ...base, hours, rule_kind: ref.key }
       if (a === 'STAFFING') r.staff = qty
       if (a === 'STORAGE_CAPACITY') Object.assign(r, { qty, end_date: event.date })
-      if (a === 'TRIP_VEHICLE') Object.assign(r, { pickup: place, dropoff: place, passengers: Math.min(guests, 50) })
+      if (a === 'TRIP_VEHICLE') Object.assign(r, { pickup: place, dropoff: place, passengers: Math.min(guests, 50), ...(ref.vehicle ? { items: [{ item_key: ref.vehicle }] } : {}) })
       if (a === 'PERSONAL_SERVICE') r.qty = qty
       return r
     }
