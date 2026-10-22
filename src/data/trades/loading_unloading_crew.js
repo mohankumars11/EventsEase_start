@@ -7,10 +7,15 @@ export default {
   screens: [
     screen('profile', 'Your crew', 'What you handle and who you send.', [
       q.multi('work', 'Loading, unloading or both?', ['Loading', 'Unloading'], { required: true }),
-      q.multi('materials', 'What kinds of materials do you handle?', ['Furniture', 'Event equipment', 'Cartons', 'Pallets', 'Fragile items', 'Heavy machinery', 'Decor'], { required: true, other: true }),
-      q.multi('access', 'Access you can work with', ['Ground floor', 'Lift', 'Stairs', 'Long carry (50 m+)'], { required: true }),
+      q.multi('materials', 'What kinds of materials do you handle?', ['Furniture', 'Event equipment', 'Cartons', 'Pallets', 'Fragile items', 'Heavy machinery', 'Decor',
+        'Stage & truss', 'Generators', 'Kitchen equipment', 'Exhibition stands', 'Glass & mirrors', 'Plants & flowers', 'Sound & lighting gear'], { required: true, other: true }),
+      q.multi('access', 'Access you can work with', ['Ground floor', 'Lift', 'Stairs', 'Long carry (50 m+)', 'Basement', 'Narrow lanes (no truck entry)'], { required: true, other: true }),
       q.multi('tools', 'Lifting tools you bring', ['Trolleys', 'Pallet jack', 'Straps & blankets', 'Ramps'], { other: true }),
       q.number('max_item_kg', 'Heaviest single item you will lift', { required: true, min: 10, max: 2000, suffix: 'kg' }),
+      q.toggle('packing', 'You pack and wrap items'),
+      q.toggle('assembly', 'You assemble and dismantle furniture and stages'),
+      q.toggle('same_day', 'Same-day crew possible'),
+      q.number('service_radius_km', 'How far your crew travels', { min: 2, max: 1000, suffix: 'km' }),
     ]),
     screen('crew', 'Crew configuration', 'How your crews are put together.', [
       q.number('workers', 'Workers available per day', { required: true, min: 1, max: 1000 }),

@@ -1,5 +1,5 @@
 // Trade 9 — Event Equipment Rental (spec Part 9, Trade 9)
-import { q, screen, catalogue } from './schema'
+import { q, screen, catalogue, EVENT_TYPES } from './schema'
 
 export default {
   id: 'event_equipment_rental',
@@ -9,7 +9,15 @@ export default {
       q.multi('equipment_types', 'Which equipment types are available?', [
         'Tables / chairs', 'Staging', 'Audio equipment', 'Lighting', 'Screens / projectors',
         'Power equipment', 'Cooling equipment', 'Decorative equipment',
+        'Stage & truss', 'Barricades', 'LED screens', 'Mist fans / coolers', 'Heaters', 'Catering equipment',
+        'Kids zone / inflatables', 'Photo booth', 'Red carpet & stanchions', 'Podiums & lecterns', 'Display stands', 'Umbrellas & canopies',
       ], { required: true, other: true }),
+      q.multi('events', 'Events you rent for', EVENT_TYPES, { other: true }),
+      /* Reach and notice are what make a rental bookable without a call:
+         the engine can confirm stock, but not whether you can get there. */
+      q.number('delivery_radius_km', 'How far you deliver', { min: 0, max: 1000, suffix: 'km' }),
+      q.number('lead_hours', 'Notice you need before delivery', { min: 0, max: 720, suffix: 'hours' }),
+      q.toggle('same_day', 'Same-day delivery possible'),
     ]),
     screen('terms', 'Rental terms', 'The rules every rental follows.', [
       q.single('min_period', 'Minimum rental period', ['4 hours', '1 day', '2 days', '1 week'], { required: true }),

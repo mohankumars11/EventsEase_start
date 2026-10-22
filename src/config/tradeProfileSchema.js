@@ -1153,6 +1153,46 @@ export const TRADE_PROFILE_SCHEMA = {
         "form": "single"
       },
       {
+        "k": "sound_covers",
+        "key": "sound_covers",
+        "label": "Your own sound system covers up to",
+        "type": "TEXT",
+        "screen": "profile",
+        "cond": "own_equipment in [sound_and_lighting|sound_only]",
+        "showWhen": {
+          "q": "own_equipment",
+          "in": [
+            "sound_and_lighting",
+            "sound_only"
+          ]
+        },
+        "form": "single"
+      },
+      {
+        "k": "settings",
+        "key": "settings",
+        "label": "Where you can play",
+        "type": "TEXT[]",
+        "screen": "profile",
+        "form": "multi"
+      },
+      {
+        "k": "languages",
+        "key": "languages",
+        "label": "Languages you can host and take requests in",
+        "type": "TEXT[]",
+        "screen": "profile",
+        "form": "multi"
+      },
+      {
+        "k": "emcee",
+        "key": "emcee",
+        "label": "You can also host / emcee the night",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
+      },
+      {
         "k": "formats",
         "key": "formats",
         "label": "Performance format",
@@ -1276,6 +1316,46 @@ export const TRADE_PROFILE_SCHEMA = {
         "req": true,
         "screen": "scope",
         "form": "number"
+      },
+      {
+        "k": "max_guests",
+        "key": "max_guests",
+        "label": "Largest event you have run logistics for",
+        "type": "NUMERIC",
+        "screen": "scope",
+        "form": "number"
+      },
+      {
+        "k": "vehicle_types",
+        "key": "vehicle_types",
+        "label": "Vehicles you can deploy",
+        "type": "TEXT[]",
+        "screen": "scope",
+        "form": "multi"
+      },
+      {
+        "k": "service_radius_km",
+        "key": "service_radius_km",
+        "label": "How far you take projects",
+        "type": "NUMERIC",
+        "screen": "scope",
+        "form": "number"
+      },
+      {
+        "k": "overnight_setup",
+        "key": "overnight_setup",
+        "label": "Overnight setup and teardown",
+        "type": "BOOLEAN",
+        "screen": "scope",
+        "form": "toggle"
+      },
+      {
+        "k": "transit_insurance",
+        "key": "transit_insurance",
+        "label": "Goods-in-transit insurance",
+        "type": "BOOLEAN",
+        "screen": "scope",
+        "form": "toggle"
       }
     ],
     "itemColumns": []
@@ -1310,6 +1390,38 @@ export const TRADE_PROFILE_SCHEMA = {
         "req": true,
         "screen": "profile",
         "form": "multi"
+      },
+      {
+        "k": "events",
+        "key": "events",
+        "label": "Events you rent for",
+        "type": "TEXT[]",
+        "screen": "profile",
+        "form": "multi"
+      },
+      {
+        "k": "delivery_radius_km",
+        "key": "delivery_radius_km",
+        "label": "How far you deliver",
+        "type": "NUMERIC",
+        "screen": "profile",
+        "form": "number"
+      },
+      {
+        "k": "lead_hours",
+        "key": "lead_hours",
+        "label": "Notice you need before delivery",
+        "type": "NUMERIC",
+        "screen": "profile",
+        "form": "number"
+      },
+      {
+        "k": "same_day",
+        "key": "same_day",
+        "label": "Same-day delivery possible",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
       },
       {
         "k": "min_period",
@@ -1491,6 +1603,14 @@ export const TRADE_PROFILE_SCHEMA = {
         "form": "multi"
       },
       {
+        "k": "events",
+        "key": "events",
+        "label": "Events you light",
+        "type": "TEXT[]",
+        "screen": "profile",
+        "form": "multi"
+      },
+      {
         "k": "suitability",
         "key": "suitability",
         "label": "Indoor / outdoor",
@@ -1563,6 +1683,30 @@ export const TRADE_PROFILE_SCHEMA = {
         "type": "BOOLEAN",
         "screen": "profile",
         "form": "toggle"
+      },
+      {
+        "k": "setup_hours",
+        "key": "setup_hours",
+        "label": "Setup time you need before the event",
+        "type": "NUMERIC",
+        "screen": "profile",
+        "form": "number"
+      },
+      {
+        "k": "backup_power",
+        "key": "backup_power",
+        "label": "You bring backup power for the lights",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
+      },
+      {
+        "k": "service_radius_km",
+        "key": "service_radius_km",
+        "label": "How far you work from your base",
+        "type": "NUMERIC",
+        "screen": "profile",
+        "form": "number"
       }
     ],
     "itemColumns": [
@@ -1656,6 +1800,38 @@ export const TRADE_PROFILE_SCHEMA = {
         "req": true,
         "screen": "profile",
         "form": "multi"
+      },
+      {
+        "k": "bulk",
+        "key": "bulk",
+        "label": "You take bulk orders (1,000+ units)",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
+      },
+      {
+        "k": "same_day",
+        "key": "same_day",
+        "label": "Same-day orders possible",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
+      },
+      {
+        "k": "gst_invoice",
+        "key": "gst_invoice",
+        "label": "You give a GST invoice",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
+      },
+      {
+        "k": "returns_unused",
+        "key": "returns_unused",
+        "label": "Unopened stock can be returned",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
       },
       {
         "k": "prep_hours",
@@ -1783,6 +1959,30 @@ export const TRADE_PROFILE_SCHEMA = {
         "req": true,
         "screen": "profile",
         "form": "multi"
+      },
+      {
+        "k": "occasions",
+        "key": "occasions",
+        "label": "Occasions you make gifts for",
+        "type": "TEXT[]",
+        "screen": "profile",
+        "form": "multi"
+      },
+      {
+        "k": "personalisation_methods",
+        "key": "personalisation_methods",
+        "label": "Personalisation you can do",
+        "type": "TEXT[]",
+        "screen": "profile",
+        "form": "multi"
+      },
+      {
+        "k": "message_card",
+        "key": "message_card",
+        "label": "You add a printed message card",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
       },
       {
         "k": "packaging_personalisation",
@@ -1934,6 +2134,38 @@ export const TRADE_PROFILE_SCHEMA = {
         "req": true,
         "screen": "profile",
         "form": "multi"
+      },
+      {
+        "k": "languages",
+        "key": "languages",
+        "label": "Languages your staff speak",
+        "type": "TEXT[]",
+        "screen": "profile",
+        "form": "multi"
+      },
+      {
+        "k": "attire",
+        "key": "attire",
+        "label": "Attire you can provide",
+        "type": "TEXT[]",
+        "screen": "profile",
+        "form": "multi"
+      },
+      {
+        "k": "max_event_guests",
+        "key": "max_event_guests",
+        "label": "Largest event you have staffed",
+        "type": "NUMERIC",
+        "screen": "profile",
+        "form": "number"
+      },
+      {
+        "k": "grooming",
+        "key": "grooming",
+        "label": "Grooming and a pre-event briefing for every staff member",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
       }
     ],
     "itemColumns": [
@@ -2073,6 +2305,14 @@ export const TRADE_PROFILE_SCHEMA = {
         "form": "multi"
       },
       {
+        "k": "card_styles",
+        "key": "card_styles",
+        "label": "Card styles you make",
+        "type": "TEXT[]",
+        "screen": "profile",
+        "form": "multi"
+      },
+      {
         "k": "revisions",
         "key": "revisions",
         "label": "Design revisions included",
@@ -2085,6 +2325,30 @@ export const TRADE_PROFILE_SCHEMA = {
         "k": "proof_required",
         "key": "proof_required",
         "label": "You send a proof for approval before production",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
+      },
+      {
+        "k": "min_order",
+        "key": "min_order",
+        "label": "Smallest printed order you take",
+        "type": "NUMERIC",
+        "screen": "profile",
+        "form": "number"
+      },
+      {
+        "k": "home_delivery",
+        "key": "home_delivery",
+        "label": "You deliver the printed cards to the family",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
+      },
+      {
+        "k": "guest_distribution",
+        "key": "guest_distribution",
+        "label": "You can courier or hand-deliver cards to guests",
         "type": "BOOLEAN",
         "screen": "profile",
         "form": "toggle"
@@ -2220,6 +2484,38 @@ export const TRADE_PROFILE_SCHEMA = {
         "req": true,
         "screen": "profile",
         "form": "multi"
+      },
+      {
+        "k": "events",
+        "key": "events",
+        "label": "Events you perform at",
+        "type": "TEXT[]",
+        "screen": "profile",
+        "form": "multi"
+      },
+      {
+        "k": "own_sound",
+        "key": "own_sound",
+        "label": "You bring your own sound system",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
+      },
+      {
+        "k": "shows_per_day",
+        "key": "shows_per_day",
+        "label": "Most shows you can do in one day",
+        "type": "NUMERIC",
+        "screen": "profile",
+        "form": "number"
+      },
+      {
+        "k": "service_radius_km",
+        "key": "service_radius_km",
+        "label": "How far you travel for a show",
+        "type": "NUMERIC",
+        "screen": "profile",
+        "form": "number"
       }
     ],
     "itemColumns": [
@@ -2386,6 +2682,38 @@ export const TRADE_PROFILE_SCHEMA = {
         "form": "number"
       },
       {
+        "k": "packing",
+        "key": "packing",
+        "label": "You pack and wrap items",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
+      },
+      {
+        "k": "assembly",
+        "key": "assembly",
+        "label": "You assemble and dismantle furniture and stages",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
+      },
+      {
+        "k": "same_day",
+        "key": "same_day",
+        "label": "Same-day crew possible",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
+      },
+      {
+        "k": "service_radius_km",
+        "key": "service_radius_km",
+        "label": "How far your crew travels",
+        "type": "NUMERIC",
+        "screen": "profile",
+        "form": "number"
+      },
+      {
         "k": "workers",
         "key": "workers",
         "label": "Workers available per day",
@@ -2533,6 +2861,39 @@ export const TRADE_PROFILE_SCHEMA = {
         "type": "BOOLEAN",
         "screen": "profile",
         "form": "toggle"
+      },
+      {
+        "k": "night_movement",
+        "key": "night_movement",
+        "label": "You run at night when city entry is restricted by day",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
+      },
+      {
+        "k": "loading_crew",
+        "key": "loading_crew",
+        "label": "You can send a loading crew",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
+      },
+      {
+        "k": "transit_insurance",
+        "key": "transit_insurance",
+        "label": "Goods-in-transit insurance",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
+      },
+      {
+        "k": "notice",
+        "key": "notice",
+        "label": "Shortest notice you need",
+        "type": "TEXT",
+        "req": true,
+        "screen": "profile",
+        "form": "single"
       }
     ],
     "itemColumns": [
@@ -2652,6 +3013,14 @@ export const TRADE_PROFILE_SCHEMA = {
         "form": "multi"
       },
       {
+        "k": "events",
+        "key": "events",
+        "label": "Events you do mehendi for",
+        "type": "TEXT[]",
+        "screen": "profile",
+        "form": "multi"
+      },
+      {
         "k": "intricate_bridal",
         "key": "intricate_bridal",
         "label": "Intricate bridal work available",
@@ -2680,6 +3049,38 @@ export const TRADE_PROFILE_SCHEMA = {
         "k": "references_value",
         "key": "references",
         "label": "Customers can share design references",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
+      },
+      {
+        "k": "bridal_hours",
+        "key": "bridal_hours",
+        "label": "Time for a full bridal mehendi",
+        "type": "NUMERIC",
+        "screen": "profile",
+        "form": "number"
+      },
+      {
+        "k": "guests_per_hour",
+        "key": "guests_per_hour",
+        "label": "Guests one artist covers in an hour (simple design)",
+        "type": "NUMERIC",
+        "screen": "profile",
+        "form": "number"
+      },
+      {
+        "k": "home_visit",
+        "key": "home_visit",
+        "label": "Home visits",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
+      },
+      {
+        "k": "aftercare",
+        "key": "aftercare",
+        "label": "You give aftercare for a deep colour",
         "type": "BOOLEAN",
         "screen": "profile",
         "form": "toggle"
@@ -2787,6 +3188,38 @@ export const TRADE_PROFILE_SCHEMA = {
         "req": true,
         "screen": "profile",
         "form": "single"
+      },
+      {
+        "k": "night_trips",
+        "key": "night_trips",
+        "label": "Night trips (after 10 pm)",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
+      },
+      {
+        "k": "multi_stop",
+        "key": "multi_stop",
+        "label": "Multi-stop trips (pick up from several shops)",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
+      },
+      {
+        "k": "outstation",
+        "key": "outstation",
+        "label": "Outstation trips",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
+      },
+      {
+        "k": "fragile",
+        "key": "fragile",
+        "label": "You handle fragile loads (glass, cakes, decor)",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
       }
     ],
     "itemColumns": [
@@ -2909,6 +3342,38 @@ export const TRADE_PROFILE_SCHEMA = {
         "k": "airport_station",
         "key": "airport_station",
         "label": "Flight / train coordination",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
+      },
+      {
+        "k": "languages",
+        "key": "languages",
+        "label": "Languages your drivers speak",
+        "type": "TEXT[]",
+        "screen": "profile",
+        "form": "multi"
+      },
+      {
+        "k": "uniformed",
+        "key": "uniformed",
+        "label": "Drivers in uniform",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
+      },
+      {
+        "k": "outstation",
+        "key": "outstation",
+        "label": "Outstation trips",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
+      },
+      {
+        "k": "late_night",
+        "key": "late_night",
+        "label": "Late-night pickups (after 11 pm)",
         "type": "BOOLEAN",
         "screen": "profile",
         "form": "toggle"
@@ -3071,6 +3536,38 @@ export const TRADE_PROFILE_SCHEMA = {
         "req": true,
         "screen": "profile",
         "form": "number"
+      },
+      {
+        "k": "languages",
+        "key": "languages",
+        "label": "Languages you speak with families",
+        "type": "TEXT[]",
+        "screen": "profile",
+        "form": "multi"
+      },
+      {
+        "k": "sneak_peek_days",
+        "key": "sneak_peek_days",
+        "label": "Sneak-peek photos delivered within",
+        "type": "NUMERIC",
+        "screen": "profile",
+        "form": "number"
+      },
+      {
+        "k": "same_day_edit",
+        "key": "same_day_edit",
+        "label": "Same-day edit slideshow at the reception",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
+      },
+      {
+        "k": "outstation",
+        "key": "outstation",
+        "label": "You travel for destination / outstation shoots",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
       }
     ],
     "itemColumns": [
@@ -3196,6 +3693,38 @@ export const TRADE_PROFILE_SCHEMA = {
         "label": "Service radius",
         "type": "NUMERIC",
         "req": true,
+        "screen": "profile",
+        "form": "number"
+      },
+      {
+        "k": "largest_kva",
+        "key": "largest_kva",
+        "label": "Largest generator you can supply",
+        "type": "NUMERIC",
+        "screen": "profile",
+        "form": "number"
+      },
+      {
+        "k": "parallel",
+        "key": "parallel",
+        "label": "You can run generators in sync (parallel)",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
+      },
+      {
+        "k": "silent_canopy",
+        "key": "silent_canopy",
+        "label": "CPCB-compliant silent canopies",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
+      },
+      {
+        "k": "setup_hours",
+        "key": "setup_hours",
+        "label": "Setup time you need before the event",
+        "type": "NUMERIC",
         "screen": "profile",
         "form": "number"
       }
@@ -3377,6 +3906,38 @@ export const TRADE_PROFILE_SCHEMA = {
         "type": "BOOLEAN",
         "screen": "profile",
         "form": "toggle"
+      },
+      {
+        "k": "years",
+        "key": "years",
+        "label": "Years performing ceremonies",
+        "type": "NUMERIC",
+        "screen": "profile",
+        "form": "number"
+      },
+      {
+        "k": "online_puja",
+        "key": "online_puja",
+        "label": "Online / video-call puja for families abroad",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
+      },
+      {
+        "k": "horoscope",
+        "key": "horoscope",
+        "label": "Horoscope matching",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
+      },
+      {
+        "k": "prasadam_cook",
+        "key": "prasadam_cook",
+        "label": "You can arrange a cook for prasadam",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
       }
     ],
     "itemColumns": [
@@ -3524,6 +4085,38 @@ export const TRADE_PROFILE_SCHEMA = {
         "form": "toggle"
       },
       {
+        "k": "ambulance",
+        "key": "ambulance",
+        "label": "Ambulance on standby available",
+        "type": "BOOLEAN",
+        "screen": "capacity",
+        "form": "toggle"
+      },
+      {
+        "k": "medical_staff",
+        "key": "medical_staff",
+        "label": "Paramedic or nurse on site available",
+        "type": "BOOLEAN",
+        "screen": "capacity",
+        "form": "toggle"
+      },
+      {
+        "k": "permissions_help",
+        "key": "permissions_help",
+        "label": "You help with fire and police permissions",
+        "type": "BOOLEAN",
+        "screen": "capacity",
+        "form": "toggle"
+      },
+      {
+        "k": "setup_hours",
+        "key": "setup_hours",
+        "label": "Setup time you need before the event",
+        "type": "NUMERIC",
+        "screen": "capacity",
+        "form": "number"
+      },
+      {
         "k": "restrictions",
         "key": "restrictions",
         "label": "Restrictions",
@@ -3587,6 +4180,14 @@ export const TRADE_PROFILE_SCHEMA = {
         "form": "number"
       },
       {
+        "k": "police_liaison",
+        "key": "police_liaison",
+        "label": "You coordinate with local police for the event",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
+      },
+      {
         "k": "guards",
         "key": "guards",
         "label": "Guards available",
@@ -3621,6 +4222,22 @@ export const TRADE_PROFILE_SCHEMA = {
         "req": true,
         "screen": "team",
         "form": "multi"
+      },
+      {
+        "k": "lady_guards",
+        "key": "lady_guards",
+        "label": "Lady guards available",
+        "type": "NUMERIC",
+        "screen": "team",
+        "form": "number"
+      },
+      {
+        "k": "ex_servicemen",
+        "key": "ex_servicemen",
+        "label": "Ex-servicemen on your team",
+        "type": "BOOLEAN",
+        "screen": "team",
+        "form": "toggle"
       },
       {
         "k": "equipment",
@@ -3689,6 +4306,46 @@ export const TRADE_PROFILE_SCHEMA = {
         "label": "Largest audience you can cover",
         "type": "NUMERIC",
         "req": true,
+        "screen": "profile",
+        "form": "number"
+      },
+      {
+        "k": "brands",
+        "key": "brands",
+        "label": "Brands in your inventory",
+        "type": "TEXT[]",
+        "screen": "profile",
+        "form": "multi"
+      },
+      {
+        "k": "events",
+        "key": "events",
+        "label": "Events you supply for",
+        "type": "TEXT[]",
+        "screen": "profile",
+        "form": "multi"
+      },
+      {
+        "k": "backup",
+        "key": "backup",
+        "label": "A backup mixer and mics stay on site",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
+      },
+      {
+        "k": "setup_hours",
+        "key": "setup_hours",
+        "label": "Setup time you need before the event",
+        "type": "NUMERIC",
+        "screen": "profile",
+        "form": "number"
+      },
+      {
+        "k": "service_radius_km",
+        "key": "service_radius_km",
+        "label": "How far you work from your base",
+        "type": "NUMERIC",
         "screen": "profile",
         "form": "number"
       }
@@ -3799,6 +4456,46 @@ export const TRADE_PROFILE_SCHEMA = {
         "req": true,
         "screen": "profile",
         "form": "multi"
+      },
+      {
+        "k": "largest_structure_sqft",
+        "key": "largest_structure_sqft",
+        "label": "Largest structure you can put up",
+        "type": "NUMERIC",
+        "screen": "profile",
+        "form": "number"
+      },
+      {
+        "k": "max_seated_guests",
+        "key": "max_seated_guests",
+        "label": "Most guests you can seat",
+        "type": "NUMERIC",
+        "screen": "profile",
+        "form": "number"
+      },
+      {
+        "k": "setup_hours",
+        "key": "setup_hours",
+        "label": "Setup time you need",
+        "type": "NUMERIC",
+        "screen": "profile",
+        "form": "number"
+      },
+      {
+        "k": "fire_retardant",
+        "key": "fire_retardant",
+        "label": "Fire-retardant fabric",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
+      },
+      {
+        "k": "ac_tents",
+        "key": "ac_tents",
+        "label": "Air-conditioned tents available",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
       },
       {
         "k": "weatherproof",
@@ -3975,6 +4672,30 @@ export const TRADE_PROFILE_SCHEMA = {
         "req": true,
         "screen": "scope",
         "form": "number"
+      },
+      {
+        "k": "vehicle_types",
+        "key": "vehicle_types",
+        "label": "Vehicle types you can arrange",
+        "type": "TEXT[]",
+        "screen": "scope",
+        "form": "multi"
+      },
+      {
+        "k": "service_radius_km",
+        "key": "service_radius_km",
+        "label": "How far you operate from your base",
+        "type": "NUMERIC",
+        "screen": "scope",
+        "form": "number"
+      },
+      {
+        "k": "live_tracking",
+        "key": "live_tracking",
+        "label": "Live vehicle tracking shared with the customer",
+        "type": "BOOLEAN",
+        "screen": "scope",
+        "form": "toggle"
       }
     ],
     "itemColumns": []
@@ -4046,6 +4767,30 @@ export const TRADE_PROFILE_SCHEMA = {
         "req": true,
         "screen": "profile",
         "form": "multi"
+      },
+      {
+        "k": "min_order_sets",
+        "key": "min_order_sets",
+        "label": "Smallest order you take",
+        "type": "NUMERIC",
+        "screen": "profile",
+        "form": "number"
+      },
+      {
+        "k": "rental_trays",
+        "key": "rental_trays",
+        "label": "Returnable rental trays and baskets",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
+      },
+      {
+        "k": "venue_display",
+        "key": "venue_display",
+        "label": "You arrange the trousseau display at the venue",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
       }
     ],
     "itemColumns": [
@@ -4161,6 +4906,38 @@ export const TRADE_PROFILE_SCHEMA = {
         "form": "toggle"
       },
       {
+        "k": "max_cars",
+        "key": "max_cars",
+        "label": "Most cars handled at one event",
+        "type": "NUMERIC",
+        "screen": "profile",
+        "form": "number"
+      },
+      {
+        "k": "luxury_trained",
+        "key": "luxury_trained",
+        "label": "Drivers trained for luxury, automatic and EV cars",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
+      },
+      {
+        "k": "key_tracking",
+        "key": "key_tracking",
+        "label": "Digital key tracking (token or app)",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
+      },
+      {
+        "k": "remote_shuttle",
+        "key": "remote_shuttle",
+        "label": "Shuttle from a remote parking lot",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
+      },
+      {
         "k": "customer_duties",
         "key": "customer_duties",
         "label": "What the host must provide",
@@ -4210,6 +4987,14 @@ export const TRADE_PROFILE_SCHEMA = {
         "req": true,
         "screen": "profile",
         "form": "single"
+      },
+      {
+        "k": "events",
+        "key": "events",
+        "label": "Events you host",
+        "type": "TEXT[]",
+        "screen": "profile",
+        "form": "multi"
       },
       {
         "k": "photos",
@@ -4278,6 +5063,38 @@ export const TRADE_PROFILE_SCHEMA = {
         "type": "TEXT[]",
         "screen": "profile",
         "form": "multi"
+      },
+      {
+        "k": "dining_capacity",
+        "key": "dining_capacity",
+        "label": "Dining capacity (seated at one time)",
+        "type": "NUMERIC",
+        "screen": "profile",
+        "form": "number"
+      },
+      {
+        "k": "two_wheeler_parking",
+        "key": "two_wheeler_parking",
+        "label": "Two-wheeler parking",
+        "type": "NUMERIC",
+        "screen": "profile",
+        "form": "number"
+      },
+      {
+        "k": "early_muhurtha",
+        "key": "early_muhurtha",
+        "label": "Early-morning muhurtha bookings (before 6 am)",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
+      },
+      {
+        "k": "overnight_stay",
+        "key": "overnight_stay",
+        "label": "Guests can stay overnight",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
       },
       {
         "k": "catering_rule",
@@ -4530,6 +5347,38 @@ export const TRADE_PROFILE_SCHEMA = {
         "req": true,
         "screen": "profile",
         "form": "number"
+      },
+      {
+        "k": "deliverables",
+        "key": "deliverables",
+        "label": "Deliverables you offer",
+        "type": "TEXT[]",
+        "screen": "profile",
+        "form": "multi"
+      },
+      {
+        "k": "languages",
+        "key": "languages",
+        "label": "Languages you speak with families",
+        "type": "TEXT[]",
+        "screen": "profile",
+        "form": "multi"
+      },
+      {
+        "k": "same_day_edit",
+        "key": "same_day_edit",
+        "label": "Same-day edit shown at the reception",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
+      },
+      {
+        "k": "outstation",
+        "key": "outstation",
+        "label": "You travel for destination / outstation shoots",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
       }
     ],
     "itemColumns": [
@@ -4748,6 +5597,38 @@ export const TRADE_PROFILE_SCHEMA = {
         "form": "multi"
       },
       {
+        "k": "ceiling_ft",
+        "key": "ceiling_ft",
+        "label": "Clear ceiling height",
+        "type": "NUMERIC",
+        "screen": "facility",
+        "form": "number"
+      },
+      {
+        "k": "truck_access",
+        "key": "truck_access",
+        "label": "A truck can reach the loading door",
+        "type": "BOOLEAN",
+        "screen": "facility",
+        "form": "toggle"
+      },
+      {
+        "k": "round_clock_access",
+        "key": "round_clock_access",
+        "label": "Access at any hour",
+        "type": "BOOLEAN",
+        "screen": "facility",
+        "form": "toggle"
+      },
+      {
+        "k": "inventory_online",
+        "key": "inventory_online",
+        "label": "Inventory list and photos shared online",
+        "type": "BOOLEAN",
+        "screen": "facility",
+        "form": "toggle"
+      },
+      {
         "k": "equipment",
         "key": "equipment",
         "label": "Loading equipment",
@@ -4852,6 +5733,38 @@ export const TRADE_PROFILE_SCHEMA = {
         "req": true,
         "screen": "profile",
         "form": "single"
+      },
+      {
+        "k": "wedding_styles",
+        "key": "wedding_styles",
+        "label": "Wedding traditions you plan",
+        "type": "TEXT[]",
+        "screen": "profile",
+        "form": "multi"
+      },
+      {
+        "k": "max_guests",
+        "key": "max_guests",
+        "label": "Largest wedding you have planned",
+        "type": "NUMERIC",
+        "screen": "profile",
+        "form": "number"
+      },
+      {
+        "k": "languages",
+        "key": "languages",
+        "label": "Languages your team works in",
+        "type": "TEXT[]",
+        "screen": "profile",
+        "form": "multi"
+      },
+      {
+        "k": "vendor_network",
+        "key": "vendor_network",
+        "label": "You bring your own trusted vendor network",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
       }
     ],
     "itemColumns": [

@@ -1,5 +1,5 @@
 // Trade 10 — Event Lighting (spec Part 9, Trade 10)
-import { q, screen, catalogue } from './schema'
+import { q, screen, catalogue, EVENT_TYPES } from './schema'
 
 export default {
   id: 'event_lighting',
@@ -9,7 +9,10 @@ export default {
       q.multi('service_types', 'Which lighting services do you provide?', [
         'Basic event lighting', 'Stage lighting', 'Decorative lighting', 'Moving lights',
         'Architectural / venue lighting', 'Outdoor lighting', 'Custom lighting design',
+        'Mandap lighting', 'Fairy / string lights', 'Uplighting', 'Pixel / LED effects', 'Laser show', 'Projection mapping',
+        'Tree & garden lighting', 'Chandeliers', 'Facade lighting', 'Dance-floor lighting', 'Pathway & entrance lighting',
       ], { required: true, other: true }),
+      q.multi('events', 'Events you light', EVENT_TYPES, { other: true }),
       q.multi('suitability', 'Indoor / outdoor', ['Indoor', 'Outdoor'], { required: true }),
       q.number('coverage_sqft', 'Largest area you can light', { min: 100, max: 1000000, suffix: 'sq ft' }),
       q.toggle('rigging', 'You handle rigging (truss, hanging)'),
@@ -19,6 +22,12 @@ export default {
       q.toggle('setup_dismantle', 'Setup and dismantling included'),
       q.textarea('safety', 'Safety measures', { max: 200 }),
       q.toggle('transport', 'You transport the equipment'),
+      /* Setup time and backup power decide whether a booking can be
+         confirmed instantly: a venue that hands over two hours before
+         the event cannot take a rig that needs six. */
+      q.number('setup_hours', 'Setup time you need before the event', { min: 0, max: 72, suffix: 'hours' }),
+      q.toggle('backup_power', 'You bring backup power for the lights'),
+      q.number('service_radius_km', 'How far you work from your base', { min: 5, max: 3000, suffix: 'km' }),
     ]),
   ],
   catalogue: catalogue('fixtures', 'Your fixtures', 'fixture', 'fixtures', [

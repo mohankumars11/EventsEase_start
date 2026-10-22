@@ -6,10 +6,10 @@ Do not edit by hand — re-run the script after changing a trade spec.
 ## Totals
 
 - Trades: **34**
-- Onboarding questions (profile screens): **268**
+- Onboarding questions (profile screens): **381**
 - Catalogue sub-form fields (repeating items): **250**
-- Required questions: **157**
-- Conditional questions: **16**
+- Required questions: **158**
+- Conditional questions: **17**
 - Trades with a catalogue sub-form: **24**
 
 ## Where answers live today
@@ -151,7 +151,7 @@ onboarding answers.
 | profile | `events` | Which events do you decorate? | multi | `TEXT[]` | yes | allows "other" |  |
 | profile | `flowers` | Do you use fresh flowers, artificial flowers or both? | single | `TEXT` | yes |  |  |
 | profile | `flower_types` | Which flowers do you work with? | multi | `TEXT[]` |  | allows "other" | flowers in [fresh\|both] |
-| profile | `flower_sourcing` | Where do your flowers come from? | single | `TEXT` |  |  | flowers in [fresh\|both] |
+| profile | `flower_sourcing` | Where do your flowers come from? | single | `TEXT` |  | allows "other" | flowers in [fresh\|both] |
 | profile | `props` | What do you build with? | multi | `TEXT[]` | yes | allows "other" |  |
 | profile | `custom_designs` | Do you offer custom designs? | toggle | `BOOLEAN` |  |  |  |
 | profile | `setup_dismantle` | Do you handle setup and dismantling? | toggle | `BOOLEAN` |  |  |  |
@@ -186,7 +186,7 @@ onboarding answers.
 
 ### dj_music
 
-`dj_music.js` · 13 profile questions · no catalogue
+`dj_music.js` · 17 profile questions · no catalogue
 
 | Section | Field key | Label | Type | SQL | Req | Validation | Conditional |
 |---|---|---|---|---|---|---|---|
@@ -195,6 +195,10 @@ onboarding answers.
 | profile | `styles` | Which music styles do you play? | multi | `TEXT[]` | yes | allows "other" |  |
 | profile | `performers` | How many performers can you provide? | number | `NUMERIC` | yes | min 1, max 30 |  |
 | profile | `own_equipment` | Do you supply your own sound and lighting equipment? | single | `TEXT` | yes |  |  |
+| profile | `sound_covers` | Your own sound system covers up to | single | `TEXT` |  |  | own_equipment in [sound_and_lighting\|sound_only] |
+| profile | `settings` | Where you can play | multi | `TEXT[]` |  | allows "other" |  |
+| profile | `languages` | Languages you can host and take requests in | multi | `TEXT[]` |  | allows "other" |  |
+| profile | `emcee` | You can also host / emcee the night | toggle | `BOOLEAN` |  |  |  |
 | performance | `formats` | Performance format | multi | `TEXT[]` | yes | allows "other" |  |
 | performance | `duration_options` | Duration options | multi | `TEXT[]` | yes |  |  |
 | performance | `setup_minutes` | Setup / soundcheck time | number | `NUMERIC` | yes | min 0, max 300, unit minutes |  |
@@ -206,7 +210,7 @@ onboarding answers.
 
 ### end_to_end_event_logistics
 
-`end_to_end_event_logistics.js` · 5 profile questions · no catalogue
+`end_to_end_event_logistics.js` · 10 profile questions · no catalogue
 
 | Section | Field key | Label | Type | SQL | Req | Validation | Conditional |
 |---|---|---|---|---|---|---|---|
@@ -215,14 +219,23 @@ onboarding answers.
 | scope | `own_vehicles` | Vehicles you operate | number | `NUMERIC` |  | min 0, max 500 |  |
 | scope | `own_staff` | Staff you employ | number | `NUMERIC` |  | min 0, max 5000 |  |
 | scope | `max_concurrent_projects` | Projects you can run at the same time | number | `NUMERIC` | yes | min 1, max 100 |  |
+| scope | `max_guests` | Largest event you have run logistics for | number | `NUMERIC` |  | min 10, max 500000, unit guests |  |
+| scope | `vehicle_types` | Vehicles you can deploy | multi | `TEXT[]` |  | allows "other" |  |
+| scope | `service_radius_km` | How far you take projects | number | `NUMERIC` |  | min 5, max 3000, unit km |  |
+| scope | `overnight_setup` | Overnight setup and teardown | toggle | `BOOLEAN` |  |  |  |
+| scope | `transit_insurance` | Goods-in-transit insurance | toggle | `BOOLEAN` |  |  |  |
 
 ### event_equipment_rental
 
-`event_equipment_rental.js` · 9 profile questions · 11 catalogue fields
+`event_equipment_rental.js` · 13 profile questions · 11 catalogue fields
 
 | Section | Field key | Label | Type | SQL | Req | Validation | Conditional |
 |---|---|---|---|---|---|---|---|
 | profile | `equipment_types` | Which equipment types are available? | multi | `TEXT[]` | yes | allows "other" |  |
+| profile | `events` | Events you rent for | multi | `TEXT[]` |  | allows "other" |  |
+| profile | `delivery_radius_km` | How far you deliver | number | `NUMERIC` |  | min 0, max 1000, unit km |  |
+| profile | `lead_hours` | Notice you need before delivery | number | `NUMERIC` |  | min 0, max 720, unit hours |  |
+| profile | `same_day` | Same-day delivery possible | toggle | `BOOLEAN` |  |  |  |
 | terms | `min_period` | Minimum rental period | single | `TEXT` | yes |  |  |
 | terms | `max_period` | Maximum rental period | single | `TEXT` |  |  |  |
 | terms | `handover` | Delivery / pickup options | multi | `TEXT[]` | yes |  |  |
@@ -245,11 +258,12 @@ onboarding answers.
 
 ### event_lighting
 
-`event_lighting.js` · 10 profile questions · 7 catalogue fields
+`event_lighting.js` · 14 profile questions · 7 catalogue fields
 
 | Section | Field key | Label | Type | SQL | Req | Validation | Conditional |
 |---|---|---|---|---|---|---|---|
 | profile | `service_types` | Which lighting services do you provide? | multi | `TEXT[]` | yes | allows "other" |  |
+| profile | `events` | Events you light | multi | `TEXT[]` |  | allows "other" |  |
 | profile | `suitability` | Indoor / outdoor | multi | `TEXT[]` | yes |  |  |
 | profile | `coverage_sqft` | Largest area you can light | number | `NUMERIC` |  | min 100, max 1000000, unit sq ft |  |
 | profile | `rigging` | You handle rigging (truss, hanging) | toggle | `BOOLEAN` |  |  |  |
@@ -259,6 +273,9 @@ onboarding answers.
 | profile | `setup_dismantle` | Setup and dismantling included | toggle | `BOOLEAN` |  |  |  |
 | profile | `safety` | Safety measures | textarea | `TEXT` |  | max 200 |  |
 | profile | `transport` | You transport the equipment | toggle | `BOOLEAN` |  |  |  |
+| profile | `setup_hours` | Setup time you need before the event | number | `NUMERIC` |  | min 0, max 72, unit hours |  |
+| profile | `backup_power` | You bring backup power for the lights | toggle | `BOOLEAN` |  |  |  |
+| profile | `service_radius_km` | How far you work from your base | number | `NUMERIC` |  | min 5, max 3000, unit km |  |
 | catalogue/fixtures | `name` | Fixture | text | `TEXT` | yes | max 60 |  |
 | catalogue/fixtures | `total_qty` | Quantity | number | `NUMERIC` | yes | min 1, max 10000 |  |
 | catalogue/fixtures | `suitability` | Use | single | `TEXT` | yes |  |  |
@@ -269,12 +286,16 @@ onboarding answers.
 
 ### event_materials_supplier
 
-`event_materials_supplier.js` · 3 profile questions · 12 catalogue fields
+`event_materials_supplier.js` · 7 profile questions · 12 catalogue fields
 
 | Section | Field key | Label | Type | SQL | Req | Validation | Conditional |
 |---|---|---|---|---|---|---|---|
 | profile | `supplies` | What supplies do you sell or supply for events? | multi | `TEXT[]` | yes | allows "other" |  |
 | profile | `fulfilment` | How customers receive orders | multi | `TEXT[]` | yes |  |  |
+| profile | `bulk` | You take bulk orders (1,000+ units) | toggle | `BOOLEAN` |  |  |  |
+| profile | `same_day` | Same-day orders possible | toggle | `BOOLEAN` |  |  |  |
+| profile | `gst_invoice` | You give a GST invoice | toggle | `BOOLEAN` |  |  |  |
+| profile | `returns_unused` | Unopened stock can be returned | toggle | `BOOLEAN` |  |  |  |
 | profile | `prep_hours` | Order preparation time | number | `NUMERIC` | yes | min 0, max 720, unit hours |  |
 | catalogue/products | `sku` | SKU | text | `TEXT` |  | max 30 |  |
 | catalogue/products | `name` | Name | text | `TEXT` | yes | max 60 |  |
@@ -291,11 +312,14 @@ onboarding answers.
 
 ### gifts_favours
 
-`gifts_favours.js` · 4 profile questions · 13 catalogue fields
+`gifts_favours.js` · 7 profile questions · 13 catalogue fields
 
 | Section | Field key | Label | Type | SQL | Req | Validation | Conditional |
 |---|---|---|---|---|---|---|---|
 | profile | `gift_types` | What types of gifts or favours do you offer? | multi | `TEXT[]` | yes | allows "other" |  |
+| profile | `occasions` | Occasions you make gifts for | multi | `TEXT[]` |  | allows "other" |  |
+| profile | `personalisation_methods` | Personalisation you can do | multi | `TEXT[]` |  | allows "other" |  |
+| profile | `message_card` | You add a printed message card | toggle | `BOOLEAN` |  |  |  |
 | profile | `packaging_personalisation` | Can customers choose packaging and personalization? | toggle | `BOOLEAN` |  |  |  |
 | profile | `min_order` | What is the minimum order quantity? | number | `NUMERIC` | yes | min 1, max 100000 |  |
 | profile | `prep_days` | How much time do you need to prepare an order? | number | `NUMERIC` | yes | min 0, max 90, unit days |  |
@@ -315,11 +339,15 @@ onboarding answers.
 
 ### guest_services
 
-`guest_services.js` · 1 profile questions · 13 catalogue fields
+`guest_services.js` · 5 profile questions · 13 catalogue fields
 
 | Section | Field key | Label | Type | SQL | Req | Validation | Conditional |
 |---|---|---|---|---|---|---|---|
 | profile | `roles` | Which services do you provide? | multi | `TEXT[]` | yes | allows "other" |  |
+| profile | `languages` | Languages your staff speak | multi | `TEXT[]` |  | allows "other" |  |
+| profile | `attire` | Attire you can provide | multi | `TEXT[]` |  | allows "other" |  |
+| profile | `max_event_guests` | Largest event you have staffed | number | `NUMERIC` |  | min 10, max 200000, unit guests |  |
+| profile | `grooming` | Grooming and a pre-event briefing for every staff member | toggle | `BOOLEAN` |  |  |  |
 | catalogue/role_specs | `role` | Role | single | `TEXT` | yes | allows "other" |  |
 | catalogue/role_specs | `min_staff` | Minimum staff | number | `NUMERIC` | yes | min 1, max 500 |  |
 | catalogue/role_specs | `max_staff` | Maximum staff | number | `NUMERIC` | yes | min 1, max 2000 |  |
@@ -336,22 +364,26 @@ onboarding answers.
 
 ### invitation_printing
 
-`invitation_printing.js` · 4 profile questions · 14 catalogue fields
+`invitation_printing.js` · 8 profile questions · 14 catalogue fields
 
 | Section | Field key | Label | Type | SQL | Req | Validation | Conditional |
 |---|---|---|---|---|---|---|---|
 | profile | `products` | Which of these do you provide? | multi | `TEXT[]` | yes | allows "other" |  |
 | profile | `languages` | Languages / scripts you can typeset | multi | `TEXT[]` | yes | allows "other" |  |
+| profile | `card_styles` | Card styles you make | multi | `TEXT[]` |  | allows "other" |  |
 | profile | `revisions` | Design revisions included | number | `NUMERIC` | yes | min 0, max 10 |  |
 | profile | `proof_required` | You send a proof for approval before production | toggle | `BOOLEAN` |  |  |  |
+| profile | `min_order` | Smallest printed order you take | number | `NUMERIC` |  | min 1, max 100000, unit cards |  |
+| profile | `home_delivery` | You deliver the printed cards to the family | toggle | `BOOLEAN` |  |  |  |
+| profile | `guest_distribution` | You can courier or hand-deliver cards to guests | toggle | `BOOLEAN` |  |  |  |
 | catalogue/products | `name` | Product | text | `TEXT` | yes | max 60 |  |
 | catalogue/products | `format` | Format | single | `TEXT` | yes |  |  |
 | catalogue/products | `size` | Size / dimensions | text | `TEXT` |  | max 30 | format in [printed] |
 | catalogue/products | `paper` | Paper / material | text | `TEXT` |  | max 40 | format in [printed] |
 | catalogue/products | `process` | Printing process | single | `TEXT` |  | allows "other" | format in [printed] |
 | catalogue/products | `colours` | Number of colours | number | `NUMERIC` |  | min 1, max 8 | format in [printed] |
-| catalogue/products | `file_formats` | File formats delivered | multi | `TEXT[]` |  |  | format in [digital] |
-| catalogue/products | `delivery_method` | Delivered via | single | `TEXT` |  |  | format in [digital] |
+| catalogue/products | `file_formats` | File formats delivered | multi | `TEXT[]` |  | allows "other" | format in [digital] |
+| catalogue/products | `delivery_method` | Delivered via | single | `TEXT` |  | allows "other" | format in [digital] |
 | catalogue/products | `design_fee` | Design fee | money | `BIGINT` |  |  |  |
 | catalogue/products | `per_piece` | Price per piece | money | `BIGINT` | yes |  |  |
 | catalogue/products | `min_qty` | Minimum quantity | number | `NUMERIC` |  | min 1, max 100000 |  |
@@ -361,36 +393,44 @@ onboarding answers.
 
 ### live_entertainment
 
-`live_entertainment.js` · 1 profile questions · 13 catalogue fields
+`live_entertainment.js` · 5 profile questions · 13 catalogue fields
 
 | Section | Field key | Label | Type | SQL | Req | Validation | Conditional |
 |---|---|---|---|---|---|---|---|
 | profile | `act_types` | Which acts are provided? | multi | `TEXT[]` | yes | allows "other" |  |
+| profile | `events` | Events you perform at | multi | `TEXT[]` |  | allows "other" |  |
+| profile | `own_sound` | You bring your own sound system | toggle | `BOOLEAN` |  |  |  |
+| profile | `shows_per_day` | Most shows you can do in one day | number | `NUMERIC` |  | min 1, max 10 |  |
+| profile | `service_radius_km` | How far you travel for a show | number | `NUMERIC` |  | min 5, max 3000, unit km |  |
 | catalogue/acts | `name` | Act name | text | `TEXT` | yes | max 60 |  |
 | catalogue/acts | `description` | Description | textarea | `TEXT` | yes | max 300 |  |
 | catalogue/acts | `performers` | Performers | number | `NUMERIC` | yes | min 1, max 100 |  |
 | catalogue/acts | `durations` | Duration options | multi | `TEXT[]` | yes |  |  |
-| catalogue/acts | `format` | Performance format | single | `TEXT` | yes |  |  |
+| catalogue/acts | `format` | Performance format | single | `TEXT` | yes | allows "other" |  |
 | catalogue/acts | `setup_minutes` | Setup / soundcheck | number | `NUMERIC` |  | min 0, max 300, unit minutes |  |
 | catalogue/acts | `stage_space` | Stage space needed | dimensions | `JSONB` |  |  |  |
 | catalogue/acts | `tech_rider` | Equipment & technical rider | textarea | `TEXT` |  | max 300 |  |
 | catalogue/acts | `languages` | Languages | multi | `TEXT[]` |  | allows "other" |  |
-| catalogue/acts | `audience` | Audience suitability | single | `TEXT` | yes |  |  |
+| catalogue/acts | `audience` | Audience suitability | single | `TEXT` | yes | allows "other" |  |
 | catalogue/acts | `price` | Price | money | `BIGINT` | yes |  |  |
 | catalogue/acts | `price_unit` | Per | single | `TEXT` | yes |  |  |
 | catalogue/acts | `showreel` | Showreel link | url | `TEXT` |  |  |  |
 
 ### loading_unloading_crew
 
-`loading_unloading_crew.js` · 14 profile questions · no catalogue
+`loading_unloading_crew.js` · 18 profile questions · no catalogue
 
 | Section | Field key | Label | Type | SQL | Req | Validation | Conditional |
 |---|---|---|---|---|---|---|---|
 | profile | `work` | Loading, unloading or both? | multi | `TEXT[]` | yes |  |  |
 | profile | `materials` | What kinds of materials do you handle? | multi | `TEXT[]` | yes | allows "other" |  |
-| profile | `access` | Access you can work with | multi | `TEXT[]` | yes |  |  |
+| profile | `access` | Access you can work with | multi | `TEXT[]` | yes | allows "other" |  |
 | profile | `tools` | Lifting tools you bring | multi | `TEXT[]` |  | allows "other" |  |
 | profile | `max_item_kg` | Heaviest single item you will lift | number | `NUMERIC` | yes | min 10, max 2000, unit kg |  |
+| profile | `packing` | You pack and wrap items | toggle | `BOOLEAN` |  |  |  |
+| profile | `assembly` | You assemble and dismantle furniture and stages | toggle | `BOOLEAN` |  |  |  |
+| profile | `same_day` | Same-day crew possible | toggle | `BOOLEAN` |  |  |  |
+| profile | `service_radius_km` | How far your crew travels | number | `NUMERIC` |  | min 2, max 1000, unit km |  |
 | crew | `workers` | Workers available per day | number | `NUMERIC` | yes | min 1, max 1000 |  |
 | crew | `skills` | Skills | multi | `TEXT[]` |  | allows "other" |  |
 | crew | `supervisor` | Supervisor available | toggle | `BOOLEAN` |  |  |  |
@@ -403,7 +443,7 @@ onboarding answers.
 
 ### medium_large_goods_vehicle
 
-`medium_large_goods_vehicle.js` · 6 profile questions · 9 catalogue fields
+`medium_large_goods_vehicle.js` · 10 profile questions · 9 catalogue fields
 
 | Section | Field key | Label | Type | SQL | Req | Validation | Conditional |
 |---|---|---|---|---|---|---|---|
@@ -413,6 +453,10 @@ onboarding answers.
 | profile | `permit_scope` | Goods-carriage permit | single | `TEXT` | yes |  |  |
 | profile | `service_radius_km` | Furthest you will go for one booking | number | `NUMERIC` | yes | min 5, max 3000, unit km |  |
 | profile | `part_load` | You take part loads (shared truck) | toggle | `BOOLEAN` |  |  |  |
+| profile | `night_movement` | You run at night when city entry is restricted by day | toggle | `BOOLEAN` |  |  |  |
+| profile | `loading_crew` | You can send a loading crew | toggle | `BOOLEAN` |  |  |  |
+| profile | `transit_insurance` | Goods-in-transit insurance | toggle | `BOOLEAN` |  |  |  |
+| profile | `notice` | Shortest notice you need | single | `TEXT` | yes |  |  |
 | catalogue/vehicles | `category` | Vehicle type | single | `TEXT` | yes | allows "other" |  |
 | catalogue/vehicles | `payload_kg` | Load capacity | number | `NUMERIC` | yes | min 500, max 50000, unit kg |  |
 | catalogue/vehicles | `load_dimensions` | Load space (L × W × H) | dimensions | `JSONB` | yes |  |  |
@@ -425,26 +469,31 @@ onboarding answers.
 
 ### mehendi_artist
 
-`mehendi_artist.js` · 7 profile questions · 5 catalogue fields
+`mehendi_artist.js` · 12 profile questions · 5 catalogue fields
 
 | Section | Field key | Label | Type | SQL | Req | Validation | Conditional |
 |---|---|---|---|---|---|---|---|
 | profile | `who` | Bridal, family / guest or casual mehendi? | multi | `TEXT[]` | yes |  |  |
 | profile | `styles` | Which styles are offered? | multi | `TEXT[]` | yes | allows "other" |  |
 | profile | `coverage` | Coverage levels | multi | `TEXT[]` | yes | allows "other" |  |
+| profile | `events` | Events you do mehendi for | multi | `TEXT[]` |  | allows "other" |  |
 | profile | `intricate_bridal` | Intricate bridal work available | toggle | `BOOLEAN` |  |  |  |
 | profile | `cone` | Is natural / cone material provided? | single | `TEXT` | yes |  |  |
 | profile | `trial_designs` | Trial designs available | toggle | `BOOLEAN` |  |  |  |
 | profile | `references` | Customers can share design references | toggle | `BOOLEAN` |  |  |  |
+| profile | `bridal_hours` | Time for a full bridal mehendi | number | `NUMERIC` |  | min 1, max 12, unit hours |  |
+| profile | `guests_per_hour` | Guests one artist covers in an hour (simple design) | number | `NUMERIC` |  | min 1, max 30 |  |
+| profile | `home_visit` | Home visits | toggle | `BOOLEAN` |  |  |  |
+| profile | `aftercare` | You give aftercare for a deep colour | toggle | `BOOLEAN` |  |  |  |
 | catalogue/services | `service` | Service | single | `TEXT` | yes | allows "other" |  |
-| catalogue/services | `coverage` | Coverage | single | `TEXT` | yes |  |  |
+| catalogue/services | `coverage` | Coverage | single | `TEXT` | yes | allows "other" |  |
 | catalogue/services | `minutes` | Time per person | number | `NUMERIC` | yes | min 5, max 600, unit minutes |  |
 | catalogue/services | `price` | Price | money | `BIGINT` | yes |  |  |
 | catalogue/services | `price_unit` | Per | single | `TEXT` | yes |  |  |
 
 ### mini_truck_pickup
 
-`mini_truck_pickup.js` · 5 profile questions · 9 catalogue fields
+`mini_truck_pickup.js` · 9 profile questions · 9 catalogue fields
 
 | Section | Field key | Label | Type | SQL | Req | Validation | Conditional |
 |---|---|---|---|---|---|---|---|
@@ -453,10 +502,14 @@ onboarding answers.
 | profile | `helpers` | You can send helpers for loading | toggle | `BOOLEAN` |  |  |  |
 | profile | `same_day` | You take same-day, on-demand trips | toggle | `BOOLEAN` |  |  |  |
 | profile | `notice` | Shortest notice you need | single | `TEXT` | yes |  |  |
+| profile | `night_trips` | Night trips (after 10 pm) | toggle | `BOOLEAN` |  |  |  |
+| profile | `multi_stop` | Multi-stop trips (pick up from several shops) | toggle | `BOOLEAN` |  |  |  |
+| profile | `outstation` | Outstation trips | toggle | `BOOLEAN` |  |  |  |
+| profile | `fragile` | You handle fragile loads (glass, cakes, decor) | toggle | `BOOLEAN` |  |  |  |
 | catalogue/vehicles | `category` | Vehicle | single | `TEXT` | yes | allows "other" |  |
 | catalogue/vehicles | `payload_kg` | Load capacity | number | `NUMERIC` | yes | min 100, max 5000, unit kg |  |
 | catalogue/vehicles | `load_dimensions` | Load space | dimensions | `JSONB` | yes |  |  |
-| catalogue/vehicles | `body` | Body | single | `TEXT` | yes |  |  |
+| catalogue/vehicles | `body` | Body | single | `TEXT` | yes | allows "other" |  |
 | catalogue/vehicles | `count` | How many | number | `NUMERIC` | yes | min 1, max 200 |  |
 | catalogue/vehicles | `driver_included` | Driver included | toggle | `BOOLEAN` |  |  |  |
 | catalogue/vehicles | `registration` | Registration number (private) | text | `TEXT` | yes | max 15 |  |
@@ -465,7 +518,7 @@ onboarding answers.
 
 ### passenger_transport
 
-`passenger_transport.js` · 4 profile questions · 8 catalogue fields
+`passenger_transport.js` · 8 profile questions · 8 catalogue fields
 
 | Section | Field key | Label | Type | SQL | Req | Validation | Conditional |
 |---|---|---|---|---|---|---|---|
@@ -473,6 +526,10 @@ onboarding answers.
 | profile | `service_radius_km` | Service area radius | number | `NUMERIC` | yes | min 5, max 3000, unit km |  |
 | profile | `driver_type` | Drivers | single | `TEXT` | yes |  |  |
 | profile | `airport_station` | Flight / train coordination | toggle | `BOOLEAN` |  |  |  |
+| profile | `languages` | Languages your drivers speak | multi | `TEXT[]` |  | allows "other" |  |
+| profile | `uniformed` | Drivers in uniform | toggle | `BOOLEAN` |  |  |  |
+| profile | `outstation` | Outstation trips | toggle | `BOOLEAN` |  |  |  |
+| profile | `late_night` | Late-night pickups (after 11 pm) | toggle | `BOOLEAN` |  |  |  |
 | catalogue/vehicles | `category` | Vehicle | single | `TEXT` | yes | allows "other" |  |
 | catalogue/vehicles | `seats` | Passenger capacity | number | `NUMERIC` | yes | min 1, max 80 |  |
 | catalogue/vehicles | `bags` | Luggage capacity (bags) | number | `NUMERIC` |  | min 0, max 100 |  |
@@ -484,7 +541,7 @@ onboarding answers.
 
 ### photography
 
-`photography.js` · 9 profile questions · 9 catalogue fields
+`photography.js` · 13 profile questions · 9 catalogue fields
 
 | Section | Field key | Label | Type | SQL | Req | Validation | Conditional |
 |---|---|---|---|---|---|---|---|
@@ -495,21 +552,25 @@ onboarding answers.
 | profile | `portfolio` | Portfolio | photos | `TEXT[]` | yes | min 6, max 30 |  |
 | profile | `gallery_link` | Online gallery link | url | `TEXT` |  |  |  |
 | profile | `equipment` | Equipment | multi | `TEXT[]` |  | allows "other" |  |
-| profile | `formats` | Delivery formats | multi | `TEXT[]` | yes |  |  |
+| profile | `formats` | Delivery formats | multi | `TEXT[]` | yes | allows "other" |  |
 | profile | `service_radius_km` | Service area radius | number | `NUMERIC` | yes | min 5, max 3000, unit km |  |
+| profile | `languages` | Languages you speak with families | multi | `TEXT[]` |  | allows "other" |  |
+| profile | `sneak_peek_days` | Sneak-peek photos delivered within | number | `NUMERIC` |  | min 0, max 30, unit days |  |
+| profile | `same_day_edit` | Same-day edit slideshow at the reception | toggle | `BOOLEAN` |  |  |  |
+| profile | `outstation` | You travel for destination / outstation shoots | toggle | `BOOLEAN` |  |  |  |
 | catalogue/packages | `coverage` | Coverage type | single | `TEXT` | yes | allows "other" |  |
 | catalogue/packages | `hours` | Hours of coverage | number | `NUMERIC` | yes | min 1, max 72, unit hours |  |
 | catalogue/packages | `photographers` | Photographers | number | `NUMERIC` | yes | min 1, max 20 |  |
 | catalogue/packages | `edited_images` | Edited images delivered | number | `NUMERIC` | yes | min 10, max 5000 |  |
 | catalogue/packages | `retouch` | Retouching level | single | `TEXT` | yes |  |  |
-| catalogue/packages | `album` | Album / prints | single | `TEXT` | yes |  |  |
+| catalogue/packages | `album` | Album / prints | single | `TEXT` | yes | allows "other" |  |
 | catalogue/packages | `delivery_days` | Delivery timeline | number | `NUMERIC` | yes | min 1, max 180, unit days |  |
 | catalogue/packages | `raw` | RAW files included | toggle | `BOOLEAN` |  |  |  |
 | catalogue/packages | `price` | Your price for this package | money | `BIGINT` | yes |  |  |
 
 ### power_cooling
 
-`power_cooling.js` · 4 profile questions · 13 catalogue fields
+`power_cooling.js` · 8 profile questions · 13 catalogue fields
 
 | Section | Field key | Label | Type | SQL | Req | Validation | Conditional |
 |---|---|---|---|---|---|---|---|
@@ -517,11 +578,15 @@ onboarding answers.
 | profile | `operators` | You supply operators / technicians | toggle | `BOOLEAN` |  |  |  |
 | profile | `fuel_policy` | Fuel policy | single | `TEXT` | yes |  |  |
 | profile | `service_radius_km` | Service radius | number | `NUMERIC` | yes | min 5, max 1000, unit km |  |
+| profile | `largest_kva` | Largest generator you can supply | number | `NUMERIC` |  | min 1, max 5000, unit kVA |  |
+| profile | `parallel` | You can run generators in sync (parallel) | toggle | `BOOLEAN` |  |  |  |
+| profile | `silent_canopy` | CPCB-compliant silent canopies | toggle | `BOOLEAN` |  |  |  |
+| profile | `setup_hours` | Setup time you need before the event | number | `NUMERIC` |  | min 0, max 48, unit hours |  |
 | catalogue/items | `type` | Type | single | `TEXT` | yes | allows "other" |  |
 | catalogue/items | `model` | Make / model | text | `TEXT` |  | max 40 |  |
 | catalogue/items | `capacity` | Rated capacity | number | `NUMERIC` | yes | min 0.1, max 5000, unit kVA / ton |  |
 | catalogue/items | `quantity` | Quantity owned | number | `NUMERIC` | yes | min 1, max 1000 |  |
-| catalogue/items | `power_source` | Fuel / power | single | `TEXT` | yes |  |  |
+| catalogue/items | `power_source` | Fuel / power | single | `TEXT` | yes | allows "other" |  |
 | catalogue/items | `runtime_hours` | Runtime on one fill | number | `NUMERIC` |  | min 1, max 72, unit hours |  |
 | catalogue/items | `placement` | Indoor / outdoor | single | `TEXT` | yes |  |  |
 | catalogue/items | `cabling` | Cabling included | toggle | `BOOLEAN` |  |  |  |
@@ -533,7 +598,7 @@ onboarding answers.
 
 ### priest_rituals
 
-`priest_rituals.js` · 7 profile questions · 6 catalogue fields
+`priest_rituals.js` · 11 profile questions · 6 catalogue fields
 
 | Section | Field key | Label | Type | SQL | Req | Validation | Conditional |
 |---|---|---|---|---|---|---|---|
@@ -544,6 +609,10 @@ onboarding answers.
 | profile | `muhurta` | You fix muhurta (auspicious time) | toggle | `BOOLEAN` |  |  |  |
 | profile | `materials` | Puja materials & offerings | single | `TEXT` | yes |  |  |
 | profile | `assistants` | Assistant priests available | toggle | `BOOLEAN` |  |  |  |
+| profile | `years` | Years performing ceremonies | number | `NUMERIC` |  | min 0, max 70, unit years |  |
+| profile | `online_puja` | Online / video-call puja for families abroad | toggle | `BOOLEAN` |  |  |  |
+| profile | `horoscope` | Horoscope matching | toggle | `BOOLEAN` |  |  |  |
+| profile | `prasadam_cook` | You can arrange a cook for prasadam | toggle | `BOOLEAN` |  |  |  |
 | catalogue/ceremonies | `ceremony` | Ceremony | single | `TEXT` | yes | allows "other" |  |
 | catalogue/ceremonies | `description` | Short description | text | `TEXT` |  | max 160 |  |
 | catalogue/ceremonies | `minutes` | Duration | number | `NUMERIC` | yes | min 15, max 1440, unit minutes |  |
@@ -553,7 +622,7 @@ onboarding answers.
 
 ### safety_facilities
 
-`safety_facilities.js` · 10 profile questions · no catalogue
+`safety_facilities.js` · 14 profile questions · no catalogue
 
 | Section | Field key | Label | Type | SQL | Req | Validation | Conditional |
 |---|---|---|---|---|---|---|---|
@@ -566,11 +635,15 @@ onboarding answers.
 | capacity | `shift_hours` | Standard shift | number | `NUMERIC` | yes | min 2, max 24, unit hours |  |
 | capacity | `setup_included` | Setup included | toggle | `BOOLEAN` |  |  |  |
 | capacity | `emergency_response` | Emergency response capability | toggle | `BOOLEAN` |  |  |  |
+| capacity | `ambulance` | Ambulance on standby available | toggle | `BOOLEAN` |  |  |  |
+| capacity | `medical_staff` | Paramedic or nurse on site available | toggle | `BOOLEAN` |  |  |  |
+| capacity | `permissions_help` | You help with fire and police permissions | toggle | `BOOLEAN` |  |  |  |
+| capacity | `setup_hours` | Setup time you need before the event | number | `NUMERIC` |  | min 0, max 48, unit hours |  |
 | capacity | `restrictions` | Restrictions | textarea | `TEXT` |  |  |  |
 
 ### security_services
 
-`security_services.js` · 11 profile questions · no catalogue
+`security_services.js` · 14 profile questions · no catalogue
 
 | Section | Field key | Label | Type | SQL | Req | Validation | Conditional |
 |---|---|---|---|---|---|---|---|
@@ -578,23 +651,31 @@ onboarding answers.
 | profile | `other_service` | Anything else (reviewed before it is shown) | textarea | `TEXT` |  |  |  |
 | profile | `venues` | Venue types | multi | `TEXT[]` | yes | allows "other" |  |
 | profile | `max_visitors` | Largest visitor volume handled | number | `NUMERIC` | yes | min 10, max 200000, unit people |  |
+| profile | `police_liaison` | You coordinate with local police for the event | toggle | `BOOLEAN` |  |  |  |
 | team | `guards` | Guards available | number | `NUMERIC` | yes | min 1, max 5000 |  |
 | team | `supervisors` | Supervisors available | number | `NUMERIC` | yes | min 0, max 500 |  |
 | team | `shifts` | Shifts | multi | `TEXT[]` | yes | allows "other" |  |
-| team | `uniform` | Uniform | multi | `TEXT[]` | yes |  |  |
+| team | `uniform` | Uniform | multi | `TEXT[]` | yes | allows "other" |  |
+| team | `lady_guards` | Lady guards available | number | `NUMERIC` |  | min 0, max 2000 |  |
+| team | `ex_servicemen` | Ex-servicemen on your team | toggle | `BOOLEAN` |  |  |  |
 | team | `equipment` | Equipment | multi | `TEXT[]` |  | allows "other" |  |
 | team | `briefing` | Pre-event briefing included | toggle | `BOOLEAN` |  |  |  |
 | team | `relief` | Break relief guards provided | toggle | `BOOLEAN` |  |  |  |
 
 ### sound_av
 
-`sound_av.js` · 3 profile questions · 9 catalogue fields
+`sound_av.js` · 8 profile questions · 9 catalogue fields
 
 | Section | Field key | Label | Type | SQL | Req | Validation | Conditional |
 |---|---|---|---|---|---|---|---|
 | profile | `groups` | Equipment groups | multi | `TEXT[]` | yes | allows "other" |  |
 | profile | `capabilities` | You can also handle | multi | `TEXT[]` |  | allows "other" |  |
 | profile | `max_audience` | Largest audience you can cover | number | `NUMERIC` | yes | min 10, max 100000, unit people |  |
+| profile | `brands` | Brands in your inventory | multi | `TEXT[]` |  | allows "other" |  |
+| profile | `events` | Events you supply for | multi | `TEXT[]` |  | allows "other" |  |
+| profile | `backup` | A backup mixer and mics stay on site | toggle | `BOOLEAN` |  |  |  |
+| profile | `setup_hours` | Setup time you need before the event | number | `NUMERIC` |  | min 0, max 48, unit hours |  |
+| profile | `service_radius_km` | How far you work from your base | number | `NUMERIC` |  | min 5, max 3000, unit km |  |
 | catalogue/items | `group` | Group | single | `TEXT` | yes | allows "other" |  |
 | catalogue/items | `model` | Make / model | text | `TEXT` | yes | max 60 |  |
 | catalogue/items | `quantity` | Quantity | number | `NUMERIC` | yes | min 1, max 10000 |  |
@@ -607,12 +688,17 @@ onboarding answers.
 
 ### tent_furniture
 
-`tent_furniture.js` · 5 profile questions · 11 catalogue fields
+`tent_furniture.js` · 10 profile questions · 11 catalogue fields
 
 | Section | Field key | Label | Type | SQL | Req | Validation | Conditional |
 |---|---|---|---|---|---|---|---|
 | profile | `groups` | What do you supply? | multi | `TEXT[]` | yes | allows "other" |  |
-| profile | `surfaces` | Surfaces you can install on | multi | `TEXT[]` | yes |  |  |
+| profile | `surfaces` | Surfaces you can install on | multi | `TEXT[]` | yes | allows "other" |  |
+| profile | `largest_structure_sqft` | Largest structure you can put up | number | `NUMERIC` |  | min 100, max 500000, unit sq ft |  |
+| profile | `max_seated_guests` | Most guests you can seat | number | `NUMERIC` |  | min 10, max 100000, unit guests |  |
+| profile | `setup_hours` | Setup time you need | number | `NUMERIC` |  | min 0, max 96, unit hours |  |
+| profile | `fire_retardant` | Fire-retardant fabric | toggle | `BOOLEAN` |  |  |  |
+| profile | `ac_tents` | Air-conditioned tents available | toggle | `BOOLEAN` |  |  |  |
 | profile | `weatherproof` | Weather-proof tents available | toggle | `BOOLEAN` |  |  |  |
 | profile | `deposit` | Security deposit (refundable) | money | `BIGINT` |  |  |  |
 | profile | `damage_policy` | Damage policy | textarea | `TEXT` | yes | max 400 |  |
@@ -630,7 +716,7 @@ onboarding answers.
 
 ### transportation
 
-`transportation.js` · 5 profile questions · no catalogue
+`transportation.js` · 8 profile questions · no catalogue
 
 | Section | Field key | Label | Type | SQL | Req | Validation | Conditional |
 |---|---|---|---|---|---|---|---|
@@ -639,10 +725,13 @@ onboarding answers.
 | scope | `operation` | How do you operate? | single | `TEXT` | yes |  |  |
 | scope | `routes` | Areas / routes you cover | textarea | `TEXT` | yes |  |  |
 | scope | `vehicles` | Vehicles you can arrange | number | `NUMERIC` | yes | min 1, max 1000 |  |
+| scope | `vehicle_types` | Vehicle types you can arrange | multi | `TEXT[]` |  | allows "other" |  |
+| scope | `service_radius_km` | How far you operate from your base | number | `NUMERIC` |  | min 5, max 3000, unit km |  |
+| scope | `live_tracking` | Live vehicle tracking shared with the customer | toggle | `BOOLEAN` |  |  |  |
 
 ### trousseau_gift_packing
 
-`trousseau_gift_packing.js` · 6 profile questions · 7 catalogue fields
+`trousseau_gift_packing.js` · 9 profile questions · 7 catalogue fields
 
 | Section | Field key | Label | Type | SQL | Req | Validation | Conditional |
 |---|---|---|---|---|---|---|---|
@@ -652,6 +741,9 @@ onboarding answers.
 | profile | `customer_materials` | You pack customer-supplied items | toggle | `BOOLEAN` |  |  |  |
 | profile | `proof` | You share a sample / photo proof before the full order | toggle | `BOOLEAN` |  |  |  |
 | profile | `handover` | Pickup / delivery | multi | `TEXT[]` | yes |  |  |
+| profile | `min_order_sets` | Smallest order you take | number | `NUMERIC` |  | min 1, max 1000, unit sets |  |
+| profile | `rental_trays` | Returnable rental trays and baskets | toggle | `BOOLEAN` |  |  |  |
+| profile | `venue_display` | You arrange the trousseau display at the venue | toggle | `BOOLEAN` |  |  |  |
 | catalogue/products | `name` | Name | text | `TEXT` | yes | max 60 |  |
 | catalogue/products | `type` | Type | single | `TEXT` | yes | allows "other" |  |
 | catalogue/products | `size` | Dimensions | dimensions | `JSONB` |  |  |  |
@@ -662,7 +754,7 @@ onboarding answers.
 
 ### valet_parking
 
-`valet_parking.js` · 6 profile questions · no catalogue
+`valet_parking.js` · 10 profile questions · no catalogue
 
 | Section | Field key | Label | Type | SQL | Req | Validation | Conditional |
 |---|---|---|---|---|---|---|---|
@@ -671,16 +763,21 @@ onboarding answers.
 | profile | `supervisors` | Supervisors available | number | `NUMERIC` | yes | min 0, max 200 |  |
 | profile | `cars_per_hour` | Cars your team can take per hour at peak | number | `NUMERIC` | yes | min 5, max 5000 |  |
 | profile | `insurance` | Vehicle damage insurance | toggle | `BOOLEAN` |  |  |  |
+| profile | `max_cars` | Most cars handled at one event | number | `NUMERIC` |  | min 10, max 20000 |  |
+| profile | `luxury_trained` | Drivers trained for luxury, automatic and EV cars | toggle | `BOOLEAN` |  |  |  |
+| profile | `key_tracking` | Digital key tracking (token or app) | toggle | `BOOLEAN` |  |  |  |
+| profile | `remote_shuttle` | Shuttle from a remote parking lot | toggle | `BOOLEAN` |  |  |  |
 | profile | `customer_duties` | What the host must provide | textarea | `TEXT` |  |  |  |
 
 ### venue
 
-`venue.js` · 19 profile questions · 11 catalogue fields
+`venue.js` · 24 profile questions · 11 catalogue fields
 
 | Section | Field key | Label | Type | SQL | Req | Validation | Conditional |
 |---|---|---|---|---|---|---|---|
 | profile | `venue_name` | Venue name | text | `TEXT` | yes | max 80 |  |
 | profile | `venue_type` | Venue type | single | `TEXT` | yes | allows "other" |  |
+| profile | `events` | Events you host | multi | `TEXT[]` |  | allows "other" |  |
 | profile | `photos` | Photos | photos | `TEXT[]` | yes | min 5, max 30 |  |
 | profile | `video` | Walkthrough video link | url | `TEXT` |  |  |  |
 | profile | `max_capacity` | Maximum capacity | number | `NUMERIC` | yes | min 10, max 50000, unit guests |  |
@@ -689,6 +786,10 @@ onboarding answers.
 | profile | `parking` | Parking spaces | number | `NUMERIC` | yes | min 0, max 10000 |  |
 | profile | `rooms` | Rooms on site | number | `NUMERIC` |  | min 0, max 1000 |  |
 | profile | `facilities` | Included facilities | multi | `TEXT[]` |  | allows "other" |  |
+| profile | `dining_capacity` | Dining capacity (seated at one time) | number | `NUMERIC` |  | min 0, max 50000, unit guests |  |
+| profile | `two_wheeler_parking` | Two-wheeler parking | number | `NUMERIC` |  | min 0, max 20000 |  |
+| profile | `early_muhurtha` | Early-morning muhurtha bookings (before 6 am) | toggle | `BOOLEAN` |  |  |  |
+| profile | `overnight_stay` | Guests can stay overnight | toggle | `BOOLEAN` |  |  |  |
 | rules | `catering_rule` | Catering | single | `TEXT` | yes |  |  |
 | rules | `outside_catering_fee` | Outside catering fee | money | `BIGINT` |  |  | catering_rule in [outside_allowed_with_a_fee] |
 | rules | `decor_rule` | Decoration | single | `TEXT` | yes |  |  |
@@ -702,7 +803,7 @@ onboarding answers.
 | catalogue/spaces | `setting` | Indoor / outdoor | single | `TEXT` | yes |  |  |
 | catalogue/spaces | `capacity` | Capacity | number | `NUMERIC` | yes | min 5, max 50000, unit guests |  |
 | catalogue/spaces | `size` | Dimensions | dimensions | `JSONB` |  |  |  |
-| catalogue/spaces | `layouts` | Layouts | multi | `TEXT[]` | yes |  |  |
+| catalogue/spaces | `layouts` | Layouts | multi | `TEXT[]` | yes | allows "other" |  |
 | catalogue/spaces | `slots` | Bookable slots | multi | `TEXT[]` | yes |  |  |
 | catalogue/spaces | `combinable` | Booking | single | `TEXT` | yes |  |  |
 | catalogue/spaces | `amenities` | Amenities | multi | `TEXT[]` |  | allows "other" |  |
@@ -712,7 +813,7 @@ onboarding answers.
 
 ### videography
 
-`videography.js` · 7 profile questions · 12 catalogue fields
+`videography.js` · 11 profile questions · 12 catalogue fields
 
 | Section | Field key | Label | Type | SQL | Req | Validation | Conditional |
 |---|---|---|---|---|---|---|---|
@@ -723,12 +824,16 @@ onboarding answers.
 | profile | `portfolio` | Portfolio stills | photos | `TEXT[]` |  | min 3, max 20 |  |
 | profile | `equipment` | Equipment | multi | `TEXT[]` |  | allows "other" |  |
 | profile | `service_radius_km` | Service area radius | number | `NUMERIC` | yes | min 5, max 3000, unit km |  |
+| profile | `deliverables` | Deliverables you offer | multi | `TEXT[]` |  | allows "other" |  |
+| profile | `languages` | Languages you speak with families | multi | `TEXT[]` |  | allows "other" |  |
+| profile | `same_day_edit` | Same-day edit shown at the reception | toggle | `BOOLEAN` |  |  |  |
+| profile | `outstation` | You travel for destination / outstation shoots | toggle | `BOOLEAN` |  |  |  |
 | catalogue/offerings | `service` | Service | single | `TEXT` | yes | allows "other" |  |
 | catalogue/offerings | `hours` | Hours of filming | number | `NUMERIC` | yes | min 1, max 72 |  |
 | catalogue/offerings | `videographers` | Videographers | number | `NUMERIC` | yes | min 1, max 20 |  |
 | catalogue/offerings | `cameras` | Cameras | number | `NUMERIC` | yes | min 1, max 30 |  |
-| catalogue/offerings | `resolution` | Resolution | single | `TEXT` | yes |  |  |
-| catalogue/offerings | `edit_level` | Edit level | single | `TEXT` | yes |  |  |
+| catalogue/offerings | `resolution` | Resolution | single | `TEXT` | yes | allows "other" |  |
+| catalogue/offerings | `edit_level` | Edit level | single | `TEXT` | yes | allows "other" |  |
 | catalogue/offerings | `highlight_minutes` | Highlight length | number | `NUMERIC` |  | min 0, max 30, unit minutes |  |
 | catalogue/offerings | `full_film` | Full-length film included | toggle | `BOOLEAN` |  |  |  |
 | catalogue/offerings | `raw` | Raw footage included | toggle | `BOOLEAN` |  |  |  |
@@ -738,13 +843,13 @@ onboarding answers.
 
 ### warehouse_storage
 
-`warehouse_storage.js` · 17 profile questions · no catalogue
+`warehouse_storage.js` · 21 profile questions · no catalogue
 
 | Section | Field key | Label | Type | SQL | Req | Validation | Conditional |
 |---|---|---|---|---|---|---|---|
 | profile | `item_types` | Item types accepted | multi | `TEXT[]` | yes | allows "other" |  |
 | profile | `custom_category` | Another category (reviewed before it is shown) | textarea | `TEXT` |  |  |  |
-| profile | `storage_kind` | Storage | multi | `TEXT[]` | yes |  |  |
+| profile | `storage_kind` | Storage | multi | `TEXT[]` | yes | allows "other" |  |
 | profile | `climate` | Climate-controlled area | toggle | `BOOLEAN` |  |  |  |
 | profile | `hazardous_excluded` | Hazardous goods are refused | toggle | `BOOLEAN` | yes |  |  |
 | profile | `smallest` | Smallest item accepted | text | `TEXT` |  | max 40 |  |
@@ -753,7 +858,11 @@ onboarding answers.
 | facility | `pallet_positions` | Pallet positions | number | `NUMERIC` |  | min 0, max 100000 |  |
 | facility | `available_sqft` | Area available to Sambramo customers | number | `NUMERIC` | yes | min 10, max 2000000, unit sq ft |  |
 | facility | `access_hours` | Access hours | text | `TEXT` | yes | max 40 |  |
-| facility | `security` | Security | multi | `TEXT[]` | yes |  |  |
+| facility | `security` | Security | multi | `TEXT[]` | yes | allows "other" |  |
+| facility | `ceiling_ft` | Clear ceiling height | number | `NUMERIC` |  | min 6, max 80, unit ft |  |
+| facility | `truck_access` | A truck can reach the loading door | toggle | `BOOLEAN` |  |  |  |
+| facility | `round_clock_access` | Access at any hour | toggle | `BOOLEAN` |  |  |  |
+| facility | `inventory_online` | Inventory list and photos shared online | toggle | `BOOLEAN` |  |  |  |
 | facility | `equipment` | Loading equipment | multi | `TEXT[]` |  | allows "other" |  |
 | facility | `inspection` | Inbound inspection & photo log | toggle | `BOOLEAN` |  |  |  |
 | facility | `min_period` | Minimum storage period | single | `TEXT` | yes |  |  |
@@ -762,7 +871,7 @@ onboarding answers.
 
 ### wedding_planning
 
-`wedding_planning.js` · 5 profile questions · 11 catalogue fields
+`wedding_planning.js` · 9 profile questions · 11 catalogue fields
 
 | Section | Field key | Label | Type | SQL | Req | Validation | Conditional |
 |---|---|---|---|---|---|---|---|
@@ -771,13 +880,17 @@ onboarding answers.
 | profile | `years` | Years planning weddings | number | `NUMERIC` | yes | min 0, max 60, unit years |  |
 | profile | `portfolio` | Weddings you planned | photos | `TEXT[]` | yes | min 4, max 30 |  |
 | profile | `budget_band` | Typical wedding budget you handle | single | `TEXT` | yes |  |  |
+| profile | `wedding_styles` | Wedding traditions you plan | multi | `TEXT[]` |  | allows "other" |  |
+| profile | `max_guests` | Largest wedding you have planned | number | `NUMERIC` |  | min 10, max 100000, unit guests |  |
+| profile | `languages` | Languages your team works in | multi | `TEXT[]` |  | allows "other" |  |
+| profile | `vendor_network` | You bring your own trusted vendor network | toggle | `BOOLEAN` |  |  |  |
 | catalogue/packages | `name` | Package name | text | `TEXT` | yes | max 60 |  |
 | catalogue/packages | `functions` | Functions covered | number | `NUMERIC` | yes | min 1, max 20 |  |
 | catalogue/packages | `planning_months` | Planning period | number | `NUMERIC` | yes | min 0, max 24, unit months |  |
 | catalogue/packages | `onsite_days` | Onsite days | number | `NUMERIC` | yes | min 1, max 15 |  |
 | catalogue/packages | `onsite_hours` | Onsite hours per day | number | `NUMERIC` |  | min 1, max 24 |  |
 | catalogue/packages | `coordinators` | Coordinators onsite | number | `NUMERIC` | yes | min 1, max 50 |  |
-| catalogue/packages | `vendor_categories` | Vendors you coordinate | multi | `TEXT[]` | yes |  |  |
+| catalogue/packages | `vendor_categories` | Vendors you coordinate | multi | `TEXT[]` | yes | allows "other" |  |
 | catalogue/packages | `deliverables` | Deliverables | textarea | `TEXT` | yes | max 400 |  |
 | catalogue/packages | `exclusions` | Not included | textarea | `TEXT` | yes | max 400 |  |
 | catalogue/packages | `change_limit` | Scope changes included | number | `NUMERIC` |  | min 0, max 20 |  |

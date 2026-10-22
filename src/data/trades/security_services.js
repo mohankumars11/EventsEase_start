@@ -8,16 +8,21 @@ export default {
     screen('profile', 'Your security services', 'What your guards do on site.', [
       q.multi('services', 'Services', [
         'Guest access control', 'Entry / exit management', 'Queue management', 'Site security', 'Parking security', 'Supervision',
+        'Bouncers', 'VIP / close protection', 'Lady guards', 'Bag screening', 'Crowd control', 'Gift & cash counter guarding',
+        'Night patrol', 'CCTV monitoring', 'Fire marshals',
       ], { required: true }),
       q.textarea('other_service', 'Anything else (reviewed before it is shown)'),
       q.multi('venues', 'Venue types', ['Banquet halls', 'Open grounds', 'Hotels', 'Corporate', 'Residences', 'Exhibitions'], { required: true, other: true }),
       q.number('max_visitors', 'Largest visitor volume handled', { required: true, min: 10, max: 200000, suffix: 'people' }),
+      q.toggle('police_liaison', 'You coordinate with local police for the event'),
     ]),
     screen('team', 'Your team', null, [
       q.number('guards', 'Guards available', { required: true, min: 1, max: 5000 }),
       q.number('supervisors', 'Supervisors available', { required: true, min: 0, max: 500 }),
       q.multi('shifts', 'Shifts', ['Day (8h)', 'Night (8h)', '12-hour'], { required: true, other: true }),
-      q.multi('uniform', 'Uniform', ['Standard uniform', 'Formal / suited', 'Bouncer'], { required: true }),
+      q.multi('uniform', 'Uniform', ['Standard uniform', 'Formal / suited', 'Bouncer', 'Black suits with earpieces', 'Traditional attire', 'Branded T-shirts'], { required: true, other: true }),
+      q.number('lady_guards', 'Lady guards available', { min: 0, max: 2000 }),
+      q.toggle('ex_servicemen', 'Ex-servicemen on your team'),
       q.multi('equipment', 'Equipment', ['Metal detectors', 'Radios', 'Torches', 'Barricades', 'Body cameras'], { other: true }),
       q.toggle('briefing', 'Pre-event briefing included'),
       q.toggle('relief', 'Break relief guards provided'),

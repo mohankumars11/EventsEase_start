@@ -102,6 +102,7 @@ console.log(`without, and closed by design: ${closedOk.length}`)
 console.log(`without, and open by nature  : ${openGaps.length}`)
 console.log('')
 for (const g of openGaps) console.log(`  FAIL  ${g}`)
+if (process.env.SHOW_CLOSED) for (const g of closedOk) console.log(`  closed ${g}`)
 console.log(openGaps.length
   ? `\nFAIL — ${openGaps.length} open-ended question(s) offer no way to say anything else`
   : '\nPASS — every open-ended choice lets a partner add their own')

@@ -4,6 +4,8 @@ import { q, screen } from './schema'
 const SCOPE = [
   'Loading / unloading coordination', 'Material transport', 'Storage', 'Equipment delivery', 'Setup coordination',
   'Vendor scheduling', 'On-site logistics management', 'Return logistics', 'Multi-location coordination', 'Complete logistics management',
+  'Setup & teardown crews', 'Generator & power logistics', 'Guest luggage handling', 'Exhibition stall logistics',
+  'Inventory tracking', 'Last-mile delivery', 'Waste removal & cleanup',
 ]
 
 export default {
@@ -16,6 +18,11 @@ export default {
       q.number('own_vehicles', 'Vehicles you operate', { min: 0, max: 500 }),
       q.number('own_staff', 'Staff you employ', { min: 0, max: 5000 }),
       q.number('max_concurrent_projects', 'Projects you can run at the same time', { required: true, min: 1, max: 100 }),
+      q.number('max_guests', 'Largest event you have run logistics for', { min: 10, max: 500000, suffix: 'guests' }),
+      q.multi('vehicle_types', 'Vehicles you can deploy', ['Mini truck', '14–17 ft truck', '19–24 ft truck', '32 ft container', 'Tempo Traveller', 'Two-wheeler'], { other: true }),
+      q.number('service_radius_km', 'How far you take projects', { min: 5, max: 3000, suffix: 'km' }),
+      q.toggle('overnight_setup', 'Overnight setup and teardown'),
+      q.toggle('transit_insurance', 'Goods-in-transit insurance'),
     ]),
   ],
   catalogue: null,

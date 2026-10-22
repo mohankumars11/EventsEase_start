@@ -8,7 +8,13 @@ export default {
     screen('profile', 'Your gifts & favours', 'What you make and how much notice you need.', [
       q.multi('gift_types', 'What types of gifts or favours do you offer?', [
         'Guest favours', 'Welcome gifts', 'Return gifts', 'Corporate gifts', 'Gift hampers', 'Personalized items',
+        'Tambula / pooja return gifts', 'Sweets & dry-fruit boxes', 'Chocolate boxes', 'Plants & eco gifts', 'Handicrafts',
+        'Silver & brass gifts', 'Customised mugs & frames', 'Kids party favours', 'Baby shower favours',
       ], { required: true, other: true }),
+      q.multi('occasions', 'Occasions you make gifts for', ['Weddings', 'Baby shower', 'Naming ceremony', 'Housewarming', 'Birthdays',
+        'Corporate events', 'Festivals', 'Varamahalakshmi / pooja'], { other: true }),
+      q.multi('personalisation_methods', 'Personalisation you can do', ['Name printing', 'Laser engraving', 'Embroidery', 'Photo printing', 'Custom tags', 'Hand-painted'], { other: true }),
+      q.toggle('message_card', 'You add a printed message card'),
       q.toggle('packaging_personalisation', 'Can customers choose packaging and personalization?'),
       q.number('min_order', 'What is the minimum order quantity?', { required: true, min: 1, max: 100000 }),
       q.number('prep_days', 'How much time do you need to prepare an order?', { required: true, min: 0, max: 90, suffix: 'days' }),
@@ -37,7 +43,7 @@ export default {
   ],
   resources: { model: 'production', title: 'Production', fields: [
     q.number('units_per_day', 'Units you can produce per day', { required: true, min: 1, max: 100000 }),
-    q.multi('fulfilment', 'Pickup / delivery', ['We deliver', 'Customer collects'], { required: true }),
+    q.multi('fulfilment', 'Pickup / delivery', ['We deliver', 'Customer collects', 'Courier across India'], { required: true }),
     q.textarea('fragile_handling', 'Fragile-item handling', { max: 200 }),
   ] },
   compliance: { conditional: [] },

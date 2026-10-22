@@ -1,5 +1,5 @@
 // Trade 13 — Guest Services (spec Part 9, Trade 13)
-import { q, screen, catalogue } from './schema'
+import { q, screen, catalogue, LANGUAGES } from './schema'
 
 export default {
   id: 'guest_services',
@@ -9,14 +9,22 @@ export default {
       q.multi('roles', 'Which services do you provide?', [
         'Guest reception', 'Registration desk', 'Ushers', 'Guest guidance', 'Queue management',
         'Gift distribution', 'Hospitality desk', 'Guest coordination',
+        'Welcome & aarti team', 'Luggage desk', 'Hotel check-in desk', 'Airport / station pickup desk',
+        'Shoe stand & cloakroom', 'VIP / protocol escort', 'Kids-zone attendants', 'Elderly assistance', 'Event concierge', 'Hostesses',
       ], { required: true, other: true }),
+      q.multi('languages', 'Languages your staff speak', LANGUAGES, { other: true }),
+      q.multi('attire', 'Attire you can provide', ['Formal suits', 'Traditional (saree / kurta)', 'Branded T-shirts', 'Blazers', 'To the event theme'], { other: true }),
+      q.number('max_event_guests', 'Largest event you have staffed', { min: 10, max: 200000, suffix: 'guests' }),
+      q.toggle('grooming', 'Grooming and a pre-event briefing for every staff member'),
     ]),
   ],
   catalogue: catalogue('role_specs', 'Each role', 'role', 'roles', [
-    q.single('role', 'Role', ['Guest reception', 'Registration desk', 'Ushers', 'Guest guidance', 'Queue management', 'Gift distribution', 'Hospitality desk', 'Guest coordination'], { required: true, other: true }),
+    q.single('role', 'Role', ['Guest reception', 'Registration desk', 'Ushers', 'Guest guidance', 'Queue management', 'Gift distribution', 'Hospitality desk', 'Guest coordination',
+      'Welcome & aarti team', 'Luggage desk', 'Hotel check-in desk', 'Airport / station pickup desk',
+        'Shoe stand & cloakroom', 'VIP / protocol escort', 'Kids-zone attendants', 'Elderly assistance', 'Event concierge', 'Hostesses'], { required: true, other: true }),
     q.number('min_staff', 'Minimum staff', { required: true, min: 1, max: 500 }),
     q.number('max_staff', 'Maximum staff', { required: true, min: 1, max: 2000 }),
-    q.multi('languages', 'Languages', ['English', 'Hindi', 'Kannada', 'Tamil', 'Telugu', 'Malayalam'], { other: true }),
+    q.multi('languages', 'Languages', ['English', 'Hindi', 'Kannada', 'Tamil', 'Telugu', 'Malayalam', 'Marathi', 'Bengali', 'Gujarati', 'Urdu'], { other: true }),
     q.text('dress_code', 'Dress code', { max: 60 }),
     q.toggle('uniform', 'Uniform provided'),
     q.single('experience', 'Experience', ['Fresher', '1+ year', '3+ years'], { required: true }),

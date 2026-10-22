@@ -84,9 +84,21 @@ export const ADDON_UNITS = [
   'per_piece', 'per_set', 'per_box', 'per_kg', 'per_km', 'per_trip', 'per_staff', 'per_counter', 'per_vehicle', 'per_staff_hour', 'per_counter_hour',
 ]
 
-/** Shared option lists, reused only where the meaning is genuinely the same. */
+/** Shared option lists, reused only where the meaning is genuinely the same.
+ *
+ * Appended to, never renamed: an option's id is the slug of its label, so
+ * renaming "Weddings" would orphan every answer already saved under it.
+ * The second line is the functions an Indian wedding actually has, which a
+ * partner books separately and a customer searches for by name. */
 export const EVENT_TYPES = ['Weddings', 'Engagements', 'Receptions', 'Corporate events', 'Private parties',
-  'Birthdays', 'Festivals', 'Religious functions', 'College events', 'Exhibitions']
+  'Birthdays', 'Festivals', 'Religious functions', 'College events', 'Exhibitions',
+  'Haldi & mehendi', 'Sangeet', 'Baby shower', 'Naming ceremony', 'Housewarming', 'Anniversaries',
+  'Product launches', 'Conferences', 'Concerts & shows', 'Destination weddings']
+
+/** The languages a customer in this market asks for by name. Used where a
+ *  partner's team has to talk to guests or the family. */
+export const LANGUAGES = ['English', 'Kannada', 'Hindi', 'Tamil', 'Telugu', 'Malayalam', 'Marathi',
+  'Bengali', 'Gujarati', 'Urdu', 'Punjabi', 'Tulu', 'Konkani']
 
 export const YES_NO = ['Yes', 'No']
 

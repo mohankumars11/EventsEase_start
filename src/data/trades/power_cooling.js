@@ -8,18 +8,26 @@ export default {
     screen('profile', 'Your power & cooling', 'What you supply and support.', [
       q.multi('services', 'What do you provide?', [
         'Generators', 'Backup power', 'Power distribution', 'Temporary cooling', 'Air-conditioning', 'Fans / air coolers', 'Setup & on-site support',
+        'Silent DG sets', 'Mobile inverters / battery', 'Solar power', 'Lighting towers', 'Heaters', 'Misting systems', 'Cable laying & panels', 'Fuel supply',
       ], { required: true, other: true }),
       q.toggle('operators', 'You supply operators / technicians'),
       q.single('fuel_policy', 'Fuel policy', ['Fuel included for the booked hours', 'Fuel charged at actuals', 'Customer supplies fuel'], { required: true }),
       q.number('service_radius_km', 'Service radius', { required: true, min: 5, max: 1000, suffix: 'km' }),
+      /* The largest set and whether two can run together decide which
+         loads can be confirmed instantly. */
+      q.number('largest_kva', 'Largest generator you can supply', { min: 1, max: 5000, suffix: 'kVA' }),
+      q.toggle('parallel', 'You can run generators in sync (parallel)'),
+      q.toggle('silent_canopy', 'CPCB-compliant silent canopies'),
+      q.number('setup_hours', 'Setup time you need before the event', { min: 0, max: 48, suffix: 'hours' }),
     ]),
   ],
   catalogue: catalogue('items', 'Your units', 'unit', 'units', [
-    q.single('type', 'Type', ['Diesel generator', 'Silent generator', 'Distribution board', 'Tower AC', 'Ducted AC', 'Mist fan', 'Air cooler', 'Pedestal fan'], { required: true, other: true }),
+    q.single('type', 'Type', ['Diesel generator', 'Silent generator', 'Distribution board', 'Tower AC', 'Ducted AC', 'Mist fan', 'Air cooler', 'Pedestal fan',
+      'Mobile inverter', 'Lighting tower', 'Spot cooler', 'Patio heater', 'Industrial fan'], { required: true, other: true }),
     q.text('model', 'Make / model', { max: 40 }),
     q.number('capacity', 'Rated capacity', { required: true, min: 0.1, max: 5000, suffix: 'kVA / ton' }),
     q.number('quantity', 'Quantity owned', { required: true, min: 1, max: 1000 }),
-    q.single('power_source', 'Fuel / power', ['Diesel', 'Petrol', 'Gas', 'Mains electricity'], { required: true }),
+    q.single('power_source', 'Fuel / power', ['Diesel', 'Petrol', 'Gas', 'Mains electricity', 'Battery', 'Solar', 'Hybrid'], { required: true, other: true }),
     q.number('runtime_hours', 'Runtime on one fill', { min: 1, max: 72, suffix: 'hours' }),
     q.single('placement', 'Indoor / outdoor', ['Indoor', 'Outdoor', 'Both'], { required: true }),
     q.toggle('cabling', 'Cabling included'),

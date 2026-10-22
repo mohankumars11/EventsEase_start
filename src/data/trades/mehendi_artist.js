@@ -7,17 +7,27 @@ export default {
   screens: [
     screen('profile', 'Your mehendi', 'Styles, coverage and who you serve.', [
       q.multi('who', 'Bridal, family / guest or casual mehendi?', ['Bridal', 'Family / guest', 'Casual'], { required: true }),
-      q.multi('styles', 'Which styles are offered?', ['Rajasthani', 'Arabic', 'Indo-Arabic', 'Moroccan', 'Portrait / figure', 'Minimal', 'Glitter'], { required: true, other: true }),
-      q.multi('coverage', 'Coverage levels', ['Full hand', 'Half hand', 'Front only', 'Back only', 'Feet'], { required: true, other: true }),
+      q.multi('styles', 'Which styles are offered?', ['Rajasthani', 'Arabic', 'Indo-Arabic', 'Moroccan', 'Portrait / figure', 'Minimal', 'Glitter',
+        'Mughlai', 'Pakistani', 'Indo-Western', 'Bride & groom portrait', 'Jewellery style', 'Shaded', 'Mandala', 'Floral & leafy',
+        'White henna', 'Jagua', 'Kids designs', 'Traditional Karnataka'], { required: true, other: true }),
+      q.multi('coverage', 'Coverage levels', ['Full hand', 'Half hand', 'Front only', 'Back only', 'Feet', 'Up to elbow', 'Full arms', 'Feet up to knee'], { required: true, other: true }),
+      q.multi('events', 'Events you do mehendi for', ['Wedding mehendi', 'Sangeet', 'Engagement', 'Karwa Chauth', 'Teej', 'Eid', 'Baby shower', 'Festivals', 'Corporate / mela stall'], { other: true }),
       q.toggle('intricate_bridal', 'Intricate bridal work available'),
       q.single('cone', 'Is natural / cone material provided?', ['Natural organic cones', 'Ready-made cones', 'Customer provides'], { required: true }),
       q.toggle('trial_designs', 'Trial designs available'),
       q.toggle('references', 'Customers can share design references'),
+      /* Time is what decides whether a booking fits: a bride's full
+         mehendi is hours, a guest's palm is minutes. */
+      q.number('bridal_hours', 'Time for a full bridal mehendi', { min: 1, max: 12, suffix: 'hours' }),
+      q.number('guests_per_hour', 'Guests one artist covers in an hour (simple design)', { min: 1, max: 30 }),
+      q.toggle('home_visit', 'Home visits'),
+      q.toggle('aftercare', 'You give aftercare for a deep colour'),
     ]),
   ],
   catalogue: catalogue('services', 'Your mehendi services', 'service', 'services', [
-    q.single('service', 'Service', ['Bridal full', 'Bridal hands only', 'Family / guest full hand', 'Guest half hand', 'Feet', 'Simple design'], { required: true, other: true }),
-    q.single('coverage', 'Coverage', ['Full hand', 'Half hand', 'Front', 'Back', 'Feet'], { required: true }),
+    q.single('service', 'Service', ['Bridal full', 'Bridal hands only', 'Family / guest full hand', 'Guest half hand', 'Feet', 'Simple design',
+      'Groom mehendi', 'Kids mehendi', 'Arabic quick design', 'Bride & groom portrait'], { required: true, other: true }),
+    q.single('coverage', 'Coverage', ['Full hand', 'Half hand', 'Front', 'Back', 'Feet', 'Up to elbow', 'Full arms', 'Feet up to knee'], { required: true, other: true }),
     q.number('minutes', 'Time per person', { required: true, min: 5, max: 600, suffix: 'minutes' }),
     q.money('price', 'Price', { required: true }),
     q.single('price_unit', 'Per', ['Hand', 'Person', 'Design', 'Session'], { required: true }),

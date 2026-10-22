@@ -9,8 +9,14 @@ export default {
       q.multi('supplies', 'What supplies do you sell or supply for events?', [
         'Disposable serving items', 'Decorations', 'Event consumables', 'Signage materials',
         'Packaging', 'Table accessories', 'Gift materials',
+        'Balloons & party supplies', 'Pooja materials', 'Water bottles & cups', 'Tissues & napkins', 'Candles & diyas',
+        'Fabric & drapes', 'Artificial flowers', 'Stationery & name cards', 'Cleaning & hygiene supplies', 'Foil & cling film', 'Garbage bags',
       ], { required: true, other: true }),
-      q.multi('fulfilment', 'How customers receive orders', ['Delivery', 'Pickup'], { required: true }),
+      q.multi('fulfilment', 'How customers receive orders', ['Delivery', 'Pickup', 'Courier'], { required: true }),
+      q.toggle('bulk', 'You take bulk orders (1,000+ units)'),
+      q.toggle('same_day', 'Same-day orders possible'),
+      q.toggle('gst_invoice', 'You give a GST invoice'),
+      q.toggle('returns_unused', 'Unopened stock can be returned'),
       q.number('prep_hours', 'Order preparation time', { required: true, min: 0, max: 720, suffix: 'hours' }),
     ]),
   ],
@@ -39,7 +45,7 @@ export default {
   ],
   resources: { model: 'items', title: 'Stock & delivery', fields: [
     q.number('delivery_radius_km', 'Delivery area', { min: 0, max: 500, suffix: 'km' }),
-    q.multi('slots', 'Pickup / delivery slots', ['Morning', 'Afternoon', 'Evening'], { required: true }),
+    q.multi('slots', 'Pickup / delivery slots', ['Morning', 'Afternoon', 'Evening', 'Early morning (before 7 am)', 'Night'], { required: true }),
   ] },
   compliance: { conditional: [] },
   quoteTriggers: [

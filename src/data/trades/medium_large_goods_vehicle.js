@@ -7,12 +7,19 @@ export default {
   serviceNoun: 'goods vehicle service',
   screens: [
     screen('profile', 'Your goods vehicles', 'What you carry and how.', [
-      q.multi('loads', 'Which loads do your trucks move?', ['Event equipment', 'Furniture', 'Staging & truss', 'Generators', 'Decor', 'Bulk materials', 'Machinery'], { required: true, other: true }),
+      q.multi('loads', 'Which loads do your trucks move?', ['Event equipment', 'Furniture', 'Staging & truss', 'Generators', 'Decor', 'Bulk materials', 'Machinery',
+        'Tents & shamiana', 'Exhibition stalls', 'Catering equipment', 'Chairs & tables in bulk', 'Cold-chain food', 'Household shifting'], { required: true, other: true }),
       q.multi('handling', 'Special handling', ['Fragile', 'Over-dimension', 'Temperature-controlled', 'High-value'], { other: true }),
       q.multi('routes', 'Routes you run', ['Within the city', 'Intercity (same state)', 'Interstate'], { required: true }),
       q.single('permit_scope', 'Goods-carriage permit', ['State permit', 'National permit', 'Both'], { required: true }),
       q.number('service_radius_km', 'Furthest you will go for one booking', { required: true, min: 5, max: 3000, suffix: 'km' }),
       q.toggle('part_load', 'You take part loads (shared truck)'),
+      /* City truck-entry hours decide whether a daytime delivery is even
+         possible; a booking that cannot reach the venue is not booked. */
+      q.toggle('night_movement', 'You run at night when city entry is restricted by day'),
+      q.toggle('loading_crew', 'You can send a loading crew'),
+      q.toggle('transit_insurance', 'Goods-in-transit insurance'),
+      q.single('notice', 'Shortest notice you need', ['2 hours', '6 hours', 'Same day', 'Next day', '2 days'], { required: true }),
     ]),
   ],
   catalogue: catalogue('vehicles', 'Your vehicles', 'vehicle', 'vehicles', [

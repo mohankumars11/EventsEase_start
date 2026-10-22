@@ -11,6 +11,12 @@ export default {
       q.number('supervisors', 'Supervisors available', { required: true, min: 0, max: 200 }),
       q.number('cars_per_hour', 'Cars your team can take per hour at peak', { required: true, min: 5, max: 5000 }),
       q.toggle('insurance', 'Vehicle damage insurance'),
+      /* Peak volume, the cars your drivers are trained on, and how keys
+         are tracked decide which events can be confirmed instantly. */
+      q.number('max_cars', 'Most cars handled at one event', { min: 10, max: 20000 }),
+      q.toggle('luxury_trained', 'Drivers trained for luxury, automatic and EV cars'),
+      q.toggle('key_tracking', 'Digital key tracking (token or app)'),
+      q.toggle('remote_shuttle', 'Shuttle from a remote parking lot'),
       q.textarea('customer_duties', 'What the host must provide', { hint: 'e.g. parking area within 500 m, key box' }),
     ]),
   ],

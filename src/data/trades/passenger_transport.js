@@ -1,5 +1,5 @@
 // Trade 20 — Passenger Transport (spec Part 9, Trade 20)
-import { q, screen, catalogue } from './schema'
+import { q, screen, catalogue, LANGUAGES } from './schema'
 import { TRIP_PRICING } from './_trip'
 
 export default {
@@ -9,14 +9,20 @@ export default {
     screen('profile', 'Your passenger transport', 'What you provide.', [
       q.multi('vehicle_services', 'What do you provide?', [
         'Cars', 'Premium cars', 'SUVs', 'Vans', 'Mini-buses', 'Buses', 'Shuttle service', 'Multi-vehicle guest transport',
+        'Decorated wedding cars', 'Vintage / classic cars', 'Luxury cars', 'Airport & station transfers', 'Electric cars', 'Tempo Travellers', 'Luxury coaches',
       ], { required: true, other: true }),
       q.number('service_radius_km', 'Service area radius', { required: true, min: 5, max: 3000, suffix: 'km' }),
       q.single('driver_type', 'Drivers', ['Our own drivers', 'Contract drivers', 'Both'], { required: true }),
       q.toggle('airport_station', 'Flight / train coordination'),
+      q.multi('languages', 'Languages your drivers speak', LANGUAGES, { other: true }),
+      q.toggle('uniformed', 'Drivers in uniform'),
+      q.toggle('outstation', 'Outstation trips'),
+      q.toggle('late_night', 'Late-night pickups (after 11 pm)'),
     ]),
   ],
   catalogue: catalogue('vehicles', 'Your vehicles', 'vehicle', 'vehicles', [
-    q.single('category', 'Vehicle', ['Sedan', 'Premium sedan', 'SUV', 'Luxury car', 'Tempo Traveller', 'Mini-bus', 'Bus', 'Vintage car'], { required: true, other: true }),
+    q.single('category', 'Vehicle', ['Sedan', 'Premium sedan', 'SUV', 'Luxury car', 'Tempo Traveller', 'Mini-bus', 'Bus', 'Vintage car',
+      'Hatchback', 'MUV (Innova / Ertiga)', 'Electric car', 'Open jeep', 'Limousine', 'Luxury coach', 'Sleeper coach'], { required: true, other: true }),
     q.number('seats', 'Passenger capacity', { required: true, min: 1, max: 80 }),
     q.number('bags', 'Luggage capacity (bags)', { min: 0, max: 100 }),
     q.multi('accessibility', 'Accessibility features', ['Wheelchair ramp', 'Low step', 'Child seat'], { other: true }),

@@ -1,5 +1,5 @@
 // Trade 31 — Venue (spec Part 9, Trade 31)
-import { q, screen, catalogue } from './schema'
+import { q, screen, catalogue, EVENT_TYPES } from './schema'
 
 export default {
   id: 'venue',
@@ -7,7 +7,10 @@ export default {
   screens: [
     screen('profile', 'Your venue', 'The property as a whole.', [
       q.text('venue_name', 'Venue name', { required: true, max: 80 }),
-      q.single('venue_type', 'Venue type', ['Banquet hall', 'Convention centre', 'Lawn / garden', 'Resort', 'Hotel', 'Farmhouse', 'Rooftop', 'Community hall', 'Temple hall'], { required: true, other: true }),
+      q.single('venue_type', 'Venue type', ['Banquet hall', 'Convention centre', 'Lawn / garden', 'Resort', 'Hotel', 'Farmhouse', 'Rooftop', 'Community hall', 'Temple hall',
+        'Kalyana mantapa', 'Party hall', 'Heritage property / palace', 'Beach property', 'Club house', 'Restaurant / private dining',
+        'Auditorium', 'Open-air amphitheatre', 'Villa'], { required: true, other: true }),
+      q.multi('events', 'Events you host', EVENT_TYPES, { other: true }),
       q.photos('photos', 'Photos', { required: true, min: 5, max: 30 }),
       q.url('video', 'Walkthrough video link'),
       q.number('max_capacity', 'Maximum capacity', { required: true, min: 10, max: 50000, suffix: 'guests' }),
@@ -15,7 +18,15 @@ export default {
       q.multi('accessibility', 'Accessibility', ['Step-free entry', 'Lift', 'Accessible toilet', 'Wheelchair available'], { other: true }),
       q.number('parking', 'Parking spaces', { required: true, min: 0, max: 10000 }),
       q.number('rooms', 'Rooms on site', { min: 0, max: 1000 }),
-      q.multi('facilities', 'Included facilities', ['Furniture', 'Power backup', 'Air-conditioning', 'Bridal room', 'Kitchen', 'Basic sound', 'Stage'], { other: true }),
+      q.multi('facilities', 'Included facilities', ['Furniture', 'Power backup', 'Air-conditioning', 'Bridal room', 'Kitchen', 'Basic sound', 'Stage',
+        'Valet parking', 'Changing rooms', 'Dining hall', 'Lift', 'Wi-Fi', 'Projector & screen', 'CCTV', 'Drinking water'], { other: true }),
+      /* Guests seat in a hall and eat in shifts in a dining hall. A
+         booking for 800 that fits the hall but feeds 300 at a time is a
+         different event, and the family needs to know before they pay. */
+      q.number('dining_capacity', 'Dining capacity (seated at one time)', { min: 0, max: 50000, suffix: 'guests' }),
+      q.number('two_wheeler_parking', 'Two-wheeler parking', { min: 0, max: 20000 }),
+      q.toggle('early_muhurtha', 'Early-morning muhurtha bookings (before 6 am)'),
+      q.toggle('overnight_stay', 'Guests can stay overnight'),
     ]),
     screen('rules', 'House rules', 'What customers must know before they book.', [
       q.single('catering_rule', 'Catering', ['In-house only', 'Outside caterers allowed', 'Outside allowed with a fee', 'Approved list only'], { required: true }),
@@ -26,7 +37,7 @@ export default {
       q.toggle('alcohol', 'Alcohol permitted'),
       q.number('setup_hours', 'Setup time before the event', { required: true, min: 0, max: 48, suffix: 'hours' }),
       q.number('cleanup_hours', 'Cleanup time after', { required: true, min: 0, max: 24, suffix: 'hours' }),
-      q.single('setup_charging', 'When does setup / cleanup time start being charged?', ['Never — included', 'Beyond the included hours', 'Always charged'], { required: true }),
+      q.single('setup_charging', 'When does setup / cleanup time start being charged?', ['Never — included', 'Beyond the included hours', 'Always charged'], { required: true, customerLabel: 'Setup & cleanup time' }),
     ]),
   ],
   catalogue: catalogue('spaces', 'Your spaces', 'space', 'spaces', [
@@ -34,7 +45,8 @@ export default {
     q.single('setting', 'Indoor / outdoor', ['Indoor', 'Outdoor', 'Semi-covered'], { required: true }),
     q.number('capacity', 'Capacity', { required: true, min: 5, max: 50000, suffix: 'guests' }),
     q.dimensions('size', 'Dimensions', { unit: 'ft' }),
-    q.multi('layouts', 'Layouts', ['Theatre', 'Round tables', 'Cluster', 'Classroom', 'U-shape', 'Cocktail', 'Floating buffet'], { required: true }),
+    q.multi('layouts', 'Layouts', ['Theatre', 'Round tables', 'Cluster', 'Classroom', 'U-shape', 'Cocktail', 'Floating buffet',
+      'Boardroom', 'Long banquet tables', 'Mandap with seating'], { required: true, other: true }),
     q.multi('slots', 'Bookable slots', ['Morning', 'Evening', 'Half-day', 'Full-day'], { required: true }),
     q.single('combinable', 'Booking', ['Separately only', 'Separately or combined', 'Only with another space'], { required: true }),
     q.multi('amenities', 'Amenities', ['AC', 'Stage', 'Projector', 'Green room', 'Dance floor'], { other: true }),

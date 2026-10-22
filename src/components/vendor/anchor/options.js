@@ -118,7 +118,7 @@ export const STEPS = [
   { id: 'addons', label: 'Add-ons', short: 'Add-ons' },
   { id: 'packages', label: 'Packages', short: 'Packages' },
   { id: 'rules', label: 'Rules', short: 'Rules' },
-  { id: 'publish', label: 'Publish', short: 'Publish' },
+  { id: 'publish', label: 'Submit', short: 'Submit' },
 ]
 
 /* The eleven stages of the full Anchor & MC listing (master spec §4). The
@@ -134,7 +134,10 @@ export const STAGES = [
   { id: 'availability', label: 'Availability & travel', short: 'Calendar' },
   { id: 'rules', label: 'Booking & cancellation', short: 'Rules' },
   { id: 'payout', label: 'Identity & bank details', short: 'ID & Bank' },
-  { id: 'review', label: 'Review & publish', short: 'Publish' },
+  /* Submit, not Publish. Nothing a partner does here publishes anything:
+     it goes to Sambramo for review and goes live once approved, and a
+     button that says Publish promises the opposite. */
+  { id: 'review', label: 'Review & submit', short: 'Submit' },
 ]
 
 export const TRAVEL_SCOPE = [
@@ -163,16 +166,19 @@ export const EVENT_GROUPS_V3 = [
   { id: 'weddings', label: 'Weddings', items: [
     ['haldi', 'Haldi'], ['mehendi', 'Mehendi'], ['sangeet', 'Sangeet'], ['engagement', 'Engagement'],
     ['reception', 'Wedding reception'], ['cocktail', 'Cocktail party'], ['destination', 'Destination wedding'],
-    ['wedding_anniversary', 'Wedding anniversary'] ] },
+    ['wedding_anniversary', 'Wedding anniversary'], ['welcome_dinner', 'Welcome dinner'], ['bachelor', 'Bachelor / bachelorette party'] ] },
   { id: 'corporate', label: 'Corporate', items: [
     ['conference', 'Conference'], ['annual_day', 'Annual day'], ['launch', 'Product launch'], ['awards', 'Awards ceremony'],
-    ['dealer_meet', 'Dealer meet'], ['team_building', 'Team building'], ['gala', 'Corporate gala'], ['town_hall', 'Town hall'], ['mice', 'MICE event'] ] },
+    ['dealer_meet', 'Dealer meet'], ['team_building', 'Team building'], ['gala', 'Corporate gala'], ['town_hall', 'Town hall'], ['mice', 'MICE event'],
+    ['offsite', 'Offsite'], ['family_day', 'Family day'], ['investor_meet', 'Investor meet'] ] },
   { id: 'private', label: 'Private', items: [
     ['birthday', 'Birthday'], ['kids', "Children's birthday"], ['anniversary', 'Anniversary'], ['baby_shower', 'Baby shower'],
-    ['reunion', 'Reunion'], ['private_party', 'Private party'] ] },
+    ['reunion', 'Reunion'], ['private_party', 'Private party'], ['housewarming', 'Housewarming'], ['naming', 'Naming ceremony'],
+    ['retirement', 'Retirement party'] ] },
   { id: 'public', label: 'Public & entertainment', items: [
     ['concert', 'Concert'], ['festival', 'Festival'], ['fashion_show', 'Fashion show'], ['sports', 'Sports event'],
-    ['mall_activation', 'Mall activation'], ['trade_show', 'Trade show'], ['public_celebration', 'Public celebration'] ] },
+    ['mall_activation', 'Mall activation'], ['trade_show', 'Trade show'], ['public_celebration', 'Public celebration'],
+    ['pageant', 'Beauty pageant'], ['quiz', 'Quiz show'], ['open_mic', 'Open mic'] ] },
   { id: 'virtual', label: 'Virtual & institutional', items: [
     ['webinar', 'Webinar'], ['online_conference', 'Online conference'], ['podcast', 'Podcast'], ['college', 'College fest'],
     ['school', 'School annual day'], ['ngo', 'NGO event'] ] },
@@ -200,7 +206,8 @@ export const PROFICIENCY_V3 = [
 ]
 
 export const STYLES_V3 = ['Funny & entertaining', 'Formal & professional', 'High-energy & interactive', 'Storytelling',
-  'Poetry & Shayari', 'Games & audience engagement', 'News & interview style']
+  'Poetry & Shayari', 'Games & audience engagement', 'News & interview style',
+  'Bilingual / multilingual', 'Traditional & devotional', 'Kids-friendly', 'Luxury & elegant', 'Quiz master']
 
 export const ADDONS_V3 = [
   { id: 'custom_script', label: 'Custom script writing & research', unit: 'per_event', suggest: 5000 },

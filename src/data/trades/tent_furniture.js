@@ -8,15 +8,25 @@ export default {
     screen('profile', 'Your tents & furniture', 'What you put up and furnish.', [
       q.multi('groups', 'What do you supply?', [
         'Tents / canopies', 'Tables', 'Chairs', 'Sofas / lounge', 'Stage / platform', 'Dining furniture', 'Counters', 'Partitioning',
+        'German hangars', 'Pagoda tents', 'Shamiana', 'Mandap structures', 'Carpets & flooring', 'Bar counters', 'Cocktail tables',
+        'Lounge seating', 'Stage thrones', 'Buffet tables', 'Chair covers & sashes', 'Kids furniture',
       ], { required: true, other: true }),
-      q.multi('surfaces', 'Surfaces you can install on', ['Lawn', 'Concrete', 'Sand', 'Terrace', 'Indoor hall'], { required: true }),
+      q.multi('surfaces', 'Surfaces you can install on', ['Lawn', 'Concrete', 'Sand', 'Terrace', 'Indoor hall', 'Gravel', 'Paved / interlock'], { required: true, other: true }),
+      /* The size of the largest structure and the seats you can lay out
+         decide which bookings fit instantly; everything bigger is a quote. */
+      q.number('largest_structure_sqft', 'Largest structure you can put up', { min: 100, max: 500000, suffix: 'sq ft' }),
+      q.number('max_seated_guests', 'Most guests you can seat', { min: 10, max: 100000, suffix: 'guests' }),
+      q.number('setup_hours', 'Setup time you need', { min: 0, max: 96, suffix: 'hours' }),
+      q.toggle('fire_retardant', 'Fire-retardant fabric'),
+      q.toggle('ac_tents', 'Air-conditioned tents available'),
       q.toggle('weatherproof', 'Weather-proof tents available'),
       q.money('deposit', 'Security deposit (refundable)'),
       q.textarea('damage_policy', 'Damage policy', { required: true, max: 400 }),
     ]),
   ],
   catalogue: catalogue('items', 'Your items', 'item', 'items', [
-    q.single('group', 'Type', ['Tent / canopy', 'Table', 'Chair', 'Sofa / lounge', 'Stage / platform', 'Dining set', 'Counter', 'Partition'], { required: true, other: true }),
+    q.single('group', 'Type', ['Tent / canopy', 'Table', 'Chair', 'Sofa / lounge', 'Stage / platform', 'Dining set', 'Counter', 'Partition',
+      'German hangar', 'Pagoda tent', 'Shamiana', 'Mandap structure', 'Carpet / flooring', 'Bar counter', 'Cocktail table', 'Stage throne'], { required: true, other: true }),
     q.text('name', 'Name', { required: true, max: 60 }),
     q.dimensions('size', 'Dimensions', { unit: 'ft' }),
     q.number('capacity', 'Seats / people covered', { min: 0, max: 10000 }),

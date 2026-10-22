@@ -1,5 +1,5 @@
 // Trade 26 — Sound & AV (spec Part 9, Trade 26)
-import { q, screen, catalogue } from './schema'
+import { q, screen, catalogue, EVENT_TYPES } from './schema'
 
 export default {
   id: 'sound_av',
@@ -9,13 +9,24 @@ export default {
       q.multi('groups', 'Equipment groups', [
         'Speakers', 'Mixers', 'Microphones', 'Wireless systems', 'Projectors & screens',
         'Video-conferencing', 'LED walls / video', 'Stage monitors', 'Cables & stands', 'Operators',
+        'Line arrays', 'Subwoofers', 'DJ setup', 'Podium mics', 'Interpretation booths', 'Teleprompters', 'Intercom / talk-back', 'Stage timers',
       ], { required: true, other: true }),
-      q.multi('capabilities', 'You can also handle', ['Recording', 'Live streaming', 'Multi-zone audio', 'Simultaneous interpretation'], { other: true }),
+      q.multi('capabilities', 'You can also handle', ['Recording', 'Live streaming', 'Multi-zone audio', 'Simultaneous interpretation',
+        'Hybrid / virtual events', 'Live-band audio', 'Silent-disco headphones', 'Webcasting'], { other: true }),
       q.number('max_audience', 'Largest audience you can cover', { required: true, min: 10, max: 100000, suffix: 'people' }),
+      /* Customers ask which speakers by name, and the brand is often the
+         difference between two quotes that look the same. */
+      q.multi('brands', 'Brands in your inventory', ['JBL', 'Bose', 'Shure', 'Sennheiser', 'Yamaha', 'Allen & Heath', 'Behringer',
+        'L-Acoustics', 'd&b audiotechnik', 'QSC', 'RCF', 'Electro-Voice'], { other: true }),
+      q.multi('events', 'Events you supply for', EVENT_TYPES, { other: true }),
+      q.toggle('backup', 'A backup mixer and mics stay on site'),
+      q.number('setup_hours', 'Setup time you need before the event', { min: 0, max: 48, suffix: 'hours' }),
+      q.number('service_radius_km', 'How far you work from your base', { min: 5, max: 3000, suffix: 'km' }),
     ]),
   ],
   catalogue: catalogue('items', 'Your equipment', 'item', 'items', [
-    q.single('group', 'Group', ['Speakers', 'Mixers', 'Microphones', 'Wireless systems', 'Projectors & screens', 'Video-conferencing', 'LED walls / video', 'Stage monitors', 'Cables & stands'], { required: true, other: true }),
+    q.single('group', 'Group', ['Speakers', 'Mixers', 'Microphones', 'Wireless systems', 'Projectors & screens', 'Video-conferencing', 'LED walls / video', 'Stage monitors', 'Cables & stands',
+      'Line arrays', 'Subwoofers', 'DJ setup', 'Podium mics', 'Teleprompters', 'Intercom / talk-back'], { required: true, other: true }),
     q.text('model', 'Make / model', { required: true, max: 60 }),
     q.number('quantity', 'Quantity', { required: true, min: 1, max: 10000 }),
     q.single('condition', 'Condition', ['New', 'Excellent', 'Good'], { required: true }),

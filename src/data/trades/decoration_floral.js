@@ -120,7 +120,7 @@ export default {
       q.single('flower_sourcing', 'Where do your flowers come from?', [
         'Flower market, bought per order', 'Regular wholesale supplier', 'Own farm or nursery',
         'Imported through an agent', 'Depends on the order',
-      ], { showWhen: { q: 'flowers', in: ['fresh', 'both'] } }),
+      ], { other: true, showWhen: { q: 'flowers', in: ['fresh', 'both'] } }),
       q.multi('props', 'What do you build with?', PROPS, { required: true, other: true }),
       q.toggle('custom_designs', 'Do you offer custom designs?'),
       q.toggle('setup_dismantle', 'Do you handle setup and dismantling?'),

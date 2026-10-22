@@ -1,5 +1,5 @@
 // Trade 6 — DJ & Music (spec Part 9, Trade 6)
-import { q, screen, EVENT_TYPES } from './schema'
+import { q, screen, EVENT_TYPES, LANGUAGES } from './schema'
 
 export default {
   id: 'dj_music',
@@ -8,16 +8,27 @@ export default {
     screen('profile', 'Your music performance', 'What you play and who performs.', [
       q.multi('performance_kinds', 'What kind of music performances do you provide?', [
         'DJ', 'Live musician', 'DJ with live musician', 'Ceremony music', 'Background music',
+        'Live band', 'Baraat DJ (on a vehicle)', 'Dhol with DJ', 'Sangeet night', 'Karaoke night', 'Silent disco',
       ], { required: true, other: true }),
       q.multi('event_types', 'Which event types do you support?', EVENT_TYPES, { required: true, other: true }),
       q.multi('styles', 'Which music styles do you play?', [
         'Bollywood', 'Punjabi', 'Kannada / South Indian', 'Retro', 'EDM', 'House', 'Hip-hop', 'Sufi', 'Instrumental', 'Western pop',
+        'Tamil', 'Telugu', 'Malayalam', 'Marathi', 'Gujarati / Garba', 'Bhangra', '90s Bollywood', 'Techno',
+        'Commercial', 'Lounge / chill', 'Jazz', 'Classical fusion', 'Devotional', 'Arabic',
       ], { required: true, other: true }),
       q.number('performers', 'How many performers can you provide?', { required: true, min: 1, max: 30 }),
       q.single('own_equipment', 'Do you supply your own sound and lighting equipment?', ['Sound and lighting', 'Sound only', 'Lighting only', 'Neither'], { required: true }),
+      /* How big a room your own sound fills is what decides whether a
+         booking can be priced as listed or needs a bigger rig quoted. */
+      q.single('sound_covers', 'Your own sound system covers up to', ['50 guests', '100 guests', '200 guests', '500 guests', '1,000 guests', '2,000+ guests'],
+        { showWhen: { q: 'own_equipment', in: ['sound_and_lighting', 'sound_only'] } }),
+      q.multi('settings', 'Where you can play', ['Indoor hall', 'Open lawn', 'Rooftop', 'Poolside', 'Hotel ballroom', 'Farmhouse', 'Moving baraat vehicle', 'Club / lounge'], { other: true }),
+      q.multi('languages', 'Languages you can host and take requests in', LANGUAGES, { other: true }),
+      q.toggle('emcee', 'You can also host / emcee the night'),
     ]),
     screen('performance', 'Performance details', 'What a booking includes.', [
-      q.multi('formats', 'Performance format', ['Solo DJ set', 'DJ + percussionist', 'DJ + singer', 'Live band set', 'Acoustic set'], { required: true, other: true }),
+      q.multi('formats', 'Performance format', ['Solo DJ set', 'DJ + percussionist', 'DJ + singer', 'Live band set', 'Acoustic set',
+        'DJ + saxophonist', 'DJ + violinist', 'DJ + dhol', 'Back-to-back DJs'], { required: true, other: true }),
       /* Extended rather than given an "Other": a duration feeds the
          hourly pricing, and a typed one would be unpriceable. */
       q.multi('duration_options', 'Duration options', ['1 hour', '2 hours', '3 hours', '4 hours', '5 hours', '6 hours', '8 hours', '10 hours', 'Full night'], { required: true }),

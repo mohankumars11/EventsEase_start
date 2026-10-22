@@ -1,5 +1,5 @@
 // Trade 15 — Live Entertainment (spec Part 9, Trade 15)
-import { q, screen, catalogue } from './schema'
+import { q, screen, catalogue, EVENT_TYPES } from './schema'
 
 export default {
   id: 'live_entertainment',
@@ -9,7 +9,14 @@ export default {
       q.multi('act_types', 'Which acts are provided?', [
         'Singer', 'Band', 'Instrumentalist', 'Dance troupe', 'Comedian', 'Magician',
         'Emcee-supported act', 'Traditional performance', 'Specialty act',
+        'Folk dance (Dollu Kunitha, Yakshagana…)', 'Classical dance (Bharatanatyam, Kathak…)', 'Bollywood dance', 'Nadaswaram / shehnai',
+        'Chenda melam / dhol troupe', 'Ghazal / sufi singer', 'Qawwali group', 'Playback / celebrity singer', 'Stand-up comedy', 'Mimicry',
+        'Mentalist', 'Puppet show', 'Fire / LED act', 'Acrobats / aerial act', 'Caricature artist', 'Kids entertainer', 'Bartender flair show',
       ], { required: true, other: true }),
+      q.multi('events', 'Events you perform at', EVENT_TYPES, { other: true }),
+      q.toggle('own_sound', 'You bring your own sound system'),
+      q.number('shows_per_day', 'Most shows you can do in one day', { min: 1, max: 10 }),
+      q.number('service_radius_km', 'How far you travel for a show', { min: 5, max: 3000, suffix: 'km' }),
     ]),
   ],
   catalogue: catalogue('acts', 'Each act', 'act', 'acts', [
@@ -18,13 +25,13 @@ export default {
     q.number('performers', 'Performers', { required: true, min: 1, max: 100 }),
     /* Extended rather than given an "Other", for the same reason as
        DJ & Music: a duration feeds the pricing and must stay priceable. */
-    q.multi('durations', 'Duration options', ['10 min', '15 min', '30 min', '45 min', '1 hour', '90 min', '2 hours', '3 hours', '4 hours'], { required: true }),
-    q.single('format', 'Performance format', ['On stage', 'Roaming', 'Interactive', 'Background'], { required: true }),
+    q.multi('durations', 'Duration options', ['10 min', '15 min', '30 min', '45 min', '1 hour', '90 min', '2 hours', '3 hours', '4 hours', '20 min', '5 hours'], { required: true }),
+    q.single('format', 'Performance format', ['On stage', 'Roaming', 'Interactive', 'Background', 'Procession / baraat', 'Workshop'], { required: true, other: true }),
     q.number('setup_minutes', 'Setup / soundcheck', { min: 0, max: 300, suffix: 'minutes' }),
     q.dimensions('stage_space', 'Stage space needed', { unit: 'ft' }),
     q.textarea('tech_rider', 'Equipment & technical rider', { max: 300 }),
     q.multi('languages', 'Languages', ['English', 'Hindi', 'Kannada', 'Tamil', 'Telugu', 'Malayalam'], { other: true }),
-    q.single('audience', 'Audience suitability', ['All ages', 'Family', 'Adults', 'Corporate'], { required: true }),
+    q.single('audience', 'Audience suitability', ['All ages', 'Family', 'Adults', 'Corporate', 'Kids'], { required: true, other: true }),
     q.money('price', 'Price', { required: true }),
     q.single('price_unit', 'Per', ['Act', 'Session', 'Hour', 'Event'], { required: true }),
     q.url('showreel', 'Showreel link'),

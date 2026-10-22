@@ -1,20 +1,29 @@
 // Trade 21 — Photography (spec Part 9, Trade 21)
-import { q, screen, catalogue, EVENT_TYPES } from './schema'
+import { q, screen, catalogue, EVENT_TYPES, LANGUAGES } from './schema'
 
 export default {
   id: 'photography',
   serviceNoun: 'photography',
   screens: [
     screen('profile', 'Your photography', 'What you shoot and how you deliver.', [
-      q.multi('specialties', 'Specialties', ['Candid', 'Traditional', 'Pre-wedding', 'Portrait', 'Product', 'Corporate', 'Fashion', 'Maternity / newborn'], { required: true, other: true }),
+      q.multi('specialties', 'Specialties', ['Candid', 'Traditional', 'Pre-wedding', 'Portrait', 'Product', 'Corporate', 'Fashion', 'Maternity / newborn',
+        'Haldi & mehendi', 'Engagement', 'Baby & kids', 'Birthday', 'Event / conference', 'Food', 'Real estate / venue', 'Drone photography'], { required: true, other: true }),
       q.multi('events', 'Event categories', EVENT_TYPES, { required: true, other: true }),
-      q.multi('styles', 'Styles', ['Documentary', 'Editorial', 'Fine art', 'Classic posed', 'Cinematic stills'], { other: true }),
+      q.multi('styles', 'Styles', ['Documentary', 'Editorial', 'Fine art', 'Classic posed', 'Cinematic stills',
+        'Photojournalistic', 'Bright & airy', 'Dark & moody', 'Vintage film', 'Black & white'], { other: true }),
       q.number('years', 'Years of experience', { required: true, min: 0, max: 60, suffix: 'years' }),
       q.photos('portfolio', 'Portfolio', { required: true, min: 6, max: 30 }),
       q.url('gallery_link', 'Online gallery link'),
       q.multi('equipment', 'Equipment', ['Full-frame bodies', 'Backup body', 'Prime lenses', 'Zoom lenses', 'Off-camera flash', 'Studio lights', 'Drone (licensed)'], { other: true }),
-      q.multi('formats', 'Delivery formats', ['Online gallery', 'Pen drive', 'Printed album', 'Prints', 'RAW files'], { required: true }),
+      q.multi('formats', 'Delivery formats', ['Online gallery', 'Pen drive', 'Printed album', 'Prints',
+        'RAW files', 'Cloud download link', 'Hard drive', 'Photo book', 'Framed prints', 'Social-media edits'], { required: true, other: true }),
       q.number('service_radius_km', 'Service area radius', { required: true, min: 5, max: 3000, suffix: 'km' }),
+      /* What a customer asks before they book, and what decides whether
+         the booking can be priced without a phone call. */
+      q.multi('languages', 'Languages you speak with families', LANGUAGES, { other: true }),
+      q.number('sneak_peek_days', 'Sneak-peek photos delivered within', { min: 0, max: 30, suffix: 'days' }),
+      q.toggle('same_day_edit', 'Same-day edit slideshow at the reception'),
+      q.toggle('outstation', 'You travel for destination / outstation shoots'),
     ]),
   ],
   catalogue: catalogue('packages', 'Your coverage', 'coverage package', 'coverage packages', [
@@ -22,8 +31,9 @@ export default {
     q.number('hours', 'Hours of coverage', { required: true, min: 1, max: 72, suffix: 'hours' }),
     q.number('photographers', 'Photographers', { required: true, min: 1, max: 20 }),
     q.number('edited_images', 'Edited images delivered', { required: true, min: 10, max: 5000 }),
-    q.single('retouch', 'Retouching level', ['Basic colour', 'Standard', 'Advanced skin & detail'], { required: true }),
-    q.single('album', 'Album / prints', ['None', 'Digital album', 'Printed album', 'Prints'], { required: true }),
+    q.single('retouch', 'Retouching level', ['Basic colour', 'Standard', 'Advanced skin & detail', 'Magazine / high-end'], { required: true }),
+    q.single('album', 'Album / prints', ['None', 'Digital album', 'Printed album', 'Prints',
+      'Premium leather album', 'Coffee-table book', 'Canvas print'], { required: true, other: true }),
     q.number('delivery_days', 'Delivery timeline', { required: true, min: 1, max: 180, suffix: 'days' }),
     q.toggle('raw', 'RAW files included'),
     q.money('price', 'Your price for this package', { required: true, hint: 'Starts from a suggestion based on your hourly rate; your edited price is kept separately.' }),

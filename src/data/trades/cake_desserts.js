@@ -100,7 +100,7 @@ export default {
     fields: [
       q.number('capacity_per_day', 'Orders you can make per day', { required: true, min: 1, max: 1000 }),
       q.number('delivery_radius_km', 'Delivery radius', { min: 0, max: 200, suffix: 'km' }),
-      q.multi('delivery_slots', 'Delivery time slots', ['Morning', 'Afternoon', 'Evening', 'Night'], { required: true }),
+      q.multi('delivery_slots', 'Delivery time slots', ['Morning', 'Afternoon', 'Evening', 'Night', 'Midnight surprise (11 pm – 12:30 am)'], { required: true }),
       q.toggle('refrigeration', 'Needs refrigeration on arrival'),
       q.textarea('handling', 'Handling or setup requirements', { max: 200 }),
     ],

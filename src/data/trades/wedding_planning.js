@@ -1,5 +1,5 @@
 // Trade 34 — Wedding Planning (spec Part 9, Trade 34)
-import { q, screen, catalogue } from './schema'
+import { q, screen, catalogue, LANGUAGES } from './schema'
 
 export default {
   id: 'wedding_planning',
@@ -9,11 +9,20 @@ export default {
       q.multi('services', 'Services', [
         'Full planning', 'Partial planning', 'Day-of coordination', 'Destination weddings', 'Vendor coordination',
         'Guest coordination', 'Budget management', 'Design / theme', 'Ceremony & reception management',
+        'Mehendi & sangeet planning', 'Guest hospitality & travel', 'Invitation & RSVP management', 'Bridal entry & choreography',
+        'Wedding website', 'Trousseau & gift management', 'Religious ceremony coordination', 'Honeymoon planning',
       ], { required: true, other: true }),
-      q.multi('cities', 'Cities / destinations', ['Bengaluru', 'Mysuru', 'Coorg', 'Goa', 'Udaipur', 'Jaipur', 'Kerala'], { required: true, other: true }),
+      q.multi('cities', 'Cities / destinations', ['Bengaluru', 'Mysuru', 'Coorg', 'Goa', 'Udaipur', 'Jaipur', 'Kerala',
+        'Hyderabad', 'Chennai', 'Mumbai', 'Delhi NCR', 'Hampi', 'Chikkamagaluru', 'Kabini', 'Puducherry', 'Rishikesh', 'Jodhpur',
+        'Thailand', 'Bali', 'Dubai'], { required: true, other: true }),
       q.number('years', 'Years planning weddings', { required: true, min: 0, max: 60, suffix: 'years' }),
       q.photos('portfolio', 'Weddings you planned', { required: true, min: 4, max: 30 }),
       q.single('budget_band', 'Typical wedding budget you handle', ['Under ₹10 L', '₹10–25 L', '₹25–50 L', '₹50 L–1 Cr', 'Above ₹1 Cr'], { required: true }),
+      q.multi('wedding_styles', 'Wedding traditions you plan', ['South Indian', 'North Indian', 'Bengali', 'Marwari', 'Gujarati', 'Christian',
+        'Muslim / Nikah', 'Sikh / Anand Karaj', 'Inter-faith', 'Intimate (under 100 guests)', 'Grand (1,000+ guests)'], { other: true }),
+      q.number('max_guests', 'Largest wedding you have planned', { min: 10, max: 100000, suffix: 'guests' }),
+      q.multi('languages', 'Languages your team works in', LANGUAGES, { other: true }),
+      q.toggle('vendor_network', 'You bring your own trusted vendor network'),
     ]),
   ],
   catalogue: catalogue('packages', 'Your planning packages', 'package', 'packages', [
@@ -23,7 +32,8 @@ export default {
     q.number('onsite_days', 'Onsite days', { required: true, min: 1, max: 15 }),
     q.number('onsite_hours', 'Onsite hours per day', { min: 1, max: 24 }),
     q.number('coordinators', 'Coordinators onsite', { required: true, min: 1, max: 50 }),
-    q.multi('vendor_categories', 'Vendors you coordinate', ['Venue', 'Catering', 'Decor', 'Photo / video', 'Makeup', 'Entertainment', 'Transport', 'Stay'], { required: true }),
+    q.multi('vendor_categories', 'Vendors you coordinate', ['Venue', 'Catering', 'Decor', 'Photo / video', 'Makeup', 'Entertainment', 'Transport', 'Stay',
+      'Priest', 'Mehendi', 'Invitations', 'Gifts & favours', 'Sound & lighting', 'Security', 'Valet'], { required: true, other: true }),
     q.textarea('deliverables', 'Deliverables', { required: true, max: 400 }),
     q.textarea('exclusions', 'Not included', { required: true, max: 400 }),
     q.number('change_limit', 'Scope changes included', { min: 0, max: 20 }),

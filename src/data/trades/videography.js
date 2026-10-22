@@ -1,30 +1,39 @@
 // Trade 32 — Videography (spec Part 9, Trade 32)
-import { q, screen, catalogue, EVENT_TYPES } from './schema'
+import { q, screen, catalogue, EVENT_TYPES, LANGUAGES } from './schema'
 
 export default {
   id: 'videography',
   serviceNoun: 'videography',
   screens: [
     screen('profile', 'Your videography', 'What you film and how you deliver.', [
-      q.multi('specialties', 'Specialties', ['Wedding films', 'Corporate', 'Music video', 'Documentary', 'Ads / brand', 'Live events'], { required: true, other: true }),
+      q.multi('specialties', 'Specialties', ['Wedding films', 'Corporate', 'Music video', 'Documentary', 'Ads / brand', 'Live events',
+        'Pre-wedding film', 'Save-the-date video', 'Reels & short-form', 'Drone films', 'Event aftermovie', 'Interviews & testimonials'], { required: true, other: true }),
       q.multi('events', 'Events', EVENT_TYPES, { required: true, other: true }),
       q.number('years', 'Years of experience', { required: true, min: 0, max: 60, suffix: 'years' }),
       q.url('showreel', 'Showreel link', { required: true }),
       q.photos('portfolio', 'Portfolio stills', { min: 3, max: 20 }),
       q.multi('equipment', 'Equipment', ['Cinema cameras', 'Mirrorless', 'Gimbals', 'Sliders', 'Wireless audio', 'Lights', 'Drone (licensed)', 'Streaming encoder'], { other: true }),
       q.number('service_radius_km', 'Service area radius', { required: true, min: 5, max: 3000, suffix: 'km' }),
+      /* The deliverables are what a family is actually buying, and what
+         decides whether a package can be priced without a call. */
+      q.multi('deliverables', 'Deliverables you offer', ['Teaser (about 1 min)', 'Highlight film', 'Full-length film', 'Instagram reels',
+        'Save-the-date video', 'Raw footage', 'Drone shots', 'Live stream link', 'Same-day edit'], { other: true }),
+      q.multi('languages', 'Languages you speak with families', LANGUAGES, { other: true }),
+      q.toggle('same_day_edit', 'Same-day edit shown at the reception'),
+      q.toggle('outstation', 'You travel for destination / outstation shoots'),
     ]),
   ],
   catalogue: catalogue('offerings', 'Your offerings', 'offering', 'offerings', [
     q.single('service', 'Service', [
       'Event coverage', 'Wedding film', 'Highlight reel', 'Full-length film', 'Cinematic film', 'Interviews',
       'Multi-camera', 'Live streaming', 'Raw footage', 'Drone (authorized)',
+      'Pre-wedding film', 'Reels package', 'Save-the-date video', 'Aftermovie',
     ], { required: true, other: true }),
     q.number('hours', 'Hours of filming', { required: true, min: 1, max: 72 }),
     q.number('videographers', 'Videographers', { required: true, min: 1, max: 20 }),
     q.number('cameras', 'Cameras', { required: true, min: 1, max: 30 }),
-    q.single('resolution', 'Resolution', ['1080p', '4K', '6K+'], { required: true }),
-    q.single('edit_level', 'Edit level', ['Basic cut', 'Colour-graded', 'Cinematic'], { required: true }),
+    q.single('resolution', 'Resolution', ['1080p', '4K', '6K+', '4K HDR', '8K'], { required: true, other: true }),
+    q.single('edit_level', 'Edit level', ['Basic cut', 'Colour-graded', 'Cinematic', 'Documentary', 'Vertical / reels-ready'], { required: true, other: true }),
     q.number('highlight_minutes', 'Highlight length', { min: 0, max: 30, suffix: 'minutes' }),
     q.toggle('full_film', 'Full-length film included'),
     q.toggle('raw', 'Raw footage included'),
