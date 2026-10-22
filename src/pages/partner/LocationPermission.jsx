@@ -1,5 +1,7 @@
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MapPin, Navigation, Sparkles, Truck } from 'lucide-react'
+import { MapPin, Navigation, Truck, BadgeCheck } from 'lucide-react'
+import { locationPermissionState } from '../../lib/partnerLocation'
 
 /**
  * The reason, before the system asks.
@@ -27,12 +29,31 @@ import { MapPin, Navigation, Sparkles, Truck } from 'lucide-react'
 
 const BENEFITS = [
   { icon: Navigation, text: 'Find nearby event opportunities' },
-  { icon: Sparkles,   text: 'Get better service requests' },
+  { icon: BadgeCheck,   text: 'Get better service requests' },
   { icon: Truck,      text: 'Accurate pickup and delivery support' },
 ]
 
 export default function LocationPermission() {
   const navigate = useNavigate()
+
+  /* ── Already granted: no reason to give, so no screen ──────────────
+     A partner reinstalling, or one who allowed location for another
+     reason, would otherwise be asked to tap "Allow" for a permission the
+     phone already holds. The answer is known without prompting, so the
+     screen steps aside and the capture starts. Blank for the moment the
+     check takes, rather than flashing the explanation and then leaving. */
+  const [asking, setAsking] = useState(false)
+  useEffect(() => {
+    let alive = true
+    locationPermissionState().then(state => {
+      if (!alive) return
+      if (state === 'granted') navigate('/partner/location', { replace: true })
+      else setAsking(true)
+    })
+    return () => { alive = false }
+  }, [navigate])
+
+  if (!asking) return <div className="native-screen bg-white" aria-busy="true" />
 
   return (
     <div className="native-screen flex flex-col bg-white">

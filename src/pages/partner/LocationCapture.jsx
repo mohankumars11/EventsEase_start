@@ -118,8 +118,14 @@ export default function LocationCapture() {
        and confirm still reads nothing.
 
        Passing it in route state costs one object and breaks the loop
-       even when nothing persisted. */
-    navigate('/partner/location-confirmation', {
+       even when nothing persisted.
+
+       Straight to the market screen, not to a separate "we found you
+       here" confirmation. The market screen prints the same address
+       with an Update link beside the answer that actually matters (are
+       we open there), so the confirmation was a screen and a tap that
+       said half as much. */
+    navigate('/partner/market', {
       replace: true,
       state: { fix, addr: stamped },
     })

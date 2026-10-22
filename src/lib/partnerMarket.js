@@ -45,9 +45,13 @@ export { MARKET_STATUS }
  * @param force  ignore a saved fix and ask the device again
  * @returns { ok, reason?, fix, address, market }
  */
-export async function detectMarket({ force = false } = {}) {
-  let fix = force ? null : readSavedLocation()
-  let address = force ? null : readSavedAddress()
+export async function detectMarket({ force = false, fix: handedFix = null, address: handedAddress = null } = {}) {
+  /* A fix handed over by the capture screen outranks storage, whose
+     write is allowed to fail silently. Without this, a device that
+     cannot persist would ask the GPS a second time for a position it
+     got one screen ago. */
+  let fix = handedFix ?? (force ? null : readSavedLocation())
+  let address = handedAddress ?? (force ? null : readSavedAddress())
 
   if (!fix) {
     const res = await captureLocation()
@@ -174,4 +178,23 @@ export function rememberServesCity(city) {
 
 export function servesCity() {
   try { return localStorage.getItem(SERVES_KEY) } catch { return null }
+}
+
+const CHECKED_KEY = 'sb_partner_city_checked_v1'
+
+/**
+ * The partner has been through the city check: their location was
+ * found (or they could not give one and said where they work), and the
+ * market screen has told them what it means.
+ *
+ * Sign-in reads this and will not open without it. Location is
+ * confirmed BEFORE an account exists, so nobody makes an account to be
+ * told afterwards that we are not in their city.
+ */
+export function markCityChecked() {
+  try { localStorage.setItem(CHECKED_KEY, String(Date.now())) } catch { /* private mode */ }
+}
+
+export function cityChecked() {
+  try { return !!localStorage.getItem(CHECKED_KEY) } catch { return false }
 }

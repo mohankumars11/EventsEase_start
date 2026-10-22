@@ -67,25 +67,26 @@ const CARDS = [
   },
 ]
 
-/* ── Where "Join as a Partner" goes: straight to sign-in ─────────────
+/* ── Where "Join as a Partner" goes: the city check, then sign-in ────
 
-   It used to go to location permission, then location capture, then a
-   confirmation, then a city check, and only then to sign-in — seven
-   screens and a dozen taps before a partner could say yes.
+   For one build this went straight to sign-in, to save taps. It was
+   the wrong saving. A decorator in Mysuru made an account and only then
+   found out we are not in Mysuru yet. That reads as bait, and it lost
+   the one thing the check exists to record: which cities have partners
+   waiting.
 
-   Every partner app worth copying does the opposite. Uber Driver,
-   Rapido Captain and Porter Partner take the phone number first, because
-   signing up IS the commitment, and ask for city and location inside
-   onboarding where the reason is obvious. Swiggy and Zomato ask for
-   location up front only because their CUSTOMER apps need it to show
-   anything at all; a partner does not.
+   So location is confirmed BEFORE an account exists. The flow is kept
+   short instead:
 
-   Nothing downstream needed those screens to run first: sign-in and
-   setup read nothing they stored, and every listing asks for its own
-   service location. What the city check did that is lost here is
-   recording interest from cities we are not in yet — said in the commit,
-   because it is a real trade. */
-const SIGN_IN = '/partner/login'
+     Join → why we ask → OS dialog → "Sambramo is live in <city>" → sign-in
+
+   The explanation screen skips itself when the phone has already
+   granted location, and the separate "we found you here" screen is
+   folded into the market screen, which prints the same address with an
+   Update link. Three taps of ours, one of Android's. Sign-in also
+   refuses to open without a check on record (PartnerEntry), so a deep
+   link cannot go round it. */
+const CITY_CHECK = '/partner/location-permission'
 
 /* Long enough to read a headline and its line beneath, short enough
    that a partner who is not reading is not kept waiting. */
@@ -112,11 +113,11 @@ export default function PartnerOnboarding() {
   }, [reduced])
 
   /* ── What the painted button promises, it does ─────────────────────
-     Cards one and three say "Join as a Partner", and that now goes to
-     sign-in from wherever it is pressed — one tap, not three. Card two
+     Cards one and three say "Join as a Partner", and that goes to the
+     city check from wherever it is pressed — one tap, not three. Card two
      says "See How It Works"; sending that to a sign-in form would make
      the label a lie, so it moves on to the card that does the showing. */
-  const onCta = i => (CARDS[i].cta === 'See How It Works' ? goTo(i + 1) : navigate(SIGN_IN))
+  const onCta = i => (CARDS[i].cta === 'See How It Works' ? goTo(i + 1) : navigate(CITY_CHECK))
 
   /* ── The cards move on their own ───────────────────────────────────
      A partner had to tap three times to see three cards. They advance
@@ -182,7 +183,7 @@ export default function PartnerOnboarding() {
             <button
               type="button"
               onClick={() => onCta(i)}
-              aria-label={c.cta === 'See How It Works' ? `${c.cta}, next card` : `${c.cta}, continue to sign in`}
+              aria-label={c.cta === 'See How It Works' ? `${c.cta}, next card` : `${c.cta}, check your city`}
               /* ── Each card's own button, not one shared position ─────
                  The tap areas were one fixed rectangle for all three
                  cards, which was right while the artwork put every
@@ -209,8 +210,8 @@ export default function PartnerOnboarding() {
           Skip is removed from the image when it is rendered — see
           scripts/render-onboarding-cards.mjs — so there are never two.
 
-          Skip means "skip the introduction", so it goes where Join goes
-          rather than into a location prompt nobody asked for.
+          Skip means "skip the introduction", not "skip the city
+          check", so it goes where Join goes.
 
           The timer line that used to sit here is gone: the artwork
           already paints the position dots, and a second indicator at
@@ -219,8 +220,8 @@ export default function PartnerOnboarding() {
       <div className="safe-top pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-end px-4">
         <button
           type="button"
-          onClick={() => navigate(SIGN_IN)}
-          aria-label="Skip the introduction and continue to sign in"
+          onClick={() => navigate(CITY_CHECK)}
+          aria-label="Skip the introduction and check your city"
           className="pointer-events-auto mt-2 rounded-full bg-black/20 px-4 py-1.5 text-[15px] font-semibold text-white backdrop-blur-sm
                      focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
         >

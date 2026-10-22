@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { FIELD_RULES } from '../../lib/validation/fieldRules'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { ArrowRight, Loader2, Mail, ShieldCheck, Check } from 'lucide-react'
+import { cityChecked } from '../../lib/partnerMarket'
 import { useAuth, PENDING_ROLE } from '../../context/AuthContext'
 import GoogleSignInButton from '../../components/ui/GoogleSignInButton'
 import { PARTNER_TERMS_LONG, PARTNER_TERMS_VERSION } from '../../config/partnerTerms'
@@ -62,7 +63,8 @@ import { validateField, normalise, SEVERITY } from '../../lib/validation/fieldRu
  */
 export default function PartnerEntry() {
   const navigate = useNavigate()
-  const { user, profile, sendEmailOtp, verifyEmailOtp, signInWithGoogle } = useAuth()
+  const { user, profile, loading: authLoading, sendEmailOtp, verifyEmailOtp, signInWithGoogle } = useAuth()
+  const { state: arrivedWith } = useLocation()
   /* Renamed on the way in: `stage` is already this screen's own
      email-or-code state, and two things called stage in one component is
      how the wrong one gets read six months from now. */
@@ -88,6 +90,30 @@ export default function PartnerEntry() {
   useEffect(() => {
     stashPartnerRef(new URLSearchParams(window.location.search).get('ref'))
   }, [])
+
+  /* ══════════════════════════════════════════════════════════════════
+     NO ACCOUNT BEFORE THE CITY CHECK
+     ══════════════════════════════════════════════════════════════════
+
+     Location is confirmed before sign-in, so nobody makes an account to
+     be told afterwards that we are not in their city. The intro sends
+     everyone through the check, and this closes the side doors: a
+     forwarded /partner/join link, a bookmark, a back-stack jump.
+
+     Only for somebody signed OUT, and only once auth has finished
+     restoring: a session still loading looks exactly like nobody, and
+     bouncing a signed-in partner into a location prompt on every cold
+     start would be worse than the hole this closes. The referral code
+     is already stashed by the effect above, so it survives the detour.
+
+     Route state is accepted as well as storage: the market screen sets
+     both, and on a device that cannot persist, storage alone would send
+     the partner back and forth between the two screens for ever. */
+  useEffect(() => {
+    if (authLoading || user) return
+    if (arrivedWith?.cityChecked || cityChecked()) return
+    navigate('/partner/location-permission', { replace: true })
+  }, [authLoading, user, arrivedWith, navigate])
 
   /* ══════════════════════════════════════════════════════════════════
      NEW OR RETURNING, ASKED OUTRIGHT

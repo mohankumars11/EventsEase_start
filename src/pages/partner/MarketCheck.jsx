@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import {
-  CheckCircle2, Rocket, MapPin, Loader2, Heart, ArrowRight,
+  CheckCircle2, Rocket, MapPin, Loader2, Heart, ArrowRight, Pencil,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
-import { detectMarket, openCities, captureMarketInterest, rememberServesCity, MARKET_STATUS } from '../../lib/partnerMarket'
+import {
+  detectMarket, openCities, captureMarketInterest, rememberServesCity,
+  markCityChecked, MARKET_STATUS,
+} from '../../lib/partnerMarket'
 import { readSavedAddress } from '../../lib/partnerLocation'
 
 /**
@@ -40,6 +43,7 @@ import { readSavedAddress } from '../../lib/partnerLocation'
  */
 export default function MarketCheck() {
   const navigate = useNavigate()
+  const { state: handed } = useLocation()
   const { user, profile } = useAuth()
 
   const [loading, setLoading] = useState(true)
@@ -54,7 +58,7 @@ export default function MarketCheck() {
 
   useEffect(() => {
     let alive = true
-    detectMarket().then(res => {
+    detectMarket({ fix: handed?.fix ?? null, address: handed?.addr ?? null }).then(res => {
       if (!alive) return
       const addr = res.address ?? readSavedAddress()
       setDetected({
@@ -64,6 +68,7 @@ export default function MarketCheck() {
         lat: res.fix?.lat ?? null,
         lng: res.fix?.lng ?? null,
         line: addr?.line ?? null,
+        accuracy: addr?.accuracy ?? res.fix?.accuracy ?? null,
       })
       setMarket(res.market)
       setLoading(false)
@@ -91,10 +96,33 @@ export default function MarketCheck() {
     }
   }
 
+  /* Every way out of this screen towards an account goes through here.
+     The mark is what sign-in checks before it will open; the route state
+     carries the same fact for a device whose storage write cannot land,
+     so the two screens can never send a partner back and forth. */
+  function toSignIn() {
+    markCityChecked()
+    navigate('/partner/login', { state: { cityChecked: true } })
+  }
+
   function serveTheOpenCity() {
     rememberServesCity(openCity)
-    navigate('/partner/login')
+    toSignIn()
   }
+
+  /* The confirmation screen this replaced offered a way to correct a
+     wrong fix. It lives here now, next to the address it corrects. */
+  const updateLocation = (
+    <button
+      type="button"
+      data-update-location="true"
+      onClick={() => navigate('/partner/location', { replace: true })}
+      className="mt-2 inline-flex min-h-[36px] items-center gap-1.5 rounded-full px-3 text-[12.5px] font-bold text-plum-600"
+    >
+      <Pencil size={13} /> Not right? Update location
+    </button>
+  )
+  const approximate = typeof detected?.accuracy === 'number' && detected.accuracy > 100
 
   if (loading) {
     return (
@@ -129,7 +157,7 @@ export default function MarketCheck() {
         <div className="safe-cta px-7">
           <button
             type="button"
-            onClick={() => navigate('/partner/login')}
+            onClick={toSignIn}
             className="min-h-[52px] w-full rounded-full bg-gradient-to-r from-plum-700 to-plum-500
                        text-[15.5px] font-extrabold text-white"
           >
@@ -156,15 +184,21 @@ export default function MarketCheck() {
             start offering your services to customers across {market.city}.
           </p>
           {detected?.line && (
-            <p className="mt-4 flex items-center gap-1.5 text-[12px] font-semibold text-ink-mute">
-              <MapPin size={13} /> {detected.line}
+            <p className="mt-4 flex max-w-[19rem] items-start gap-1.5 text-left text-[12px] font-semibold leading-snug text-ink-mute">
+              <MapPin size={13} className="mt-0.5 shrink-0" /> {detected.line}
             </p>
           )}
+          {approximate && (
+            <p className="mt-1 max-w-[19rem] text-[11.5px] leading-snug text-ink-mute">
+              Approximate location. A precise one matches you to events nearer where you work.
+            </p>
+          )}
+          {updateLocation}
         </div>
         <div className="safe-cta px-7">
           <button
             type="button"
-            onClick={() => navigate('/partner/login')}
+            onClick={toSignIn}
             className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full
                        bg-gradient-to-r from-plum-700 to-plum-500 text-[15.5px] font-extrabold text-white"
           >
@@ -190,7 +224,7 @@ export default function MarketCheck() {
           <Rocket size={28} className="text-plum-600" />
         </span>
         <h1 data-market="coming-soon" className="text-[22px] font-extrabold leading-tight text-plum-950">
-          Sambramo is coming to your city
+          {detected?.city ? 'Sambramo is coming to your city' : 'We could not find your city'}
         </h1>
 
         <p className="mt-3 text-[13.5px] leading-relaxed text-ink/65">
@@ -201,6 +235,7 @@ export default function MarketCheck() {
           Sambramo is currently launching in {openCity}. We&apos;re working to
           bring it to more cities soon.
         </p>
+        {updateLocation}
 
         {/* THE question. A partner in Mysuru who works Bengaluru weddings
             is a Bengaluru partner, and dispatch reads their service
@@ -234,7 +269,7 @@ export default function MarketCheck() {
             <button
               type="button"
               data-market-continue="true"
-              onClick={() => navigate('/partner/login')}
+              onClick={toSignIn}
               className="mt-3 min-h-[48px] w-full rounded-full border border-plum-200 bg-white text-[13.5px] font-extrabold text-plum-700"
             >
               Continue partner setup
@@ -277,7 +312,7 @@ export default function MarketCheck() {
             <button
               type="button"
               data-market-continue="true"
-              onClick={() => navigate('/partner/login')}
+              onClick={toSignIn}
               className="mt-1 min-h-[48px] w-full rounded-full border border-plum-200 bg-white text-[13.5px] font-extrabold text-plum-700"
             >
               Continue partner setup

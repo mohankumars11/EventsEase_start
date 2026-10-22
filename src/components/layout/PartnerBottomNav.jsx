@@ -125,6 +125,8 @@ export default function PartnerBottomNav() {
   const PRE_ACCOUNT = [
     '/partner/onboarding',
     '/partner/location',
+    /* The city check: pre-account, and the last screen before sign-in. */
+    '/partner/market',
     '/partner/login',
     '/partner/join',
     '/partner/verify',
