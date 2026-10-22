@@ -93,7 +93,10 @@ function MediaViewer({ media, index, onClose, onIndex }) {
   )
 }
 
-function Tile({ item, onOpen, className = '', more = 0 }) {
+/* `badge`: the per-photo review mark. Off in the hero, where the hero's
+   own status chip already says the listing is in review and a mark per
+   tile collided with it and with the trade chip. */
+function Tile({ item, onOpen, className = '', more = 0, badge = true }) {
   return (
     <button type="button" onClick={onOpen} className={'sb-tile group relative overflow-hidden bg-[#EDE6FB] ' + className}
       aria-label={item.kind === 'video' ? 'Play video' : 'Open photo'}>
@@ -101,7 +104,7 @@ function Tile({ item, onOpen, className = '', more = 0 }) {
         ? <video src={item.url} muted playsInline preload="metadata" className="h-full w-full object-cover" />
         : <img src={item.url} alt={item.caption || ''} loading="lazy" className="h-full w-full object-cover transition duration-500 group-active:scale-[1.03]" />}
       {item.kind === 'video' && <span className="absolute inset-0 grid place-items-center"><span className="grid h-10 w-10 place-items-center rounded-full bg-black/45 backdrop-blur"><PlayCircle size={22} className="text-white" /></span></span>}
-      {item.review_status && item.review_status !== 'live' && <span className="absolute left-1.5 top-1.5 rounded-full bg-amber-100/95 px-2 py-0.5 text-[11px] font-extrabold text-amber-900">{item.review_status === 'rejected' ? 'Change' : 'In review'}</span>}
+      {badge && item.review_status && item.review_status !== 'live' && <span className="absolute left-1.5 top-1.5 rounded-full bg-amber-100/95 px-2 py-0.5 text-[11px] font-extrabold text-amber-900">{item.review_status === 'rejected' ? 'Change' : 'In review'}</span>}
       {more > 0 && <span className="absolute inset-0 grid place-items-center bg-[#1B1433]/55 text-[18px] font-extrabold text-white">+{more}</span>}
     </button>
   )
@@ -116,9 +119,9 @@ function Hero({ model, onOpen, onEdit }) {
     <section className="relative px-3 pt-3">
       {m.length ? (
         <div className={'sb-mosaic grid h-[252px] gap-1 overflow-hidden rounded-[26px] ' + (m.length >= 3 ? 'grid-cols-3 grid-rows-2' : m.length === 2 ? 'grid-cols-2' : 'grid-cols-1')}>
-          <Tile item={m[0]} onOpen={() => onOpen(0)} className={m.length >= 3 ? 'col-span-2 row-span-2' : ''} />
-          {m[1] && <Tile item={m[1]} onOpen={() => onOpen(1)} />}
-          {m[2] && <Tile item={m[2]} onOpen={() => onOpen(2)} more={m.length > 3 ? m.length - 3 : 0} />}
+          <Tile item={m[0]} onOpen={() => onOpen(0)} badge={false} className={m.length >= 3 ? 'col-span-2 row-span-2' : ''} />
+          {m[1] && <Tile item={m[1]} onOpen={() => onOpen(1)} badge={false} />}
+          {m[2] && <Tile item={m[2]} onOpen={() => onOpen(2)} badge={false} more={m.length > 3 ? m.length - 3 : 0} />}
         </div>
       ) : onEdit ? (
         <div className="sb-aurora relative flex h-[280px] items-start justify-center overflow-hidden rounded-[26px] px-6 pt-11 text-center" data-hero-empty="partner">

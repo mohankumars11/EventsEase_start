@@ -45,11 +45,15 @@ export function hasContent(model, secs) {
   })[k])
 }
 
+/* An eye, not a labelled pill: the header already carries Back, the step
+   title and Save & exit, and a fourth labelled control truncated the step
+   title to "Step 1 of 13 · Ab…". The pop-up after the first step says what
+   the eye does. */
 export function PreviewButton({ onClick }) {
   return (
-    <button type="button" onClick={onClick} data-live-preview-open
-      className="flex h-9 items-center gap-1 rounded-full bg-[#1B1433] px-3 text-[11.5px] font-extrabold text-white">
-      <Eye size={13} />Preview
+    <button type="button" onClick={onClick} data-live-preview-open aria-label="Preview what customers see"
+      className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#1B1433] text-white">
+      <Eye size={16} />
     </button>
   )
 }
