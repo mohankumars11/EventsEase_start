@@ -63,6 +63,7 @@ import DishCatalogue from './catering/DishCatalogue'
 import MenuBuilder from './catering/MenuBuilder'
 import { CounterBuilder, PackageBuilder, ExtrasBuilder } from './catering/Services'
 import CateringReview from './catering/CateringReview'
+import { writeTradeProfile } from '../../../lib/tradeProfileWriter'
 import { engineDraftListing, cateringDraftListing, useWorkMedia, sectionsForStage } from './draftPreview'
 import { PreviewButton, LivePreviewScreen, StepPop, SubmitPreview } from './LivePreview'
 import { modelFromTradeListing, stageForSection } from '../../customer/storefront/storefrontModel'
@@ -295,6 +296,9 @@ export default function ListingOnboardingFlow({
 
       const { data, error } = await supabase.rpc('submit_listing_version', { p_vendor_service_id: serviceId, p_payload: payload })
       if (error) { setSubmitError(friendlyError(error)); return }
+      /* The typed profile row (migration 188's columns included), so the
+         backend tables fill as partners submit. Never blocks the submit. */
+      await writeTradeProfile({ tradeId: config.id, vendorId, serviceId, answers: { ...a.answers, ...a.basics, work: undefined }, specs })
       // A dish the partner typed themselves is proposed for the shared catalogue (reviewed before it is shared).
       if (catering && vendorId) {
         const own = (a.dishes ?? []).filter(d => d.active !== false && !d.master_dish_id && d.name?.trim())

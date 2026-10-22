@@ -47,7 +47,9 @@ export default function LocationPermission() {
     let alive = true
     locationPermissionState().then(state => {
       if (!alive) return
-      if (state === 'granted') navigate('/partner/location', { replace: true })
+      /* Not denied: go straight to the OS dialog, no in-app Allow tap
+         first (asked for: the system prompt should just appear). */
+      if (state !== 'denied') navigate('/partner/location', { replace: true })
       else setAsking(true)
     })
     return () => { alive = false }

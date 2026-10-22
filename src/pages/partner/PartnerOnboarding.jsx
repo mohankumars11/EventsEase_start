@@ -90,7 +90,7 @@ const CITY_CHECK = '/partner/location-permission'
 
 /* Long enough to read a headline and its line beneath, short enough
    that a partner who is not reading is not kept waiting. */
-const AUTO_ADVANCE_MS = 3500
+const AUTO_ADVANCE_MS = 1500
 
 export default function PartnerOnboarding() {
   const navigate = useNavigate()

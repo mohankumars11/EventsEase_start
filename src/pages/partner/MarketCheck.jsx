@@ -224,7 +224,7 @@ export default function MarketCheck() {
           <Rocket size={28} className="text-plum-600" />
         </span>
         <h1 data-market="coming-soon" className="text-[22px] font-extrabold leading-tight text-plum-950">
-          {detected?.city ? 'Sambramo is coming to your city' : 'We could not find your city'}
+          {detected?.city ? `We're not live in ${detected.city} yet` : 'We could not find your city'}
         </h1>
 
         <p className="mt-3 text-[13.5px] leading-relaxed text-ink/65">

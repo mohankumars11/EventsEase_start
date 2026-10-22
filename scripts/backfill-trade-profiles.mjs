@@ -156,11 +156,14 @@ for (const svc of withSpecs) {
   rowsByTrade.set(tid, (rowsByTrade.get(tid) ?? 0) + 1)
   if (!WRITE) continue
 
-  const res = await fetch(`${URL_}/rest/v1/partner_${tid}_profiles?on_conflict=service_id`, {
-    method: 'POST',
-    headers: { ...H, Prefer: 'resolution=merge-duplicates,return=minimal' },
-    body: JSON.stringify(row),
-  })
+  /* Update-or-insert: the unique index on service_id is partial, so
+     PostgREST's on_conflict upsert cannot target it. */
+  const base = `${URL_}/rest/v1/partner_${tid}_profiles`
+  const look = await fetch(`${base}?service_id=eq.${svc.id}&select=id`, { headers: H })
+  const have = look.ok ? await look.json() : []
+  const res = have.length
+    ? await fetch(`${base}?id=eq.${have[0].id}`, { method: 'PATCH', headers: { ...H, Prefer: 'return=minimal' }, body: JSON.stringify(row) })
+    : await fetch(base, { method: 'POST', headers: { ...H, Prefer: 'return=minimal' }, body: JSON.stringify(row) })
   if (res.ok) { wrote++ } else { failed++; console.error(`  write failed ${tid} ${svc.id}: ${res.status} ${(await res.text()).slice(0, 160)}`) }
 }
 
