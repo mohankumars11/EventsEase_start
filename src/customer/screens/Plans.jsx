@@ -4,16 +4,15 @@
  */
 import { Link } from 'react-router-dom'
 import { ArrowRight, CalendarDays } from 'lucide-react'
-import { useAuth } from '../../context/AuthContext'
 import { usePlan, needsFor } from '../state/PlanContext'
 import { OCCASION } from '../data/occasions'
 import { TRADE } from '../data/trades'
 import { photoFor } from '../data/photos.generated'
 import { countdown, dayLabel, plural } from '../lib/format'
 import { Empty, Photo } from '../ui/kit'
+import Booked from './Booked'
 
 export default function Plans() {
-  const { user } = useAuth()
   const plan = usePlan()
   const ids = [...new Set([plan.event.occasionId, ...plan.basket.map(l => l.occasionId)].filter(Boolean))]
   const solo = plan.basket.filter(l => !l.occasionId)
@@ -70,10 +69,8 @@ export default function Plans() {
         )}
       </div>
 
-      <h2 className="px-4 pb-2 pt-8 text-[13px] font-extrabold uppercase tracking-[0.1em] text-[var(--ink-3)]">Booked</h2>
-      <p className="mx-4 rounded-[20px] bg-[var(--soft)] px-4 py-4 text-[13px] font-semibold leading-relaxed text-[var(--ink-2)]">
-        {user ? 'Bookings you confirm appear here with live status from each partner, the payments, and the day’s timeline.' : 'Sign in at checkout and every booking you confirm appears here, with live status from each partner.'}
-      </p>
+      <h2 className="px-4 pb-2 pt-8 text-[13px] font-extrabold uppercase tracking-[0.1em] text-[var(--ink-3)]">Booked & offers</h2>
+      <Booked />
     </main>
   )
 }

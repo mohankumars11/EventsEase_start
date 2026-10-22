@@ -9,7 +9,14 @@
  *   POST /api/anchor?op=book
  *   { vendorServiceId, request: { tier?, event_date, start_time, hours, days?, guests,
  *     languages[], event_category, addons[], lat, lng }, venue: { address, area, city },
- *     note?, preview? }
+ *     note?, preview?, negotiate? }
+ *
+ * `negotiate: { offer_paise, reasons[], message }` always sends the request
+ * to the partner as a QUOTE — even when the listing would book instantly —
+ * with the customer's price, reasons and note at the top of what the
+ * partner reads (canonical_demand.summary, shown by CustomQuoteInbox).
+ * The offer is a request, never a price: the partner's quote is what can
+ * be accepted and paid.
  *
  * The decision is resolve_anchor_booking (migration 20261010_05), never the
  * client:
@@ -26,6 +33,7 @@ import { createClient } from '@supabase/supabase-js'
 import { cors } from './cors.js'
 import { authenticatedUser } from './auth.js'
 import { PLATFORM_FEE_RATE } from './tradeNames.js'
+import { notifyPartners } from './fcm.js'
 
 const url = process.env.VITE_SUPABASE_URL
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -107,6 +115,20 @@ const explain = r => REASON_TEXT[r]
 
 const clean = (v, n = 500) => String(v ?? '').trim().slice(0, n) || null
 
+const inr = p => `₹${Math.round(Number(p) / 100).toLocaleString('en-IN')}`
+const dayText = d => (d ? new Date(`${d}T00:00:00`).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' }) : 'Date to confirm')
+/* What the partner reads first: the offer, what it means for them, why. */
+function offerSummary(offer, resolution, fee) {
+  const listed = Number(resolution.customer_paise) || 0
+  const pct = listed ? Math.round((1 - offer.offer_paise / listed) * 100) : 0
+  /* Paise, rounded down to whole ₹10 — what the partner would keep. */
+  const takeHome = Math.floor((offer.offer_paise * (1 - fee)) / 1000) * 1000
+  const parts = [`Customer offers ${inr(offer.offer_paise)} (≈ ${inr(takeHome)} to you${listed ? `, ${pct > 0 ? `${pct}% under` : 'against'} your ${inr(listed)}` : ''}).`]
+  if (offer.reasons.length) parts.push(`Why: ${offer.reasons.join(', ')}.`)
+  if (offer.message) parts.push(`“${offer.message}”`)
+  return parts.join(' ')
+}
+
 export default async function handler(req, res) {
   if (cors(req, res)) return
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
@@ -133,6 +155,17 @@ export default async function handler(req, res) {
   const FEE = Number(resolution.platform_fee_rate) || PLATFORM_FEE_RATE
   const slug = TRADE.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-')
   if (body.preview) return res.status(200).json(out)
+
+  /* A customer's offer. Bounded so a typo cannot read as an insult or a
+     windfall: at least 1 rupee, at most ten times the engine's price. */
+  const offer = body.negotiate && typeof body.negotiate === 'object' ? (() => {
+    const n = Math.round(Number(body.negotiate.offer_paise) || 0)
+    const cap = Math.max(100, Number(resolution.customer_paise) || 0) * 10
+    if (!(n >= 100) || n > cap) return null
+    return { offer_paise: n, reasons: (Array.isArray(body.negotiate.reasons) ? body.negotiate.reasons : []).map(x => clean(x, 60)).filter(Boolean).slice(0, 8),
+      message: clean(body.negotiate.message, 400) }
+  })() : null
+  if (body.negotiate && !offer) return res.status(400).json({ error: 'Enter the amount you want to offer.' })
 
   const authn = await authenticatedUser(req, db)
   if (authn.error) return res.status(401).json({ error: 'Sign in to book.' })
@@ -166,7 +199,7 @@ export default async function handler(req, res) {
   if (bErr || !booking?.ok) return res.status(500).json({ error: bErr?.message ?? booking?.detail ?? 'Could not create the booking.' })
 
   /* ── INSTANT ───────────────────────────────────────────────────────── */
-  if (resolution.path === 'INSTANT') {
+  if (resolution.path === 'INSTANT' && !offer) {
     const quoted = resolution.customer_paise
     const partner = resolution.take_home_paise
     const { data: booked, error } = await db.rpc('book_partner_line', {
@@ -191,6 +224,10 @@ export default async function handler(req, res) {
       return res.status(409).json({ ...out, path: 'NOT_ELIGIBLE', reasons: [booked?.reason], reasons_text: [booked?.reason === 'resource_full' ? 'What you asked for was just booked by someone else.' : 'This partner was just booked for that date.'] })
     }
     await log({ booking_line_id: booked.line_id })
+    /* The partner hears about it now — not when they next open the app. */
+    await notifyPartners(db, { vendorIds: [resolution.vendor_id], lineId: booked.line_id, url: `/partner/jobs/${booked.line_id}`,
+      title: `New booking: ${svc?.name ?? TRADE}`,
+      body: `${dayText(r.event_date)}${r.start_time ? ` · ${r.start_time}` : ''}${venue.area ? ` · ${clean(venue.area, 60)}` : ''}. Holding your date — confirmed once the customer pays.` }).catch(() => {})
     return res.status(200).json({ ...out, lineId: booked.line_id, bookingRequestId: booking.request_id })
   }
 
@@ -203,8 +240,9 @@ export default async function handler(req, res) {
     service_location: { city: clean(venue.city, 120), area: clean(venue.area, 160), address: clean(venue.address), lat, lng,
       distance_m: resolution.distance_km != null ? Math.round(resolution.distance_km * 1000) : null },
     canonical_demand: { ...r, tradeId: TRADE_CODE, tradeName: TRADE, note: clean(body.note, 1000),
-      summary: (out.reasons_text ?? []).join(' '), reasons: resolution.reasons, engine: VERSION,
-      advance_pct: resolution.advance_pct ?? null },
+      summary: offer ? offerSummary(offer, resolution, FEE) : (out.reasons_text ?? []).join(' '), reasons: resolution.reasons, engine: VERSION,
+      advance_pct: resolution.advance_pct ?? null,
+      ...(offer ? { customer_offer_paise: offer.offer_paise, offer_reasons: offer.reasons, offer_message: offer.message, listed_paise: resolution.customer_paise ?? null } : {}) },
     state: 'VENDOR_QUOTE', missing_inputs: resolution.reasons ?? [], required_actions: [],
     // The partner's own response window, set by the server clock.
     expires_at: new Date(Date.now() + hours * 3600 * 1000).toISOString(),
@@ -232,5 +270,8 @@ export default async function handler(req, res) {
   if (priced.length + flagged.length) await db.from('sambramo_quote_line_items').insert([...priced, ...flagged])
 
   await log({ quote_request_id: q.id })
+  await notifyPartners(db, { vendorIds: [resolution.vendor_id ?? svc?.vendor_id].filter(Boolean), url: '/dashboard/vendor',
+    title: offer ? `Offer: ${inr(offer.offer_paise)} for ${svc?.name ?? TRADE}` : `Quote request: ${svc?.name ?? TRADE}`,
+    body: `${dayText(r.event_date)}${venue.area ? ` · ${clean(venue.area, 60)}` : ''}. Reply within ${hours} hours to win it.` }).catch(() => {})
   return res.status(200).json({ ...out, quoteRequestId: q.id, bookingRequestId: booking.request_id, respondWithinHours: hours })
 }

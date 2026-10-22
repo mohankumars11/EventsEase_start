@@ -1,6 +1,9 @@
 /** The three small screens: saved partners, notifications, and all services. */
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { BellRing } from 'lucide-react'
+import { BellRing, Check, Loader2 } from 'lucide-react'
+import { useAuth } from '../../context/AuthContext'
+import { alertsAvailability, enableAlerts } from '../../lib/push'
 import { usePlan } from '../state/PlanContext'
 import { TRADE_GROUPS } from '../data/trades'
 import { BackHeader, Empty, PlanBar, SectionHead } from '../ui/kit'
@@ -25,14 +28,37 @@ export function Saved() {
 }
 
 export function Notifications() {
+  const { user, profile } = useAuth()
+  const [state, setState] = useState('idle') // idle | busy | on | off
+  const [detail, setDetail] = useState('')
+  const avail = alertsAvailability()
+  async function turnOn() {
+    if (!profile?.id) return
+    setState('busy')
+    const r = await enableAlerts({ profileId: profile.id, app: 'customer' }).catch(e => ({ ok: false, detail: e.message }))
+    setState(r?.ok ? 'on' : 'off')
+    setDetail(r?.ok ? '' : r?.scan ?? r?.detail ?? 'Alerts could not be switched on.')
+  }
   return (
     <main className="cx-enter">
       <BackHeader title="Notifications" />
-      <div className="px-4 pt-6 text-center">
-        <span className="mx-auto grid h-16 w-16 place-items-center rounded-[22px] bg-[var(--brand-tint)]"><BellRing size={26} className="text-[var(--brand)]" /></span>
-        <p className="mt-4 text-[17px] font-extrabold tracking-[-0.02em]">You are all caught up</p>
-        <p className="mx-auto mt-1.5 max-w-[300px] text-[13px] font-semibold leading-relaxed text-[var(--ink-2)]">Quotes, confirmations and reminders for your event appear here — and on your phone, once you allow notifications.</p>
-      </div>
+      <section className="mx-4 mt-2 rounded-[24px] bg-[var(--am-50)] p-4 ring-1 ring-[var(--am-200)]">
+        <div className="flex items-start gap-3">
+          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-[16px] bg-white shadow-sm"><BellRing size={22} className="text-[var(--brand)]" /></span>
+          <div className="min-w-0">
+            <p className="text-[15.5px] font-extrabold tracking-[-0.02em]">Know the moment it happens</p>
+            <p className="mt-1 text-[12.5px] font-semibold leading-relaxed text-[var(--ink-2)]">A partner sends a quote, accepts your offer, or your payment confirms them — you hear it first.</p>
+          </div>
+        </div>
+        {!user ? <p className="mt-3 text-[12.5px] font-bold text-[var(--ink-3)]">Sign in from Account to turn alerts on.</p>
+          : state === 'on' ? <p className="mt-3 flex items-center gap-1.5 text-[13px] font-extrabold text-[var(--ok)]"><Check size={16} strokeWidth={3} />Alerts are on for this device</p>
+            : avail.ok === false && avail.via === 'web' ? <p className="mt-3 text-[12.5px] font-bold text-[var(--ink-3)]">This browser cannot show alerts. Install the Sambramo app to get them.</p>
+              : <button type="button" onClick={turnOn} disabled={state === 'busy'} className="cx-press cx-cta mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-[16px] text-[14px] font-extrabold" data-alerts>
+                  {state === 'busy' ? <Loader2 size={16} className="animate-spin" /> : <BellRing size={16} />}Turn on alerts
+                </button>}
+        {detail && <p className="mt-2 text-[12px] font-bold text-[#9B1A2A]">{detail}</p>}
+      </section>
+      <p className="mx-auto mt-6 max-w-[300px] px-4 text-center text-[12.5px] font-semibold leading-relaxed text-[var(--ink-3)]">Your quotes, confirmations and offers live in Plans — alerts just bring you there.</p>
     </main>
   )
 }

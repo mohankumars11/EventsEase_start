@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import crypto from 'crypto'
 import { bookingLinesFor, captureBookingPayment } from './_lib/bookingCapture.js'
 import { routeTransfersForCapture, routeWebhook } from './_lib/routeTransfers.js'
+import { notifyCustomersPaid, notifyPartnersPaid } from './_lib/fcm.js'
 
 /**
  * Razorpay's webhook — the only thing in this app that can say a milestone
@@ -126,7 +127,10 @@ export default async function handler(req, res) {
       /* Money is recorded; now move each Route partner's share, on hold
          until delivery. Never fails the webhook — see routeTransfers.js. */
       const route = await routeTransfersForCapture(supabase, { entity, lineIds: booking.lineIds })
-      return res.status(200).json({ ...r, route })
+      /* Tell the customer — only for a NEW capture (a Razorpay retry comes
+         back with no lines), and never able to fail the webhook. */
+      const told = r.lines > 0 ? { customer: await notifyCustomersPaid(supabase, booking.lineIds), partners: await notifyPartnersPaid(supabase, booking.lineIds) } : null
+      return res.status(200).json({ ...r, route, told })
     }
   }
 

@@ -2,6 +2,7 @@
  * Anchor & MC endpoints, one serverless function.
  *
  *   POST /api/anchor?op=book            customer booking / preview   (_lib/anchorBook.js)
+ *   POST /api/anchor?op=confirm-payment customer app confirms a paid booking (_lib/confirmPayment.js)
  *   POST /api/anchor?op=route-setup     partner Razorpay Route setup (_lib/routeSetup.js)
  *   GET  /api/anchor?op=route-release   daily cron: release / reverse (_lib/routeRelease.js)
  *
@@ -11,8 +12,9 @@
 import book from './_lib/anchorBook.js'
 import routeSetup from './_lib/routeSetup.js'
 import routeRelease from './_lib/routeRelease.js'
+import confirmPayment from './_lib/confirmPayment.js'
 
-const OPS = { book, 'route-setup': routeSetup, 'route-release': routeRelease }
+const OPS = { book, 'route-setup': routeSetup, 'route-release': routeRelease, 'confirm-payment': confirmPayment }
 
 export default async function handler(req, res) {
   const op = String(req.query?.op ?? new URL(req.url, 'http://x').searchParams.get('op') ?? '')

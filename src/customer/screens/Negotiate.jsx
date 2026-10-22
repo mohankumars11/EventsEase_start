@@ -6,16 +6,27 @@
  * (a weekday, payment in full, several services in one booking). The
  * chips put those reasons one tap away; the message stays optional.
  *
- * The reply path is the custom-quote flow the partner app already has
- * (sambramo_quote_requests → the partner's quote → accept-custom-quote).
- * Sending is the next wiring step, and the button says so.
+ * Sending goes through the booking engine with `negotiate` (lib/booking
+ * sendOffer → api/anchor?op=book): it always becomes a quote request to
+ * that partner, with the offer, the reasons and the note at the top of
+ * their inbox. Their reply lands in Plans, where it is accepted
+ * (api/accept-custom-quote) and paid like any booking. The offer itself
+ * is never a price anyone can pay — only the partner's quote is.
  */
 import { useEffect, useMemo, useState } from 'react'
-import { useParams, useSearchParams } from 'react-router-dom'
-import { HandCoins, Minus, Plus, Send } from 'lucide-react'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { CalendarDays, CheckCircle2, HandCoins, Loader2, MapPin, Minus, Plus, Send } from 'lucide-react'
 import { TRADE } from '../data/trades'
 import { partnersFor } from '../lib/market'
-import { rupees } from '../lib/format'
+import { rupees, whenLabel } from '../lib/format'
+import { sendOffer } from '../lib/booking'
+import { useAuth } from '../../context/AuthContext'
+import { enableAlerts } from '../../lib/push'
+import { usePlan } from '../state/PlanContext'
+import { OCCASION } from '../data/occasions'
+import SignInSheet from './SignInSheet'
+import WhenSheet from './WhenSheet'
+import PlaceSheet from './PlaceSheet'
 import { ActionBar, BackHeader, Photo, RatingChip, Sheet } from '../ui/kit'
 
 const REASONS = ['Booking several services', 'Weekday event', 'Paying in full now', 'Flexible on date', 'Fewer guests than usual', 'Repeat customer']
@@ -29,7 +40,34 @@ export default function Negotiate() {
   const [offer, setOffer] = useState(null)
   const [reasons, setReasons] = useState([])
   const [msg, setMsg] = useState('')
-  const [sent, setSent] = useState(false)
+  const [sent, setSent] = useState(null)
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState('')
+  const [sheet, setSheet] = useState(null)
+  const { user, profile } = useAuth()
+  const plan = usePlan()
+  const navigate = useNavigate()
+  const occasion = OCCASION[q.get('o')] ?? null
+  const ev = occasion && plan.event.occasionId === occasion.id ? plan.event : { ...plan.event, guests: plan.event.guests ?? 50 }
+  const place = plan.place
+  const ready = !!(ev.date && ev.time && place?.lat)
+
+  async function send() {
+    if (!user) { setSheet('signin'); return }
+    if (!ev.date || !ev.time) { setSheet('when'); return }
+    if (!place?.lat) { setSheet('place'); return }
+    setBusy(true); setErr('')
+    try {
+      const line = { serviceId, tradeId, fromRef: p.fromRef, fromKind: p.fromKind, fromUnit: p.fromUnit, fromLabel: p.fromLabel, qty: null }
+      const r = await sendOffer(line, ev, place, { offer_paise: offer, reasons, message: msg.trim() || undefined },
+        { venue: { address: place.address, area: place.area, city: 'Bengaluru' } })
+      if (!r?.quoteRequestId) throw new Error(r?.reasons_text?.[0] ?? r?.error ?? 'The partner cannot take this request.')
+      plan.recordBookings([{ key: `offer:${serviceId}:${Date.now()}`, tradeId, serviceId, name: p.name, cover: p.cover, occasionId: occasion?.id ?? null,
+        path: 'QUOTE', quoteRequestId: r.quoteRequestId, bookingRequestId: r.bookingRequestId, offerPaise: offer, at: Date.now() }])
+      if (profile?.id) enableAlerts({ profileId: profile.id, app: 'customer' }).catch(() => {})
+      setSent({ hours: r.respondWithinHours ?? p.quoteHours ?? 4 })
+    } catch (e) { setErr(e.message) } finally { setBusy(false) }
+  }
 
   useEffect(() => {
     partnersFor(tradeId).then(l => {
@@ -92,15 +130,28 @@ export default function Negotiate() {
         </p>
       </section>
 
-      <ActionBar>
-        <button type="button" disabled={!p || !offer} onClick={() => setSent(true)} className="cx-press cx-cta flex h-14 w-full items-center justify-center gap-2 rounded-[18px] text-[15.5px] font-extrabold" data-send-offer>
-          <Send size={17} />Send offer · {rupees(offer ?? base)}
+      <ActionBar note={err || (ready ? `${whenLabel(ev.date, ev.time)} · ${place.area}` : 'We ask for the day, time and place before it is sent')}>
+        {!ready && (
+          <div className="mb-2 grid grid-cols-2 gap-2">
+            <button type="button" onClick={() => setSheet('when')} className="cx-press cx-btn flex items-center justify-center gap-1.5 rounded-[14px] py-2.5 text-[12.5px] font-extrabold"><CalendarDays size={15} />{ev.date && ev.time ? whenLabel(ev.date, ev.time) : 'Add day & time'}</button>
+            <button type="button" onClick={() => setSheet('place')} className="cx-press cx-btn flex items-center justify-center gap-1.5 rounded-[14px] py-2.5 text-[12.5px] font-extrabold"><MapPin size={15} />{place?.area ?? 'Add the place'}</button>
+          </div>
+        )}
+        <button type="button" disabled={!p || !offer || busy} onClick={send} className="cx-press cx-cta flex h-14 w-full items-center justify-center gap-2 rounded-[18px] text-[15.5px] font-extrabold" data-send-offer>
+          {busy ? <Loader2 size={17} className="animate-spin" /> : <Send size={17} />}{user ? 'Send offer' : 'Sign in & send offer'} · {rupees(offer ?? base)}
         </button>
       </ActionBar>
-      <Sheet open={sent} onClose={() => setSent(false)} title="Offer ready">
-        <p className="pb-4 text-[14px] font-semibold leading-relaxed text-[var(--ink-2)]">
-          Sending offers to partners is the next step being connected, so nothing has been sent yet. Your offer of {rupees(offer)} stays on this screen until you leave it.
-        </p>
+      <WhenSheet open={sheet === 'when'} onClose={() => setSheet(null)} date={plan.event.date} time={plan.event.time} hours={plan.event.hours} onPick={w => { plan.setEvent(w); setSheet(null) }} />
+      <PlaceSheet open={sheet === 'place'} onClose={() => setSheet(null)} value={place} onPick={x => { plan.setPlace(x); setSheet(null) }} />
+      <SignInSheet open={sheet === 'signin'} onClose={() => setSheet(null)} onDone={() => setSheet(null)} why="to send your offer" />
+      <Sheet open={!!sent} onClose={() => navigate('/plans')} title="Offer sent">
+        <div className="pb-4">
+          <CheckCircle2 size={44} className="text-[var(--ok)]" />
+          <p className="mt-3 text-[14px] font-semibold leading-relaxed text-[var(--ink-2)]">
+            {p?.name} has your offer of {rupees(offer)}. They reply within {sent?.hours} hours — accept or counter from Plans, and you pay only if you accept.
+          </p>
+          <button type="button" onClick={() => navigate('/plans')} className="cx-press cx-cta mt-5 h-12 w-full rounded-[16px] text-[14px] font-extrabold">See my plans</button>
+        </div>
       </Sheet>
     </main>
   )

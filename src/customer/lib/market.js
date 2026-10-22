@@ -95,28 +95,28 @@ export function partnersFor(tradeId, { lat = BLR.lat, lng = BLR.lng, limit = 40 
        catalogue line in its own unit, else the rate in its own unit. */
     const vids = (versions ?? []).map(v => v.id)
     const [pk, mn, ct, rr] = vids.length ? await Promise.all([
-      supabase.from('sambramo_trade_packages').select('listing_version_id, name, trade_inputs').eq('status', 'LIVE').in('listing_version_id', vids),
-      tradeId === 'catering_food' ? supabase.from('sambramo_catering_menus').select('listing_version_id, name, customer_paise').eq('status', 'active').in('listing_version_id', vids) : { data: [] },
-      supabase.from('sambramo_catalogue_items').select('listing_version_id, name, unit, customer_paise').eq('active', true).in('listing_version_id', vids),
+      supabase.from('sambramo_trade_packages').select('listing_version_id, name, trade_inputs, commercial_inputs').eq('status', 'LIVE').in('listing_version_id', vids),
+      tradeId === 'catering_food' ? supabase.from('sambramo_catering_menus').select('listing_version_id, menu_key, name, customer_paise, min_guests').eq('status', 'active').in('listing_version_id', vids) : { data: [] },
+      supabase.from('sambramo_catalogue_items').select('listing_version_id, item_key, name, unit, customer_paise, min_qty').eq('active', true).in('listing_version_id', vids),
       supabase.from('sambramo_rate_rules').select('listing_version_id, rule_kind, customer_paise').in('listing_version_id', vids),
     ]) : [{}, {}, {}, {}]
     const best = {}
-    const offer = (vid, rank, paise, kind, unit, label = null) => {
+    const offer = (vid, rank, paise, kind, unit, label = null, ref = null) => {
       const n = Number(paise)
       if (!(n > 0)) return
       const cur = best[vid]
-      if (!cur || rank < cur.rank || (rank === cur.rank && n < cur.paise)) best[vid] = { rank, paise: n, kind, unit, label }
+      if (!cur || rank < cur.rank || (rank === cur.rank && n < cur.paise)) best[vid] = { rank, paise: n, kind, unit, label, ref }
     }
-    for (const x of pk.data ?? []) offer(x.listing_version_id, 0, x.trade_inputs?.customer_paise, 'package', 'package', x.name)
-    for (const x of mn.data ?? []) offer(x.listing_version_id, 1, x.customer_paise, 'plate', 'per plate', x.name)
-    for (const x of ct.data ?? []) offer(x.listing_version_id, 2, x.customer_paise, unitKind(x.unit, tradeId), unitLabel(x.unit, tradeId), x.name)
-    for (const x of rr.data ?? []) offer(x.listing_version_id, 3, x.customer_paise, RULE_KIND[x.rule_kind]?.[0] ?? 'unit', RULE_KIND[x.rule_kind]?.[1] ?? 'onwards')
+    for (const x of pk.data ?? []) offer(x.listing_version_id, 0, x.trade_inputs?.customer_paise, 'package', 'package', x.name, { type: 'package', key: x.commercial_inputs?.tier ?? null, hours: Number(x.trade_inputs?.duration_hours) || null })
+    for (const x of mn.data ?? []) offer(x.listing_version_id, 1, x.customer_paise, 'plate', 'per plate', x.name, { type: 'menu', key: x.menu_key, minQty: x.min_guests })
+    for (const x of ct.data ?? []) offer(x.listing_version_id, 2, x.customer_paise, unitKind(x.unit, tradeId), unitLabel(x.unit, tradeId), x.name, { type: 'item', key: x.item_key, minQty: Number(x.min_qty) || 1 })
+    for (const x of rr.data ?? []) offer(x.listing_version_id, 3, x.customer_paise, RULE_KIND[x.rule_kind]?.[0] ?? 'unit', RULE_KIND[x.rule_kind]?.[1] ?? 'onwards', null, { type: 'rule', key: x.rule_kind })
     return rows.map(r => {
       const v = byId[r.vendor_service_id]
       const p = shape(r, v, tradeId)
       const b = v && best[v.id]
-      if (b) Object.assign(p, { fromPaise: b.paise, fromKind: b.kind, fromUnit: b.unit, fromLabel: b.label })
-      else Object.assign(p, { fromKind: 'unit', fromUnit: 'onwards', fromLabel: null })
+      if (b) Object.assign(p, { fromPaise: b.paise, fromKind: b.kind, fromUnit: b.unit, fromLabel: b.label, fromRef: b.ref })
+      else Object.assign(p, { fromKind: 'unit', fromUnit: 'onwards', fromLabel: null, fromRef: null })
       return p
     })
   })()

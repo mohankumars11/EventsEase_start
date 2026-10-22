@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { cors } from './_lib/cors.js'
 import { tradeNameFor, PLATFORM_FEE_RATE } from './_lib/tradeNames.js'
 import { authenticatedUser } from './_lib/auth.js'
+import { notifyCustomer } from './_lib/fcm.js'
 
 const url = process.env.VITE_SUPABASE_URL
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -56,7 +57,7 @@ export default async function handler(req, res) {
 
   const { data: vendor } = await db
     .from('vendors')
-    .select('id, profile_id, is_verified, verification_status')
+    .select('id, profile_id, business_name, is_verified, verification_status')
     .eq('profile_id', authn.user.id)
     .maybeSingle()
   if (!vendor?.id) return res.status(403).json({ error: 'Partner account not found.' })
@@ -64,7 +65,7 @@ export default async function handler(req, res) {
 
   const { data: request } = await db
     .from('sambramo_quote_requests')
-    .select('id, vendor_id, trade_id, event_date, service_location, state, expires_at, quote_group_id, canonical_demand')
+    .select('id, customer_id, service_name, vendor_id, trade_id, event_date, service_location, state, expires_at, quote_group_id, canonical_demand')
     .eq('id', quoteRequestId)
     .eq('vendor_id', vendor.id)
     .maybeSingle()
@@ -77,6 +78,9 @@ export default async function handler(req, res) {
   if (body.decline === true) {
     await db.from('sambramo_quote_requests').update({ state: 'UNAVAILABLE', updated_at: new Date().toISOString() })
       .eq('id', request.id).eq('vendor_id', vendor.id)
+    await notifyCustomer(db, { customerId: request.customer_id, url: '/plans',
+      title: `${vendor.business_name ?? 'The partner'} can't take this one`,
+      body: `Your ${String(request.service_name ?? 'request').toLowerCase()} request was declined. Other partners are one tap away.` })
     return res.status(200).json({ ok: true, declined: true })
   }
 
@@ -161,6 +165,11 @@ export default async function handler(req, res) {
     const version = (prev?.[0]?.quote_version ?? 0) + 1
     await db.from('sambramo_quote_line_items').insert(lines.map(l => ({ ...l, quote_request_id: quoteRequestId, vendor_id: vendor.id, quote_version: version })))
   }
+
+  /* After the write: the customer hears about the quote while it is still open. */
+  await notifyCustomer(db, { customerId: request.customer_id, url: '/plans',
+    title: `${vendor.business_name ?? 'Your partner'} sent you a quote`,
+    body: `₹${Math.round(Number(data.customer_amount_paise) / 100).toLocaleString('en-IN')} for ${request.service_name ?? 'your request'} · tap to accept` })
 
   return res.status(200).json({
     ok: true,

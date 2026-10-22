@@ -4,24 +4,29 @@
  * A partner's "from" is a price OF something — a package, a plate, an
  * hour, a kilo — and those cannot be added together as they stand. A
  * caterer's ₹913 is not the catering bill; at 300 guests it is ₹2,73,900.
- * So each line is multiplied only by what the customer has actually told
- * us (guests, hours) and only when the unit allows it. A line priced by
- * quantity (a rental per item, storage per sq ft) is left out of the sum
- * and said so, rather than counted as one.
- *
- * This is a floor, and every screen calls it one. The engine states the
- * exact total at checkout, from the same rows, before anything is paid.
+ * So each line is multiplied only by what the customer has told us
+ * (guests, hours, the quantity on the line) and only when the unit allows
+ * it. This is a floor, and every screen calls it one: checkout asks the
+ * engine for the exact total before anything is paid.
  */
+import { qtyOf } from './booking'
+
+const STAFF = /staff/
+
 export function lineFloor(line, event = {}) {
   const p = Number(line.fromPaise) || 0
   if (!p) return { paise: null, note: 'Price on request' }
+  const q = qtyOf(line, event)
   switch (line.fromKind) {
     case 'plate':
       return event.guests ? { paise: p * event.guests, note: `${event.guests.toLocaleString('en-IN')} plates` } : { paise: null, note: 'Per plate · add guests' }
-    case 'hour':
-      return event.hours ? { paise: p * event.hours, note: `${event.hours} hours` } : { paise: p, note: 'Per hour · add a duration' }
+    case 'hour': {
+      const h = Number(event.hours) || null
+      if (STAFF.test(line.fromUnit ?? '')) return h ? { paise: p * h * q, note: `${q} staff × ${h} h` } : { paise: null, note: 'Per staff hour · add a duration' }
+      return h ? { paise: p * h, note: `${h} hours` } : { paise: p, note: 'Per hour · add a duration' }
+    }
     case 'unit':
-      return { paise: null, note: `${line.fromUnit ?? 'By quantity'} · priced at checkout` }
+      return { paise: p * q, note: `${q.toLocaleString('en-IN')} × ${String(line.fromUnit ?? 'item').replace(/^per /, '')}` }
     default:
       return { paise: p, note: line.fromKind === 'package' && line.fromLabel ? `${line.fromLabel} package` : null }
   }
@@ -38,3 +43,6 @@ export function planFloor(lines, event = {}) {
   }
   return { paise, open }
 }
+
+/** Whether a line's quantity is the customer's to set (a stepper is shown). */
+export const hasQty = line => line.fromKind === 'unit' || (line.fromKind === 'hour' && STAFF.test(line.fromUnit ?? ''))

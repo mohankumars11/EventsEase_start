@@ -67,11 +67,24 @@ await rpc('Page.enable'); await rpc('Runtime.enable')
 await rpc('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 2, mobile: true })
 await rpc('Emulation.setTouchEmulationEnabled', { enabled: true })
 
-if (state) {
+/* --session <email>: sign in as a real account (service role mints a magic
+   link, the anon client redeems it) — for screens behind a login. Needs
+   .env loaded (node --env-file=.env). */
+const sessionEmail = flag('session', null)
+if (state || sessionEmail) {
   await rpc('Page.navigate', { url: `${base}/favicon.svg` })
   await sleep(800)
-  const s = readFileSync(state, 'utf8')
-  await js(`localStorage.setItem('sbm.cx.plan.v1', ${JSON.stringify(s)}); localStorage.setItem('sambramo_splash_seen','1'); 'ok'`)
+  if (state) await js(`localStorage.setItem('sbm.cx.plan.v1', ${JSON.stringify(readFileSync(state, 'utf8'))}); 'ok'`)
+  if (sessionEmail) {
+    const { createClient } = await import('@supabase/supabase-js')
+    const U = process.env.VITE_SUPABASE_URL
+    const admin = createClient(U, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } })
+    const anon = createClient(U, process.env.VITE_SUPABASE_ANON_KEY, { auth: { persistSession: false } })
+    const { data: link } = await admin.auth.admin.generateLink({ type: 'magiclink', email: sessionEmail })
+    const { data } = await anon.auth.verifyOtp({ token_hash: link.properties.hashed_token, type: 'magiclink' })
+    const ref = new URL(U).hostname.split('.')[0]
+    await js(`localStorage.setItem('sb-${ref}-auth-token', ${JSON.stringify(JSON.stringify(data.session))}); 'ok'`)
+  }
 }
 await rpc('Page.navigate', { url: base + route })
 

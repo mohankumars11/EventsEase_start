@@ -1,103 +1,204 @@
 /**
- * Checkout: where the event is, who to call, and one payment for every
- * instant partner in the plan.
+ * Checkout: the exact total, then one payment.
  *
- * ── How payment works (and what is wired today) ─────────────────────
- * Each instant line is booked through /api/anchor?op=book, which returns
- * a booking line; every line id then goes into ONE Razorpay payment via
- * lib/payLines (native sheet in the app, web checkout otherwise). The
- * Razorpay webhook — never this screen — records the money, which is
- * held until the partner delivers. Quote lines are sent as requests and
- * paid once the partner's quote is accepted.
+ * ── The reveal ──────────────────────────────────────────────────────
+ * Once the day, the start time and the place are known, every line is
+ * put to the booking engine as a PREVIEW (no login, nothing written).
+ * What comes back is the real decision — INSTANT with the exact price
+ * and the advance due now, QUOTE (the partner prices it), or NOT_ELIGIBLE
+ * with the reasons in plain English. Nothing on this screen is an
+ * estimate once the previews are in.
  *
- * In this build the screen, the sign-in and the summary are real; the
- * booking call is the next step, and the button says so rather than
- * pretending to charge.
+ * ── The payment ─────────────────────────────────────────────────────
+ * "Confirm & pay" books each instant line (api/anchor?op=book →
+ * book_partner_line, which re-checks availability under the partner's
+ * lock), sends each quote line to its partner, then opens ONE Razorpay
+ * payment for every instant line (lib/payLines: native sheet in the app,
+ * web checkout otherwise). The Razorpay webhook, never this screen,
+ * records the money; money is held until the partner delivers.
  */
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { CalendarDays, Clock3, Lock, MapPin, Phone, ShieldCheck, Zap } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { AlertTriangle, CalendarDays, CheckCircle2, Clock3, Loader2, Lock, MapPin, Phone, ShieldCheck, Zap } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import { supabase } from '../../lib/supabase'
+import { payLines } from '../../lib/payLines'
+import { enableAlerts } from '../../lib/push'
 import { usePlan } from '../state/PlanContext'
 import { TRADE } from '../data/trades'
-import { dayLabel, plural, rupees, whenLabel } from '../lib/format'
-import { planFloor } from '../lib/estimate'
-import { ActionBar, BackHeader, Sheet } from '../ui/kit'
+import { OCCASION } from '../data/occasions'
+import { plural, rupees, whenLabel } from '../lib/format'
+import { previewLine, bookLine } from '../lib/booking'
+import { confirmPaid } from '../lib/bookings'
+import { ActionBar, BackHeader, Photo, Sheet } from '../ui/kit'
 import SignInSheet from './SignInSheet'
 import WhenSheet from './WhenSheet'
+import PlaceSheet from './PlaceSheet'
 
 export default function Checkout() {
   const { user, profile } = useAuth()
   const plan = usePlan()
   const navigate = useNavigate()
-  const [address, setAddress] = useState('')
-  const [phone, setPhone] = useState(profile?.phone ?? '')
+  const ev = plan.event
+  const [phone, setPhone] = useState(profile?.phone?.replace(/^\+91/, '') ?? '')
   const [note, setNote] = useState('')
-  const [signIn, setSignIn] = useState(false)
-  const [dateOpen, setDateOpen] = useState(false)
-  const [pending, setPending] = useState(false)
-  const instant = plan.basket.filter(l => l.instant)
-  const quote = plan.basket.filter(l => !l.instant)
-  const floor = planFloor(instant, plan.event).paise
-  const ready = plan.event.date && plan.event.time && address.trim().length > 5 && /^[6-9]\d{9}$/.test(phone.replace(/\D/g, '').slice(-10))
+  const [sheet, setSheet] = useState(null)
+  const [quotes, setQuotes] = useState({})
+  const [phase, setPhase] = useState('idle') // idle | booking | paying | done | unpaid | error
+  const [outcome, setOutcome] = useState(null)
+  const lines = plan.basket
+  const eventFor = l => (l.occasionId && l.occasionId === ev.occasionId ? ev : { ...ev, guests: ev.guests ?? 50 })
+  const place = plan.place
+  const ready = !!(ev.date && ev.time && place?.lat)
+  useEffect(() => { if (profile?.phone && !phone) setPhone(profile.phone.replace(/^\+91/, '')) }, [profile?.phone]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  function pay() {
-    if (!user) { setSignIn(true); return }
-    setPending(true)
+  /* The reveal: ask the engine about every line whenever the facts change. */
+  const sig = JSON.stringify([ev.date, ev.time, ev.hours, ev.guests, place?.lat, place?.lng, lines.map(l => [l.key, l.serviceId, l.qty])])
+  useEffect(() => {
+    if (!ready) return
+    let live = true
+    setQuotes(Object.fromEntries(lines.map(l => [l.key, { loading: true }])))
+    ;(async () => {
+      for (const l of lines) {
+        try {
+          const r = await previewLine(l, eventFor(l), place)
+          if (live) setQuotes(q => ({ ...q, [l.key]: r }))
+        } catch (e) {
+          if (live) setQuotes(q => ({ ...q, [l.key]: { path: 'ERROR', reasons_text: [e.message] } }))
+        }
+      }
+    })()
+    return () => { live = false }
+  }, [sig]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const res = lines.map(l => ({ line: l, q: quotes[l.key] ?? null }))
+  const instant = res.filter(r => r.q?.path === 'INSTANT')
+  const quoteLines = res.filter(r => r.q?.path === 'QUOTE')
+  const blocked = res.filter(r => r.q && ['NOT_ELIGIBLE', 'ERROR'].includes(r.q.path))
+  const loading = ready && res.some(r => !r.q || r.q.loading)
+  const dueNow = instant.reduce((s, r) => s + (Number(r.q.advance_paise) || Number(r.q.customer_paise) || 0), 0)
+  const total = instant.reduce((s, r) => s + (Number(r.q.customer_paise) || 0), 0)
+  const phoneOk = /^[6-9]\d{9}$/.test(phone.replace(/\D/g, '').slice(-10))
+  const canPay = ready && !loading && phoneOk && (instant.length + quoteLines.length) > 0 && phase === 'idle'
+  const occ = OCCASION[ev.occasionId]
+
+  async function pay() {
+    if (!user) { setSheet('signin'); return }
+    setPhase('booking')
+    const tel = `+91${phone.replace(/\D/g, '').slice(-10)}`
+    if (profile?.id && profile.phone !== tel) supabase.from('profiles').update({ phone: tel }).eq('id', profile.id).then(() => {}, () => {})
+    const venue = { address: place.address, area: place.area, city: 'Bengaluru' }
+    const results = []
+    for (const r of [...instant, ...quoteLines]) {
+      try {
+        const b = await bookLine(r.line, eventFor(r.line), place, { note: note.trim() || undefined, venue })
+        results.push({ key: r.line.key, tradeId: r.line.tradeId, serviceId: r.line.serviceId, name: r.line.name, cover: r.line.cover, occasionId: r.line.occasionId,
+          path: b.path, lineId: b.lineId ?? null, quoteRequestId: b.quoteRequestId ?? null, bookingRequestId: b.bookingRequestId ?? null,
+          amountPaise: b.customer_paise ?? null, reasons: b.reasons_text ?? [], at: Date.now() })
+      } catch (e) {
+        results.push({ key: r.line.key, name: r.line.name, path: 'ERROR', reasons: [e.message] })
+      }
+    }
+    plan.recordBookings(results)
+    const lineIds = results.filter(r => r.lineId).map(r => r.lineId)
+    const sent = results.filter(r => r.quoteRequestId).length
+    const failed = results.filter(r => !r.lineId && !r.quoteRequestId)
+    /* Ask for alerts once something is in flight — quotes and confirmations arrive later. */
+    if (profile?.id) enableAlerts({ profileId: profile.id, app: 'customer' }).catch(() => {})
+    if (!lineIds.length) { setOutcome({ paid: 0, sent, failed }); setPhase(sent ? 'done' : 'error'); return }
+    setPhase('paying')
+    const p = await payLines({ lineIds, part: 'advance', description: occ ? `${occ.name} · ${plural(lineIds.length, 'partner')}` : `Sambramo · ${plural(lineIds.length, 'partner')}` })
+    const confirmed = await confirmPaid(p)
+    setOutcome({ paid: lineIds.length, sent, failed, error: p.error ?? null, confirmed: !!confirmed?.ok })
+    setPhase(p.ok ? 'done' : p.dismissed ? 'unpaid' : 'error')
   }
 
   return (
-    <main className="cx-enter pb-[calc(env(safe-area-inset-bottom,0px)+150px)]">
-      <BackHeader title="Checkout" sub={`${plural(plan.basket.length, 'partner')} · ${plan.event.date ? dayLabel(plan.event.date) : 'date needed'}`} />
+    <main className="cx-enter pb-[calc(env(safe-area-inset-bottom,0px)+170px)]">
+      <BackHeader title="Checkout" sub={`${plural(lines.length, 'partner')}${occ ? ` · ${occ.name}` : ''}`} />
 
       <Block title="When & where">
-        <button type="button" onClick={() => setDateOpen(true)} className="cx-press flex w-full items-center gap-3 rounded-[16px] bg-[var(--soft)] px-4 py-3.5 text-left">
-          <CalendarDays size={19} className="text-[var(--brand)]" />
-          <span className={'flex-1 text-[15px] font-extrabold ' + (plan.event.date && plan.event.time ? '' : 'text-[var(--brand)]')}>{plan.event.date ? whenLabel(plan.event.date, plan.event.time) : 'Pick the day and start time'}</span>
-        </button>
-        <label className="mt-2 flex items-start gap-3 rounded-[16px] bg-[var(--soft)] px-4 py-3.5">
-          <MapPin size={19} className="mt-0.5 text-[var(--brand)]" />
-          <textarea rows={2} value={address} onChange={e => setAddress(e.target.value)} placeholder="Event address — house, street, area"
-            className="flex-1 resize-none bg-transparent text-[14.5px] font-bold outline-none placeholder:text-[var(--ink-3)]" />
-        </label>
+        <Row icon={CalendarDays} onClick={() => setSheet('when')} value={ev.date ? whenLabel(ev.date, ev.time) + (ev.hours ? ` · ${ev.hours} h` : '') : null} placeholder="Pick the day and start time" />
+        <Row icon={MapPin} onClick={() => setSheet('place')} value={place ? `${place.area}${place.address ? ` · ${place.address}` : ''}` : null} placeholder="Where is the event?" />
       </Block>
 
       <Block title="Who partners should call">
-        <label className="flex items-center gap-3 rounded-[16px] bg-[var(--soft)] px-4 py-3.5">
+        <label className="flex items-center gap-3 rounded-[16px] bg-[var(--am-50)] px-4 py-3.5 ring-1 ring-[var(--am-200)]">
           <Phone size={19} className="text-[var(--brand)]" />
           <span className="text-[15px] font-extrabold text-[var(--ink-3)]">+91</span>
-          <input inputMode="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="Mobile number" className="cx-num flex-1 bg-transparent text-[15px] font-extrabold outline-none placeholder:text-[var(--ink-3)]" />
+          <input inputMode="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="Mobile number" className="cx-num flex-1 bg-transparent text-[15px] font-extrabold outline-none placeholder:text-[var(--ink-3)]" data-phone />
         </label>
       </Block>
 
+      <Block title={ready ? (loading ? 'Getting exact prices…' : 'Your exact total') : 'Your partners'}>
+        <ul className="overflow-hidden rounded-[22px] shadow-[0_0_0_1px_var(--line)]">
+          {res.map(({ line: l, q }, i) => (
+            <li key={l.key} className={(i ? 'border-t border-[var(--line)] ' : '') + 'flex items-center gap-3 bg-white p-3'} data-checkout-line={l.tradeId} data-path={q?.path ?? ''}>
+              <span className="relative h-12 w-12 shrink-0 overflow-hidden rounded-[14px] bg-[var(--am-100)]"><Photo src={l.cover} className="absolute inset-0 h-full w-full object-cover" /></span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[14px] font-extrabold">{l.name}</p>
+                <p className="truncate text-[12px] font-bold text-[var(--ink-3)]">
+                  {!ready ? TRADE[l.tradeId]?.label
+                    : !q || q.loading ? 'Checking availability…'
+                      : q.path === 'INSTANT' ? <span className="text-[#946200]"><Zap size={11} className="mr-0.5 inline fill-[var(--gold)] text-[var(--gold)]" />Confirms now{q.advance_paise && q.advance_paise < q.customer_paise ? ` · ${rupees(q.advance_paise)} now` : ''}</span>
+                        : q.path === 'QUOTE' ? <span><Clock3 size={11} className="mr-0.5 inline" />Partner prices it · {q.reasons_text?.[0] ?? 'custom request'}</span>
+                          : <span className="text-[#C8112A]">{q.reasons_text?.[0] ?? 'Not available'}</span>}
+                </p>
+              </div>
+              <span className="shrink-0 text-right">
+                {q?.loading ? <Loader2 size={16} className="animate-spin text-[var(--ink-3)]" />
+                  : q?.path === 'INSTANT' ? <span className="cx-num text-[14.5px] font-extrabold">{rupees(q.customer_paise)}</span>
+                    : q && ['NOT_ELIGIBLE', 'ERROR'].includes(q.path) ? <Link to={`/s/${l.tradeId}${l.occasionId ? `?o=${l.occasionId}` : ''}`} className="text-[12.5px] font-extrabold text-[var(--brand)]">Change</Link>
+                      : null}
+              </span>
+            </li>
+          ))}
+        </ul>
+        {blocked.length > 0 && (
+          <p className="mt-2 flex items-start gap-2 rounded-[14px] bg-[#FFF1F2] px-3 py-2.5 text-[12.5px] font-bold text-[#9B1A2A]">
+            <AlertTriangle size={15} className="mt-0.5 shrink-0" />{plural(blocked.length, 'partner')} cannot take this booking. Change them, or continue without.
+          </p>
+        )}
+      </Block>
+
       <Block title="What happens next">
-        {instant.length > 0 && <Step icon={Zap} gold title={`${plural(instant.length, 'partner')} confirm instantly`} body={`${instant.map(l => TRADE[l.tradeId]?.label).join(', ')}. Booked the moment the payment goes through.`} />}
-        {quote.length > 0 && <Step icon={Clock3} title={`${plural(quote.length, 'partner')} send a quote`} body={`${quote.map(l => TRADE[l.tradeId]?.label).join(', ')}. You compare, negotiate and pay only when you accept.`} />}
-        <Step icon={ShieldCheck} title="Your money is held until the day" body="Partners are paid after they deliver. Cancellation terms are each partner's own, shown on their page." />
+        {instant.length > 0 && <Step icon={Zap} gold title={`${plural(instant.length, 'partner')} confirm the moment you pay`} body={`${instant.map(r => TRADE[r.line.tradeId]?.label).join(', ')}. One payment, held in escrow until each delivers.`} />}
+        {quoteLines.length > 0 && <Step icon={Clock3} title={`${plural(quoteLines.length, 'partner')} send you a quote`} body={`${quoteLines.map(r => TRADE[r.line.tradeId]?.label).join(', ')}. Compare and accept in Plans; you pay only then.`} />}
+        <Step icon={ShieldCheck} title="Safe if plans change" body="Each partner’s own cancellation terms apply, shown on their page." />
       </Block>
 
       <Block title="Anything partners should know?">
         <textarea rows={3} value={note} onChange={e => setNote(e.target.value)} maxLength={500} placeholder="Theme, colours, traditions, timings…"
-          className="w-full resize-none rounded-[16px] bg-[var(--soft)] px-4 py-3.5 text-[14px] font-semibold outline-none placeholder:text-[var(--ink-3)]" />
+          className="w-full resize-none rounded-[16px] bg-[var(--am-50)] px-4 py-3.5 text-[14px] font-semibold outline-none ring-1 ring-[var(--am-200)] placeholder:text-[var(--ink-3)]" />
       </Block>
 
-      <ActionBar note={user ? 'Razorpay · UPI, cards, netbanking' : 'You will sign in with your email before paying'}>
+      <ActionBar note={!ready ? 'Add the time and place to see the exact total' : user ? 'Razorpay · UPI, cards, netbanking' : 'You sign in with your email before paying'}>
         <div className="mb-2 flex items-end justify-between px-1">
-          <span className="text-[13px] font-bold text-[var(--ink-2)]">Pay now, from</span>
-          <span className="cx-num text-[22px] font-extrabold tracking-[-0.03em]">{rupees(floor) ?? '₹0'}</span>
+          <span className="text-[13px] font-bold text-[var(--ink-2)]">{instant.length ? <>Pay now{total > dueNow ? <span className="block text-[11.5px] font-semibold text-[var(--ink-3)]">of {rupees(total)} total</span> : null}</> : 'Nothing to pay now'}</span>
+          <span className="cx-num text-[24px] font-extrabold tracking-[-0.03em]">{instant.length ? rupees(dueNow) : '—'}</span>
         </div>
-        <button type="button" disabled={!ready} onClick={pay} className="cx-press cx-cta flex h-14 w-full items-center justify-center gap-2 rounded-[18px] text-[15.5px] font-extrabold" data-pay>
-          <Lock size={17} />{user ? 'Confirm & pay securely' : 'Sign in & pay'}
+        <button type="button" disabled={!canPay} onClick={pay} className="cx-press cx-cta flex h-14 w-full items-center justify-center gap-2 rounded-[18px] text-[15.5px] font-extrabold" data-pay>
+          {phase === 'booking' ? <><Loader2 size={18} className="animate-spin" />Booking your partners…</>
+            : phase === 'paying' ? <><Loader2 size={18} className="animate-spin" />Opening payment…</>
+              : <><Lock size={17} />{!user ? 'Sign in & confirm' : instant.length ? `Confirm & pay ${rupees(dueNow) ?? ''}` : 'Send requests'}</>}
         </button>
       </ActionBar>
 
-      <WhenSheet open={dateOpen} onClose={() => setDateOpen(false)} date={plan.event.date} time={plan.event.time} hours={plan.event.hours} onPick={w => { plan.setEvent(w); setDateOpen(false) }} />
-      <SignInSheet open={signIn} onClose={() => setSignIn(false)} onDone={() => setSignIn(false)} />
-      <Sheet open={pending} onClose={() => setPending(false)} title="Almost there">
-        <p className="pb-4 text-[14px] font-semibold leading-relaxed text-[var(--ink-2)]">
-          Your plan, address and contact are ready. The booking-and-payment step connects to the live partners next — nothing has been charged.
-        </p>
-        <button type="button" onClick={() => { setPending(false); navigate('/plans') }} className="cx-press mb-2 h-12 w-full rounded-[16px] bg-[var(--soft)] text-[14px] font-extrabold">See my plans</button>
+      <WhenSheet open={sheet === 'when'} onClose={() => setSheet(null)} date={ev.date} time={ev.time} hours={ev.hours} onPick={w => { plan.setEvent(w); setSheet(null) }} />
+      <PlaceSheet open={sheet === 'place'} onClose={() => setSheet(null)} value={place} onPick={p => { plan.setPlace(p); setSheet(null) }} />
+      <SignInSheet open={sheet === 'signin'} onClose={() => setSheet(null)} onDone={() => setSheet(null)} />
+      <Sheet open={['done', 'unpaid', 'error'].includes(phase)} onClose={() => navigate('/plans')} title={phase === 'done' ? 'You are booked' : phase === 'unpaid' ? 'Booked — payment pending' : 'Something went wrong'}>
+        <div className="pb-4">
+          {phase === 'done' && <CheckCircle2 size={44} className="text-[var(--ok)]" />}
+          <p className="mt-3 text-[14px] font-semibold leading-relaxed text-[var(--ink-2)]">
+            {phase === 'done' && (outcome?.paid ? (outcome.confirmed ? `${plural(outcome.paid, 'partner')} confirmed. They have been told and will call you before the day.` : `${plural(outcome.paid, 'partner')} confirmed once Razorpay reports the payment — usually seconds.`) : '')}
+            {phase === 'done' && outcome?.sent ? ` ${plural(outcome.sent, 'quote request')} sent; you will be notified when they reply.` : ''}
+            {phase === 'unpaid' && 'Your partners are holding the date. Finish the payment from Plans to confirm them.'}
+            {phase === 'error' && (outcome?.error ?? outcome?.failed?.[0]?.reasons?.[0] ?? 'Nothing was booked. Please try again.')}
+          </p>
+          {outcome?.failed?.length > 0 && phase !== 'error' && <p className="mt-2 text-[12.5px] font-bold text-[#9B1A2A]">Not booked: {outcome.failed.map(f => f.name).join(', ')}.</p>}
+          <button type="button" onClick={() => navigate('/plans')} className="cx-press cx-cta mt-5 h-12 w-full rounded-[16px] text-[14px] font-extrabold" data-see-plans>See my plans</button>
+        </div>
       </Sheet>
     </main>
   )
@@ -112,10 +213,20 @@ function Block({ title, children }) {
   )
 }
 
+function Row({ icon: Icon, value, placeholder, onClick }) {
+  return (
+    <button type="button" onClick={onClick} className="cx-press mb-2 flex w-full items-center gap-3 rounded-[16px] bg-[var(--am-50)] px-4 py-3.5 text-left ring-1 ring-[var(--am-200)]">
+      <Icon size={19} className="shrink-0 text-[var(--brand)]" />
+      <span className={'min-w-0 flex-1 truncate text-[14.5px] font-extrabold ' + (value ? '' : 'text-[var(--brand)]')}>{value ?? placeholder}</span>
+      <span className="text-[12.5px] font-extrabold text-[var(--brand)]">{value ? 'Change' : 'Add'}</span>
+    </button>
+  )
+}
+
 function Step({ icon: Icon, title, body, gold = false }) {
   return (
     <div className="flex gap-3 border-b border-[var(--line)] py-3 last:border-0">
-      <span className={'grid h-10 w-10 shrink-0 place-items-center rounded-[14px] ' + (gold ? 'bg-[#FFF4DA]' : 'bg-[var(--brand-tint)]')}>
+      <span className={'grid h-10 w-10 shrink-0 place-items-center rounded-[14px] ' + (gold ? 'bg-[#FFF4DA]' : 'bg-[var(--am-100)]')}>
         <Icon size={18} className={gold ? 'fill-[var(--gold)] text-[#B87A00]' : 'text-[var(--brand)]'} />
       </span>
       <div>

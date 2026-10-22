@@ -9,13 +9,14 @@
  * anything is charged.
  */
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowRight, CalendarDays, Clock3, Trash2, Users, Zap } from 'lucide-react'
+import { ArrowRight, CalendarDays, Clock3, Minus, Plus, Trash2, Users, Zap } from 'lucide-react'
 import { OCCASION } from '../data/occasions'
 import { TRADE } from '../data/trades'
 import { photoFor } from '../data/photos.generated'
 import { usePlan } from '../state/PlanContext'
 import { dayLabel, plural, rupees } from '../lib/format'
-import { planFloor } from '../lib/estimate'
+import { planFloor, lineFloor, hasQty } from '../lib/estimate'
+import { qtyOf } from '../lib/booking'
 import { ActionBar, BackHeader, Empty, Photo } from '../ui/kit'
 
 export default function PlanReview() {
@@ -60,21 +61,24 @@ export default function PlanReview() {
               {g.lines.map((l, i) => {
                 const t = TRADE[l.tradeId]
                 return (
-                  <li key={l.key} className={(i ? 'border-t border-[var(--line)] ' : '') + 'flex items-center gap-3 bg-white p-3'} data-line={l.tradeId}>
-                    <Link to={`/p/${l.serviceId}?t=${l.tradeId}${l.occasionId ? `&o=${l.occasionId}` : ''}`} className="relative h-[64px] w-[64px] shrink-0 overflow-hidden rounded-[17px] bg-[var(--brand-tint)]">
-                      <Photo src={l.cover} className="absolute inset-0 h-full w-full object-cover" />
-                    </Link>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[11.5px] font-extrabold uppercase tracking-[0.08em] text-[var(--brand)]">{t?.label}</p>
-                      <p className="truncate text-[14.5px] font-extrabold tracking-[-0.015em]">{l.name}</p>
-                      <p className="mt-0.5 flex items-center gap-2 text-[12px] font-bold text-[var(--ink-2)]">
-                        {l.fromPaise ? <span className="cx-num">{rupees(l.fromPaise)} <span className="font-semibold text-[var(--ink-3)]">{l.fromKind === 'package' ? 'package' : l.fromUnit}</span></span> : <span>On request</span>}
-                        {l.instant
-                          ? <span className="flex items-center gap-0.5 text-[#946200]"><Zap size={12} className="fill-[var(--gold)] text-[var(--gold)]" />Instant</span>
-                          : <span className="flex items-center gap-0.5 text-[var(--ink-3)]"><Clock3 size={12} />Quote{l.quoteHours ? ` in ${l.quoteHours}h` : ''}</span>}
-                      </p>
+                  <li key={l.key} className={(i ? 'border-t border-[var(--line)] ' : '') + 'bg-white p-3'} data-line={l.tradeId}>
+                    <div className="flex items-center gap-3">
+                      <Link to={`/p/${l.serviceId}?t=${l.tradeId}${l.occasionId ? `&o=${l.occasionId}` : ''}`} className="relative h-[64px] w-[64px] shrink-0 overflow-hidden rounded-[17px] bg-[var(--brand-tint)]">
+                        <Photo src={l.cover} className="absolute inset-0 h-full w-full object-cover" />
+                      </Link>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[11.5px] font-extrabold uppercase tracking-[0.08em] text-[var(--brand)]">{t?.label}</p>
+                        <p className="truncate text-[14.5px] font-extrabold tracking-[-0.015em]">{l.name}</p>
+                        <p className="mt-0.5 flex items-center gap-2 text-[12px] font-bold text-[var(--ink-2)]">
+                          {l.fromPaise ? <span className="cx-num">{rupees(l.fromPaise)} <span className="font-semibold text-[var(--ink-3)]">{l.fromKind === 'package' ? (l.fromLabel ? `${l.fromLabel} package` : 'package') : l.fromUnit}</span></span> : <span>On request</span>}
+                          {l.instant
+                            ? <span className="flex items-center gap-0.5 text-[#946200]"><Zap size={12} className="fill-[var(--gold)] text-[var(--gold)]" />Instant</span>
+                            : <span className="flex items-center gap-0.5 text-[var(--ink-3)]"><Clock3 size={12} />Quote{l.quoteHours ? ` in ${l.quoteHours}h` : ''}</span>}
+                        </p>
+                      </div>
+                      <button type="button" onClick={() => plan.remove(l.key)} aria-label={`Remove ${l.name}`} className="cx-press grid h-10 w-10 shrink-0 place-items-center rounded-full text-[var(--ink-3)] active:bg-[var(--soft)]"><Trash2 size={17} /></button>
                     </div>
-                    <button type="button" onClick={() => plan.remove(l.key)} aria-label={`Remove ${l.name}`} className="cx-press grid h-10 w-10 shrink-0 place-items-center rounded-full text-[var(--ink-3)] active:bg-[var(--soft)]"><Trash2 size={17} /></button>
+                    <LineMath line={l} event={ev ?? { hours: plan.event.hours }} onQty={q => plan.setQty(l.key, q)} />
                   </li>
                 )
               })}
@@ -111,4 +115,29 @@ export default function PlanReview() {
 
 function Row({ k, v }) {
   return <div className="flex items-center justify-between py-1 text-[13.5px] font-bold"><span className="text-[var(--ink-2)]">{k}</span><span className="cx-num">{v}</span></div>
+}
+
+/* What the line works out to, and — for lines priced per unit — the
+   quantity, which the customer owns. Steps scale with the number so 300
+   plates do not take 300 taps. */
+function LineMath({ line, event, onQty }) {
+  const f = lineFloor(line, event)
+  const q = qtyOf(line, event)
+  const min = Number(line.fromRef?.minQty) || 1
+  const step = q >= 500 ? 50 : q >= 100 ? 10 : q >= 20 ? 5 : 1
+  return (
+    <div className="mt-2.5 flex items-center justify-between gap-3 rounded-[14px] bg-[var(--am-50)] px-3 py-2 ring-1 ring-[var(--am-200)]">
+      <span className="min-w-0 truncate text-[12px] font-bold text-[var(--ink-2)]">{f.note ?? 'One booking'}</span>
+      <span className="flex shrink-0 items-center gap-2">
+        {hasQty(line) && (
+          <span className="flex items-center gap-1">
+            <button type="button" onClick={() => onQty(Math.max(min, q - step))} aria-label="Less" className="cx-press cx-btn grid h-7 w-7 place-items-center rounded-full"><Minus size={13} /></button>
+            <span className="cx-num min-w-[34px] text-center text-[13px] font-extrabold">{q.toLocaleString('en-IN')}</span>
+            <button type="button" onClick={() => onQty(q + step)} aria-label="More" className="cx-press cx-btn grid h-7 w-7 place-items-center rounded-full"><Plus size={13} /></button>
+          </span>
+        )}
+        <span className="cx-num text-[13.5px] font-extrabold">{f.paise ? rupees(f.paise) : '—'}</span>
+      </span>
+    </div>
+  )
 }

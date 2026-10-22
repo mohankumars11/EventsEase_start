@@ -42,6 +42,9 @@ export default async function handler(req, res) {
   // A partner can become unavailable in the minutes between receiving a quote and
   // the customer accepting it. Re-run the same matcher used for dispatch so a
   // stale quote can never reserve an unavailable partner/date.
+  const { data: quoting } = await db.from('vendors').select('is_synthetic').eq('id', response.vendor_id).maybeSingle()
+  const synthetic = quoting?.is_synthetic === true
+
   async function partnerStillEligible() {
     const loc = request.service_location ?? {}
     const lat = Number(loc.lat)
@@ -56,7 +59,10 @@ export default async function handler(req, res) {
       p_point: pointWkt,
       p_radius_m: 100000,
       p_date: request.event_date,
-      p_allow_synthetic: false,
+      /* A synthetic partner (seed data, deleted at launch) is matchable only
+         for its own quote — so test quotes can be accepted end to end and a
+         real customer's real quote never reaches a seeded business. */
+      p_allow_synthetic: synthetic,
       p_limit: 25,
       p_exclude: [],
     })

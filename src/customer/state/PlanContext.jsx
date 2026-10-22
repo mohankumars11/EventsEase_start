@@ -21,13 +21,15 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
 const KEY = 'sbm.cx.plan.v1'
-const EMPTY = { event: { occasionId: null, date: null, time: null, hours: null, guests: null, venue: 'need' }, picks: {}, basket: [], saved: [] }
+/* `place`: where the event is ({ area, lat, lng, address }) — the engine checks travel and
+   distance against it. `bookings`: what checkout sent, so Plans can show it at once. */
+const EMPTY = { event: { occasionId: null, date: null, time: null, hours: null, guests: null, venue: 'need' }, place: null, picks: {}, basket: [], saved: [], bookings: [] }
 
 function load() {
   try {
     const raw = localStorage.getItem(KEY)
     const s = raw ? { ...EMPTY, ...JSON.parse(raw) } : EMPTY
-    return { ...s, saved: (s.saved ?? []).filter(x => x && typeof x === 'object') }
+    return { ...s, saved: (s.saved ?? []).filter(x => x && typeof x === 'object'), bookings: s.bookings ?? [] }
   } catch { return EMPTY }
 }
 
@@ -49,12 +51,20 @@ export function PlanProvider({ children }) {
     const line = {
       key, occasionId, tradeId: partner.tradeId, serviceId: partner.serviceId, name: partner.name, area: partner.area,
       cover: partner.cover, fromPaise: partner.fromPaise, fromKind: partner.fromKind, fromUnit: partner.fromUnit, fromLabel: partner.fromLabel,
-      instant: partner.instant, advancePct: partner.advancePct,
+      fromRef: partner.fromRef ?? null, qty: null, instant: partner.instant, advancePct: partner.advancePct,
       rating: partner.rating, quoteHours: partner.quoteHours, addedAt: Date.now(),
     }
     return { ...s, basket: [...s.basket.filter(l => l.key !== key), line] }
   }), [])
   const remove = useCallback(key => setState(s => ({ ...s, basket: s.basket.filter(l => l.key !== key) })), [])
+  const setQty = useCallback((key, qty) => setState(s => ({ ...s, basket: s.basket.map(l => (l.key === key ? { ...l, qty } : l)) })), [])
+  const setPlace = useCallback(place => setState(s => ({ ...s, place })), [])
+  /* Lines that checkout booked or sent leave the basket and are remembered here. */
+  const recordBookings = useCallback(results => setState(s => ({
+    ...s,
+    basket: s.basket.filter(l => !results.some(r => r.key === l.key && (r.lineId || r.quoteRequestId))),
+    bookings: [...results.filter(r => r.lineId || r.quoteRequestId), ...s.bookings].slice(0, 60),
+  })), [])
   const clearOccasion = useCallback(occasionId => setState(s => ({ ...s, basket: s.basket.filter(l => l.occasionId !== occasionId) })), [])
   /* Saved keeps a snapshot, so the Saved list renders without a fetch. */
   const toggleSaved = useCallback(partner => setState(s => {
@@ -67,11 +77,11 @@ export function PlanProvider({ children }) {
 
   const value = useMemo(() => ({
     ...state,
-    setEvent, setPick, add, remove, clearOccasion, toggleSaved,
+    setEvent, setPick, add, remove, setQty, setPlace, recordBookings, clearOccasion, toggleSaved,
     inBasket: (serviceId) => state.basket.some(l => l.serviceId === serviceId),
     lineFor: (occasionId, tradeId) => state.basket.find(l => l.key === `${occasionId ?? 'solo'}:${tradeId}`) ?? null,
     isSaved: serviceId => state.saved.some(x => x.serviceId === serviceId),
-  }), [state, setEvent, setPick, add, remove, clearOccasion, toggleSaved])
+  }), [state, setEvent, setPick, add, remove, setQty, setPlace, recordBookings, clearOccasion, toggleSaved])
 
   return <PlanContext.Provider value={value}>{children}</PlanContext.Provider>
 }
