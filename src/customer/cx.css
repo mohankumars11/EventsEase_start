@@ -1,0 +1,117 @@
+/*
+ * The customer app's own surface.
+ *
+ * Scoped under `.cx` so nothing here can reach the partner app or the
+ * console, which share the bundle. Pure white ground (a standing rule):
+ * separation comes from a hairline and a violet-tinted shadow, never a
+ * grey one — grey reads as dirt on #FFF.
+ */
+.cx {
+  --ink: #140F1F;
+  --ink-2: #5A546D;
+  --ink-3: #958FA8;
+  --line: #EEEAF5;
+  /* Light amethyst: the ground of every button (Mohan, 2026-10-22). Deep
+     amethyst is kept for what is SELECTED, never for an idle button. */
+  --am-50: #F8F4FF;
+  --am-100: #F0E8FF;
+  --am-200: #E4D6FF;
+  --am-300: #D2BDFF;
+  --am-ink: #3A1290;
+  --soft: #F4EEFF;
+  --brand: #6A2BD9;
+  --brand-2: #8B5CF6;
+  --brand-deep: #2B0E66;
+  --brand-tint: #F3EDFF;
+  --gold: #F6B42C;
+  --ok: #0F9D58;
+  --ok-tint: #E7F8EF;
+  background: #FFFFFF;
+  color: var(--ink);
+  font-family: Manrope, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  min-height: 100dvh;
+}
+.cx * { -webkit-tap-highlight-color: transparent; }
+.cx-display { font-weight: 800; letter-spacing: -0.035em; line-height: 1.02; }
+.cx-num { font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+
+/* ── Tiles: photo-filled, square, the words inside the picture ── */
+.cx-tile {
+  position: relative; isolation: isolate; overflow: hidden; border-radius: 22px;
+  background: var(--tone, #EDE7F8);
+  box-shadow: 0 1px 1px rgba(43, 14, 102, .05), 0 14px 28px -18px rgba(43, 14, 102, .45);
+}
+.cx-tile > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; transition: transform .6s cubic-bezier(.2, .8, .2, 1); }
+.cx-tile:active > img { transform: scale(1.04); }
+.cx-scrim::before {
+  content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(180deg, rgba(12, 7, 24, .18) 0%, rgba(12, 7, 24, 0) 26%, rgba(12, 7, 24, 0) 44%, rgba(12, 7, 24, .78) 100%);
+}
+.cx-scrim-strong::before { background: linear-gradient(180deg, rgba(12, 7, 24, .28) 0%, rgba(12, 7, 24, 0) 30%, rgba(12, 7, 24, .25) 52%, rgba(12, 7, 24, .9) 100%); }
+
+/* Glass chips that sit on a photograph and stay legible on any of them. */
+.cx-glass {
+  background: rgba(20, 12, 38, .38); color: #fff;
+  -webkit-backdrop-filter: blur(12px) saturate(1.5); backdrop-filter: blur(12px) saturate(1.5);
+  border: 1px solid rgba(255, 255, 255, .22);
+}
+.cx-glass-light {
+  background: rgba(255, 255, 255, .82); color: var(--ink);
+  -webkit-backdrop-filter: blur(14px) saturate(1.6); backdrop-filter: blur(14px) saturate(1.6);
+  border: 1px solid rgba(255, 255, 255, .9);
+}
+
+.cx-card { background: #fff; border-radius: 24px; box-shadow: 0 0 0 1px var(--line), 0 18px 36px -28px rgba(43, 14, 102, .5); }
+.cx-hair { box-shadow: 0 0 0 1px var(--line); }
+
+.cx-press { transition: transform .18s cubic-bezier(.2, .8, .2, 1), background-color .18s, box-shadow .18s; }
+.cx-press:active { transform: scale(.965); }
+
+/* The primary action: light amethyst, lifted, with deep-amethyst words. */
+.cx-cta {
+  background: linear-gradient(180deg, #EFE6FF 0%, #E0CEFF 100%); color: var(--am-ink);
+  box-shadow: 0 0 0 1px #D6C2FF, 0 14px 28px -16px rgba(106, 43, 217, .7), inset 0 1px 0 rgba(255, 255, 255, .9);
+}
+.cx-cta:active { background: linear-gradient(180deg, #E6D9FF 0%, #D6C1FF 100%); }
+.cx-cta:disabled { background: #F3F1F8; color: #B7B1C8; box-shadow: 0 0 0 1px #ECE9F3; }
+/* Every other button. */
+.cx-btn { background: var(--am-100); color: var(--am-ink); }
+.cx-btn:active { background: var(--am-200); }
+
+/* A photo square: hairline + violet-tinted lift, the words live below it. */
+.cx-frame { background: var(--tone, #EDE7F8); box-shadow: 0 0 0 1px rgba(43, 14, 102, .06), 0 14px 26px -20px rgba(43, 14, 102, .55); }
+.cx-frame > img { transition: transform .6s cubic-bezier(.2, .8, .2, 1); }
+.cx-press:active .cx-frame > img { transform: scale(1.04); }
+
+.cx-rail { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding: 0 16px; padding: 2px 16px 18px; }
+.cx-rail > * { scroll-snap-align: start; flex: none; }
+.cx-noscroll { scrollbar-width: none; }
+.cx-noscroll::-webkit-scrollbar { display: none; }
+
+.cx-shimmer { background: linear-gradient(90deg, #F2EEF9 0%, #FBFAFE 45%, #F2EEF9 90%); background-size: 220% 100%; animation: cx-shimmer 1.3s linear infinite; }
+@keyframes cx-shimmer { to { background-position: -220% 0; } }
+
+/* Opacity only: a transform on a page wrapper traps every position:fixed
+   child inside it, which is how a sheet ends up rendered off-screen. */
+.cx-enter { animation: cx-fade .32s ease-out both; }
+@keyframes cx-fade { from { opacity: 0; } to { opacity: 1; } }
+
+.cx-pop { animation: cx-pop .38s cubic-bezier(.2, 1.4, .4, 1) both; }
+@keyframes cx-pop { 0% { transform: scale(.6); } 100% { transform: scale(1); } }
+
+.cx-sheet-back { position: fixed; inset: 0; z-index: 400; background: rgba(14, 8, 28, .42); transition: opacity .24s ease; }
+.cx-sheet {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 401; max-height: 88dvh; overflow: auto;
+  background: #fff; border-radius: 28px 28px 0 0; padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
+  transition: transform .32s cubic-bezier(.2, .9, .25, 1);
+  box-shadow: 0 -20px 50px -20px rgba(20, 8, 50, .35);
+}
+.cx-sheet[data-open='false'] { transform: translateY(105%); }
+.cx-sheet-back[data-open='false'] { opacity: 0; pointer-events: none; }
+@media (min-width: 640px) { .cx-sheet { left: 50%; right: auto; width: 480px; transform: translateX(-50%); } .cx-sheet[data-open='false'] { transform: translate(-50%, 105%); } }
+
+.cx-bottom-pad { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 96px); }
+.cx-bottom-pad-bar { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 168px); }
+.cx-safe-top { padding-top: calc(env(safe-area-inset-top, 0px) + 10px); }
