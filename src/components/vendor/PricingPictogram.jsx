@@ -26,7 +26,6 @@ export default function PricingPictogram() {
       <span className="absolute bottom-0 right-0 flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-fuchsia-300 to-violet-700 text-white shadow-[0_8px_15px_rgba(24,7,70,.32)]">
         <span className="text-[17px] font-black">₹</span>
       </span>
-      <span className="absolute right-1 top-0 text-[13px] text-yellow-200">✦</span>
     </span>
   )
 }

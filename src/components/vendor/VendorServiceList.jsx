@@ -70,6 +70,9 @@ export default function VendorServiceList({
      This is an id, never a trade/category, so Edit opens the saved row's
      own questionnaire instead of reopening the picker with a trade preselected. */
   editListing = null, onEditConsumed,
+  /* The section to open the edit at (a stage id), from the customer
+     preview's Edit buttons. Null opens the review, as before. */
+  editStep = null,
   /* Where to send the partner when the add flow closes. Set only when
      they arrived from step 1 of onboarding — see VendorDashboard. */
   returnTo = null,
@@ -111,6 +114,7 @@ export default function VendorServiceList({
     const row = services.find(s => s.id === editListing)
     if (!row) return
     setEditing(current => current === editListing ? current : editListing)
+    setEditingStep(editStep || null)
     onEditConsumed?.()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editListing, services])
@@ -119,6 +123,7 @@ export default function VendorServiceList({
   // null = closed, 'new' = the add form, or an id being edited. One at a time:
   // two open forms on a phone is two half-finished items.
   const [editing, setEditing] = useState(null)
+  const [editingStep, setEditingStep] = useState(null)
 
   const [busyId,  setBusyId]  = useState(null)
 
@@ -231,12 +236,14 @@ export default function VendorServiceList({
           <AddItemFlow
             existing={services}
             editing={services.find(x => x.id === editing)}
+            initialStep={editingStep}
             vendorId={vendor?.id}
             onUpdate={onUpdate}
             onClose={(next, result) => {
               const row = services.find(x => x.id === editing)
               if (result) { onSubmitted(row?.category ?? null, result); return }
               setEditing(null)
+              setEditingStep(null)
               onEditConsumed?.()
               if (returnTo) {
                 const sep = returnTo.includes('?') ? '&' : '?'

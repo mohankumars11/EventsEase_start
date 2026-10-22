@@ -268,6 +268,9 @@ const PREVIEW_NOTE = {
 export default function TradeCustomerPreviewScreen({
   vendor, service, config, listing, tradeName, media: suppliedMedia = EMPTY_MEDIA, avatarSlot,
   onClose, onPick, isLive, previewError, onRetry, previewState, previewLoading = false, onAction,
+  /* (section) => void. Gives every storefront section an Edit that opens
+     the listing form at that section. */
+  onEditSection = null,
 }) {
   const [favorite, setFavorite] = useState(false)
   const [actionNote, setActionNote] = useState('')
@@ -344,21 +347,21 @@ export default function TradeCustomerPreviewScreen({
   const isNone = !!listing && listing.state === 'NONE'
   const isError = listing?.state === 'ERROR' || !!previewError
   return (
-    <div className="fixed inset-0 z-[240] flex flex-col bg-[#f7fbff] text-[#102250]"
+    <div className="fixed inset-0 z-[240] flex flex-col bg-[#FBF9FF] text-[#1B1433]"
       style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
       role="dialog" aria-modal="true" aria-label="Full-screen customer storefront preview">
-      <header className="z-20 flex h-[54px] shrink-0 items-center gap-2 border-b border-[#e4edf9] bg-white/95 px-3 backdrop-blur">
-        <button type="button" onClick={onClose} aria-label="Close customer preview" className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#eff6ff] text-[#16356b]"><ArrowLeft size={19}/></button>
+      <header className="z-20 flex h-[54px] shrink-0 items-center gap-2 border-b border-[#EEE8F8] bg-white/95 px-3 backdrop-blur">
+        <button type="button" onClick={onClose} aria-label="Close customer preview" className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#F1EAFF] text-[#4B1D96]"><ArrowLeft size={19}/></button>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[12px] font-black text-[#102250]">Customer preview</p>
-          <p className="truncate text-[9px] font-semibold text-[#657897]">{tradeName || config?.name || service?.name || 'Your service'} · mobile storefront</p>
+          <p className="truncate text-[13px] font-extrabold text-[#1B1433]">Customer preview</p>
+          <p className="truncate text-[11px] font-semibold text-[#8E87A6]">{tradeName || config?.name || service?.name || 'Your service'} · mobile storefront</p>
         </div>
-        <button type="button" onClick={share} aria-label="Share preview" className="grid h-9 w-9 place-items-center rounded-full bg-[#eff6ff] text-[#16356b]"><Share2 size={17}/></button>
-        <button type="button" onClick={() => setFavorite(value => !value)} aria-label={favorite ? 'Remove preview from favourites' : 'Add preview to favourites'} aria-pressed={favorite} className={'grid h-9 w-9 place-items-center rounded-full ' + (favorite ? 'bg-rose-50 text-rose-600' : 'bg-[#eff6ff] text-[#16356b]')}><Heart size={17} fill={favorite ? 'currentColor' : 'none'}/></button>
+        <button type="button" onClick={share} aria-label="Share preview" className="grid h-9 w-9 place-items-center rounded-full bg-[#F1EAFF] text-[#4B1D96]"><Share2 size={17}/></button>
+        <button type="button" onClick={() => setFavorite(value => !value)} aria-label={favorite ? 'Remove preview from favourites' : 'Add preview to favourites'} aria-pressed={favorite} className={'grid h-9 w-9 place-items-center rounded-full ' + (favorite ? 'bg-rose-50 text-rose-600' : 'bg-[#F1EAFF] text-[#4B1D96]')}><Heart size={17} fill={favorite ? 'currentColor' : 'none'}/></button>
       </header>
       <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-4">
         {notice ? <div className="mx-3 mt-2 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-[10.5px] font-semibold leading-snug text-amber-900"><ShieldCheck size={13} className="mt-0.5 shrink-0"/><span>{notice}</span></div> : null}
-        {mediaState.loading ? <div className="mx-3 mt-2 h-1 overflow-hidden rounded-full bg-[#e5effb]"><div className="h-full w-1/2 animate-pulse rounded-full bg-[#2586ef]"/></div> : null}
+        {mediaState.loading ? <div className="mx-3 mt-2 h-1 overflow-hidden rounded-full bg-[#EDE6FB]"><div className="h-full w-1/2 animate-pulse rounded-full bg-[#7C3AED]"/></div> : null}
         {isLoading ? <div className="flex h-40 items-center justify-center"><Loader2 size={22} className="animate-spin text-[#6b31df]"/></div>
           : isError ? <div className="space-y-3 py-8 text-center"><CircleAlert size={28} className="mx-auto text-rose-600"/><p className="text-[14px] font-extrabold text-[#172752]">Your preview could not load</p><p className="px-5 text-[12px] leading-relaxed text-[#667693]">{previewError || 'Check your connection and try again.'}</p><button type="button" onClick={onRetry} className="rounded-full bg-[#5f2bdf] px-4 py-2.5 text-[12px] font-extrabold text-white">Retry</button></div>
           : isNone ? <div className="mx-4 mt-5 rounded-2xl bg-white p-5 text-center text-[13px] font-bold text-[#536787]">Finish your listing once and its saved details will appear here.</div>
@@ -368,6 +371,7 @@ export default function TradeCustomerPreviewScreen({
               media={media}
               avatarSlot={avatarSlot || <PartnerAvatarInput vendor={vendor} draft={{ profile: cardListing?.profile ?? {} }} businessName={profileName} editable variant="marketplace"/>}
               onPick={pkg => { setSelectedPackage(pkg); onPick?.(pkg) }}
+              onEditSection={onEditSection}
             />}
       </main>
 
@@ -387,12 +391,12 @@ export default function TradeCustomerPreviewScreen({
         </div>
       ) : null}
 
-      <footer className="z-20 shrink-0 border-t border-[#e4ecfa] bg-white/95 px-3 pb-2 pt-2 shadow-[0_-5px_20px_rgba(26,75,140,.08)] backdrop-blur">
+      <footer className="z-20 shrink-0 border-t border-[#EEE8F8] bg-white/95 px-3 pb-2 pt-2 shadow-[0_-8px_24px_-12px_rgba(91,33,168,.25)] backdrop-blur">
         <button type="button" onClick={() => { const message = 'Preview only. The live booking flow checks the service date, availability and final payable amount before payment.'; setActionNote(message); onAction?.(message) }}
-          className={'flex min-h-[50px] w-full items-center justify-center gap-2 rounded-[17px] px-4 text-center text-[13px] font-black text-white shadow-lg ' + (instant ? 'bg-gradient-to-r from-[#4935dc] to-[#7134ed]' : 'bg-gradient-to-r from-[#287be9] to-[#1557cc]')}>
+          className={'flex min-h-[50px] w-full items-center justify-center gap-2 rounded-full px-4 text-center text-[14px] font-extrabold text-white shadow-lg ' + (instant ? 'bg-gradient-to-r from-[#5B21A8] to-[#7C3AED]' : 'bg-[#1B1433]')}>
           <span>{instant ? 'Instant Book & Pay' : 'Check availability & request quote'}</span><span aria-hidden="true">→</span>
         </button>
-        <p className="mt-1.5 text-center text-[9px] font-medium text-[#657594]" role={actionNote ? 'status' : undefined}>{actionNote || 'Preview only · secure payment and booking confirmation happen in the customer flow.'}</p>
+        <p className="mt-1.5 text-center text-[11px] font-medium text-[#8E87A6]" role={actionNote ? 'status' : undefined}>{actionNote || 'Preview only · secure payment and booking confirmation happen in the customer flow.'}</p>
       </footer>
     </div>
   )

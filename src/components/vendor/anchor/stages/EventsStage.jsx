@@ -87,7 +87,7 @@ export default function EventsStage({ value, set }) {
         <ChipRow multi size="sm" options={FORMATS} value={v.formats ?? []} onChange={x => set({ ...v, formats: x })} />
       </Card>
 
-      <Sheet open={!!otherFor} onOpenChange={o => !o && setOtherFor(null)} title="Add another event type">
+      <Sheet full open={!!otherFor} onOpenChange={o => !o && setOtherFor(null)} title="Add another event type">
         <p className="mb-2 text-[12px] text-ink/55">We review new event types before customers can book them.</p>
         <div className="flex gap-2">
           <div className="flex-1"><TextField value={otherText} onChange={setOtherText} placeholder="Type the event" max={40} /></div>

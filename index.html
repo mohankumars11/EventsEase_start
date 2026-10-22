@@ -27,14 +27,17 @@
          They are copied from BRAND.tagline and BRAND.descriptor verbatim; if
          you change either there, change it here too. -->
     <meta name="description" content="Sambramo — Celebrations, arranged. Nothing left to chance. India's human-assisted concierge celebration service: tell us what you're celebrating and a real coordinator sources every vendor, negotiates, and brings back one clear price." />
-    <!-- The launch screen font, fetched before the CSS that asks for it.
+    <!-- Manrope, fetched before the CSS that asks for it.
 
-         This is the one face the app does NOT take from the CDN below. In
+         The splash wordmark and every button and line of UI are set in it,
+         and it is served from inside the apk, not the Google Fonts CDN. In
          the packaged Android build the HTML, CSS and JS are all local, so a
          CDN font is a network round trip on every cold start: the splash
          would paint the wordmark in a fallback and swap to the real cut
-         mid animation. See the @font-face at the top of src/index.css. -->
-    <link rel="preload" href="/fonts/ArchivoBlack-Regular.woff2" as="font" type="font/woff2" crossorigin />
+         mid animation. See the @font-face at the top of src/index.css.
+         Latin only here: it is the file the first screen needs. The
+         Latin-Extended file (for the rupee sign) loads when text uses it. -->
+    <link rel="preload" href="/fonts/Manrope-latin.woff2" as="font" type="font/woff2" crossorigin />
     <!-- The launch artwork. It is the entire first screen, so it is
          fetched ahead of the bundle that renders it; 81KB of WebP, written
          by scripts/render-splash-art.mjs, which crops brand/splash-source.png
@@ -53,8 +56,12 @@
          here and a second, serial one triggered while parsing the CSS.
          They also disagreed — this asked for Playfair 400 and 600, that
          one asked for 900 — so some weights arrived late and text reflowed
-         after first paint. The union of both is here now. -->
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;0,900;1,700;1,800&family=Manrope:wght@400;500;600;700;800&family=Pinyon+Script&display=swap" rel="stylesheet" />
+         after first paint. The union of both is here now.
+
+         Manrope is no longer in this request: it is bundled, see the
+         preload below and the @font-face in src/index.css. Two sources for
+         one family is how a browser ends up with a weight from each. -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;0,900;1,700;1,800&family=Pinyon+Script&display=swap" rel="stylesheet" />
     <title>Sambramo — Celebrations, arranged. Nothing left to chance.</title>
   </head>
   <body>

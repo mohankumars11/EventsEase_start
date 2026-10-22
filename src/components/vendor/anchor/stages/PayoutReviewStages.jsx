@@ -1,5 +1,5 @@
 /**
- * Stage 10 · Identity Verification & Bank Details, and Stage 11 · Review & publish.
+ * Stage 10 · Identity Verification & Bank Details, and Stage 11 · Review & submit.
  *
  * Stage 10 is the real form, inline, in every trade's onboarding (Anchor &
  * MC, Catering & Food and the shared engine flow all render PayoutStage):
@@ -24,14 +24,14 @@
  * reports the payout account activated (server rule, migration 20261010_15).
  */
 import { useCallback, useEffect, useState } from 'react'
-import { ShieldCheck, Landmark, Sparkles, RefreshCw, Check, Clock3, AlertTriangle, ChevronDown, CreditCard, Smartphone } from 'lucide-react'
+import { ShieldCheck, Landmark, RefreshCw, Check, Clock3, AlertTriangle, ChevronDown, CreditCard, Smartphone, BadgeCheck, Package } from 'lucide-react'
 import { SectionTitle, Card } from '../ui'
-import ReadinessChecklist from '../../pricing/ReadinessChecklist'
+import { SubmitPreview } from '../../listing/LivePreview'
 import RazorpayBadge from '../../../partner/payout/RazorpayBadge'
 import PayoutOnboardingForm from '../../bank/PayoutOnboardingForm'
 import { useIdentityRequirements, IdentitySection, PanDocumentSection, STATE_LABEL } from '../../../partner/identity/IdentityPanel'
 import { supabase } from '../../../../lib/supabase'
-import { rupees } from '../../../../lib/tierPackages'
+import { rupees, takeHomeOf } from '../../../../lib/tierPackages'
 import { destinationShort } from '../../../../lib/documents/mask'
 import { routeSetup } from '../../../../lib/payoutRoute'
 import { identityStatus, payoutStatus, PAYOUT } from '../../../../lib/partnerAccountStatus'
@@ -122,7 +122,7 @@ export function PayoutStage({ status, vendorId }) {
       text: !d?.account_number ? 'Not added' : d.verified_at ? 'Verified' : 'Details saved — verification pending',
       tone: !d?.account_number ? 'none' : d.verified_at ? 'good' : 'wait' },
     { key: 'upi', I: Smartphone, label: 'UPI', text: d?.upi_id ? 'Saved — not verified' : 'Not added', tone: d?.upi_id ? 'wait' : 'none' },
-    { key: 'activation', I: Sparkles, label: 'Payout activation',
+    { key: 'activation', I: BadgeCheck, label: 'Payout activation',
       text: ACTIVATION_TEXT[status.payout]?.[0] ?? (activation && !activation.ok ? (STEP_HINT[activation.body?.step] ?? activation.body?.error ?? 'Not started') : 'Not started'),
       tone: ACTIVATION_TEXT[status.payout]?.[1] ?? (activation && !activation.ok ? 'act' : 'none') },
   ]
@@ -235,42 +235,67 @@ function ContactFix({ onSaved }) {
  *
  * `stages`, `done` and `onEdit` are optional so this still renders
  * anywhere it is used without them.
+ *
+ * ── No Instant Book & Pay checklist here any more ─────────────────────
+ * It sat at the top of this screen: seven rows, two of them red, under
+ * "Complete these items before enabling Instant Book & Pay". That is a
+ * question about payouts and approval, which nothing on this screen
+ * answers and nothing the partner does here changes, and it read as a
+ * second, older review stacked on the new one. It also looked like the
+ * reason Submit was grey when the real reason was the unfinished
+ * sections. So the section list comes first and says how many are
+ * left. Instant Book & Pay readiness lives in the Pricing tab, where
+ * it can be acted on.
  */
-export function ReviewStage({ items, state, quotesOk, tiers, name, langs, stages = null, done = null, onEdit = null }) {
+export function ReviewStage({ tiers, name, langs, stages = null, done = null, onEdit = null, previewModel = null, onOpenPreview, onEditSection = null }) {
+  const sections = stages ? stages.slice(0, -1) : []
+  const left = sections.filter(st => !done?.has?.(st.id)).length
   return (
     <>
-      <SectionTitle title="Review & publish" sub="Submit for review. Your profile goes live once Sambramo approves it." />
-      <ReadinessChecklist state={state} items={items} quotesOk={quotesOk} />
+      <SectionTitle title="Review & submit" sub="Check each section, then submit. Sambramo reviews it within 24 hours and your profile goes live once approved." />
+      {previewModel && <SubmitPreview model={previewModel} onOpenFull={onOpenPreview} onEditSection={onEditSection} />}
+
+      {stages && onEdit && (
+        <>
+          <p data-review-left={left} className={`mb-2 rounded-2xl px-3 py-2 text-[12.5px] font-bold ring-1 ${
+            left ? 'bg-amber-50 text-amber-900 ring-amber-200' : 'bg-forest-50 text-forest-800 ring-forest-200'}`}>
+            {left
+              ? `${left} ${left === 1 ? 'section needs' : 'sections need'} finishing before you can submit. Tap one to finish it.`
+              : 'Every section is complete. Check anything you want, then submit.'}
+          </p>
+          <Card>
+            {sections.map(st => (
+              <button key={st.id} type="button" onClick={() => onEdit(st.id)} data-review-edit={st.id}
+                className="flex w-full items-center gap-3 border-t border-ink/[0.05] py-2.5 text-left first:border-0">
+                <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[12px] font-extrabold ${
+                  done?.has?.(st.id) ? 'bg-forest-600 text-white' : 'bg-amber-100 text-amber-700'}`}>
+                  {done?.has?.(st.id) ? <Check size={13} strokeWidth={3} /> : '!'}
+                </span>
+                <span className="flex-1 text-[13px] font-bold text-ink">{st.label}</span>
+                <span className="text-[12px] font-extrabold text-plum-700">{done?.has?.(st.id) ? 'Edit' : 'Finish'}</span>
+              </button>
+            ))}
+          </Card>
+        </>
+      )}
+
       <div className="mt-3 rounded-[22px] bg-gradient-to-br from-plum-700 to-plum-950 p-4 text-white">
-        <p className="flex items-center gap-1.5 text-[12px] font-extrabold uppercase tracking-[0.12em] text-plum-200"><Sparkles size={14} /> Ready to submit</p>
+        <p className="flex items-center gap-1.5 text-[12px] font-extrabold uppercase tracking-[0.12em] text-plum-200"><Package size={14} /> {left ? 'Your packages' : 'Ready to submit'}</p>
         <p className="mt-2 text-[18px] font-extrabold">{name || 'Your profile'}</p>
         <p className="text-[12.5px] text-plum-100">{langs || 'No languages yet'}</p>
         <div className="mt-3 grid grid-cols-3 gap-2">
           {tiers.map(p => (
             <div key={p.tier} className="rounded-xl bg-white/10 p-2 text-center">
               <p className="text-[10px] font-extrabold uppercase text-plum-200">{p.name}</p>
-              <p className="text-[13.5px] font-extrabold">{rupees(p.price_paise)}</p>
+              {/* Your rate, not the customer price: an anchor tier's
+                  price_paise is what the customer pays, and onboarding
+                  quotes the partner's own number (see StepsCommercial). */}
+              <p className="text-[13.5px] font-extrabold">{rupees(takeHomeOf(p.price_paise))}</p>
               <p className="text-[10.5px] text-plum-200">{p.duration_hours} hrs</p>
             </div>
           ))}
         </div>
       </div>
-
-      {stages && onEdit && (
-        <Card className="mt-3">
-          {stages.slice(0, -1).map(st => (
-            <button key={st.id} type="button" onClick={() => onEdit(st.id)}
-              className="flex w-full items-center gap-3 border-t border-ink/[0.05] py-2.5 text-left first:border-0">
-              <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[12px] font-extrabold ${
-                done?.has?.(st.id) ? 'bg-forest-600 text-white' : 'bg-amber-100 text-amber-700'}`}>
-                {done?.has?.(st.id) ? <Check size={13} strokeWidth={3} /> : '!'}
-              </span>
-              <span className="flex-1 text-[13px] font-bold text-ink">{st.label}</span>
-              <span className="text-[12px] font-extrabold text-plum-700">Edit</span>
-            </button>
-          ))}
-        </Card>
-      )}
     </>
   )
 }

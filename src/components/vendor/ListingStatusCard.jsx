@@ -1,4 +1,4 @@
-import { Clock, Sparkles, AlertCircle, CalendarDays, ArrowRight } from 'lucide-react'
+import { Clock, AlertCircle, CalendarDays, ArrowRight, BadgeCheck } from 'lucide-react'
 
 /**
  * Where the account as a whole stands, in one strip.
@@ -62,7 +62,7 @@ const TONE = {
     shell: 'bg-forest-700 text-white',
     chip: 'bg-white/20 text-white',
     body: 'text-white/80',
-    icon: Sparkles,
+    icon: BadgeCheck,
     word: 'Live',
   },
   rejected: {

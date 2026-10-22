@@ -11,7 +11,7 @@
  * re-list it. Old setups are not bookable (forced re-onboarding).
  */
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Loader2, ArrowRight, CircleAlert, Hourglass, Lock, Pencil, Eye, Sparkles, RefreshCw } from 'lucide-react'
+import { Loader2, ArrowRight, CircleAlert, Hourglass, Lock, Pencil, Eye, RefreshCw, CalendarRange } from 'lucide-react'
 import ReadinessChecklist from './ReadinessChecklist'
 import PricingControlCenter, { SeasonalUpdate } from './PricingControlCenter'
 import { Sheet } from '../anchor/ui'
@@ -19,6 +19,7 @@ import { supabase } from '../../../lib/supabase'
 import { rupees } from '../../../lib/tierPackages'
 import PackageCarousel from '../packages/PackageCarousel'
 import TradeCustomerPreviewScreen from './TradeCustomerPreviewScreen'
+import { stageForSection } from '../../customer/storefront/storefrontModel'
 import { fetchWork, signedUrlsFor } from '../../../lib/partnerWork'
 import { configFor } from '../../../data/trades'
 import { RULE_KINDS } from '../../../data/trades/schema'
@@ -362,7 +363,7 @@ export default function TradePricing({ service, vendor, onEdit, onOpenPayout }) 
         </div>
       ) : null}
       {(d.live && d.pending) ? <div className="flex gap-2.5 rounded-[20px] bg-amber-50 p-4 ring-1 ring-amber-200"><Hourglass size={17} className="mt-0.5 shrink-0 text-amber-700"/><p className="text-[12.5px] font-semibold text-amber-900">Version {d.pending.version} is with our team. Customers keep seeing your live prices until it is approved.</p></div> : null}
-      {d.seasonal.filter(item => item.status === 'LIVE').map(item => <div key={item.id} className="flex gap-2.5 rounded-[20px] bg-white p-4 ring-1 ring-amber-200"><Sparkles size={17} className="mt-0.5 shrink-0 text-amber-600"/><p className="text-[12.5px] font-semibold text-ink/75">Seasonal prices are live for {fmt(item.effective_from)} – {fmt(item.effective_to)}.</p></div>)}
+      {d.seasonal.filter(item => item.status === 'LIVE').map(item => <div key={item.id} className="flex gap-2.5 rounded-[20px] bg-white p-4 ring-1 ring-amber-200"><CalendarRange size={17} className="mt-0.5 shrink-0 text-amber-600"/><p className="text-[12.5px] font-semibold text-ink/75">Seasonal prices are live for {fmt(item.effective_from)} – {fmt(item.effective_to)}.</p></div>)}
     </>
   )
 
@@ -407,7 +408,8 @@ export default function TradePricing({ service, vendor, onEdit, onOpenPayout }) 
             city: previewData.city ?? [vendor?.area, vendor?.city].filter(Boolean).join(', '),
             rating: previewData.rating ?? vendor?.rating_avg,
             review_count: previewData.review_count ?? vendor?.review_count,
-            is_verified: previewData.is_verified ?? vendor?.is_verified,
+            /* The green badge is for a partner Sambramo has approved. */
+            is_verified: (previewData.is_verified ?? vendor?.is_verified) === true || vendor?.verification_status === 'approved',
           } : null}
           previewLoading={!previewData && !previewError}
           previewError={previewError}
@@ -416,6 +418,8 @@ export default function TradePricing({ service, vendor, onEdit, onOpenPayout }) 
           media={previewMedia.rows.length ? previewMedia.rows : undefined}
           onClose={() => setPreview(false)}
           onAction={message => setPreviewActionNote(message)}
+          /* Edit beside a section opens the form at that section. */
+          onEditSection={section => { setPreview(false); onEdit?.(stageForSection(section, config)) }}
         />
       )}
 

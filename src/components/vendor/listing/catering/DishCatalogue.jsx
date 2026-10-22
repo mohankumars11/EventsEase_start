@@ -317,7 +317,7 @@ export default function DishCatalogue({ a, put, fee, legacyDishes = [] }) {
       <MasterSearch open={search} onClose={() => setSearch(false)} cuisines={a.cuisines ?? []} have={have} tax={tax}
         onPick={r => { setSearch(false); startNew({ name: r.name, master_dish_id: r.id, category_id: r.category_id, suggested_diet: r.suggested_diet,
           cuisine_ids: (r.cuisine_ids ?? []).filter(c => (a.cuisines ?? []).includes(c)) }) }} />
-      <Sheet open={!!open} onOpenChange={o => { if (!o) setOpen(null) }} title={isNew ? 'New dish' : 'Edit dish'}
+      <Sheet full open={!!open} onOpenChange={o => { if (!o) setOpen(null) }} title={isNew ? 'New dish' : 'Edit dish'}
         footer={<button type="button" onClick={save} className="h-[52px] w-full rounded-full bg-gradient-to-r from-plum-700 to-fuchsia-600 text-[15px] font-extrabold text-white">Save dish</button>}>
         {open && <DishEditor dish={open} set={setOpen} tax={tax} cuisines={a.cuisines ?? []} fee={fee} tried={tried} />}
       </Sheet>

@@ -1,4 +1,4 @@
-import { Sparkles, Wallet, Hand, ShieldCheck } from 'lucide-react'
+import { Wallet, Hand, ShieldCheck, Lightbulb } from 'lucide-react'
 import { hookFor, PROMISES } from '../../data/partnerHooks'
 
 /**
@@ -57,7 +57,7 @@ export default function HookCard({ id, hook, className = '' }) {
   return (
     <div className={`flex items-start gap-3 rounded-[18px] p-3.5 ${t.shell} ${className}`}>
       <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${t.icon}`}>
-        <Sparkles size={15} />
+        <Lightbulb size={15} />
       </span>
       <span className="min-w-0 flex-1">
         <span className={`block text-[13.5px] font-extrabold leading-snug ${t.line}`}>

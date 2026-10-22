@@ -12,10 +12,7 @@
  */
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import {
-  ChevronDown, Lock, Sparkles, Eye, Award, Crown, Gem, Check, Pencil, MapPin, Languages, Users,
-  Clock, Mic2, CalendarCheck, Sun, SunMedium, CalendarRange, ArrowRight,
-} from 'lucide-react'
+import { ChevronDown, Lock, Eye, Award, Crown, Gem, Check, Pencil, MapPin, Languages, Users, Clock, Mic2, CalendarCheck, Sun, SunMedium, CalendarRange, ArrowRight } from 'lucide-react'
 import { rupees } from '../../../lib/tierPackages'
 import PackageCarousel from '../packages/PackageCarousel'
 
@@ -94,7 +91,7 @@ export default function PricingControlCenter({ data, onEdit, onSeasonal, onPayou
         <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}
           className="flex items-center justify-between gap-2 rounded-2xl bg-amber-50 px-3 py-2 ring-1 ring-amber-200">
           <span className="flex min-w-0 items-center gap-2 text-[11.5px] font-bold text-amber-900">
-            <Sparkles size={15} className="shrink-0" />
+            <CalendarRange size={15} className="shrink-0" />
             <span className="truncate">Seasonal price window · until {fmtDate(d.seasonal.deadline)}</span>
           </span>
           <button type="button" onClick={onSeasonal} className="shrink-0 rounded-full bg-amber-800 px-3 py-2 text-[11px] font-extrabold text-white">

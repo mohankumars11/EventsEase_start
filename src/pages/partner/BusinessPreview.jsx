@@ -1,10 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import {
-  ArrowLeft, BadgeCheck, BarChart3, Check, ChevronRight, CircleAlert, Clock3,
-  Edit3, Eye, FileCheck2, Layers3, MapPin, Ruler, Send, ShieldCheck,
-  Sparkles, X
-} from 'lucide-react'
+import { ArrowLeft, BadgeCheck, BarChart3, Check, ChevronRight, CircleAlert, Clock3, Edit3, Eye, FileCheck2, Layers3, MapPin, Ruler, Send, ShieldCheck, X, Loader2 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { usePartnerOnboarding } from '../../hooks/usePartnerOnboarding'
 import WorkLibrary from '../../components/vendor/WorkLibrary'
@@ -143,7 +139,7 @@ function SubmissionPanel({ status, allDone, onSubmitted, error, setError }) {
   return (
     <div className="rounded-[22px] bg-white p-4 ring-1 ring-ink/[0.08] shadow-sm">
       <div className="flex items-start gap-3"><div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-plum-50 text-plum-700"><Send size={17} /></div><div className="min-w-0 flex-1"><p className="text-[14px] font-extrabold text-ink">Ready to go live?</p><p className="mt-1 text-[12px] leading-relaxed text-ink-soft">Send this exact storefront version to the Sambramo team. We review it before customers can see it.</p></div></div>
-      <button type="button" disabled={!allDone || busy} onClick={submit} className="mt-4 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-plum-950 px-4 text-[13.5px] font-extrabold text-white shadow-[0_10px_26px_rgba(42,8,92,0.18)] disabled:cursor-not-allowed disabled:opacity-40">{busy ? <Sparkles size={16} className="animate-spin" /> : <Send size={16} />}Submit for Sambramo Review</button>
+      <button type="button" disabled={!allDone || busy} onClick={submit} className="mt-4 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-plum-950 px-4 text-[13.5px] font-extrabold text-white shadow-[0_10px_26px_rgba(42,8,92,0.18)] disabled:cursor-not-allowed disabled:opacity-40">{busy ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}Submit for Sambramo Review</button>
       <p className="mt-2 text-center text-[10.5px] leading-snug text-ink-mute">Minimum review window: 2 hours · Publishing requires Sambramo approval</p>
       {!allDone && <p className="mt-2 text-center text-[11.5px] font-semibold text-amber-800">Complete pricing for every listed trade before submitting.</p>}
     </div>
@@ -230,7 +226,7 @@ export default function BusinessPreview() {
   })), [listings, pricingByService])
 
   if (loading || pricingLoading && account.vendor) {
-    return <div className="native-screen grid place-items-center bg-white"><Sparkles className="animate-pulse text-plum-700" size={28} /></div>
+    return <div className="native-screen grid place-items-center bg-white"><Loader2 className="animate-spin text-plum-700" size={28} /></div>
   }
 
   const status = storefrontStatus(vendor, enrichedListings)
@@ -290,7 +286,7 @@ export default function BusinessPreview() {
         ) : (
           <section className="mt-4 space-y-3">
             <div className="rounded-[22px] bg-white p-4 ring-1 ring-ink/[0.08]">
-              <div className="flex items-center justify-between gap-3"><div><p className="text-[9.5px] font-extrabold uppercase tracking-[0.15em] text-plum-600">Edit controls</p><h2 className="mt-1 text-[16px] font-black text-ink">Everything customers can see</h2></div><Sparkles size={19} className="text-saffron-500" /></div>
+              <div className="flex items-center justify-between gap-3"><div><p className="text-[9.5px] font-extrabold uppercase tracking-[0.15em] text-plum-600">Edit controls</p><h2 className="mt-1 text-[16px] font-black text-ink">Everything customers can see</h2></div><BadgeCheck size={19} className="text-saffron-500" /></div>
               <div className="mt-4 grid grid-cols-2 gap-2"><EditAction icon={Edit3} label="Business profile" detail="Name, description & media" onClick={editProfile} /><EditAction icon={Layers3} label="Services" detail="Trades & offerings" onClick={editServices} /><EditAction icon={BarChart3} label="Pricing" detail="Rates, packages & add-ons" onClick={editPricing} /><EditAction icon={Clock3} label="Availability" detail="Capacity & calendar" onClick={editAvailability} /></div>
             </div>
 

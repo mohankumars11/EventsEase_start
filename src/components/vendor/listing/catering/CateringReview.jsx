@@ -4,6 +4,7 @@
  * check. Nothing here is decorative — every line reads `a`.
  */
 import { useState } from 'react'
+import { SubmitPreview } from '../LivePreview'
 import { Eye, ShieldCheck, Check, AlertTriangle, ChevronRight } from 'lucide-react'
 import { Card, Sheet, SectionTitle } from '../../anchor/ui'
 import { MenuPreview } from './MenuBuilder'
@@ -25,7 +26,7 @@ function Section({ id, title, ok, lines, missing, go }) {
   )
 }
 
-export default function CateringReview({ a, done, go, fee, payout }) {
+export default function CateringReview({ a, done, go, fee, payout, previewModel = null, onOpenPreview, onEditSection = null }) {
   const tax = useFoodTaxonomy()
   const [preview, setPreview] = useState(false)
   const [ready, setReady] = useState(false)
@@ -48,8 +49,10 @@ export default function CateringReview({ a, done, go, fee, payout }) {
   return (
     <>
       <SectionTitle title="Review everything" sub="This is exactly what Sambramo reviews. Your listing goes live after approval; prices are then protected for 15 days." />
+      {/* The same storefront every other trade previews at Submit. */}
+      {previewModel && <SubmitPreview model={previewModel} onOpenFull={onOpenPreview} onEditSection={onEditSection} />}
       <div className="grid grid-cols-2 gap-2">
-        <button type="button" onClick={() => setPreview(true)} className="flex items-center justify-center gap-1.5 rounded-[18px] bg-gradient-to-r from-plum-700 to-fuchsia-600 py-3 text-[13px] font-extrabold text-white"><Eye size={15} /> Preview my customer listing</button>
+        <button type="button" onClick={() => (onOpenPreview ? onOpenPreview() : setPreview(true))} className="flex items-center justify-center gap-1.5 rounded-[18px] bg-gradient-to-r from-plum-700 to-fuchsia-600 py-3 text-[13px] font-extrabold text-white"><Eye size={15} /> Preview my customer listing</button>
         <button type="button" onClick={() => setReady(true)} className="flex items-center justify-center gap-1.5 rounded-[18px] bg-white py-3 text-[13px] font-extrabold text-plum-700 ring-1 ring-plum-200"><ShieldCheck size={15} /> Review booking readiness</button>
       </div>
 

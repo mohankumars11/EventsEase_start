@@ -186,7 +186,7 @@ export default function AddItemFlow(props) {
         trade={trade}
         vendorId={props.vendorId}
         editing={props.editing}
-        initialStep={props.editing ? 'review' : null}
+        initialStep={props.initialStep || (props.editing ? 'review' : null)}
         onAdd={props.onAdd}
         onUpdate={props.onUpdate}
         onClose={props.onClose}
@@ -226,7 +226,7 @@ export default function AddItemFlow(props) {
            Safe for an incomplete listing: the flow clamps a requested
            step back to the first unfinished one, so this cannot skip a
            gap. */
-        initialStep={props.editing ? 'review' : null}
+        initialStep={props.initialStep || (props.editing ? 'review' : null)}
         onAdd={props.onAdd}
         onUpdate={props.onUpdate}
         onClose={props.onClose}

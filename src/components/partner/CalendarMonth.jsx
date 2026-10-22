@@ -217,7 +217,6 @@ export default function CalendarMonth({
               <span className="h-5 w-5 rounded-full border-[3px] border-white/90 border-t-transparent" />
             </span>
             <span className="absolute left-1 top-3 h-2 w-2 rounded-full bg-yellow-300 shadow-[0_0_10px_rgba(253,224,71,0.9)]" />
-            <span className="absolute left-10 top-0 text-[16px] text-yellow-200">✦</span>
           </div>
         </div>
 

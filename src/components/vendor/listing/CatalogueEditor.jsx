@@ -67,12 +67,16 @@ export default function CatalogueEditor({ cat, items = [], set, trade, tried }) 
         <p className="mt-2 text-center text-[12px] font-bold text-rose-600">Add at least {cat.min ?? 1} {cat.min > 1 ? cat.nounPlural : cat.noun}.</p>
       )}
 
-      <Sheet open={open !== null} onOpenChange={o => { if (!o) setOpen(null) }} title={open === 'new' ? `New ${cat.noun}` : `Edit ${cat.noun}`}>
+      {/* Full screen: naming a product with the keyboard up needs the
+          room. Save lives in the footer so the keyboard never hides it. */}
+      <Sheet full open={open !== null} onOpenChange={o => { if (!o) setOpen(null) }} title={open === 'new' ? `New ${cat.noun}` : `Edit ${cat.noun}`}
+        footer={(
+          <button type="button" onClick={save}
+            className="h-[52px] w-full rounded-full bg-gradient-to-r from-plum-700 to-fuchsia-600 text-[15px] font-extrabold text-white">
+            Save {cat.noun}
+          </button>
+        )}>
         <QuestionRenderer questions={cat.fields} answers={draft} set={setDraft} trade={trade} tried={triedItem} />
-        <button type="button" onClick={save}
-          className="mt-4 h-[52px] w-full rounded-full bg-gradient-to-r from-plum-700 to-fuchsia-600 text-[15px] font-extrabold text-white">
-          Save {cat.noun}
-        </button>
       </Sheet>
     </>
   )

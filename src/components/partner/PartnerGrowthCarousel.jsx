@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowRight, Gift, MapPin, TrendingUp, UsersRound, Sparkles, UserRound } from 'lucide-react'
+import { ArrowRight, Gift, MapPin, TrendingUp, UsersRound, UserRound } from 'lucide-react'
 
 const CARDS = [
   {
@@ -64,7 +64,6 @@ function CardArt({ id, Icon }) {
     <div aria-hidden="true" className="absolute right-2 top-5 h-28 w-28">
       <div className="absolute right-1 top-1 h-20 w-20 rounded-full bg-fuchsia-300/20" />
       <MapPin className="absolute right-4 top-4 h-16 w-16 text-yellow-300" fill="currentColor" strokeWidth={1.7} />
-      <Sparkles className="absolute bottom-1 left-2 h-8 w-8 text-yellow-200" />
     </div>
   )
 }

@@ -20,7 +20,10 @@ import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'motion/react'
 import { ArrowLeft, ArrowRight, Loader2, LogOut } from 'lucide-react'
 import StepRail from './StepRail'
-import { STAGES } from './options'
+import { STAGES, ADDONS_V3 } from './options'
+import { anchorDraftProps, useWorkMedia, sectionsForStage } from '../listing/draftPreview'
+import { PreviewButton, LivePreviewScreen, StepPop, SubmitPreview } from '../listing/LivePreview'
+import { modelFromAnchor, ANCHOR_SECTION_STAGE } from '../../customer/storefront/storefrontModel'
 import { buildListingPayload } from './payload'
 import AboutStage, { aboutDone } from './stages/AboutStage'
 import LocationStage, { locationDone } from './stages/LocationStage'
@@ -160,9 +163,21 @@ export default function AnchorOnboardingFlow({
     if (at === -1) { setStep(STAGES[0].id); return }
     if (at > reachIdx) setStep(STAGES[reachIdx].id)
   }, [step, reachIdx, editing])
+  /* ── The customer's view, from the first step ───────────────────
+     The same live preview every trade gets. See listing/LivePreview. */
+  const workMedia = useWorkMedia(a.about?.work)
+  const draftModel = useMemo(() => modelFromAnchor({
+    ...anchorDraftProps(a, finalPackages(generated, a.overrides, offered), id => ADDONS_V3.find(x => x.id === id)?.label ?? id),
+    media: workMedia,
+  }), [a, generated, offered, workMedia])
+  const [pop, setPop] = useState(null)
+  const [livePreview, setLivePreview] = useState(false)
+
   function next() {
     if (!canNext) { setTried(true); return }
     if (isLast) return submit()
+    const secs = sectionsForStage(step, 'anchor')
+    if (secs) setPop({ key: Date.now(), stage: step, label: here.label, n: idx + 1, secs })
     go(STAGES[idx + 1].id)
   }
   function back() { idx === 0 ? onClose?.() : go(STAGES[idx - 1].id) }
@@ -235,20 +250,6 @@ export default function AnchorOnboardingFlow({
     }
   }
 
-  const readiness = useMemo(() => ({
-    state: 'PRICING_UNDER_REVIEW',
-    items: [
-      { id: 'profile', label: 'Profile & identity', status: done.has('about') && payout.verified ? 'pass' : done.has('about') ? 'pending' : 'fail',
-        next: done.has('about') ? 'Identity verification is still pending.' : 'Finish About you.' },
-      { id: 'capability', label: 'Services, languages & capacity', status: done.has('events') && done.has('languages') ? 'pass' : 'fail', next: 'Finish Events and Languages.' },
-      { id: 'location', label: 'Location confirmed', status: done.has('location') ? 'pass' : 'fail', next: 'Confirm your base on the map.' },
-      { id: 'pricing', label: 'Pricing approved', status: 'pending', next: 'Submit to send your packages for review.' },
-      { id: 'availability', label: 'Calendar & booking windows', status: done.has('availability') ? 'pass' : 'fail', next: 'Set your limits and open your calendar.' },
-      { id: 'rules', label: 'Booking & cancellation rules', status: done.has('rules') ? 'pass' : 'fail', next: 'Finish Booking & cancellation.' },
-      { id: 'payout', label: 'Razorpay payout account', status: payout.active ? 'pass' : 'fail', next: 'Complete payout setup to be booked instantly.' },
-    ],
-  }), [done, payout])
-
   const missing = tried && !canNext ? MISSING[step] : null
 
   const body = (
@@ -263,6 +264,7 @@ export default function AnchorOnboardingFlow({
             <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-plum-600">{trade}</p>
             <p className="text-[14px] font-extrabold text-ink">Step {idx + 1} of {STAGES.length} · {here.label}</p>
           </div>
+          <PreviewButton onClick={() => setLivePreview(true)} />
           <button type="button" onClick={() => { saveDraft({ answers: a, step }); onClose?.() }}
             className="flex h-9 items-center gap-1 rounded-full bg-plum-50 px-3 text-[11.5px] font-extrabold text-plum-700"><LogOut size={13} />Save & exit</button>
         </div>
@@ -289,14 +291,16 @@ export default function AnchorOnboardingFlow({
               {step === 'rules' && <RulesStage value={a.rules} set={put('rules')} />}
               {step === 'payout' && <PayoutStage status={payout} vendorId={embedded ? null : vendorId} />}
               {step === 'review' && (
-                <ReviewStage items={readiness.items} state={readiness.state} quotesOk={false}
+                <ReviewStage
                   tiers={finalPackages(generated, a.overrides, offered)} name={a.about.stage_name}
                   langs={(a.languages.languages ?? []).map(l => l.name).join(' · ')}
                   /* Every step, with a way back into it — the same thing
                      the engine's review does. `go` is the guarded
                      navigator, so an Edit cannot jump past an unfinished
                      step any more than the rail can. */
-                  stages={STAGES} done={done} onEdit={go} />
+                  stages={STAGES} done={done} onEdit={go}
+                  previewModel={draftModel} onOpenPreview={() => setLivePreview(true)}
+                  onEditSection={section => go(ANCHOR_SECTION_STAGE[section] ?? 'review')} />
               )}
             </motion.div>
           </AnimatePresence>
@@ -322,6 +326,11 @@ export default function AnchorOnboardingFlow({
           </motion.button>
         </div>
       </footer>
+
+      <StepPop pop={pop} model={draftModel} total={STAGES.length} onClose={() => setPop(null)}
+        onFull={() => { setPop(null); setLivePreview(true) }} />
+      <LivePreviewScreen open={livePreview} model={draftModel} onClose={() => setLivePreview(false)}
+        onEditSection={section => { setLivePreview(false); go(ANCHOR_SECTION_STAGE[section] ?? 'review') }} />
     </div>
   )
 

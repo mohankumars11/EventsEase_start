@@ -1,8 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import {
-  ArrowRight, Banknote, CalendarCheck2, ChevronLeft, ChevronRight,
-  FileText, Landmark, Percent, ReceiptIndianRupee, ShieldCheck, Sparkles, WalletCards,
-} from 'lucide-react'
+import { ArrowRight, Banknote, CalendarCheck2, ChevronLeft, ChevronRight, FileText, Landmark, Percent, ReceiptIndianRupee, ShieldCheck, WalletCards, BadgeCheck } from 'lucide-react'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 
 const SLIDES = [
@@ -74,7 +71,7 @@ const SLIDES = [
     accent: 'green',
     Art: () => <div className="relative h-[132px] w-[154px] shrink-0">
       <div className="absolute right-1 top-1 flex h-24 w-28 flex-col justify-between rounded-[24px] bg-white p-3 shadow-[0_18px_32px_rgba(5,150,105,0.18)]">
-        <div className="flex items-center justify-between"><WalletCards size={22} className="text-emerald-600" /><Sparkles size={16} className="text-emerald-500" /></div>
+        <div className="flex items-center justify-between"><WalletCards size={22} className="text-emerald-600" /><BadgeCheck size={16} className="text-emerald-500" /></div>
         <div><div className="h-2 w-4/5 rounded-full bg-emerald-100" /><div className="mt-2 h-2 w-3/5 rounded-full bg-slate-100" /></div>
       </div>
       <div className="absolute bottom-1 left-0 flex h-20 w-20 items-center justify-center rounded-[24px] bg-gradient-to-br from-emerald-600 to-teal-400 text-white shadow-[0_18px_34px_rgba(5,150,105,0.28)]"><ArrowRight size={35} /></div>

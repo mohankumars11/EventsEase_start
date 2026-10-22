@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Sparkles } from 'lucide-react'
+import { Lightbulb } from 'lucide-react'
 
 /**
  * The reason to list, in one line, above the trades.
@@ -77,7 +77,7 @@ export default function ListingPitch({ empty = true, className = '' }) {
 
   return (
     <div className={`mb-3 flex items-center gap-2.5 rounded-[18px] bg-kumkuma-600 px-3.5 py-2.5 text-white ${className}`}>
-      <Sparkles size={15} className="shrink-0 opacity-90" />
+      <Lightbulb size={15} className="shrink-0 opacity-90" />
       {/* Keyed on the index so React swaps the node and the animation
           replays. Without the key it is one node whose text changes and
           nothing moves. */}

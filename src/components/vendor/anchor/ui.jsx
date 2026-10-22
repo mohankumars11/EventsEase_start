@@ -196,7 +196,34 @@ export function StopSlider({ stops, value, onChange, format = x => x }) {
    to have loaded: a content-sized sheet opens short on the first page,
    then jumps as more rows arrive. Short confirmation sheets keep the
    content-height behaviour, which is right for them. */
-export function Sheet({ open, onOpenChange, title, children, footer, tall = false }) {
+/* ── `full`: the whole screen, for anything a partner types into ──────
+   A bottom sheet capped at 88dvh is fine for picking a chip. It is the
+   wrong shape for naming a product: the keyboard takes half the screen,
+   the sheet shrinks around it, and the name field and Save end up
+   squeezed into a strip. Full screen gives the form the room, a real
+   Close button instead of a drag handle nobody sees under the keyboard,
+   and a footer that stays above it. */
+export function Sheet({ open, onOpenChange, title, children, footer, tall = false, full = false }) {
+  if (full) {
+    return (
+      <Drawer.Root open={open} onOpenChange={onOpenChange}>
+        <Drawer.Portal>
+          <Drawer.Overlay className="fixed inset-0 z-[120] bg-black/40" />
+          <Drawer.Content data-sheet-full className="fixed inset-0 z-[121] flex h-[100dvh] flex-col bg-white outline-none">
+            <div className="flex shrink-0 items-center gap-2 border-b border-ink/[0.06] px-4 pb-3 pt-[calc(env(safe-area-inset-top,0px)+12px)]">
+              <Drawer.Title className="min-w-0 flex-1 truncate text-[17px] font-extrabold text-ink">{title}</Drawer.Title>
+              <button type="button" onClick={() => onOpenChange?.(false)} aria-label="Close"
+                className="flex h-10 shrink-0 items-center rounded-full bg-ink/[0.05] px-4 text-[13px] font-extrabold text-ink/70">Close</button>
+            </div>
+            <div className={`min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pt-4 ${footer ? 'pb-4' : 'pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))]'}`}>{children}</div>
+            {footer && (
+              <div className="shrink-0 border-t border-ink/[0.06] bg-white px-5 pb-[calc(0.875rem+env(safe-area-inset-bottom,0px))] pt-3">{footer}</div>
+            )}
+          </Drawer.Content>
+        </Drawer.Portal>
+      </Drawer.Root>
+    )
+  }
   return (
     <Drawer.Root open={open} onOpenChange={onOpenChange}>
       <Drawer.Portal>

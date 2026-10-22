@@ -63,6 +63,9 @@ import DishCatalogue from './catering/DishCatalogue'
 import MenuBuilder from './catering/MenuBuilder'
 import { CounterBuilder, PackageBuilder, ExtrasBuilder } from './catering/Services'
 import CateringReview from './catering/CateringReview'
+import { engineDraftListing, cateringDraftListing, useWorkMedia, sectionsForStage } from './draftPreview'
+import { PreviewButton, LivePreviewScreen, StepPop, SubmitPreview } from './LivePreview'
+import { modelFromTradeListing, stageForSection } from '../../customer/storefront/storefrontModel'
 
 const EMPTY = { basics: {}, location: {}, answers: {}, catalogue: [], rules: {}, packages: [], addons: {}, availability: {}, booking: { instant: true, custom_quotes: true } }
 const DEFAULT_POLICY = { platform_fee_rate: 0.08, signature_uplift: 1.75, vip_factor: 2 }
@@ -221,10 +224,22 @@ export default function ListingOnboardingFlow({
     setDir(j > idx ? 1 : -1); setTried(false); setSubmitError(''); setStep(to)
     document.getElementById('listing-scroll')?.scrollTo({ top: 0 })
   }
+  /* ── The customer's view, from the first step ───────────────────
+     Built from this flow's own state, so it moves with every answer.
+     See LivePreview for why it pops up after each step. */
+  const workMedia = useWorkMedia(a.basics?.work)
+  const draftModel = useMemo(() => modelFromTradeListing(
+    catering ? cateringDraftListing(config, a) : engineDraftListing(config, a),
+    { tradeName: config.name, media: workMedia }), [a, config, catering, workMedia])
+  const [pop, setPop] = useState(null)
+  const [livePreview, setLivePreview] = useState(false)
+
   function next() {
     if (!canNext) { setTried(true); return }
     if (here.id === 'pricing' && config.tiers && config.pricing.packages && !a.packages?.length) put('packages')(suggested)
     if (isLast) return submit()
+    const secs = sectionsForStage(here.id, catering ? 'catering' : 'engine')
+    if (secs) setPop({ key: Date.now(), stage: here.id, label: here.label, n: idx + 1, secs })
     go(STAGES[idx + 1].id)
   }
   const back = () => (idx === 0 ? onClose?.() : go(STAGES[idx - 1].id))
@@ -323,6 +338,7 @@ export default function ListingOnboardingFlow({
             <p className="truncate text-[11px] font-extrabold uppercase tracking-[0.14em] text-plum-600">{config.name}</p>
             <p className="truncate text-[14px] font-extrabold text-ink">Step {idx + 1} of {STAGES.length} · {here.label}</p>
           </div>
+          <PreviewButton onClick={() => setLivePreview(true)} />
           <button type="button" onClick={() => { saveDraft({ answers: a, step }); onClose?.() }}
             className="flex h-9 items-center gap-1 rounded-full bg-plum-50 px-3 text-[11.5px] font-extrabold text-plum-700"><LogOut size={13} />Save & exit</button>
         </div>
@@ -350,7 +366,8 @@ export default function ListingOnboardingFlow({
                   case 'cat_extras': return <ExtrasBuilder {...ctx} />
                   case 'cat_prep': return <PrepStage {...ctx} />
                   case 'cat_safety': return <FoodSafetyStage {...ctx} />
-                  case 'review': return <CateringReview a={a} done={done} go={go} fee={fee} payout={payout} />
+                  case 'review': return <CateringReview a={a} done={done} go={go} fee={fee} payout={payout} previewModel={draftModel} onOpenPreview={() => setLivePreview(true)}
+                    onEditSection={section => go(stageForSection(section, config))} />
                   default: return null
                 }
               })()}
@@ -399,7 +416,9 @@ export default function ListingOnboardingFlow({
               {here.id === 'compliance' && <ComplianceStage config={config} answers={a.answers} vendorId={vendorId} />}
               {here.id === 'booking' && <BookingStage value={a.booking} set={put('booking')} />}
               {here.id === 'payout' && <PayoutStage status={payout} vendorId={embedded ? null : vendorId} />}
-              {!catering && here.id === 'review' && <ReviewStage config={config} a={a} done={done} stages={STAGES} go={go} fee={fee} suggested={suggested} />}
+              {!catering && here.id === 'review' && <ReviewStage config={config} a={a} done={done} stages={STAGES} go={go} fee={fee} suggested={suggested}
+                previewModel={draftModel} onOpenPreview={() => setLivePreview(true)}
+                onEditSection={section => go(stageForSection(section, config))} />}
             </motion.div>
           </AnimatePresence>
         </div>
@@ -423,6 +442,12 @@ export default function ListingOnboardingFlow({
           </motion.button>
         </div>
       </footer>
+
+      {/* Both portal to the page, above the flow. */}
+      <StepPop pop={pop} model={draftModel} total={STAGES.length} onClose={() => setPop(null)}
+        onFull={() => { setPop(null); setLivePreview(true) }} />
+      <LivePreviewScreen open={livePreview} model={draftModel} onClose={() => setLivePreview(false)}
+        onEditSection={section => { setLivePreview(false); go(stageForSection(section, config)) }} />
     </div>
   )
 
@@ -430,7 +455,7 @@ export default function ListingOnboardingFlow({
 }
 
 /* ── Review: every section with Edit, a customer preview, and what is left ── */
-function ReviewStage({ config, a, done, stages, go, fee, suggested }) {
+function ReviewStage({ config, a, done, stages, go, fee, suggested, previewModel, onOpenPreview, onEditSection }) {
   const items = (a.catalogue ?? []).slice(0, 4)
   const pkgs = a.packages?.length ? a.packages : suggested
   /* The partner's own rate, not a fee-inflated customer price.
@@ -447,12 +472,15 @@ function ReviewStage({ config, a, done, stages, go, fee, suggested }) {
   return (
     <>
       <SectionTitle title="Review & submit" sub="Your listing goes live once Sambramo approves it. Prices are protected for 15 days after that." />
+      {/* The customer preview at Submit: the real storefront, in a phone,
+          built from these answers. It replaced a purple summary card that
+          showed a name and one number and called itself the listing. */}
+      {previewModel && <SubmitPreview model={previewModel} onOpenFull={onOpenPreview} onEditSection={onEditSection} />}
       <div className="rounded-[22px] bg-gradient-to-br from-plum-700 to-plum-950 p-4 text-white">
-        <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-plum-200">Your listing</p>
+        <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-plum-200">What you earn</p>
         <p className="mt-1.5 text-[19px] font-extrabold">{a.basics.display_name || 'Your service'}</p>
-        {a.basics.tagline && <p className="text-[12.5px] text-plum-100">{a.basics.tagline}</p>}
         {from.length > 0 && (
-          <p className="mt-2 text-[14px] font-extrabold">
+          <p className="mt-1 text-[14px] font-extrabold">
             You earn from {inr(Math.min(...from))}
           </p>
         )}

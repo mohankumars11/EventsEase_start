@@ -1,9 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import {
-  Check, ChevronDown, ChevronRight, CirclePlus, Edit3, Filter, Leaf,
-  Loader2, Plus, Search, ShieldCheck, Sparkles, Trash2, UtensilsCrossed,
-  Users, WalletCards, X,
-} from 'lucide-react'
+import { Check, ChevronDown, ChevronRight, CirclePlus, Edit3, Filter, Leaf, Loader2, Plus, Search, ShieldCheck, Trash2, UtensilsCrossed, Users, WalletCards, X, Info, ListPlus, Package } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { formatINR } from '../../utils/format'
 import {
@@ -671,7 +667,7 @@ function CateringPackageEditor({ vendor, service, capability, catalogueDishes = 
 
       {!previewOnly && step === 'package' && (
         <section className="space-y-3 rounded-[26px] bg-white p-4 ring-1 ring-ink/[0.06]">
-          <SectionHeading icon={Sparkles} title="Name and shape" helper="You choose the package name. Sambramo does not force generic tiers." />
+          <SectionHeading icon={Package} title="Name and shape" helper="You choose the package name. Sambramo does not force generic tiers." />
           <Field fieldId="catering_package_name" label="Menu package name" value={draft.name} onChange={v => update('name', v)} placeholder="Wedding Plantain Leaf Feast" />
           <div>
             <p className="mb-2 text-[10.5px] font-extrabold uppercase tracking-[0.08em] text-ink-mute">Cuisine used in this package</p>
@@ -733,7 +729,7 @@ function CateringPackageEditor({ vendor, service, capability, catalogueDishes = 
                   ]).values()],
                 }))}
                 className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-white py-2.5 text-[11px] font-extrabold text-plum-700 ring-1 ring-plum-200">
-                <Sparkles size={13} /> Start from the {capability.dishIds.length} dishes already on my listing
+                <ListPlus size={13} /> Start from the {capability.dishIds.length} dishes already on my listing
               </button>
             )}
           </div>
@@ -879,7 +875,7 @@ function CateringPackageEditor({ vendor, service, capability, catalogueDishes = 
             <InfoMetric label="Starting rate" value={rateFromBands(draft.rateBands) ? formatINR(rateFromBands(draft.rateBands)) + ' / guest' : '—'} icon={WalletCards} />
             <InfoMetric label="Menu range" value={draft.maxGuests ? draft.minGuests + '–' + draft.maxGuests + ' guests' : draft.minGuests + '+ guests'} icon={Users} />
           </div>
-          <InfoCard icon={Sparkles} text="Rates are stored as versions with the exact guest bands used at activation, so existing bookings retain the historical price snapshot." />
+          <InfoCard icon={Info} text="Rates are stored as versions with the exact guest bands used at activation, so existing bookings retain the historical price snapshot." />
         </section>
       )}
 

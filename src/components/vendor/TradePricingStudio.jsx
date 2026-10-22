@@ -4,8 +4,8 @@ import './TradeCustomerPreview.css'
 import {
   ArrowLeft, ArrowRight, BadgeCheck, Check, ChevronDown, ChevronLeft,
   CirclePlus, Eye, FileText, Images, Info, Loader2, Package, Pencil,
-  Plus, Ruler, ShieldCheck, Sparkles, Trash2, WalletCards,
-  Camera, Clock3, Truck, Users, Flower2, Music2, Utensils, Video, MapPin, Boxes, Zap,
+  Plus, Ruler, ShieldCheck, Layers, Trash2, WalletCards,
+  Camera, Clock3, Truck, Users, Palette, Music2, Utensils, Video, MapPin, Boxes, Zap,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { formatINR } from '../../utils/format'
@@ -379,7 +379,7 @@ export default function TradePricingStudio({ vendor, service, config, onBack, on
             {packages.map(pkg => (
               <button key={pkg.id} type="button" onClick={() => openExisting(pkg)} className="w-full rounded-[20px] bg-[#FBFAFD] p-3.5 text-left ring-1 ring-[#E8E2EE]">
                 <div className="flex items-start gap-3">
-                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[#EEE7FA] text-[#2A085C]">{pkg.source === 'SAMBRAMO_TEMPLATE' ? <Sparkles size={17} /> : <Package size={17} />}</span>
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[#EEE7FA] text-[#2A085C]">{pkg.source === 'SAMBRAMO_TEMPLATE' ? <Layers size={17} /> : <Package size={17} />}</span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-[14px] font-extrabold text-[#211735]">{pkg.name || 'Unnamed package'}</span>
                     <span className="mt-1 block text-[11.5px] text-[#6B5B85]">
@@ -954,7 +954,7 @@ function PricingStep({ config, units, draft, readOnly, onUpdate }) {
           <PresetNumberField required label={isCatalog ? 'Ready in' : 'How much notice?'} value={draft.lead_time} disabled={readOnly} presets={LEAD_TIME_PRESETS} suffix="days" onChange={v => onUpdate('lead_time', v)} />
           <ChoiceField required label="Where do you serve?" value={draft.travel_policy} disabled={readOnly} options={TRAVEL_POLICIES} onChange={v => onUpdate('travel_policy', v)} />
           <div className="trade-pricing-platform-lane" role="status">
-            <div className="trade-pricing-platform-lane-icon">{transactionLaneFor({ tradeId: config?.trade_id, pricingUnit: draft.pricing_unit, customFirst: config?.mode === 'CUSTOM' }) === TRANSACTION_LANES.INSTANT_QUOTE_PAY ? <Sparkles size={16} /> : <Zap size={16} />}</div>
+            <div className="trade-pricing-platform-lane-icon">{transactionLaneFor({ tradeId: config?.trade_id, pricingUnit: draft.pricing_unit, customFirst: config?.mode === 'CUSTOM' }) === TRANSACTION_LANES.INSTANT_QUOTE_PAY ? <Layers size={16} /> : <Zap size={16} />}</div>
             <div>
               <strong>{transactionLaneCopy(transactionLaneFor({ tradeId: config?.trade_id, pricingUnit: draft.pricing_unit, customFirst: config?.mode === 'CUSTOM' }), { concise: true })}</strong>
               <span>Sambramo decides the final lane from the customer requirement. You do not choose a payment method.</span>
@@ -997,7 +997,7 @@ function addonArtwork(name) {
   if (/video|film|reel|edit/.test(text)) return { Icon: Video, tone: 'blue', note: 'Video / content upgrade' }
   if (/travel|trip|vehicle|pickup|truck|transport|fuel/.test(text)) return { Icon: Truck, tone: 'mint', note: 'Transport or route extra' }
   if (/crew|staff|worker|guard|operator|person|host/.test(text)) return { Icon: Users, tone: 'lilac', note: 'Additional people or support' }
-  if (/flower|floral|decor|stage|backdrop|mandap/.test(text)) return { Icon: Flower2, tone: 'amber', note: 'Decor / setup upgrade' }
+  if (/flower|floral|decor|stage|backdrop|mandap/.test(text)) return { Icon: Palette, tone: 'amber', note: 'Decor / setup upgrade' }
   if (/music|sound|dj|artist|perform/.test(text)) return { Icon: Music2, tone: 'blue', note: 'Entertainment upgrade' }
   if (/food|meal|menu|drink|catering|live counter/.test(text)) return { Icon: Utensils, tone: 'mint', note: 'Food / service extra' }
   if (/time|hour|duration|overtime|extended|priority/.test(text)) return { Icon: Clock3, tone: 'amber', note: 'Extra time or priority' }

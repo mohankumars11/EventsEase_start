@@ -1,4 +1,4 @@
-import { ArrowRight, Banknote, Landmark, ShieldCheck, Sparkles } from 'lucide-react'
+import { ArrowRight, Banknote, Landmark, ShieldCheck, TrendingUp } from 'lucide-react'
 import { formatINR } from '../../../utils/format'
 import { destinationOf, payoutReady } from '../../../lib/documents/mask'
 
@@ -16,7 +16,7 @@ export default function EarningsHero({
       <div className="relative flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="inline-flex items-center gap-1.5 rounded-full bg-plum-50 px-2.5 py-1 text-[9.5px] font-black uppercase tracking-[0.12em] text-plum-700 ring-1 ring-plum-100">
-            <Sparkles size={11} />
+            <TrendingUp size={11} />
             Ready to claim
           </div>
           <p className="mt-2 font-serif text-[34px] font-extrabold leading-none tracking-tight text-ink tabular-nums">

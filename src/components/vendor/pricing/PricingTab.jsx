@@ -7,12 +7,13 @@
  * works today changes for them.
  */
 import { useEffect, useMemo, useState } from 'react'
-import { Loader2, Sparkles, ArrowRight, CircleAlert, Hourglass, CircleHelp, CheckCircle2, ChevronRight, X, ArrowLeft, MapPin, Package, CalendarClock, SlidersHorizontal, IndianRupee, Eye, Pencil } from 'lucide-react'
+import { Loader2, ArrowRight, CircleAlert, Hourglass, CircleHelp, CheckCircle2, ChevronRight, X, ArrowLeft, MapPin, Package, CalendarClock, SlidersHorizontal, IndianRupee, Eye, Pencil, Lightbulb } from 'lucide-react'
 import PricingControlCenter, { SeasonalUpdate } from './PricingControlCenter'
 import TradePricing from './TradePricing'
 import { useEngineReady, onEngine } from '../../../lib/tradeEngine'
 import SambramoPricingStudio from '../SambramoPricingStudio'
 import AnchorCustomerPreviewScreen from './AnchorCustomerPreviewScreen'
+import { ANCHOR_SECTION_STAGE } from '../../customer/storefront/storefrontModel'
 import { Sheet } from '../anchor/ui'
 import { hasProfileFor } from '../../../data/tradePricingProfiles'
 import { useAnchorPricing } from '../../../hooks/useAnchorPricing'
@@ -331,11 +332,11 @@ export default function PricingTab({ vendor, services = [], onOpenListings, onEd
           {detailHeader}
           {anchors.some(s => s.id === selectedService.id) ? (
             <AnchorPricing service={selectedService} vendor={vendor}
-              onEdit={() => onEditListing?.(selectedService)}
+              onEdit={step => onEditListing?.(selectedService, typeof step === 'string' ? step : null)}
               onOpenPayout={onOpenPayout} />
           ) : engine.some(s => s.id === selectedService.id) ? (
             <TradePricing service={selectedService} vendor={vendor}
-              onEdit={() => onEditListing?.(selectedService)}
+              onEdit={step => onEditListing?.(selectedService, typeof step === 'string' ? step : null)}
               onOpenPayout={onOpenPayout} />
           ) : legacyScreen === 'details' ? (
             <LegacyListingDetails
@@ -698,7 +699,7 @@ function AnchorPricing({ service, vendor, onEdit, onOpenPayout }) {
     )}
     {d.seasonal.filter(v => v.status === 'LIVE').map(v => (
       <div key={v.id} className="flex gap-2.5 rounded-[20px] bg-white p-4 ring-1 ring-amber-200">
-        <Sparkles size={17} className="mt-0.5 shrink-0 text-amber-600" />
+        <Lightbulb size={17} className="mt-0.5 shrink-0 text-amber-600" />
         <p className="text-[12.5px] font-semibold text-ink/75">Seasonal prices are live for events from {fmt(v.effective_from)} to {fmt(v.effective_to)}.</p>
       </div>
     ))}
@@ -745,7 +746,7 @@ function AnchorPricing({ service, vendor, onEdit, onOpenPayout }) {
           city={view.listing.city}
           rating={vendor?.rating_avg}
           reviewCount={vendor?.review_count ?? 0}
-          verified={vendor?.is_verified === true}
+          verified={vendor?.is_verified === true || vendor?.verification_status === 'approved'}
           packages={view.packages.map(p => ({ tier: p.tier, name: p.name, hours: p.hours, customer_paise: p.price_paise, inclusions: p.inclusions }))}
           pricingModels={view.models.map(m => ({ name: MODEL_LABEL[m.id] ?? m.id, rules: m.rules, price: `${rupees(m.customer_paise)} ${m.unit}` }))}
           extras={view.addons.map(a => ({ name: a.name, price: `${rupees(a.paise)} ${a.unit}` }))}
@@ -757,6 +758,7 @@ function AnchorPricing({ service, vendor, onEdit, onOpenPayout }) {
           instantBookEnabled={d.current.booking_rules?.instant !== false && d.current.booking_rules?.instant !== 'false'}
           onClose={() => setSheet(null)}
           onPick={picked => setSheet({ tier: picked.tier })}
+          onEditSection={section => { setSheet(null); onEdit?.(ANCHOR_SECTION_STAGE[section] ?? 'review') }}
         />
       )}
 

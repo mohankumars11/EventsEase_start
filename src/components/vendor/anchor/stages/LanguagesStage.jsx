@@ -53,7 +53,7 @@ export default function LanguagesStage({ value, set }) {
         <div className="mt-3"><TextField value={v.style_other} onChange={x => set({ ...v, style_other: x })} placeholder="Other style (optional)" max={40} /></div>
       </Card>
 
-      <Sheet open={sheet} onOpenChange={setSheet} title="Add a language">
+      <Sheet full open={sheet} onOpenChange={setSheet} title="Add a language">
         <div className="mb-3 flex items-center gap-2 rounded-2xl bg-[#f7f6fb] px-3.5 ring-1 ring-ink/[0.06]">
           <Search size={16} className="text-ink/40" />
           <input autoFocus value={q} onChange={e => setQ(e.target.value)} placeholder="Search or type a language"

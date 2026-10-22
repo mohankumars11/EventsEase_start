@@ -1,8 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
-import {
-  CalendarCheck, CalendarDays, CheckCircle2, ChevronLeft, ChevronRight,
-  Loader2, Pause, Sparkles, Zap,
-} from 'lucide-react'
+import { CalendarCheck, CalendarDays, CheckCircle2, ChevronLeft, ChevronRight, Loader2, Pause, Zap, Lightbulb } from 'lucide-react'
 import { useToast, friendlyError } from '../../context/ToastContext'
 import DayStatusSheet from './DayStatusSheet'
 import {
@@ -423,7 +420,7 @@ export default function VendorAvailability({
         {/* The cost of leaving it, said once, where the number is. Not a
             standing banner: this card is only ever opened on purpose. */}
         <p className="mt-2.5 flex items-start gap-1.5 border-t border-orange-100 pt-2.5 text-[11.5px] leading-snug text-gray-500">
-          <Sparkles size={13} className="mt-0.5 shrink-0 text-saffron-500" />
+          <Lightbulb size={13} className="mt-0.5 shrink-0 text-saffron-500" />
           <span>
             We keep offering you jobs on every day you have not blocked. Accepting one
             and cancelling costs a strike — three in 90 days suspends the account.

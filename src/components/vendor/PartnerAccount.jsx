@@ -5,12 +5,7 @@ import BuildStamp from '../partner/BuildStamp'
 import { validateForm, normalise } from '../../lib/validation/fieldRules'
 import { useServerErrors, focusFirstInvalid, useFieldCheck, FieldMessage } from '../partner/FieldCheck'
 import { asFormError, parseServerError } from '../../lib/validation/serverError'
-import {
-  Store, MapPin, Phone, UserRound, Landmark, BadgeCheck, ShieldCheck, ClipboardList,
-  Bell, MessageSquare, ArrowLeft, LifeBuoy, Settings,
-  LogOut, Check, Loader2, CircleDot, Star, DoorOpen,
-  TriangleAlert, Sparkles, Navigation, Gift, FileText, TrendingUp,
-} from 'lucide-react'
+import { Store, MapPin, Phone, UserRound, Landmark, BadgeCheck, ShieldCheck, ClipboardList, Bell, MessageSquare, ArrowLeft, LifeBuoy, Settings, LogOut, Check, Loader2, CircleDot, Star, DoorOpen, TriangleAlert, Navigation, Gift, FileText, TrendingUp, Briefcase, Lightbulb } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import { BRAND } from '../../config/sambramo'
@@ -522,7 +517,7 @@ export default function PartnerAccount({
         <Row icon={UserRound} label="Partner profile"  onClick={() => onOpenScreen('profile')} />
         <Row icon={Store}     label="My services"      onClick={() => onOpenScreen('services')}
              badge={drafts ? `${drafts} draft${drafts === 1 ? '' : 's'}` : null} tone="attention" />
-        <Row icon={Sparkles}  label="Business profile" onClick={() => onOpenScreen('business')} />
+        <Row icon={Briefcase}  label="Business profile" onClick={() => onOpenScreen('business')} />
       </Group>
 
       <Group title="Operations">
@@ -1385,7 +1380,7 @@ function YourPlan({ tier }) {
     <div className="space-y-2.5">
       {LAUNCH_OFFER && (
         <div className="flex items-start gap-2.5 rounded-[16px] bg-forest-50 p-3 ring-1 ring-forest-200">
-          <Sparkles size={16} className="mt-0.5 shrink-0 text-forest-700" />
+          <Lightbulb size={16} className="mt-0.5 shrink-0 text-forest-700" />
           <div className="min-w-0">
             <p className="text-[13px] font-extrabold text-forest-900">
               You are on the top plan, free

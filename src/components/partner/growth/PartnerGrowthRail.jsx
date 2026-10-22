@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Sparkles } from 'lucide-react'
+import { TrendingUp } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { selectPromotions } from '../../../lib/promotions'
 import { isMissingTable } from '../../../lib/serviceCatalog'
@@ -113,7 +113,7 @@ export default function PartnerGrowthRail({ vendorId, facts = {}, onAct }) {
   return (
     <section className="mb-4" aria-label="Your Sambramo growth">
       <div className="mb-2.5 flex items-start gap-2">
-        <Sparkles size={15} className="mt-0.5 shrink-0 text-plum-600" />
+        <TrendingUp size={15} className="mt-0.5 shrink-0 text-plum-600" />
         <div className="min-w-0">
           <h2 className="font-mono text-[11px] font-extrabold uppercase tracking-[0.14em] text-plum-800">
             Your Sambramo growth

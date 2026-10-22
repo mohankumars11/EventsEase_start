@@ -1,11 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { setTrackingContext, track, EVENTS } from '../../lib/track'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
-import {
-  ClipboardList, CalendarDays, LayoutDashboard, UserCog,
-  Loader2, AlertCircle,
-  Bell, IndianRupee, Calculator, Eye, Sparkles, Store, Plus,
-} from 'lucide-react'
+import { ClipboardList, CalendarDays, LayoutDashboard, UserCog, Loader2, AlertCircle, Bell, IndianRupee, Calculator, Eye, Store, Plus } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { BRAND } from '../../config/sambramo'
 import { PARTNER_PLANS, PLAN_BY_ID, effectiveTier } from '../../config/partnerPlans'
@@ -116,6 +112,20 @@ export default function VendorDashboard() {
   useEffect(() => {
     if (params.get('start') || params.get('edit')) setListFlowOpen(true)
   }, [params])
+
+  /* ── And on the very render the parameter arrives ────────────────
+     The effect above was not enough: Edit listing still bounced to
+     Pricing on the FIRST tap and worked on the second. On that first
+     render the latch is still false, so the redirect below is rendered;
+     React runs a child's effects before its parent's, so <Navigate>
+     fired before the latch was set, replaced the URL and dropped ?edit.
+     The latch then set anyway, which is why the second tap worked.
+
+     So the parameter counts as "open" in the same render it appears,
+     and the latch only has to hold it after VendorServiceList consumes
+     it. */
+  const listFlowRequested = !!(params.get('start') || params.get('edit'))
+  const flowOpen = listFlowOpen || listFlowRequested
 
   const account = useVendorAccount()
   const {
@@ -434,6 +444,7 @@ export default function VendorDashboard() {
         <div className="mb-0">
           <JobsHeader
             businessName={businessName}
+            verified={vendor?.verification_status === 'approved'}
             /* The PERSON, for the greeting. The h1 below it carries the
                business. `profiles.full_name` is free text, so
                `firstNameOf` decides whether any of it is usable. */
@@ -862,7 +873,11 @@ export default function VendorDashboard() {
               /* Straight to Pricing rather than bouncing off the old
                  route's redirect. */
               onOpenListings={() => setTab('pricing')}
-              onEditListing={s => navigate('/dashboard/vendor?tab=list&edit=' + encodeURIComponent(s.id))}
+              /* `step` opens the form at one section: the customer
+                 preview's Edit buttons pass it, so "Edit" beside the
+                 gallery lands on the photos, not on the review. */
+              onEditListing={(s, step) => navigate('/dashboard/vendor?tab=list&edit=' + encodeURIComponent(s.id)
+                + (typeof step === 'string' && step ? '&step=' + encodeURIComponent(step) : ''))}
               onOpenPayout={() => (import.meta.env.VITE_FF_PAYOUT_FULLSCREEN === 'false'
                 ? openAccount('bank') : navigate('/partner/payouts'))}
             />
@@ -916,11 +931,11 @@ export default function VendorDashboard() {
 
             The flow being open is state, not a URL parameter, so it is
             held as state and the parameter only ever starts it. */}
-        {tab === 'list' && !listFlowOpen && (
+        {tab === 'list' && !flowOpen && (
           <Navigate to="/dashboard/vendor?tab=pricing" replace />
         )}
 
-        {tab === 'list' && listFlowOpen && (
+        {tab === 'list' && flowOpen && (
           <div className="space-y-3">
             <VendorServiceList
             flowOnly
@@ -944,6 +959,7 @@ export default function VendorDashboard() {
             /* Exact-listing edit from Step 1. This is deliberately a listing id,
                not a trade/category, so Edit cannot reopen the generic picker. */
             editListing={params.get('edit')}
+            editStep={params.get('step')}
             /* Step 1's sub-flow hands back here. When the partner came
                from onboarding the questionnaire must return them to the
                Business and Services hub rather than leaving them on the
@@ -958,6 +974,7 @@ export default function VendorDashboard() {
             onEditConsumed={() => setParams(prev => {
               const next = new URLSearchParams(prev)
               next.delete('edit')
+              next.delete('step')
               return next
             }, { replace: true })}
             />

@@ -87,7 +87,7 @@ function EditSheet({ tier, pkg, offered, maxHours, onClose, onSave }) {
   const hourOpts = [1, 2, 3, 4, 5, 6, 8, 10, 12].filter(h => h <= (maxHours || 12))
   const ids = Object.keys(offered).concat('pre_event_call').filter((x, k, a) => a.indexOf(x) === k)
   return (
-    <Sheet open={!!tier} onOpenChange={o => !o && onClose()} title={pkg ? `Edit ${pkg.name}` : ''}>
+    <Sheet full open={!!tier} onOpenChange={o => !o && onClose()} title={pkg ? `Edit ${pkg.name}` : ''}>
       {pkg && (
         <>
           <Label hint={`Suggested: ${rupees(takeHomeOf(pkg.generated_price_paise))}. Changes go to our team for review.`}>Your rate</Label>

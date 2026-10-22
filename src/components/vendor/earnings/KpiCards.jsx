@@ -1,4 +1,4 @@
-import { ArrowDownRight, ArrowUpRight, CalendarCheck2, Clock3, IndianRupee, Minus, Send, Sparkles } from 'lucide-react'
+import { ArrowDownRight, ArrowUpRight, CalendarCheck2, Clock3, IndianRupee, Minus, Send } from 'lucide-react'
 import { formatINR } from '../../../utils/format'
 
 const TONE = {
@@ -50,7 +50,6 @@ export function KpiCard({ label, kpi, sub, tone = 'plum', periodLabel, goodWhenU
         <span className={`flex h-9 w-9 items-center justify-center rounded-[13px] ${iconBg} shadow-sm`}>
           <Icon size={18} strokeWidth={2.4} />
         </span>
-        <Sparkles size={14} className="mt-1 opacity-25" />
       </div>
       <p className="relative mt-2.5 inline-flex rounded-full bg-white/65 px-2 py-0.5 text-[8.5px] font-black uppercase tracking-[0.1em]">
         {label}

@@ -6,7 +6,7 @@
  * open day with no live package shows nothing bookable, and a live package
  * does not make a blocked day bookable.
  */
-import { Sparkles, Lock } from 'lucide-react'
+import { Lock, CalendarRange } from 'lucide-react'
 import { rupees } from '../../../lib/tierPackages'
 
 export default function DayPricing({ info }) {
@@ -17,7 +17,7 @@ export default function DayPricing({ info }) {
         <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">Bookable this day</p>
         {info.seasonal && (
           <span className="flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10.5px] font-extrabold text-amber-800">
-            <Sparkles size={11} /> {info.seasonal}
+            <CalendarRange size={11} /> {info.seasonal}
           </span>
         )}
       </div>

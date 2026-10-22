@@ -61,17 +61,26 @@
 
 .app-splash.app-splash-is-leaving { opacity: 0; }
 
-/* ── The name, in the brand's own face ────────────────────────────────
+/* ── The name, in Manrope ExtraBold, wide-tracked ─────────────────────
 
-   This was Manrope 900. Manrope is the UI face; the brand face is
-   'Sambramo Display', and it is what the wordmark is set in everywhere
-   else — the Jobs header, the tab chip, the auth panels. A splash in a
-   different typeface means the first sighting of the name and every
-   later one are two different objects.
+   Asked for by screenshot on 2026-10-22: the earlier splash, Manrope at
+   its heaviest cut with open tracking and a faint white bloom, "not the
+   bold one". The bold one was Archivo Black, which is a display face
+   with almost no counters at this size. It reads as a stamp rather than
+   a name, and it was not the face anything else in the app is set in.
 
-   Same stack as .brand-wordmark-sans, deliberately repeated rather than
-   @applied: this ships with the splash and must not wait on the
-   Tailwind layer to resolve a utility. */
+   Manrope IS the app's face (every button and line of UI), so the first
+   word a partner sees and every word after it are now one family. The
+   Jobs header chip uses the same settings.
+
+   900 is asked for and 800 is drawn, because Manrope stops at 800. It
+   is written as 800 so nobody goes looking for a heavier cut.
+
+   Sized to its space, measured: the reference screenshot has the word
+   across 67.6% of the screen. 10.6vw measured 65% in the rendered
+   splash, so it is 11vw, which lands on the reference. That leaves
+   clear ground either side on a 360px handset, so it never reads as
+   cropped. */
 .app-splash-wordmark {
   position: relative;
   z-index: 2;
@@ -85,13 +94,16 @@
   justify-content: center;
   width: min(88vw, 760px);
   color: #fff;
-  font-family: 'Sambramo Display', 'Arial Black', Manrope, system-ui, sans-serif;
-  font-weight: 400;
-  font-size: clamp(40px, 10.2vw, 80px);
+  font-family: Manrope, system-ui, sans-serif;
+  font-weight: 800;
+  font-size: clamp(38px, 11vw, 80px);
   line-height: 1;
-  letter-spacing: .035em;
+  letter-spacing: .045em;
   text-align: center;
   white-space: nowrap;
+  /* The bloom in the reference: a hairline of white to crisp the edges
+     on the purple, and a wide faint glow that lifts the word off it. */
+  text-shadow: 0 0 1px rgba(255, 255, 255, .9), 0 5px 24px rgba(255, 255, 255, .08);
 }
 
 .app-splash-wordmark span {
@@ -234,6 +246,6 @@
 }
 
 @media (max-width: 360px) {
-  .app-splash-wordmark { font-size: 38px; letter-spacing: .028em; }
+  .app-splash-wordmark { font-size: 36px; letter-spacing: .04em; }
   .app-splash-tagline { font-size: 15px; }
 }

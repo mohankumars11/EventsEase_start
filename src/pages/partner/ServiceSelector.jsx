@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'motion/react'
-import { ArrowLeft, ArrowRight, Check, Loader2, Search, X, ShieldCheck, Landmark, Sparkles, ChevronRight, RotateCcw } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Check, Loader2, Search, X, ShieldCheck, Landmark, ChevronRight, RotateCcw, Store } from 'lucide-react'
 import SambramoTradePictogram from '../../components/vendor/SambramoTradePictogram'
 import { scanForTrade } from '../../components/vendor/TradeGrid'
 import { usePayoutStatus } from '../../components/vendor/anchor/stages/PayoutReviewStages'
@@ -185,7 +185,7 @@ export default function ServiceSelector() {
             </button>
           ) : <div className="h-6" />}
           <p className="relative mt-2 flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[0.16em] text-plum-200">
-            <Sparkles size={13} className="text-saffron-300" /> {adding ? 'Add another service' : 'Sambramo partner'}
+            <Store size={13} className="text-saffron-300" /> {adding ? 'Add another service' : 'Sambramo partner'}
           </p>
           <h1 className="relative mt-2 text-[clamp(1.6rem,7.4vw,2.05rem)] font-black leading-[1.08] tracking-tight">What services do you offer?</h1>
           <p className="relative mt-2.5 max-w-md text-[13.5px] leading-relaxed text-white/75">

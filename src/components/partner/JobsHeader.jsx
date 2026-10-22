@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Bell } from 'lucide-react'
+import { Bell, BadgeCheck } from 'lucide-react'
 import { greetingFor, msUntilNextBand } from '../../lib/greeting'
 import OnlineToggle from './OnlineToggle'
 import PartnerAvatar from '../vendor/PartnerAvatar'
@@ -54,6 +54,9 @@ function useGreeting(fullName) {
 export default function JobsHeader({
   businessName, fullName = null, vendorId, avatarUrl, acceptingJobs, unreadAlerts = 0,
   onAcceptingChange, onOpenProfile, onOpenAlerts,
+  /* Approved by Sambramo. The same green badge customers see on the
+     storefront, so the partner knows what their listing carries. */
+  verified = false,
 }) {
   const { wish } = useGreeting(fullName)
   return (
@@ -67,10 +70,16 @@ export default function JobsHeader({
                 (#1B0240) reads as navy at this size — and navy is not
                 this brand. A solid amethyst ground is the same object
                 as the splash, so the first thing a partner ever sees
-                and the thing at the top of every session match. */}
+                and the thing at the top of every session match.
+
+                The letters match too: Manrope ExtraBold, wide-tracked,
+                the splash's face, not Archivo Black. 16px with 0.08em
+                tracking fills the chip the way the heavier face did at
+                15px. Manrope's narrower letters need the extra size and
+                air to hold the same width. */}
             <span
               aria-label="Sambramo"
-              className="brand-wordmark-sans shrink-0 rounded-[11px] px-3 py-[7px] text-[15px] uppercase leading-none tracking-[0.055em] text-white"
+              className="shrink-0 rounded-[11px] px-3 py-[7px] font-sans text-[16px] font-extrabold uppercase leading-none tracking-[0.08em] text-white"
               /* #5B21A8 — the same light royal amethyst the splash
                  paints, and the native launch ground with it. One
                  purple across the whole brand: the screen that opens
@@ -111,6 +120,7 @@ export default function JobsHeader({
             by the line box itself. */}
         <h1 className="mt-0.5 flex max-w-full items-baseline gap-1.5 pb-0.5 text-[26px] font-black leading-tight tracking-[-0.03em] text-[#17152B] sm:text-[31px]">
           <span className="min-w-0 truncate">{businessName ?? 'Your business'}</span>
+          {verified && <BadgeCheck size={24} className="shrink-0 self-center fill-[#16A34A] text-white" aria-label="Verified by Sambramo" data-verified />}
           <WavingHand />
         </h1>
 

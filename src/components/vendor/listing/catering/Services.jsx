@@ -10,7 +10,7 @@
  */
 import { useState } from 'react'
 import { motion } from 'motion/react'
-import { Plus, Pencil, Archive, ArchiveRestore, ChefHat, Package, Sparkles, AlertTriangle } from 'lucide-react'
+import { Plus, Pencil, Archive, ArchiveRestore, ChefHat, Package, AlertTriangle, Layers } from 'lucide-react'
 import { Card, Label, TextField, ChipRow, Segmented, Toggle, Sheet, SectionTitle, OptionCard } from '../../anchor/ui'
 import { COUNTER_TEMPLATES, COUNTER_PRICE_MODELS, EVENT_TYPES, INCLUDED_SERVICES, ADDON_TEMPLATES, ADDON_UNIT_LABEL, slugKey, toR, toP, inr, partnerRate } from './options'
 import { counterProblems, countersDone, packageProblems, packagesDone, extrasDone } from './rules'
@@ -109,7 +109,7 @@ export function CounterBuilder({ a, put, fee }) {
         </Card>) })}
       <motion.button type="button" whileTap={{ scale: 0.98 }} onClick={() => { setOpen(blank()); setTried(false) }}
         className="mt-3 flex w-full items-center justify-center gap-2 rounded-[22px] border-2 border-dashed border-plum-300 bg-white py-4 text-[14px] font-extrabold text-plum-700"><Plus size={17} /> Add a live counter</motion.button>
-      <Sheet open={!!open} onOpenChange={o => { if (!o) setOpen(null) }} title="Live counter">
+      <Sheet full open={!!open} onOpenChange={o => { if (!o) setOpen(null) }} title="Live counter">
         {open && <CounterEditor c={open} set={setOpen} dishes={dishes} fee={fee} tried={tried} />}
         <button type="button" onClick={save} className="mt-4 h-[52px] w-full rounded-full bg-gradient-to-r from-plum-700 to-fuchsia-600 text-[15px] font-extrabold text-white">Save counter</button>
       </Sheet>
@@ -176,7 +176,7 @@ export function PackageBuilder({ a, put, fee }) {
       {packages.map(p => { const q = packageProblems(p, a); return (
         <Card key={p.key} className={`mt-3 ${p.status === 'archived' ? 'opacity-60' : ''}`}>
           <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-plum-50 text-plum-700">{p.tier ? <Sparkles size={18} /> : <Package size={18} />}</span>
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-plum-50 text-plum-700">{p.tier ? <Layers size={18} /> : <Package size={18} />}</span>
             <div className="min-w-0 flex-1"><p className="truncate text-[14px] font-extrabold">{p.name}{p.tier ? <span className="ml-1.5 rounded-full bg-plum-100 px-2 py-0.5 text-[10.5px] text-plum-700">{TIERS.find(t => t[0] === p.tier)?.[1]}</span> : null}</p>
               <p className="truncate text-[12px] font-bold text-ink/55">{p.price_paise ? `${inr(partnerRate(p.price_paise))} ${p.price_model === 'per_guest' ? 'per guest' : 'fixed'}` : 'No price'} · {p.guest_min ?? '—'}–{p.guest_max ?? '∞'} guests · {(p.menu_keys ?? []).length} menus · {(p.counter_keys ?? []).length} counters</p>
               {q.length > 0 && p.status !== 'archived' && <p className="text-[11.5px] font-bold text-amber-700">Needs: {q[0]}</p>}</div>
@@ -188,7 +188,7 @@ export function PackageBuilder({ a, put, fee }) {
       <motion.button type="button" whileTap={{ scale: 0.98 }} disabled={!(a.menus ?? []).length} onClick={() => { setOpen(blank()); setTried(false) }}
         className="mt-3 flex w-full items-center justify-center gap-2 rounded-[22px] border-2 border-dashed border-plum-300 bg-white py-4 text-[14px] font-extrabold text-plum-700 disabled:opacity-40"><Plus size={17} /> Add a catering package</motion.button>
       {!(a.menus ?? []).length && <p className="mt-2 text-center text-[12px] font-bold text-ink/50">Create a menu first — packages are built from menus.</p>}
-      <Sheet open={!!open} onOpenChange={o => { if (!o) setOpen(null) }} title="Catering package">
+      <Sheet full open={!!open} onOpenChange={o => { if (!o) setOpen(null) }} title="Catering package">
         {open && <PackageEditor p={open} set={setOpen} a={a} fee={fee} tried={tried} />}
         <button type="button" onClick={save} className="mt-4 h-[52px] w-full rounded-full bg-gradient-to-r from-plum-700 to-fuchsia-600 text-[15px] font-extrabold text-white">Save package</button>
       </Sheet>

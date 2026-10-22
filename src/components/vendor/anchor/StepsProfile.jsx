@@ -194,7 +194,7 @@ export function SkillsStep({ value, set }) {
         <ChipRow multi max={3} options={STYLES} value={v.styles ?? []} onChange={x => set({ ...v, styles: x })} size="sm" />
       </Card>
 
-      <Sheet open={langSheet} onOpenChange={setLangSheet} title="Add a language">
+      <Sheet full open={langSheet} onOpenChange={setLangSheet} title="Add a language">
         <div className="flex flex-wrap gap-2">
           {unused.map(l => (
             <Chip key={l} onClick={() => { set({ ...v, languages: [...langs, { name: l, level: 'fluent' }] }); setLangSheet(false) }}>{l}</Chip>
@@ -204,7 +204,7 @@ export function SkillsStep({ value, set }) {
         <OtherAdd onAdd={t => { if (!langs.some(x => x.name === t)) set({ ...v, languages: [...langs, { name: t, level: 'fluent' }] }); setLangSheet(false) }} />
       </Sheet>
 
-      <Sheet open={!!otherSheet} onOpenChange={o => !o && setOtherSheet(null)} title="Add another event type">
+      <Sheet full open={!!otherSheet} onOpenChange={o => !o && setOtherSheet(null)} title="Add another event type">
         <OtherAdd value={otherText} setValue={setOtherText} onAdd={t => {
           const cur = v.events_other?.[otherSheet] ?? []
           if (!cur.includes(t)) set({ ...v, events_other: { ...(v.events_other ?? {}), [otherSheet]: [...cur, t] } })

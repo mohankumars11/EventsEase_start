@@ -212,7 +212,7 @@ export function PackagesStage({ config, value, set, suggested, offered, onRegene
         resetLabel="Start again from my rates"
       />
 
-      <Sheet open={idx >= 0} onOpenChange={o => { if (!o) setEditing(null) }}
+      <Sheet full open={idx >= 0} onOpenChange={o => { if (!o) setEditing(null) }}
         title={idx >= 0 ? `Edit ${pkgs[idx].name}` : ''}
         footer={<button type="button" onClick={() => setEditing(null)}
           className="h-[52px] w-full rounded-full bg-gradient-to-r from-plum-700 to-fuchsia-600 text-[15px] font-extrabold text-white">Done</button>}>

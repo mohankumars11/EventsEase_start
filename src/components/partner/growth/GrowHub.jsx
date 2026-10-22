@@ -1,8 +1,5 @@
 import { useEffect, useState } from 'react'
-import {
-  ClipboardCheck, Sparkles, Store, IndianRupee, Navigation, CalendarDays,
-  ShieldCheck, Gift, ArrowRight, Zap,
-} from 'lucide-react'
+import { ClipboardCheck, Store, IndianRupee, Navigation, CalendarDays, ShieldCheck, Gift, ArrowRight, Zap, Briefcase } from 'lucide-react'
 import { STATUS_LABEL, jobReadiness, nextActions } from '../../../lib/profileCompletion'
 import { fetchReferralSummary } from '../../../lib/referrals'
 import { totalsOf } from '../../../lib/referralModel'
@@ -89,7 +86,7 @@ export default function GrowHub({ checklist, vendor, listings, onGo, onRefresh }
             chip={checklist.done === checklist.total ? 'Complete' : 'Open checklist'}
             tone={checklist.done === checklist.total ? 'complete' : 'submitted'}
             onClick={() => onGo({ screen: 'buildprofile' })} />
-          {row('business', Sparkles, 'Business profile')}
+          {row('business', Briefcase, 'Business profile')}
           {row('trades', Store, 'Trade listings', { screen: 'services' }, { detail: listingLine })}
           {row('pricing', IndianRupee, 'Add and manage services', { screen: 'services' })}
           {row('area', Navigation, 'Service area coverage')}

@@ -1,13 +1,10 @@
 import { useEffect } from 'react'
-import {
-  UserRound, Sparkles, Camera, Phone, Store, IndianRupee, Navigation,
-  CalendarDays, ShieldCheck, Landmark,
-} from 'lucide-react'
+import { UserRound, Camera, Phone, Store, IndianRupee, Navigation, CalendarDays, ShieldCheck, Landmark, Briefcase } from 'lucide-react'
 import { STATUS_LABEL } from '../../../lib/profileCompletion'
 import { Card, ListCard, DetailRow } from './parts'
 
 const ICON = {
-  personal: UserRound, business: Sparkles, photo: Camera, contact: Phone,
+  personal: UserRound, business: Briefcase, photo: Camera, contact: Phone,
   trades: Store, pricing: IndianRupee, area: Navigation, availability: CalendarDays,
   verification: ShieldCheck, payout: Landmark,
 }
