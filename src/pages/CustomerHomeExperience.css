@@ -128,3 +128,24 @@
   box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 3px 8px rgba(91,25,214,.08);
 }
 .sambramo-bottom-nav-item:active .sambramo-bottom-nav-icon { transform: scale(.94); }
+
+.sambramo-occasion-grid { display:grid; grid-template-columns:1fr; gap:8px; }
+.sambramo-occasion-card {
+  display:flex; align-items:center; gap:12px; width:100%; min-height:58px;
+  padding:10px 13px; border:1px solid #eee7f8; border-radius:16px;
+  background:linear-gradient(110deg,#fff 0%,#fdfbff 100%); color:#2a1747;
+  text-align:left; box-shadow:0 3px 12px rgba(55,18,92,.045);
+  transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease;
+}
+.sambramo-occasion-card:active { transform:scale(.99); border-color:#c9b0fa; }
+.sambramo-occasion-number {
+  display:grid; place-items:center; flex:0 0 37px; width:37px; height:37px;
+  border-radius:13px; background:#f1e8ff; color:#5b19d6; font-size:10px; font-weight:800;
+}
+.sambramo-occasion-number--1 { background:#fff0e8; color:#a74a18; }
+.sambramo-occasion-number--2 { background:#e9f7ee; color:#227447; }
+.sambramo-occasion-number--3 { background:#e9f2ff; color:#2459a8; }
+.sambramo-occasion-number--4 { background:#fff0f5; color:#a42d65; }
+.sambramo-occasion-number--5 { background:#fff6d9; color:#8d6510; }
+.sambramo-occasion-name { flex:1; min-width:0; font-size:12px; line-height:1.3; font-weight:750; }
+.sambramo-occasion-card > svg { flex:0 0 auto; color:#7c3aed; }
