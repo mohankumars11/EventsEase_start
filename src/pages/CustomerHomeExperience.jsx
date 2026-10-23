@@ -223,7 +223,18 @@ export default function CustomerHomeExperience() {
           {selectedCategory && mode === 'celebrations' ? <button onClick={() => { setSelectedCategory(null); setQuery('') }}><ChevronDown size={16} /> All categories</button> : <button onClick={() => navigate(mode === 'celebrations' ? '/plan' : '/services')}>View all <ChevronRight size={17} /></button>}
         </div>
 
-        {mode === 'celebrations' ? (
+        {mode === 'celebrations' ? (selectedCategory ? (
+          <div className="sambramo-occasion-grid">
+            {filteredOccasions.map((occasion, index) => (
+              <button className="sambramo-occasion-card" key={occasion} onClick={() => chooseOccasion(occasion)}>
+                <span className={`sambramo-occasion-number sambramo-occasion-number--${index % 6}`}>{String(index + 1).padStart(2, '0')}</span>
+                <span className="sambramo-occasion-name">{occasion}</span>
+                <ChevronRight size={16} />
+              </button>
+            ))}
+            {filteredOccasions.length === 0 && <div className="sambramo-empty-search">No occasions match “{query}”. Try another term.</div>}
+          </div>
+        ) : (
           <div className="sambramo-category-grid">
             {filteredCategories.map(category => (
               <button className="sambramo-category-card" key={category.id} onClick={() => goToCategory(category)}>
@@ -234,7 +245,7 @@ export default function CustomerHomeExperience() {
             ))}
             {filteredCategories.length === 0 && <div className="sambramo-empty-search">No categories match “{query}”. Try a broader search.</div>}
           </div>
-        ) : (
+        )) : (
           <div className="sambramo-service-grid">
             {filteredServices.map(service => (
               <button className="sambramo-service-card" key={service.id} onClick={() => navigate('/book/instant')}>
