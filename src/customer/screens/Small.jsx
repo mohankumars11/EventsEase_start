@@ -67,14 +67,14 @@ export function Notifications() {
 export function Services() {
   return (
     <main className="cx-enter cx-bottom-pad-bar">
-      <header className="cx-safe-top px-4 pb-1">
+      <header className="cx-safe-top px-3 pb-1">
         <h1 className="pt-2 text-[24px] font-extrabold tracking-[-0.035em]">Book a master</h1>
         <p className="mt-0.5 text-[12.5px] font-semibold text-[var(--ink-3)]">34 services, every master verified · confirm and pay in a minute</p>
       </header>
       {TRADE_GROUPS.map(g => (
         <section key={g.id} className="mt-5">
-          <h2 className="px-4 pb-3 text-[17px] font-extrabold tracking-[-0.03em]">{g.label}</h2>
-          <div className="grid grid-cols-4 gap-2.5 px-4">{g.trades.map(t => <ServiceCard key={t.id} tradeId={t.id} />)}</div>
+          <h2 className="px-3 pb-3 text-[17px] font-extrabold tracking-[-0.03em]">{g.label}</h2>
+          <div className="grid grid-cols-3 gap-2 px-3">{g.trades.map(t => <ServiceCard key={t.id} tradeId={t.id} />)}</div>
         </section>
       ))}
     </main>

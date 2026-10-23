@@ -22,7 +22,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowRight, Bell, CalendarDays, ChevronDown, ChevronRight, Loader2, LocateFixed, MapPin, PartyPopper, Search, Users, Wrench, Zap } from 'lucide-react'
+import { ArrowRight, Bell, CalendarDays, ChevronDown, ChevronRight, Loader2, LocateFixed, MapPin, Search, Users, Zap } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { BENGALURU_AREAS } from '../../data/bengaluruAreas'
 import { CATEGORIES, OCCASIONS } from '../data/occasions'
@@ -53,7 +53,7 @@ const LIVE = [
 ]
 
 export default function Home() {
-  const { profile } = useAuth()
+  const { profile, user } = useAuth()
   const navigate = useNavigate()
   const [door, setDoor] = useState(() => { try { return sessionStorage.getItem('sbm.cx.door') ?? 'occasions' } catch { return 'occasions' } })
   const [whereOpen, setWhereOpen] = useState(false)
@@ -61,33 +61,34 @@ export default function Home() {
   const grid = useRef(null)
   const choose = d => { setDoor(d); try { sessionStorage.setItem('sbm.cx.door', d) } catch { /* storage off */ } }
   const name = profile?.full_name?.trim()
+  const photo = profile?.avatar_url ?? user?.user_metadata?.avatar_url ?? user?.user_metadata?.picture ?? null
+  const initial = (name || user?.email || 'S').trim()[0].toUpperCase()
   const hints = useMemo(() => shuffle([...OCCASIONS.filter(o => o.featured).map(o => o.name), ...TRADES.map(t => t.label)]).slice(0, 40), [])
   const celebrate = () => { choose('occasions'); requestAnimationFrame(() => grid.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })) }
 
   return (
     <main className="cx-enter pb-[calc(env(safe-area-inset-bottom,0px)+150px)]">
       <header className="cx-safe-top flex items-center justify-between gap-3 px-3">
-        <button type="button" onClick={() => setWhereOpen(true)} className="cx-press flex min-w-0 items-center gap-2 rounded-full bg-white py-1.5 pl-1.5 pr-3 shadow-[0_0_0_1px_#EEE6FA,0_8px_20px_-14px_rgba(58,18,144,.6)]" data-where>
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[var(--am-100)] text-[var(--brand)]"><MapPin size={18} className="fill-[var(--brand)] text-white" strokeWidth={1.8} /></span>
-          <span className="min-w-0 text-left">
-            <span className="flex items-center gap-0.5 text-[14.5px] font-extrabold tracking-[-0.02em]"><span className="truncate">{where?.area ?? 'Bengaluru'}</span><ChevronDown size={15} className="shrink-0 text-[var(--brand)]" /></span>
-            <span className="block truncate text-[10.5px] font-bold text-[var(--ink-3)]">{where?.city ?? 'Your location'}{where?.test ? ' · testing' : ''}</span>
+        {/* Where you are, said plainly in the corner — not a button. Tapping it still changes it. */}
+        <button type="button" onClick={() => setWhereOpen(true)} className="flex min-w-0 items-start gap-1.5 py-1 text-left" data-where>
+          <MapPin size={20} className="mt-[3px] shrink-0 fill-[var(--brand)] text-white" strokeWidth={1.8} />
+          <span className="min-w-0">
+            <span className="flex items-center gap-0.5 text-[17px] font-extrabold leading-tight tracking-[-0.025em]"><span className="truncate">{where?.area ?? 'Bengaluru'}</span><ChevronDown size={16} className="shrink-0" /></span>
+            <span className="block truncate text-[11.5px] font-semibold text-[var(--ink-3)]">{[where?.city ?? 'Bengaluru', where?.pincode].filter(Boolean).join(' · ')}{where?.test ? ' · testing' : ''}</span>
           </span>
         </button>
         <div className="flex shrink-0 items-center gap-2">
-          <Link to="/notifications" aria-label="Notifications" className="cx-press relative grid h-11 w-11 place-items-center rounded-full bg-white text-[var(--am-ink)] shadow-[0_0_0_1px_#EEE6FA,0_8px_20px_-14px_rgba(58,18,144,.6)]">
-            <Bell size={19} />
-          </Link>
-          <Link to="/me" aria-label="Account" className="cx-press grid h-11 w-11 place-items-center rounded-full bg-gradient-to-br from-[#F3EDFF] to-[#DCC9FF] text-[15px] font-extrabold text-[var(--am-ink)] ring-2 ring-white shadow-[0_8px_20px_-12px_rgba(58,18,144,.7)]">
-            {name ? name[0].toUpperCase() : <PartyPopper size={18} />}
+          <Link to="/notifications" aria-label="Notifications" className="cx-press grid h-11 w-11 place-items-center rounded-full bg-[var(--am-50)] text-[var(--am-ink)]"><Bell size={20} /></Link>
+          <Link to="/me" aria-label="Your profile" className="cx-press relative grid h-11 w-11 place-items-center overflow-hidden rounded-full bg-gradient-to-br from-[#A57BFF] to-[#6D35E0] text-[16px] font-extrabold text-white ring-2 ring-white shadow-[0_8px_20px_-12px_rgba(58,18,144,.8)]" data-avatar>
+            {photo ? <img src={photo} alt="" className="absolute inset-0 h-full w-full object-cover" referrerPolicy="no-referrer" /> : initial}
           </Link>
         </div>
       </header>
 
       {/* The two doors. */}
       <div className="mt-3.5 grid grid-cols-2 gap-2 px-3" role="tablist">
-        <Door on={door === 'occasions'} onClick={() => choose('occasions')} icon={PartyPopper} title="Celebrations" sub="Plan a moment" />
-        <Door on={door === 'services'} onClick={() => choose('services')} icon={Wrench} title="Book a Service" sub="One master, now" />
+        <Door on={door === 'occasions'} onClick={() => choose('occasions')} title="Celebrations" sub="Planned in minutes" />
+        <Door on={door === 'services'} onClick={() => choose('services')} title="Book a Service" sub="Masters are ready" />
       </div>
 
       <Promos onGo={g => (g === 'celebrate' ? celebrate() : navigate(g))} />
@@ -140,16 +141,18 @@ export default function Home() {
 
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]] } return a }
 
-function Door({ on, onClick, icon: Icon, title, sub }) {
+/* The two doors are the brand's two promises, so they are words, not
+   icons: bold, large, a living amethyst when chosen (the splash colour,
+   lifted), a soft amethyst when not — clearly a toggle either way. */
+function Door({ on, onClick, title, sub }) {
   return (
     <button type="button" role="tab" aria-selected={on} onClick={onClick} data-door={title}
-      className={'cx-press relative flex min-w-0 items-center gap-2.5 overflow-hidden rounded-[22px] py-3 pl-3 pr-2 text-left transition-all duration-300 ' +
-        (on ? 'bg-gradient-to-br from-[#F3ECFF] to-[#DCC8FF] text-[var(--am-ink)] shadow-[0_0_0_1.5px_#CDB4FF,0_14px_26px_-16px_rgba(106,43,217,.8)]' : 'bg-white text-[var(--am-ink)] shadow-[0_0_0_1.5px_#EEE6FA]')}>
-      <span className={'grid h-9 w-9 shrink-0 place-items-center rounded-[13px] transition ' + (on ? 'bg-white text-[var(--brand)] shadow-[0_6px_14px_-8px_rgba(58,18,144,.7)]' : 'bg-[var(--am-50)] text-[var(--brand)]')}><Icon size={19} strokeWidth={2.2} /></span>
-      <span className="min-w-0 flex-1">
-        <span className="block truncate text-[14px] font-extrabold tracking-[-0.025em]">{title}</span>
-        <span className="block truncate text-[10.5px] font-semibold text-[#6B5C92]">{sub}</span>
-      </span>
+      className={'cx-press relative min-w-0 overflow-hidden rounded-[22px] px-4 py-3.5 text-left transition-all duration-300 ' +
+        (on ? 'cx-door-on bg-gradient-to-br from-[#A57BFF] via-[#8650F2] to-[#6D35E0] text-white shadow-[0_16px_30px_-14px_rgba(91,33,168,.95),inset_0_1px_0_rgba(255,255,255,.35)]'
+            : 'bg-[#EEE5FF] text-[#3A1290] shadow-[inset_0_0_0_1.5px_#DCCBFF]')}>
+      <span className={'absolute right-3 top-3 h-2 w-2 rounded-full transition ' + (on ? 'bg-white shadow-[0_0_0_4px_rgba(255,255,255,.25),0_0_10px_2px_rgba(255,255,255,.8)]' : 'bg-[#C8B2FF]')} />
+      <span className="block truncate pr-3 text-[17.5px] font-black leading-tight tracking-[-0.035em]">{title}</span>
+      <span className={'mt-0.5 block truncate text-[11.5px] font-bold ' + (on ? 'text-white/85' : 'text-[#6B5C92]')}>{sub}</span>
     </button>
   )
 }
@@ -201,29 +204,55 @@ function Promos({ onGo }) {
 /* ── The sign-off ────────────────────────────────────────────────── */
 function SignOff() {
   return (
-    <footer className="mt-14 px-6 pb-2" aria-label="Crafted in Mysuru">
-      <p className="text-[42px] font-extrabold leading-[0.96] tracking-[-0.05em] text-[#E6DDF6]">Crafted<br />with love<span className="text-[#F3B3CB]"> ♥</span><br /><span className="text-[#D8CAF1]">in Mysuru.</span></p>
-      <p className="mt-3 text-[12.5px] font-bold text-[#A79BC2]">For every celebration in Bengaluru.</p>
-      <Palace className="-mr-2 mt-5 ml-auto block h-[92px] w-auto text-[#E2D5F6]" />
+    <footer className="mt-14 overflow-hidden" aria-label="Crafted with love in Mysuru">
+      <div className="px-6">
+        <p className="text-[42px] font-extrabold leading-[0.96] tracking-[-0.05em] text-[#E6DDF6]">Crafted<br />with love <Heart /><br /><span className="text-[#D8CAF1]">in Mysuru.</span></p>
+        <p className="mt-3 text-[12.5px] font-bold text-[#A79BC2]">For every celebration across India.</p>
+      </div>
+      <div className="mt-6 bg-gradient-to-b from-white via-[#FBF8FF] to-[#F3EDFF] pt-2">
+        <Palace className="block h-auto w-full text-[#D9CBF2]" />
+      </div>
     </footer>
   )
 }
 
-/* Mysuru Palace, as a single line drawing: the gilded central dome, the
-   two flanking towers, the arcade of the durbar hall. */
-function Palace({ className }) {
+/* A real red heart, beating slowly. */
+function Heart() {
   return (
-    <svg viewBox="0 0 240 150" className={className} fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d="M8 146h224" />
-      <path d="M20 146V96h200v50" />
-      {[40, 64, 88, 112, 136, 160, 184].map(x => <path key={x} d={`M${x} 146v-26a10 10 0 0 1 20 0v26`} />)}
-      <path d="M20 96l10-12h180l10 12" />
-      <path d="M92 84V62h56v22" />
-      <path d="M92 62c0-22 12-34 28-44 16 10 28 22 28 44" />
-      <path d="M120 18V6" /><circle cx="120" cy="4" r="2.2" />
-      <path d="M30 84V58h24v26" /><path d="M30 58c0-10 5-17 12-21 7 4 12 11 12 21" /><path d="M42 37v-8" />
-      <path d="M186 84V58h24v26" /><path d="M186 58c0-10 5-17 12-21 7 4 12 11 12 21" /><path d="M198 37v-8" />
-      {[100, 112, 128, 140].map(x => <path key={x} d={`M${x} 84v-12`} />)}
+    <svg viewBox="0 0 32 29" className="cx-beat inline-block h-[0.78em] w-auto align-baseline drop-shadow-[0_4px_8px_rgba(255,0,32,.35)]" aria-label="love">
+      <path d="M16 28.5S1 19.6 1 9.4C1 4.6 4.7 1 9.2 1c2.9 0 5.4 1.5 6.8 3.8C17.4 2.5 19.9 1 22.8 1 27.3 1 31 4.6 31 9.4 31 19.6 16 28.5 16 28.5z" fill="#FF0F2E" />
+      <path d="M8.6 5.2c-2 .3-3.6 2-3.8 4.1" stroke="#FFC2CB" strokeWidth="2" strokeLinecap="round" fill="none" />
+    </svg>
+  )
+}
+
+/* Mysuru Palace, edge to edge: the gilded central dome on its tower, the
+   two domes beside it, the corner towers, the chhatris on the parapet,
+   the long Indo-Saracenic arcade and the steps up to it. */
+function Palace({ className }) {
+  const arches = Array.from({ length: 15 }, (_, k) => 40 + k * 21)
+  return (
+    <svg viewBox="0 -10 390 140" className={className} fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M0 128h390" />
+      <path d="M8 128v-16h374v16" />
+      <path d="M150 128v-6h90v6M158 122v-5h74v5" />
+      <path d="M28 112V76h334v36" />
+      <path d="M24 76h342M28 82h334" />
+      {arches.map(x => <path key={x} d={`M${x} 112v-13a7.5 7.5 0 0 1 15 0v13`} />)}
+      <path d="M32 76V46h26v30M332 76V46h26v30" />
+      <path d="M32 46c0-9 6-15 13-18 7 3 13 9 13 18M332 46c0-9 6-15 13-18 7 3 13 9 13 18" />
+      <path d="M45 28v-7M345 28v-7" /><circle cx="45" cy="19.5" r="1.6" /><circle cx="345" cy="19.5" r="1.6" />
+      {[38, 46].map(x => <path key={x} d={`M${x} 70v-12M${x + 300} 70v-12`} />)}
+      {[84, 110, 268, 294].map(x => <g key={x}><path d={`M${x} 76v-9h14v9`} /><path d={`M${x} 67c0-5 3-8 7-10 4 2 7 5 7 10`} /><path d={`M${x + 7} 57v-4`} /></g>)}
+      <path d="M128 76V52h24v24M238 76V52h24v24" />
+      <path d="M128 52c0-8 5-13 12-16 7 3 12 8 12 16M238 52c0-8 5-13 12-16 7 3 12 8 12 16" />
+      <path d="M140 36v-6M250 36v-6" />
+      <path d="M158 76V38h74v38" />
+      <path d="M158 50h74M158 62h74" />
+      {[168, 182, 196, 210].map(x => <path key={x} d={`M${x} 74v-8a5 5 0 0 1 10 0v8M${x} 60v-6a5 5 0 0 1 10 0v6`} />)}
+      <path d="M160 38c0-18 16-28 35-38 19 10 35 20 35 38" />
+      <path d="M176 38c0-11 9-19 19-25 10 6 19 14 19 25" opacity=".55" />
+      <path d="M195 0v-6" /><circle cx="195" cy="-7.5" r="1.8" />
     </svg>
   )
 }

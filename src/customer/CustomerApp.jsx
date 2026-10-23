@@ -104,6 +104,7 @@ export default function CustomerApp() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
+        <div className="pointer-events-none fixed inset-x-0 top-0 z-[160] bg-white/90 backdrop-blur-md" style={{ height: 'env(safe-area-inset-top, 0px)' }} aria-hidden />
         {BAR_ROUTES(pathname) && <PlanBar />}
         {TAB_ROUTES(pathname) && <TabBar />}
       </div>

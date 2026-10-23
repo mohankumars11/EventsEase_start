@@ -5,7 +5,7 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { ArrowLeft, ArrowRight, CalendarDays, Gift, House, LayoutGrid, PartyPopper, ShoppingBag, Sparkles, Star, UserRound, X, Zap } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CalendarDays, Gift, House, LayoutGrid, PartyPopper, ShoppingBag, Star, UserRound, X, Zap } from 'lucide-react'
 import { usePlan } from '../state/PlanContext'
 import { rupees, plural } from '../lib/format'
 import { planFloor } from '../lib/estimate'
@@ -48,9 +48,9 @@ export function TabBar() {
           ) : (
             <div key={i} className="relative flex justify-center">
               <button type="button" onClick={() => setQuick(true)} aria-label="Start something" data-orb
-                className="cx-press cx-orb absolute -top-[42px] grid h-[60px] w-[60px] place-items-center rounded-full text-white ring-[5px] ring-white">
+                className="cx-press cx-orb absolute -top-[42px] h-[60px] w-[60px] rounded-full ring-[5px] ring-white">
+                <span className="cx-orb-track" aria-hidden />
                 <span className="cx-orb-ring" aria-hidden />
-                <Sparkles size={25} strokeWidth={2.2} />
               </button>
             </div>
           ))}
