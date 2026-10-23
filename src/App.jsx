@@ -24,7 +24,6 @@ import { isPartnerSurface as _isPartner } from './config/surface'
 // The landing page is the entry point for essentially all first-time
 // traffic, so it stays in the main bundle — code-splitting it would only
 // add a round-trip before anything renders.
-import HomeScreen from './pages/HomeScreen'
 import CustomerHomeExperience from './pages/CustomerHomeExperience'
 import PayBridge from './pages/PayBridge'
 
@@ -375,7 +374,7 @@ function AppRoutes() {
           planner, listed celebration types, pushed the shop and ran a festival
           rail — the same four things in two layouts. Signing in replaced the
           app you had just learned with another one doing the same job.
-          HomeScreen changes its contents by auth state instead.
+          The customer-specific shell now owns the first-paint experience.
 
           /dashboard/customer stays routed rather than redirecting: it is in
           the wild in the tab bar, in post-login redirects, in the profile menu
