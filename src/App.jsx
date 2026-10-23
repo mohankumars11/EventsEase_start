@@ -25,6 +25,7 @@ import { isPartnerSurface as _isPartner } from './config/surface'
 // traffic, so it stays in the main bundle — code-splitting it would only
 // add a round-trip before anything renders.
 import HomeScreen from './pages/HomeScreen'
+import CustomerHomeExperience from './pages/CustomerHomeExperience'
 import PayBridge from './pages/PayBridge'
 
 // Everything else is split per route. Previously all 25 pages shipped in
@@ -208,7 +209,7 @@ function RootScreen() {
     return <Navigate to={homeFor(SURFACE.admin, { signedIn: !!profile, role: profile?.role ?? null })} replace />
   }
 
-  if (!isPartnerSurface()) return <ScreenShell><HomeScreen /></ScreenShell>
+  if (!isPartnerSurface()) return <ScreenShell><CustomerHomeExperience /></ScreenShell>
 
   return <Navigate to={homeFor(SURFACE.partner, { signedIn: !!profile, role: profile?.role ?? null })} replace />
 }
@@ -512,7 +513,7 @@ function AppRoutes() {
       {/* ── Customer ───────────────────────────────── */}
       <Route path="/dashboard/customer" element={
         <ProtectedRoute allowedRoles={['customer']}>
-          <ScreenShell><HomeScreen /></ScreenShell>
+          <ScreenShell><CustomerHomeExperience /></ScreenShell>
         </ProtectedRoute>
       } />
       {/* /dashboard/customer/browse, /vendors/:id, /vendors/:id/quote and
