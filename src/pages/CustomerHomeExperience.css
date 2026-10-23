@@ -82,7 +82,13 @@
 .sambramo-art-spark { position:absolute; color:#ffffffd9; text-shadow:0 2px 5px #7c48c633; }
 .sambramo-art-spark--one { top:10%; left:12%; font-size:15px; }
 .sambramo-art-spark--two { right:12%; bottom:12%; font-size:19px; }
-.sambramo-art-emoji { display:block; font-size:clamp(32px,8.8vw,48px); line-height:1; filter:drop-shadow(0 5px 4px #37105a22); transform:translateY(2px); }
+.sambramo-art-image { display:block; width:88%; height:88%; object-fit:contain; filter:drop-shadow(0 7px 7px #37105a20); transform:translateY(2px); }
+.sambramo-hero-pictograms { position:absolute; inset:0; display:flex; align-items:flex-end; justify-content:center; gap:0; padding:0 2px 7px 0; }
+.sambramo-hero-pictograms img { position:relative; display:block; width:43%; height:78%; object-fit:contain; filter:drop-shadow(0 8px 8px #4c21771c); }
+.sambramo-hero-pictograms img:nth-child(2) { width:48%; height:88%; margin-left:-15%; z-index:2; }
+.sambramo-hero-pictograms img:nth-child(3) { width:37%; height:69%; margin-left:-16%; }
+.sambramo-hero-pictograms--service img { width:54%; height:84%; }
+.sambramo-hero-pictograms--service img:nth-child(2) { width:48%; height:72%; margin-left:-16%; z-index:2; }
 .sambramo-category-title { display:flex; align-items:center; min-height:40px; width:100%; padding:7px 9px 8px; color:#34264e; font-size:10px; font-weight:800; line-height:1.25; letter-spacing:-.02em; }
 .sambramo-card-arrow { position:absolute; right:7px; bottom:11px; display:grid; place-items:center; width:18px; height:18px; border-radius:50%; background:#f4edff; color:#5b19d6; }
 .sambramo-service-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; }
@@ -103,7 +109,7 @@
 @media (min-width:520px) {
   .sambramo-home { max-width:520px; margin:0 auto; padding-left:22px; padding-right:22px; border-left:1px solid #f4effb; border-right:1px solid #f4effb; }
   .sambramo-category-grid,.sambramo-service-grid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
-  .sambramo-art-emoji { font-size:48px; }
+  .sambramo-art-image { width:88%; height:88%; }
 }
 @media (max-width:350px) {
   .sambramo-home { padding-left:11px; padding-right:11px; }
