@@ -176,3 +176,8 @@
 /* The sign-off heart, beating slowly. */
 .cx-beat { animation: cx-beat 1.6s ease-in-out infinite; transform-origin: 50% 60%; }
 @keyframes cx-beat { 0%, 60%, 100% { transform: scale(1); } 15% { transform: scale(1.14); } 30% { transform: scale(.98); } 45% { transform: scale(1.08); } }
+
+/* The duration slider: an amethyst fill up to the thumb. */
+.cx-range { -webkit-appearance: none; appearance: none; height: 8px; border-radius: 9999px; background: linear-gradient(90deg, #8650F2 0 var(--fill), #EEE5FF var(--fill) 100%); outline: none; }
+.cx-range::-webkit-slider-thumb { -webkit-appearance: none; width: 26px; height: 26px; border-radius: 9999px; background: #fff; border: 3px solid #6A2BD9; box-shadow: 0 6px 14px -6px rgba(58, 18, 144, .9); }
+.cx-range::-moz-range-thumb { width: 22px; height: 22px; border-radius: 9999px; background: #fff; border: 3px solid #6A2BD9; }

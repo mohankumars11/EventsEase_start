@@ -2,10 +2,10 @@
  * When — the day, the start time and how long it runs, in one gesture
  * each.
  *
- * ── The day: a ribbon, not a form ───────────────────────────────────
- * Four months of days in one swipe, the chosen one read back large
- * ("Saturday, 12 December · in 51 days"). The full month is not a
- * separate mode; the ribbon IS the calendar.
+ * ── The day: a month calendar ───────────────────────────────────────
+ * A real calendar on white, tap a date (Mohan, 2026-10-23: the old swipe
+ * ribbon made people drag to find their day). The chosen one is read
+ * back large ("Saturday, 12 December · in 51 days").
  *
  * ── The time: a 24-hour sky ─────────────────────────────────────────
  * A ring painted the colour of the sky at each hour — night indigo at
@@ -21,14 +21,12 @@
  * hour, so all three answers are real inputs, not decoration.
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Minus, Moon, Plus, Sun } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Minus, Moon, Plus, Sun } from 'lucide-react'
 import { Sheet } from '../ui/kit'
 import { iso, fromIso, timeLabel, countdown } from '../lib/format'
 
 const LONG = new Intl.DateTimeFormat('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })
-const DOW = new Intl.DateTimeFormat('en-IN', { weekday: 'short' })
-const MON = new Intl.DateTimeFormat('en-IN', { month: 'long' })
-const SPANS = [2, 3, 4, 6, 8, 12]
+const MIN_H = 1, MAX_H = 16
 
 const toMin = t => (t ? Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5)) : 19 * 60)
 const toTime = m => `${String(Math.floor(m / 60) % 24).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`
@@ -81,13 +79,62 @@ export default function WhenSheet({ open, onClose, date, time, hours, onPick }) 
   )
 }
 
-/** The day ribbon, the sky dial and the duration — inline or in the sheet. */
+/**
+ * The day, as a real month calendar on white: tap a date, no dragging to
+ * find it. ‹ › move a month; days before today and beyond the booking
+ * window (120 days) are shown but cannot be picked; today wears a ring,
+ * the chosen day is solid amethyst. Weeks start on Sunday, as an Indian
+ * wall calendar does.
+ */
+const WEEK = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+const MONTH_YEAR = new Intl.DateTimeFormat('en-IN', { month: 'long', year: 'numeric' })
+
+function MonthCalendar({ value, onPick, first, last }) {
+  const start = value ? fromIso(value) : first
+  const [view, setView] = useState(() => new Date(start.getFullYear(), start.getMonth(), 1))
+  const y = view.getFullYear(), mo = view.getMonth()
+  const lead = new Date(y, mo, 1).getDay()
+  const count = new Date(y, mo + 1, 0).getDate()
+  const cells = [...Array(lead).fill(null), ...Array.from({ length: count }, (_, i) => new Date(y, mo, i + 1))]
+  const canBack = new Date(y, mo, 1) > new Date(first.getFullYear(), first.getMonth(), 1)
+  const canNext = new Date(y, mo + 1, 1) <= last
+  const todayKey = iso(first)
+  return (
+    <div className="mt-4 rounded-[24px] bg-white p-3 shadow-[0_0_0_1px_#EEE6FA,0_16px_32px_-26px_rgba(58,18,144,.7)]" data-calendar>
+      <div className="flex items-center justify-between px-1 pb-2">
+        <button type="button" onClick={() => setView(new Date(y, mo - 1, 1))} disabled={!canBack} aria-label="Previous month"
+          className="cx-press grid h-9 w-9 place-items-center rounded-full text-[var(--am-ink)] hover:bg-[var(--am-50)] disabled:opacity-25"><ChevronLeft size={20} /></button>
+        <p className="text-[15.5px] font-extrabold tracking-[-0.02em]" aria-live="polite">{MONTH_YEAR.format(view)}</p>
+        <button type="button" onClick={() => setView(new Date(y, mo + 1, 1))} disabled={!canNext} aria-label="Next month"
+          className="cx-press grid h-9 w-9 place-items-center rounded-full text-[var(--am-ink)] hover:bg-[var(--am-50)] disabled:opacity-25"><ChevronRight size={20} /></button>
+      </div>
+      <div className="grid grid-cols-7 pb-1">
+        {WEEK.map((w, i) => <span key={i} className={'grid h-7 place-items-center text-[11px] font-extrabold ' + (i === 0 || i === 6 ? 'text-[var(--brand)]' : 'text-[var(--ink-3)]')}>{w}</span>)}
+      </div>
+      <div className="grid grid-cols-7 gap-y-1">
+        {cells.map((x, i) => {
+          if (!x) return <span key={`b${i}`} />
+          const k = iso(x), on = value === k, out = x < first || x > last, today = k === todayKey
+          return (
+            <button key={k} type="button" disabled={out} onClick={() => onPick(k)} aria-pressed={on} aria-label={LONG.format(x)}
+              className={'cx-press cx-num relative mx-auto grid h-10 w-10 place-items-center rounded-full text-[14.5px] font-bold transition ' +
+                (on ? 'bg-[var(--brand)] font-extrabold text-white shadow-[0_8px_16px_-8px_rgba(106,43,217,.9)]'
+                  : out ? 'text-[#CFC9DC]'
+                    : today ? 'text-[var(--brand)] ring-[1.5px] ring-[var(--am-300)]'
+                      : 'text-[var(--ink)] hover:bg-[var(--am-50)]')}>
+              {x.getDate()}
+              {today && !on && <span className="absolute bottom-1 h-1 w-1 rounded-full bg-[var(--brand)]" />}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+/** The month calendar, the sky dial and the duration — inline or in the sheet. */
 export function WhenBody({ w }) {
-  const ribbon = useRef(null)
   const { d, setD, m, setM, span, setSpan, days, minAllowed, chosen } = w
-  useEffect(() => {
-    requestAnimationFrame(() => ribbon.current?.querySelector('[aria-pressed="true"]')?.scrollIntoView({ inline: 'center', block: 'nearest' }))
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <>
       {/* The chosen day, read back large. */}
@@ -96,28 +143,7 @@ export function WhenBody({ w }) {
         {chosen && <span className="mb-0.5 shrink-0 rounded-full bg-[var(--am-100)] px-2.5 py-1 text-[11.5px] font-extrabold text-[var(--am-ink)]">{countdown(d) === 'today' ? 'Today' : countdown(d) === 'tomorrow' ? 'Tomorrow' : countdown(d)}</span>}
       </div>
 
-      <div ref={ribbon} className="cx-noscroll -mx-5 mt-3 flex snap-x gap-1.5 overflow-x-auto px-5 pb-2" data-ribbon>
-        {days.map((x, i) => {
-          const k = iso(x), on = d === k, wk = x.getDay() === 0 || x.getDay() === 6
-          const newMonth = i === 0 || x.getDate() === 1
-          return (
-            <div key={k} className="flex shrink-0 snap-start items-end gap-1.5">
-              {newMonth && (
-                <span className="flex h-[66px] w-6 shrink-0 items-center justify-center">
-                  <span className="-rotate-90 whitespace-nowrap text-[10.5px] font-extrabold uppercase tracking-[0.16em] text-[var(--brand)]">{MON.format(x)}</span>
-                </span>
-              )}
-              <button type="button" onClick={() => setD(k)} aria-pressed={on} aria-label={LONG.format(x)}
-                className={'cx-press flex h-[66px] w-[50px] flex-col items-center justify-center rounded-[16px] transition-all duration-300 ' +
-                  (on ? 'scale-105 bg-[var(--brand-deep)] text-white shadow-[0_12px_22px_-12px_rgba(43,14,102,.95)]' : wk ? 'bg-[var(--am-100)] text-[var(--am-ink)]' : 'bg-white text-[var(--ink)] ring-1 ring-[var(--am-200)]')}>
-                <span className={'text-[10.5px] font-extrabold uppercase ' + (on ? 'text-white/70' : 'text-[var(--ink-3)]')}>{DOW.format(x)}</span>
-                <span className="cx-num text-[20px] font-extrabold leading-tight tracking-[-0.03em]">{x.getDate()}</span>
-                {on && <span className="mt-0.5 h-1 w-1 rounded-full bg-[var(--gold)]" />}
-              </button>
-            </div>
-          )
-        })}
-      </div>
+      <MonthCalendar value={d} onPick={setD} first={days[0]} last={days[days.length - 1]} />
 
       <SkyDial minutes={m} span={span} min={minAllowed} onChange={setM} />
 
@@ -127,14 +153,23 @@ export function WhenBody({ w }) {
         <button type="button" onClick={() => setM(x => Math.min(1410, x + 30))} aria-label="30 minutes later" className="cx-press cx-btn grid h-10 w-10 place-items-center rounded-full"><Plus size={17} /></button>
       </div>
 
-      <p className="mt-5 text-[12px] font-extrabold uppercase tracking-[0.1em] text-[var(--ink-3)]">Runs for</p>
-      <div className="mt-2.5 grid grid-cols-6 gap-1.5 pb-2">
-        {SPANS.map(h => (
-          <button key={h} type="button" onClick={() => setSpan(h)} aria-pressed={span === h}
-            className={'cx-press cx-num rounded-[14px] py-2.5 text-[13.5px] font-extrabold transition ' + (span === h ? 'bg-[var(--brand-deep)] text-white' : 'cx-btn')}>
-            {h === 12 ? 'Day' : `${h}h`}
-          </button>
-        ))}
+      {/* How long it lasts: asked as a question, set with − / + or the slider. */}
+      <div className="mt-6 rounded-[24px] bg-white p-4 shadow-[0_0_0_1px_#EEE6FA,0_16px_32px_-26px_rgba(58,18,144,.7)]" data-duration>
+        <p className="text-[15.5px] font-extrabold tracking-[-0.02em]">How long will it last?</p>
+        <p className="mt-0.5 text-[12px] font-semibold text-[var(--ink-3)]">From the first guest to the last — masters are booked for this long.</p>
+        <div className="mt-4 flex items-center justify-between gap-3">
+          <button type="button" onClick={() => setSpan(h => Math.max(MIN_H, h - 1))} disabled={span <= MIN_H} aria-label="One hour less"
+            className="cx-press cx-btn grid h-12 w-12 shrink-0 place-items-center rounded-full disabled:opacity-35"><Minus size={20} /></button>
+          <div className="text-center" aria-live="polite">
+            <p className="cx-num text-[34px] font-extrabold leading-none tracking-[-0.04em]">{span}<span className="ml-1 text-[16px] font-extrabold tracking-normal text-[var(--ink-2)]">{span === 1 ? 'hour' : 'hours'}</span></p>
+            <p className="mt-1 text-[12px] font-bold text-[var(--brand)]">{timeLabel(toTime(m))} – {timeLabel(toTime((m + span * 60) % 1440))}{m + span * 60 >= 1440 ? ' (next day)' : ''}</p>
+          </div>
+          <button type="button" onClick={() => setSpan(h => Math.min(MAX_H, h + 1))} disabled={span >= MAX_H} aria-label="One hour more"
+            className="cx-press cx-btn grid h-12 w-12 shrink-0 place-items-center rounded-full disabled:opacity-35"><Plus size={20} /></button>
+        </div>
+        <input type="range" min={MIN_H} max={MAX_H} step={1} value={span} onChange={e => setSpan(Number(e.target.value))} aria-label="Hours"
+          className="cx-range mt-4 w-full" style={{ '--fill': `${((span - MIN_H) / (MAX_H - MIN_H)) * 100}%` }} />
+        <div className="mt-1 flex justify-between text-[10.5px] font-bold text-[var(--ink-3)]"><span>{MIN_H} hour</span><span>Half day</span><span>Full day · {MAX_H} h</span></div>
       </div>
     </>
   )

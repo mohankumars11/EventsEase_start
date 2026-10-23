@@ -160,7 +160,7 @@ export function BackHeader({ title, sub = null, right = null, onBack, transparen
   const navigate = useNavigate()
   const back = onBack ?? (() => (window.history.length > 1 ? navigate(-1) : navigate('/')))
   return (
-    <header className={'cx-safe-top sticky top-0 z-[120] px-3 pb-2 ' + (transparent ? '' : 'bg-white/95 backdrop-blur-xl')}>
+    <header className={'cx-safe-top sticky top-0 z-[120] px-3 pb-2 ' + (transparent ? '' : 'bg-white')}>
       <div className="flex min-h-[44px] items-center gap-2">
         <button type="button" onClick={back} aria-label="Back" className={'cx-press grid h-11 w-11 shrink-0 place-items-center rounded-full ' + (transparent ? 'cx-glass-light' : 'cx-btn')}><ArrowLeft size={20} /></button>
         <div className="min-w-0 flex-1 px-1">
