@@ -115,3 +115,16 @@
 @media (prefers-reduced-motion:reduce) {
   .sambramo-mode-switch button,.sambramo-category-card,.sambramo-service-card { transition:none; }
 }
+
+/* The customer's four-tab shell is deliberately separate from partner navigation. */
+.sambramo-bottom-nav {
+  padding-bottom: env(safe-area-inset-bottom);
+  box-shadow: 0 -7px 24px rgba(50, 20, 90, .075);
+}
+.sambramo-bottom-nav-item { text-decoration: none; }
+.sambramo-bottom-nav-icon { transition: background .18s ease, transform .18s ease; }
+.sambramo-bottom-nav-item.is-active .sambramo-bottom-nav-icon {
+  background: linear-gradient(145deg, #f0e5ff, #e7d7ff);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 3px 8px rgba(91,25,214,.08);
+}
+.sambramo-bottom-nav-item:active .sambramo-bottom-nav-icon { transform: scale(.94); }
