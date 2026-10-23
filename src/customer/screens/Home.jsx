@@ -210,7 +210,7 @@ function SignOff() {
         <p className="mt-3 text-[12.5px] font-bold text-[#A79BC2]">For every celebration across India.</p>
       </div>
       <div className="mt-6 bg-gradient-to-b from-white via-[#FBF8FF] to-[#F3EDFF] pt-2">
-        <Palace className="block h-auto w-full text-[#D9CBF2]" />
+        <Palace className="block h-auto w-full" />
       </div>
     </footer>
   )
@@ -226,33 +226,103 @@ function Heart() {
   )
 }
 
-/* Mysuru Palace, edge to edge: the gilded central dome on its tower, the
-   two domes beside it, the corner towers, the chhatris on the parapet,
-   the long Indo-Saracenic arcade and the steps up to it. */
+/* Mysuru Palace, front on, edge to edge — drawn from its elevation, not a
+   generic dome: the tall gilded central dome on its tiered tower, the
+   seven-arch portico with the Gajalakshmi pediment above, the two domed
+   towers that flank it, the corner towers, the chhatris on the roofline,
+   the arcaded wings and the steps. Filled and lit from the left (each
+   face has a shaded right side, each dome a highlight) so it reads as a
+   building, not an outline. */
 function Palace({ className }) {
-  const arches = Array.from({ length: 15 }, (_, k) => 40 + k * 21)
+  const C = { wall: '#F1EBFC', shade: '#E2D6F7', depth: '#D2C0EF', line: '#CDBBEE', cornice: '#E4D9F7', pin: '#D9CAF3' }
+  const dome = (cx, r, b, h, k) => (
+    <g key={k}>
+      <path d={`M${cx - r} ${b}C${cx - r * 1.18} ${b - h * 0.42} ${cx - r * 0.38} ${b - h * 0.8} ${cx} ${b - h}C${cx + r * 0.38} ${b - h * 0.8} ${cx + r * 1.18} ${b - h * 0.42} ${cx + r} ${b}Z`} fill="url(#pal-dome)" stroke={C.line} strokeWidth=".8" />
+      <path d={`M${cx - r * 0.55} ${b - h * 0.2}C${cx - r * 0.6} ${b - h * 0.5} ${cx - r * 0.25} ${b - h * 0.72} ${cx - r * 0.05} ${b - h * 0.82}`} stroke="#FFFFFF" strokeOpacity=".8" strokeWidth={Math.max(1.2, r * 0.12)} strokeLinecap="round" fill="none" />
+      <rect x={cx - r - 1.5} y={b - 1.5} width={2 * r + 3} height="3.5" rx="1" fill={C.cornice} stroke={C.line} strokeWidth=".6" />
+      <path d={`M${cx} ${b - h}v-${h * 0.22}`} stroke={C.line} strokeWidth="1.1" />
+      <circle cx={cx} cy={b - h - h * 0.08} r={Math.max(1, r * 0.09)} fill="#E8C766" />
+      <circle cx={cx} cy={b - h - h * 0.18} r={Math.max(0.8, r * 0.06)} fill="#E8C766" />
+    </g>
+  )
+  const archWin = (x, y, w, h, k) => <path key={k} d={`M${x} ${y + h}V${y + w / 2}a${w / 2} ${w / 2} 0 0 1 ${w} 0V${y + h}Z`} fill={C.depth} />
+  /* a cusped (foliated) arch, the portico's signature */
+  const cusped = (x, w, top, bottom, k) => {
+    const q = w / 4
+    return <path key={k} d={`M${x} ${bottom}V${top + q * 1.6}q0 -${q} ${q} -${q * 1.2}q${q * 0.2} -${q} ${q} -${q}q${q * 0.8} 0 ${q} ${q}q${q} ${q * 0.2} ${q} ${q * 1.2}V${bottom}Z`} fill={C.depth} />
+  }
+  const tower = (x, w, top, bottom, k) => (
+    <g key={k}>
+      <rect x={x} y={top} width={w} height={bottom - top} fill={C.wall} stroke={C.line} strokeWidth=".7" />
+      <rect x={x + w * 0.64} y={top} width={w * 0.36} height={bottom - top} fill={C.shade} />
+      {Array.from({ length: Math.floor((bottom - top - 6) / 13) }, (_, r) => (
+        <g key={r}>
+          <rect x={x - 1.5} y={top + r * 13} width={w + 3} height="2.2" fill={C.cornice} />
+          {archWin(x + w / 2 - 3, top + r * 13 + 4, 6, 8, 'w')}
+        </g>
+      ))}
+    </g>
+  )
+  const chhatri = (x, k) => (
+    <g key={k}>
+      <rect x={x} y="81" width="2" height="11" fill={C.shade} /><rect x={x + 12} y="81" width="2" height="11" fill={C.shade} />
+      <rect x={x - 1.5} y="78.5" width="17" height="3" rx="1" fill={C.cornice} stroke={C.line} strokeWidth=".5" />
+      {dome(x + 7, 6.5, 78.5, 10, 'd')}
+    </g>
+  )
+  const wingArches = [], wingWins = [], pins = []
+  for (let x = 52; x <= 103; x += 17) { wingArches.push(archWin(x, 126, 11, 24, `la${x}`)); wingWins.push(archWin(x + 2, 103, 7, 11, `lw${x}`)) }
+  for (let x = 290; x <= 341; x += 17) { wingArches.push(archWin(x, 126, 11, 24, `ra${x}`)); wingWins.push(archWin(x + 2, 103, 7, 11, `rw${x}`)) }
+  for (let x = 50; x < 350; x += 12) if (x < 110 || x > 288) pins.push(<path key={`p${x}`} d={`M${x} 92l2 -6l2 6Z`} fill={C.pin} />)
+
   return (
-    <svg viewBox="0 -10 390 140" className={className} fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d="M0 128h390" />
-      <path d="M8 128v-16h374v16" />
-      <path d="M150 128v-6h90v6M158 122v-5h74v5" />
-      <path d="M28 112V76h334v36" />
-      <path d="M24 76h342M28 82h334" />
-      {arches.map(x => <path key={x} d={`M${x} 112v-13a7.5 7.5 0 0 1 15 0v13`} />)}
-      <path d="M32 76V46h26v30M332 76V46h26v30" />
-      <path d="M32 46c0-9 6-15 13-18 7 3 13 9 13 18M332 46c0-9 6-15 13-18 7 3 13 9 13 18" />
-      <path d="M45 28v-7M345 28v-7" /><circle cx="45" cy="19.5" r="1.6" /><circle cx="345" cy="19.5" r="1.6" />
-      {[38, 46].map(x => <path key={x} d={`M${x} 70v-12M${x + 300} 70v-12`} />)}
-      {[84, 110, 268, 294].map(x => <g key={x}><path d={`M${x} 76v-9h14v9`} /><path d={`M${x} 67c0-5 3-8 7-10 4 2 7 5 7 10`} /><path d={`M${x + 7} 57v-4`} /></g>)}
-      <path d="M128 76V52h24v24M238 76V52h24v24" />
-      <path d="M128 52c0-8 5-13 12-16 7 3 12 8 12 16M238 52c0-8 5-13 12-16 7 3 12 8 12 16" />
-      <path d="M140 36v-6M250 36v-6" />
-      <path d="M158 76V38h74v38" />
-      <path d="M158 50h74M158 62h74" />
-      {[168, 182, 196, 210].map(x => <path key={x} d={`M${x} 74v-8a5 5 0 0 1 10 0v8M${x} 60v-6a5 5 0 0 1 10 0v6`} />)}
-      <path d="M160 38c0-18 16-28 35-38 19 10 35 20 35 38" />
-      <path d="M176 38c0-11 9-19 19-25 10 6 19 14 19 25" opacity=".55" />
-      <path d="M195 0v-6" /><circle cx="195" cy="-7.5" r="1.8" />
+    <svg viewBox="0 -52 400 224" className={className} aria-label="Mysuru Palace" role="img">
+      <defs>
+        <linearGradient id="pal-dome" x1="0" x2="1" y1="0" y2="0">
+          <stop offset="0" stopColor="#F7F1FF" /><stop offset=".45" stopColor="#E4D5FB" /><stop offset="1" stopColor="#C4ABEF" />
+        </linearGradient>
+        <linearGradient id="pal-ground" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0" stopColor="#E9DFF8" /><stop offset="1" stopColor="#DCCDF4" />
+        </linearGradient>
+      </defs>
+
+      {/* the arcaded wings */}
+      <rect x="46" y="96" width="308" height="54" fill={C.wall} stroke={C.line} strokeWidth=".7" />
+      <rect x="44" y="92" width="312" height="4.5" fill={C.cornice} stroke={C.line} strokeWidth=".5" />
+      <rect x="46" y="119" width="308" height="2.5" fill={C.cornice} />
+      {wingWins}{wingArches}{pins}
+      {/* corner towers */}
+      {tower(20, 28, 62, 150, 'ct1')}{tower(352, 28, 62, 150, 'ct2')}
+      {dome(34, 12.5, 62, 22, 'cd1')}{dome(366, 12.5, 62, 22, 'cd2')}
+
+      {chhatri(62, 'h1')}{chhatri(86, 'h2')}{chhatri(300, 'h3')}{chhatri(324, 'h4')}
+
+      {/* the central tower and the great dome */}
+      {tower(168, 64, 24, 92, 'mt')}
+      <rect x="172" y="16" width="56" height="8" fill={C.wall} stroke={C.line} strokeWidth=".6" />
+      {[178, 189, 200, 211, 222].map(x => <rect key={x} x={x - 1} y="17.5" width="2" height="5" fill={C.depth} />)}
+      {dome(200, 27, 16, 54, 'md')}
+
+      {/* the two towers flanking the portico */}
+      {tower(114, 24, 50, 150, 'ft1')}{tower(262, 24, 50, 150, 'ft2')}
+      {dome(126, 11, 50, 22, 'fd1')}{dome(274, 11, 50, 22, 'fd2')}
+
+      {/* the portico: seven foliated arches, the Gajalakshmi pediment */}
+      <rect x="138" y="84" width="124" height="66" fill={C.wall} stroke={C.line} strokeWidth=".7" />
+      <rect x="258" y="84" width="4" height="66" fill={C.shade} />
+      <rect x="135" y="81" width="130" height="4" fill={C.cornice} stroke={C.line} strokeWidth=".5" />
+      <rect x="138" y="110" width="124" height="2.5" fill={C.cornice} />
+      {Array.from({ length: 7 }, (_, k) => archWin(146 + k * 16, 92, 8, 14, `pw${k}`))}
+      {Array.from({ length: 7 }, (_, k) => cusped(144 + k * 16, 12, 116, 150, `pa${k}`))}
+      <path d="M180 81v-7a20 13 0 0 1 40 0v7Z" fill={C.wall} stroke={C.line} strokeWidth=".7" />
+      <path d="M188 81v-5a12 8 0 0 1 24 0v5Z" fill={C.depth} />
+      <circle cx="200" cy="74.5" r="2.4" fill="#E8C766" />
+      {[184, 216].map(x => <path key={x} d={`M${x} 74l2 -6l2 6Z`} fill={C.pin} />)}
+
+      {/* the plinth and the steps */}
+      <rect x="0" y="150" width="400" height="22" fill="url(#pal-ground)" />
+      <rect x="0" y="150" width="400" height="2" fill={C.line} opacity=".7" />
+      <rect x="146" y="146" width="108" height="4" fill={C.cornice} /><rect x="154" y="142" width="92" height="4" fill={C.wall} stroke={C.line} strokeWidth=".4" />
     </svg>
   )
 }
