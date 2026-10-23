@@ -71,10 +71,14 @@ await rpc('Emulation.setTouchEmulationEnabled', { enabled: true })
    link, the anon client redeems it) — for screens behind a login. Needs
    .env loaded (node --env-file=.env). */
 const sessionEmail = flag('session', null)
-if (state || sessionEmail) {
+/* --ls 'key=value' (repeatable): seed any other localStorage key, e.g. the
+   onboarding flags, so a screen past the first-run gate can be shown. */
+const lsPairs = rest.flatMap((x, i) => (x === '--ls' ? [rest[i + 1]] : []))
+if (state || sessionEmail || lsPairs.length) {
   await rpc('Page.navigate', { url: `${base}/favicon.svg` })
   await sleep(800)
   if (state) await js(`localStorage.setItem('sbm.cx.plan.v1', ${JSON.stringify(readFileSync(state, 'utf8'))}); 'ok'`)
+  for (const p of lsPairs) { const k = p.slice(0, p.indexOf('=')), v = p.slice(p.indexOf('=') + 1); await js(`localStorage.setItem(${JSON.stringify(k)}, ${JSON.stringify(v)}); 'ok'`) }
   if (sessionEmail) {
     const { createClient } = await import('@supabase/supabase-js')
     const U = process.env.VITE_SUPABASE_URL

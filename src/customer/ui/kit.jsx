@@ -5,7 +5,7 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { ArrowLeft, ArrowRight, CalendarDays, House, LayoutGrid, Star, UserRound, X, Zap } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CalendarDays, Gift, House, LayoutGrid, PartyPopper, ShoppingBag, Sparkles, Star, UserRound, X, Zap } from 'lucide-react'
 import { usePlan } from '../state/PlanContext'
 import { rupees, plural } from '../lib/format'
 import { planFloor } from '../lib/estimate'
@@ -17,35 +17,75 @@ export function Photo({ src, alt = '', className = '', eager = false }) {
   return <img src={src} alt={alt} loading={eager ? 'eager' : 'lazy'} decoding="async" className={className} onError={() => setOk(false)} />
 }
 
-/* ── Four tabs (Mohan, 2026-10-23) ─────────────────────────────────────
- * Home is where everything starts; Services is the 34 trades on their
- * own; My Bookings is everything in flight; Account is the person. The
- * basket is not a tab — it is the bar that appears above this one when
- * there is something in it, the way a quick-commerce app does it. */
+/* ── The navigation: a floating bar with a living centre ─────────────
+ * Four places (Home, Services, My Bookings, Account) on a white pill that
+ * floats off the bottom edge, and between them an amethyst orb ringed by
+ * a slow band of light. The orb is the fastest way to start anything —
+ * plan a celebration, book one master, pick up the plan in progress,
+ * invite a friend — so it opens a sheet of exactly those, never a fifth
+ * page. The basket is still not a tab: it is the bar above this one. */
 const TABS = [
-  { to: '/', label: 'Home', icon: House, match: p => p === '/' || p.startsWith('/c/') },
+  { to: '/', label: 'Home', icon: House, match: p => p === '/' || p.startsWith('/c/') || p === '/explore' },
   { to: '/s', label: 'Services', icon: LayoutGrid, match: p => p === '/s' || p.startsWith('/s/') },
+  null,
   { to: '/plans', label: 'My Bookings', icon: CalendarDays, match: p => p.startsWith('/plans') },
   { to: '/me', label: 'Account', icon: UserRound, match: p => p.startsWith('/me') },
 ]
 export function TabBar() {
   const { pathname } = useLocation()
+  const [quick, setQuick] = useState(false)
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-[150] border-t border-[var(--line)] bg-white/95 backdrop-blur-xl" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }} aria-label="Main">
-      <div className="mx-auto grid max-w-[560px] grid-cols-4 px-2">
-        {TABS.map(t => {
-          const on = t.match(pathname)
-          return (
-            <Link key={t.to} to={t.to} className="cx-press flex flex-col items-center gap-1 pb-2 pt-2.5" aria-current={on ? 'page' : undefined}>
-              <span className={'grid h-8 w-14 place-items-center rounded-full transition ' + (on ? 'bg-[var(--brand-tint)] text-[var(--brand)]' : 'text-[var(--ink-3)]')}>
-                <t.icon size={21} strokeWidth={on ? 2.4 : 2} />
+    <>
+      <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-[150] px-3" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 10px)' }} aria-label="Main">
+        <div className="pointer-events-auto relative mx-auto grid h-[66px] max-w-[540px] grid-cols-5 items-center rounded-[26px] bg-white/95 px-1 shadow-[0_0_0_1px_#EEE6FA,0_18px_40px_-18px_rgba(58,18,144,.55)] backdrop-blur-xl">
+          {TABS.map((t, i) => t ? (
+            <Link key={t.to} to={t.to} className="cx-press relative flex flex-col items-center gap-0.5" aria-current={t.match(pathname) ? 'page' : undefined} data-tab={t.label}>
+              <span className={'grid h-8 w-12 place-items-center rounded-full transition-all duration-300 ' + (t.match(pathname) ? 'bg-[var(--am-100)] text-[var(--brand)]' : 'text-[#A49DB8]')}>
+                <t.icon size={21} strokeWidth={t.match(pathname) ? 2.5 : 2} />
               </span>
-              <span className={'text-[11.5px] font-bold ' + (on ? 'text-[var(--brand)]' : 'text-[var(--ink-3)]')}>{t.label}</span>
+              <span className={'text-[10.5px] font-extrabold tracking-[-0.01em] ' + (t.match(pathname) ? 'text-[var(--brand)]' : 'text-[#A49DB8]')}>{t.label}</span>
             </Link>
-          )
-        })}
+          ) : (
+            <div key={i} className="relative flex justify-center">
+              <button type="button" onClick={() => setQuick(true)} aria-label="Start something" data-orb
+                className="cx-press cx-orb absolute -top-[42px] grid h-[60px] w-[60px] place-items-center rounded-full text-white ring-[5px] ring-white">
+                <span className="cx-orb-ring" aria-hidden />
+                <Sparkles size={25} strokeWidth={2.2} />
+              </button>
+            </div>
+          ))}
+        </div>
+      </nav>
+      <QuickSheet open={quick} onClose={() => setQuick(false)} />
+    </>
+  )
+}
+
+function QuickSheet({ open, onClose }) {
+  const navigate = useNavigate()
+  const { basket } = usePlan()
+  const go = to => { onClose(); navigate(to) }
+  const items = [
+    { icon: PartyPopper, title: 'Plan a celebration', sub: '438 occasions, every master it needs', to: '/explore#celebrations' },
+    { icon: Zap, title: 'Book one master now', sub: 'A photographer, a cook, a DJ — instantly', to: '/s' },
+    ...(basket.length ? [{ icon: ShoppingBag, title: `Your plan · ${plural(basket.length, 'master')}`, sub: 'Review, negotiate and pay', to: '/plan' }] : []),
+    { icon: Gift, title: 'Invite a friend', sub: 'Celebrate together', to: '/refer' },
+  ]
+  return (
+    <Sheet open={open} onClose={onClose} title="What shall we start?">
+      <div className="grid gap-2.5 pb-3">
+        {items.map(x => (
+          <button key={x.title} type="button" onClick={() => go(x.to)} className="cx-press flex items-center gap-3 rounded-[20px] bg-[var(--am-50)] p-3.5 text-left ring-1 ring-[var(--am-200)]" data-quick={x.title}>
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-[16px] bg-white text-[var(--brand)] shadow-[0_8px_18px_-12px_rgba(58,18,144,.8)]"><x.icon size={22} /></span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[15px] font-extrabold tracking-[-0.02em]">{x.title}</span>
+              <span className="block truncate text-[12px] font-semibold text-[var(--ink-3)]">{x.sub}</span>
+            </span>
+            <ArrowRight size={17} className="shrink-0 text-[var(--am-ink)]" />
+          </button>
+        ))}
       </div>
-    </nav>
+    </Sheet>
   )
 }
 
@@ -57,7 +97,7 @@ export function PlanBar({ withTabs = true }) {
   const { paise: total } = planFloor(basket, event)
   const instant = basket.filter(l => l.instant).length
   return (
-    <div className="pointer-events-none fixed inset-x-0 z-[140] px-3" style={{ bottom: withTabs ? 'calc(env(safe-area-inset-bottom, 0px) + 72px)' : 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}>
+    <div className="pointer-events-none fixed inset-x-0 z-[140] px-3" style={{ bottom: withTabs ? 'calc(env(safe-area-inset-bottom, 0px) + 88px)' : 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}>
       <button type="button" onClick={() => navigate('/plan')} data-plan-bar
         className="cx-press cx-pop pointer-events-auto mx-auto flex w-full max-w-[540px] items-center gap-3 rounded-[22px] bg-gradient-to-b from-[#F1E9FF] to-[#E2D2FF] p-2 pr-2.5 text-left text-[var(--am-ink)] shadow-[0_0_0_1px_#D6C2FF,0_18px_36px_-16px_rgba(58,18,144,.75)]">
         <span className="flex shrink-0 -space-x-3 pl-1">

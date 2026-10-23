@@ -93,7 +93,7 @@ export default function Recommend() {
             <h3 className="flex items-center gap-1.5 text-[17px] font-extrabold tracking-[-0.025em]"><Sparkles size={17} className="text-[var(--gold)]" />Make it unforgettable</h3>
             <p className="text-[12px] font-semibold text-[var(--ink-3)]">Add-ons families love for a {o.name.toLowerCase()}</p>
           </div>
-          <div className="grid grid-cols-3 gap-2.5 px-4">
+          <div className="grid grid-cols-3 gap-2 px-3">
             {addOns.map(r => <AddOnCard key={r.tradeId} tradeId={r.tradeId} why={why(r.tradeId)} on={r.state === 'need'} onToggle={() => toggle(r)} />)}
           </div>
         </section>

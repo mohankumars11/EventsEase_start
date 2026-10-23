@@ -1,125 +1,271 @@
 /**
- * Home.
+ * Home (Mohan, 2026-10-23).
  *
- * Laid out to Mohan's reference (2026-10-23): the two doors as big cards
- * at the top — Celebrations, Book a Service — then the hero, the search,
- * and the eighteen event categories three across as 3D illustrated cards
- * with their names underneath. Below them, where the masters are.
+ *   location ·························· bell · you
+ *   [ Celebrations ]  [ Book a Service ]      the two doors, up top
+ *   ┌ promo: moments → how it works → refer ┐ one card at a time, on its own
+ *   ● Instant booking                         what the app does, live
+ *   ( Search "Haldi Ceremony"… )              the box names real things
+ *   Celebrate anything. Book it in minutes.   + View all
+ *   ▢ ▢ ▢  18 categories, their occasions taking turns underneath
+ *   Crafted with love in Mysuru               the sign-off
  *
- * The doors switch the page in place rather than navigating, so the
- * search and the hero stay put and the choice is remembered for the
- * session. "Book a Service" shows the 34 services in the same card family.
+ * No brand name or logo anywhere on the screen, by instruction.
+ *
+ * ── The promo cards are Mohan's artwork, with real buttons ──────────
+ * Each image had its button painted in, at a different place on each
+ * card. The art is cropped just above it and one real button sits under
+ * every card, same size, same place: Book a Celebration Instantly → the
+ * categories below; Book a Service Instantly → Services; Refer Your
+ * Friend → Refer. The whole card answers a tap the same way. They move
+ * every 1.5 s (as asked), stop while a thumb is on them, and have no dots.
  */
-import { useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ChevronDown, ChevronRight, MapPin, PartyPopper, Search, SlidersHorizontal, Wrench } from 'lucide-react'
-import { useCity } from '../../context/CityContext'
+import { ArrowRight, Bell, CalendarDays, ChevronDown, ChevronRight, Loader2, LocateFixed, MapPin, PartyPopper, Search, Users, Wrench, Zap } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { BENGALURU_AREAS } from '../../data/bengaluruAreas'
-import { usePlan } from '../state/PlanContext'
-import { CATEGORIES } from '../data/occasions'
-import { TRADE_GROUPS } from '../data/trades'
+import { CATEGORIES, OCCASIONS } from '../data/occasions'
+import { TRADES, TRADE_GROUPS } from '../data/trades'
 import { artFor } from '../data/art'
-import { CategoryCard, ServiceCard } from '../ui/art'
-import PlaceSheet from './PlaceSheet'
+import { CategoryCard, Rotator, ServiceCard } from '../ui/art'
+import { Sheet } from '../ui/kit'
+import { locate, saveWhere, savedWhere } from '../lib/where'
+
+/* The artwork is cropped just above its painted button; the button is a
+   real one, the same size and place on all three, so the deck lines up. */
+const PROMOS = [
+  { id: 'promo-moments', alt: 'Make every moment special', label: 'Book a Celebration Instantly', icon: Zap, go: 'celebrate' },
+  { id: 'promo-how', alt: 'From a thought to a celebration — how it works', label: 'Book a Service Instantly', icon: CalendarDays, go: '/s' },
+  { id: 'promo-refer', alt: 'Celebrate together — refer and earn', label: 'Refer Your Friend', icon: Users, go: '/refer' },
+]
+const HOLD_MS = 1500
+const SLIDE_MS = 600
+
+/* What the app really does, said one at a time. Only shipped features. */
+const LIVE = [
+  ['Instant booking', 'confirm a master in seconds'],
+  ['Instant payment', 'UPI, cards, netbanking'],
+  ['Escrow-safe', 'paid out only after your event'],
+  ['Verified masters', 'checked before they go live'],
+  ['Negotiate', 'send your price, they reply'],
+  ['Compare', 'three masters side by side'],
+]
 
 export default function Home() {
-  const { city, openCityPicker } = useCity()
   const { profile } = useAuth()
-  const plan = usePlan()
   const navigate = useNavigate()
   const [door, setDoor] = useState(() => { try { return sessionStorage.getItem('sbm.cx.door') ?? 'occasions' } catch { return 'occasions' } })
-  const [placeOpen, setPlaceOpen] = useState(false)
+  const [whereOpen, setWhereOpen] = useState(false)
+  const [where, setWhere] = useState(savedWhere)
+  const grid = useRef(null)
   const choose = d => { setDoor(d); try { sessionStorage.setItem('sbm.cx.door', d) } catch { /* storage off */ } }
   const name = profile?.full_name?.trim()
-  const hero = artFor('hero-family')
+  const hints = useMemo(() => shuffle([...OCCASIONS.filter(o => o.featured).map(o => o.name), ...TRADES.map(t => t.label)]).slice(0, 40), [])
+  const celebrate = () => { choose('occasions'); requestAnimationFrame(() => grid.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })) }
 
   return (
-    <main className="cx-enter cx-bottom-pad-bar">
-      <header className="cx-safe-top flex items-center justify-between gap-3 px-4">
-        <button type="button" onClick={openCityPicker} className="cx-press flex min-w-0 items-center gap-1.5 py-1.5" data-city>
-          <MapPin size={22} className="shrink-0 fill-[var(--brand)] text-white" strokeWidth={1.6} />
-          <span className="truncate text-[17px] font-extrabold tracking-[-0.02em]">{plan.place?.area ?? city}</span>
-          <ChevronDown size={18} className="shrink-0 text-[var(--brand)]" />
+    <main className="cx-enter pb-[calc(env(safe-area-inset-bottom,0px)+150px)]">
+      <header className="cx-safe-top flex items-center justify-between gap-3 px-3">
+        <button type="button" onClick={() => setWhereOpen(true)} className="cx-press flex min-w-0 items-center gap-2 rounded-full bg-white py-1.5 pl-1.5 pr-3 shadow-[0_0_0_1px_#EEE6FA,0_8px_20px_-14px_rgba(58,18,144,.6)]" data-where>
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[var(--am-100)] text-[var(--brand)]"><MapPin size={18} className="fill-[var(--brand)] text-white" strokeWidth={1.8} /></span>
+          <span className="min-w-0 text-left">
+            <span className="flex items-center gap-0.5 text-[14.5px] font-extrabold tracking-[-0.02em]"><span className="truncate">{where?.area ?? 'Bengaluru'}</span><ChevronDown size={15} className="shrink-0 text-[var(--brand)]" /></span>
+            <span className="block truncate text-[10.5px] font-bold text-[var(--ink-3)]">{where?.city ?? 'Your location'}{where?.test ? ' · testing' : ''}</span>
+          </span>
         </button>
-        <Link to="/me" aria-label="Account" className="cx-press grid h-11 w-11 shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#F3EDFF] to-[#E2D3FF] text-[15px] font-extrabold text-[var(--am-ink)] ring-2 ring-white shadow-[0_6px_16px_-8px_rgba(58,18,144,.6)]">
-          {name ? name[0].toUpperCase() : 'S'}
-        </Link>
+        <div className="flex shrink-0 items-center gap-2">
+          <Link to="/notifications" aria-label="Notifications" className="cx-press relative grid h-11 w-11 place-items-center rounded-full bg-white text-[var(--am-ink)] shadow-[0_0_0_1px_#EEE6FA,0_8px_20px_-14px_rgba(58,18,144,.6)]">
+            <Bell size={19} />
+          </Link>
+          <Link to="/me" aria-label="Account" className="cx-press grid h-11 w-11 place-items-center rounded-full bg-gradient-to-br from-[#F3EDFF] to-[#DCC9FF] text-[15px] font-extrabold text-[var(--am-ink)] ring-2 ring-white shadow-[0_8px_20px_-12px_rgba(58,18,144,.7)]">
+            {name ? name[0].toUpperCase() : <PartyPopper size={18} />}
+          </Link>
+        </div>
       </header>
 
       {/* The two doors. */}
-      <div className="mt-3 grid grid-cols-2 gap-2.5 px-4" role="tablist">
-        <Door on={door === 'occasions'} onClick={() => choose('occasions')} icon={PartyPopper} title="Celebrations" sub="Plan your moments" />
-        <Door on={door === 'services'} onClick={() => choose('services')} icon={Wrench} title="Book a Service" sub="Find trusted masters" />
+      <div className="mt-3.5 grid grid-cols-2 gap-2 px-3" role="tablist">
+        <Door on={door === 'occasions'} onClick={() => choose('occasions')} icon={PartyPopper} title="Celebrations" sub="Plan a moment" />
+        <Door on={door === 'services'} onClick={() => choose('services')} icon={Wrench} title="Book a Service" sub="One master, now" />
       </div>
 
-      {/* The hero. */}
-      <section className="relative mx-4 mt-4 h-[168px] overflow-hidden rounded-[24px] bg-gradient-to-br from-[#FDEBF5] via-[#F6EAFF] to-[#E9E0FF]" aria-label="Sambramo">
-        {hero && <img src={hero} alt="" className="absolute bottom-0 right-0 h-full w-[64%] object-cover object-[30%_40%] mix-blend-multiply [mask-image:linear-gradient(90deg,transparent_0%,#000_22%)]" />}
-        <div className="relative z-10 flex h-full max-w-[47%] flex-col justify-center pl-4">
-          <h1 className="text-[22px] font-extrabold leading-[1.05] tracking-[-0.035em] text-[#1E0B4B]">Make Every Moment Special</h1>
-          <p className="mt-1.5 text-[11.5px] font-semibold leading-snug text-[#5B4A86]">From birthdays to big milestones, we make it happen</p>
+      <Promos onGo={g => (g === 'celebrate' ? celebrate() : navigate(g))} />
+
+      {/* Live: what the app does, one line at a time. */}
+      <div className="mt-3.5 flex justify-center px-3">
+        <span className="flex max-w-full items-center gap-2 rounded-full bg-[#F1FBF5] px-3 py-1.5 ring-1 ring-[#CDEFDC]" data-live>
+          <span className="cx-live-dot h-2 w-2 shrink-0 rounded-full bg-[var(--ok)]" />
+          <Rotator items={LIVE.map(([a, b]) => <><b className="font-extrabold text-[#0B6B3D]">{a}</b><span className="text-[#3C7A5A]"> · {b}</span></>)} every={2200} className="text-[12px] font-semibold" />
+        </span>
+      </div>
+
+      <button type="button" onClick={() => navigate('/search')} className="cx-press mx-3 mt-3.5 flex h-[54px] w-[calc(100%-24px)] items-center gap-2.5 rounded-[22px] bg-white px-3 text-left shadow-[0_0_0_1.5px_var(--am-200),0_12px_26px_-18px_rgba(58,18,144,.65)]" data-search>
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[13px] bg-[var(--am-50)] text-[var(--brand)]"><Search size={19} /></span>
+        <span className="flex min-w-0 flex-1 items-center gap-1 text-[14px] font-semibold text-[var(--ink-3)]">
+          Search<Rotator items={hints.map(h => <span className="font-extrabold text-[var(--am-ink)]">“{h}”</span>)} every={2000} />
+        </span>
+      </button>
+
+      <section ref={grid} className="mt-7 scroll-mt-4" key={door}>
+        <div className="flex items-end justify-between gap-3 px-3 pb-3.5">
+          <div className="min-w-0">
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[var(--brand)]">{door === 'occasions' ? 'Your moment · our masters' : 'One tap · one master'}</p>
+            <h2 className="mt-1 text-[21px] font-extrabold leading-[1.1] tracking-[-0.035em]">{door === 'occasions' ? <>Celebrate anything.<br />Book it in minutes.</> : <>The right master,<br />at your door.</>}</h2>
+          </div>
+          <Link to="/explore" className="cx-press flex shrink-0 items-center gap-0.5 rounded-full bg-white px-3 py-2 text-[12.5px] font-extrabold text-[var(--brand)] shadow-[0_0_0_1px_var(--am-200)]" data-view-all>View all<ChevronRight size={15} /></Link>
         </div>
+        {door === 'occasions' ? (
+          <div className="cx-enter grid grid-cols-3 gap-2 px-3">
+            {CATEGORIES.map((c, i) => <CategoryCard key={c.id} category={c} index={i} />)}
+          </div>
+        ) : (
+          <div className="cx-enter">
+            {TRADE_GROUPS.map((g, i) => (
+              <div key={g.id} className={i ? 'mt-5' : ''}>
+                <h3 className="px-3 pb-2.5 text-[14px] font-extrabold tracking-[-0.02em] text-[var(--ink-2)]">{g.label}</h3>
+                <div className="grid grid-cols-3 gap-2 px-3">{g.trades.map(t => <ServiceCard key={t.id} tradeId={t.id} />)}</div>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
-      <button type="button" onClick={() => navigate('/search')} className="cx-press mx-4 mt-4 flex h-[52px] w-[calc(100%-32px)] items-center gap-3 rounded-full bg-white px-4 text-left shadow-[0_0_0_1.5px_var(--am-200),0_10px_24px_-18px_rgba(58,18,144,.6)]" data-search>
-        <Search size={20} className="shrink-0 text-[var(--am-ink)]" />
-        <span className="flex-1 truncate text-[13.5px] font-semibold text-[var(--ink-3)]">Search occasion, service or anything…</span>
-        <SlidersHorizontal size={19} className="shrink-0 text-[var(--am-ink)]" />
-      </button>
+      <SignOff />
 
-      {door === 'occasions' ? (
-        <section className="cx-enter mt-6" key="o">
-          <Head title={`Explore ${CATEGORIES.length} Event Categories`} action={<Link to="/search" className="flex items-center gap-0.5 text-[13px] font-extrabold text-[var(--brand)]">View all<ChevronRight size={16} /></Link>} />
-          <div className="grid grid-cols-3 gap-2.5 px-4">
-            {CATEGORIES.map(c => <CategoryCard key={c.id} category={c} />)}
-          </div>
-        </section>
-      ) : (
-        <section className="cx-enter mt-6" key="s">
-          {TRADE_GROUPS.map((g, i) => (
-            <div key={g.id} className={i ? 'mt-5' : ''}>
-              <Head title={g.label} />
-              <div className="grid grid-cols-4 gap-2.5 px-4">{g.trades.map(t => <ServiceCard key={t.id} tradeId={t.id} />)}</div>
-            </div>
-          ))}
-        </section>
-      )}
-
-      <button type="button" onClick={() => setPlaceOpen(true)} className="cx-press relative mx-4 mt-6 flex w-[calc(100%-32px)] items-center gap-3 overflow-hidden rounded-[20px] bg-gradient-to-r from-[#5B21C8] via-[#7A3FE4] to-[#A47BFF] px-4 py-3.5 text-left text-white shadow-[0_16px_30px_-18px_rgba(58,18,144,.9)]" data-places>
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/20"><MapPin size={20} /></span>
-        <span className="min-w-0 flex-1">
-          <span className="block text-[15.5px] font-extrabold tracking-[-0.02em]">Explore {BENGALURU_AREAS.length} areas of {city}</span>
-          <span className="block truncate text-[11.5px] font-semibold text-white/80">{plan.place?.area ? `Showing masters near ${plan.place.area}` : 'Set yours for exact travel and prices'}</span>
-        </span>
-        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white text-[var(--brand)]"><ChevronRight size={18} /></span>
-      </button>
-
-      <PlaceSheet open={placeOpen} onClose={() => setPlaceOpen(false)} value={plan.place} onPick={p => { plan.setPlace(p); setPlaceOpen(false) }} />
+      <WhereSheet open={whereOpen} onClose={() => setWhereOpen(false)} onPick={p => { saveWhere(p); setWhere(savedWhere()); setWhereOpen(false) }} />
     </main>
   )
 }
 
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]] } return a }
+
 function Door({ on, onClick, icon: Icon, title, sub }) {
   return (
     <button type="button" role="tab" aria-selected={on} onClick={onClick} data-door={title}
-      className={'cx-press flex min-w-0 items-center gap-2.5 rounded-[20px] px-3 py-3 text-left transition ' +
-        (on ? 'bg-gradient-to-br from-[#6A2BD9] to-[#4A16B0] text-white shadow-[0_14px_26px_-14px_rgba(74,22,176,.9)]' : 'bg-white text-[var(--am-ink)] shadow-[0_0_0_1.5px_var(--am-200)]')}>
-      <Icon size={24} className="shrink-0" strokeWidth={2.1} />
-      <span className="min-w-0">
-        <span className="block truncate text-[14.5px] font-extrabold tracking-[-0.02em]">{title}</span>
-        <span className={'block truncate text-[10.5px] font-semibold ' + (on ? 'text-white/80' : 'text-[var(--ink-3)]')}>{sub}</span>
+      className={'cx-press relative flex min-w-0 items-center gap-2.5 overflow-hidden rounded-[22px] py-3 pl-3 pr-2 text-left transition-all duration-300 ' +
+        (on ? 'bg-gradient-to-br from-[#F3ECFF] to-[#DCC8FF] text-[var(--am-ink)] shadow-[0_0_0_1.5px_#CDB4FF,0_14px_26px_-16px_rgba(106,43,217,.8)]' : 'bg-white text-[var(--am-ink)] shadow-[0_0_0_1.5px_#EEE6FA]')}>
+      <span className={'grid h-9 w-9 shrink-0 place-items-center rounded-[13px] transition ' + (on ? 'bg-white text-[var(--brand)] shadow-[0_6px_14px_-8px_rgba(58,18,144,.7)]' : 'bg-[var(--am-50)] text-[var(--brand)]')}><Icon size={19} strokeWidth={2.2} /></span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-[14px] font-extrabold tracking-[-0.025em]">{title}</span>
+        <span className="block truncate text-[10.5px] font-semibold text-[#6B5C92]">{sub}</span>
       </span>
     </button>
   )
 }
 
-function Head({ title, action = null }) {
+/* ── The promo cards ─────────────────────────────────────────────── */
+function Promos({ onGo }) {
+  const slides = [...PROMOS, PROMOS[0]]          // a copy of the first, so the loop never runs backwards
+  const [i, setI] = useState(0)
+  const [animate, setAnimate] = useState(true)
+  const held = useRef(0)
+  const touch = useRef(null)
+  useEffect(() => {
+    const t = setInterval(() => { if (Date.now() > held.current) { setAnimate(true); setI(n => n + 1) } }, HOLD_MS + SLIDE_MS)
+    return () => clearInterval(t)
+  }, [])
+  /* Landing on the copy: jump, unanimated, to the real first card. */
+  useEffect(() => {
+    if (i !== PROMOS.length) return
+    const t = setTimeout(() => { setAnimate(false); setI(0) }, SLIDE_MS + 20)
+    return () => clearTimeout(t)
+  }, [i])
+  const hold = () => { held.current = Date.now() + 5000 }
+  const swipe = dx => { hold(); setAnimate(true); setI(n => (dx < 0 ? Math.min(n + 1, PROMOS.length) : Math.max(n - 1, 0))) }
+
   return (
-    <div className="flex items-center justify-between gap-3 px-4 pb-3">
-      <h2 className="text-[18px] font-extrabold tracking-[-0.03em]">{title}</h2>
-      {action}
-    </div>
+    <section className="mx-3 mt-3.5 overflow-hidden rounded-[22px] bg-white shadow-[0_0_0_1px_#EEE6FA,0_20px_36px_-24px_rgba(58,18,144,.75)]" aria-roledescription="carousel" aria-label="Offers"
+      onTouchStart={e => { hold(); touch.current = e.touches[0].clientX }}
+      onTouchEnd={e => { const dx = e.changedTouches[0].clientX - (touch.current ?? 0); if (Math.abs(dx) > 40) swipe(dx) }}>
+      <div className="cx-track" style={{ transform: `translateX(-${i * 100}%)`, transition: animate ? undefined : 'none' }}>
+        {slides.map((p, k) => (
+          <div key={`${p.id}-${k}`} className="bg-white" data-promo={p.id} aria-hidden={k !== i}>
+            <button type="button" onClick={() => onGo(p.go)} tabIndex={-1} className="relative block aspect-[1200/553] w-full bg-[#F6F0FF]" aria-label={p.alt}>
+              <img src={artFor(p.id)} alt="" className="absolute inset-0 h-full w-full object-cover" loading={k ? 'lazy' : 'eager'} />
+            </button>
+            <div className="p-2">
+              <button type="button" onClick={() => onGo(p.go)} tabIndex={k === i ? 0 : -1} className="cx-press cx-cta flex h-12 w-full items-center gap-2.5 rounded-[16px] pl-3 pr-1.5 text-left" data-promo-go={p.id}>
+                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[11px] bg-white text-[var(--brand)] shadow-[0_4px_10px_-6px_rgba(58,18,144,.7)]"><p.icon size={17} strokeWidth={2.4} /></span>
+                <span className="flex-1 truncate text-[14.5px] font-extrabold tracking-[-0.02em]">{p.label}</span>
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[12px] bg-[var(--brand)] text-white"><ArrowRight size={18} /></span>
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
   )
 }
 
+/* ── The sign-off ────────────────────────────────────────────────── */
+function SignOff() {
+  return (
+    <footer className="mt-14 px-6 pb-2" aria-label="Crafted in Mysuru">
+      <p className="text-[42px] font-extrabold leading-[0.96] tracking-[-0.05em] text-[#E6DDF6]">Crafted<br />with love<span className="text-[#F3B3CB]"> ♥</span><br /><span className="text-[#D8CAF1]">in Mysuru.</span></p>
+      <p className="mt-3 text-[12.5px] font-bold text-[#A79BC2]">For every celebration in Bengaluru.</p>
+      <Palace className="-mr-2 mt-5 ml-auto block h-[92px] w-auto text-[#E2D5F6]" />
+    </footer>
+  )
+}
+
+/* Mysuru Palace, as a single line drawing: the gilded central dome, the
+   two flanking towers, the arcade of the durbar hall. */
+function Palace({ className }) {
+  return (
+    <svg viewBox="0 0 240 150" className={className} fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M8 146h224" />
+      <path d="M20 146V96h200v50" />
+      {[40, 64, 88, 112, 136, 160, 184].map(x => <path key={x} d={`M${x} 146v-26a10 10 0 0 1 20 0v26`} />)}
+      <path d="M20 96l10-12h180l10 12" />
+      <path d="M92 84V62h56v22" />
+      <path d="M92 62c0-22 12-34 28-44 16 10 28 22 28 44" />
+      <path d="M120 18V6" /><circle cx="120" cy="4" r="2.2" />
+      <path d="M30 84V58h24v26" /><path d="M30 58c0-10 5-17 12-21 7 4 12 11 12 21" /><path d="M42 37v-8" />
+      <path d="M186 84V58h24v26" /><path d="M186 58c0-10 5-17 12-21 7 4 12 11 12 21" /><path d="M198 37v-8" />
+      {[100, 112, 128, 140].map(x => <path key={x} d={`M${x} 84v-12`} />)}
+    </svg>
+  )
+}
+
+/* ── Where am I ──────────────────────────────────────────────────── */
+function WhereSheet({ open, onClose, onPick }) {
+  const [q, setQ] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState('')
+  const list = useMemo(() => {
+    const t = q.trim().toLowerCase()
+    return BENGALURU_AREAS.filter(a => !t || a.name.toLowerCase().includes(t)).sort((a, b) => a.tier - b.tier || a.name.localeCompare(b.name))
+  }, [q])
+  async function here() {
+    setBusy(true); setErr('')
+    const r = await locate()
+    setBusy(false)
+    if (!r.ok) { setErr('Location is off. Pick your area below.'); return }
+    if (!r.market?.live) { setErr(`You are in ${r.place.area}. We are live in Bengaluru — pick an area below.`); return }
+    onPick({ ...r.place, market: r.market.id, test: !!r.market.test })
+  }
+  return (
+    <Sheet open={open} onClose={onClose} title="Where are you?">
+      <button type="button" onClick={here} className="cx-press cx-btn flex w-full items-center gap-3 rounded-[18px] px-4 py-3.5 text-left">
+        {busy ? <Loader2 size={20} className="animate-spin" /> : <LocateFixed size={20} />}
+        <span className="flex-1 text-[14.5px] font-extrabold">Use my current location</span><ArrowRight size={16} />
+      </button>
+      {err && <p className="mt-2 text-[12.5px] font-bold text-[#9B1A2A]">{err}</p>}
+      <label className="mt-4 flex h-12 items-center gap-2.5 rounded-[16px] bg-[var(--am-50)] px-3.5 ring-1 ring-[var(--am-200)]">
+        <Search size={17} className="text-[var(--brand)]" />
+        <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search your area" className="h-full flex-1 bg-transparent text-[14px] font-bold outline-none placeholder:text-[var(--ink-3)]" />
+      </label>
+      <ul className="mt-2 max-h-[40dvh] overflow-y-auto pb-2">
+        {list.map(a => (
+          <li key={a.name}>
+            <button type="button" onClick={() => onPick({ area: a.name, city: 'Bengaluru', lat: a.lat, lng: a.lng, market: 'BLR', source: 'picked' })}
+              className="cx-press flex w-full items-center gap-3 border-b border-[var(--line)] py-3 text-left text-[14.5px] font-bold last:border-0">
+              <MapPin size={16} className="text-[var(--brand)]" />{a.name}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </Sheet>
+  )
+}

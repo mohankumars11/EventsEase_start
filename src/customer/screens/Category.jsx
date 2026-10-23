@@ -17,14 +17,14 @@ export default function Category() {
   return (
     <main className="cx-enter cx-bottom-pad-bar">
       <BackHeader title={c.short} sub={`${c.occasions.length} occasions`} />
-      <section className="relative mx-4 mt-1 flex h-[118px] items-center overflow-hidden rounded-[22px]" style={{ background: c.tone }}>
+      <section className="relative mx-3 mt-1 flex h-[118px] items-center overflow-hidden rounded-[22px]" style={{ background: c.tone }}>
         <div className="relative z-10 max-w-[58%] pl-4">
           <p className="text-[19px] font-extrabold leading-[1.1] tracking-[-0.03em] text-[#1E0B4B]">What are you celebrating?</p>
           <p className="mt-1 text-[11.5px] font-semibold leading-snug text-[#5B4A86]">{c.line}</p>
         </div>
         <ArtFill art={categoryArt(c)} tone="transparent" className="absolute bottom-0 right-0 h-full w-[46%] [mask-image:linear-gradient(90deg,transparent_0%,#000_30%)]" inset="8%" />
       </section>
-      <div className="mt-5 grid grid-cols-3 gap-2.5 px-4">
+      <div className="mt-5 grid grid-cols-3 gap-2 px-3">
         {list.map(o => <OccasionCard key={o.id} occasion={o} />)}
       </div>
     </main>
