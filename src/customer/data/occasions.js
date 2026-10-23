@@ -79,7 +79,7 @@ export const CATEGORIES = [
     E('Client Appreciation Event', 'awardsNight'), E('Franchise Meet', 'conference'), E('Business Anniversary', 'awardsNight'),
     E('Strategic Planning Offsite', 'retreat'), E('Partner Summit', 'conference'),
   ] },
-  { id: 'nightlife', label: 'Live entertainment & nightlife', short: 'Live Entertainment', signature: 'live_entertainment', tone: '#FBE6F4', line: 'Concerts, DJ nights, comedy, rooftops', events: [
+  { id: 'nightlife', label: 'Live entertainment & nightlife', short: 'Live & Nightlife', signature: 'live_entertainment', tone: '#FBE6F4', line: 'Concerts, DJ nights, comedy, rooftops', events: [
     E('Live Concert', 'concert', { f: 1 }), E('DJ Night', 'clubNight', { f: 1 }), E('EDM Festival', 'concert'),
     E('Bollywood Night', 'clubNight'), E('Techno Night', 'clubNight'), E('Live Band Performance', 'liveMusic'),
     E('Acoustic Music Night', 'smallStage'), E('Karaoke Night', 'smallStage'), E('Stand-Up Comedy Show', 'smallStage', { f: 1 }),
@@ -104,7 +104,7 @@ export const CATEGORIES = [
     E('Light and Sound Show', 'showSafety'), E('Immersive Experience', 'immersive'), E('Fan Convention', 'convention'),
     E('Cosplay Event', 'convention'),
   ] },
-  { id: 'sport', label: 'Sports, fitness & wellness', short: 'Sports, Fitness & Wellness', signature: 'safety_facilities', tone: '#E5F6EC', line: 'Tournaments, runs, retreats', events: [
+  { id: 'sport', label: 'Sports, fitness & wellness', short: 'Sports & Wellness', signature: 'safety_facilities', tone: '#E5F6EC', line: 'Tournaments, runs, retreats', events: [
     E('Cricket Tournament', 'tournament', { f: 1 }), E('Football Tournament', 'tournament'), E('Badminton Tournament', 'tournament'),
     E('Marathon', 'race', { f: 1 }), E('Cycling Event', 'race'), E('Corporate Sports Tournament', 'tournament'),
     E('School Sports Competition', 'tournament'), E('Esports Tournament', 'esports'), E('Fitness Bootcamp', 'wellness'),
@@ -125,7 +125,7 @@ export const CATEGORIES = [
     E('Baking Workshop', 'workshop'), E('Brewery Tasting Event', 'tasting'), E('Farm-to-Table Dinner', 'chefTable'),
     E('Food Truck Festival', 'foodFestival'), E('Catering Showcase', 'tasting'), E('Hospitality Food Expo', 'expo'),
   ] },
-  { id: 'retail', label: 'Retail, fashion & lifestyle', short: 'Retail, Fashion & Lifestyle', signature: 'gifts_favours', tone: '#FDE7F0', line: 'Launches, pop-ups, expos, pageants', events: [
+  { id: 'retail', label: 'Retail, fashion & lifestyle', short: 'Retail & Fashion', signature: 'gifts_favours', tone: '#FDE7F0', line: 'Launches, pop-ups, expos, pageants', events: [
     E('Shopping Festival', 'market'), E('Retail Store Launch', 'storeLaunch', { f: 1 }), E('Shopping Mall Event', 'mallEvent'),
     E('Fashion Pop-Up', 'storeLaunch'), E('Fashion Exhibition', 'exhibition'), E('Luxury Brand Showcase', 'storeLaunch'),
     E('Designer Collection Launch', 'storeLaunch'), E('Jewellery Exhibition', 'exhibition', { f: 1 }), E('Beauty and Makeup Workshop', 'workshop'),
@@ -164,7 +164,7 @@ export const CATEGORIES = [
     E('Aviation Expo', 'expo'), E('Pharmaceutical Conference', 'conference'), E('Telecommunications Summit', 'conference'),
     E('Mining and Infrastructure Expo', 'expo'),
   ] },
-  { id: 'themed', label: 'Seasonal & themed parties', short: 'Seasonal & Themed Parties', signature: 'decoration_floral', tone: '#F7E6FB', line: 'Halloween, masquerades, garden parties', events: [
+  { id: 'themed', label: 'Seasonal & themed parties', short: 'Themed Parties', signature: 'decoration_floral', tone: '#F7E6FB', line: 'Halloween, masquerades, garden parties', events: [
     E('Halloween Party', 'clubNight', { f: 1, o: { must: ['decoration_floral', 'dj_music', 'catering_food'], often: ['event_lighting', 'bar_beverages', 'photography', 'bridal_makeup_hair'] } }),
     E('Christmas Party', 'christmas'), E('New Year’s Eve Party', 'newYear', { f: 1 }), E('Valentine’s Party', 'clubNight'),
     E('Retro Theme Party', 'clubNight'), E('Masquerade Ball', 'gala', { f: 1 }), E('Black-Tie Gala', 'gala'),

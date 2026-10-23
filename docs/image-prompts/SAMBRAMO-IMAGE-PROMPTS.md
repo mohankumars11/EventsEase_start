@@ -17,22 +17,23 @@ Regenerate any image that has: text or letters, extra/odd fingers, a background 
 
 ## A. Categories (18) — make these first
 
-- cat-life: A grandfather and his little granddaughter blowing out birthday candles together, the mother laughing beside them
+- hero-family: A young Indian father in a cream kurta, a mother in a pink silk saree and their little daughter in a party hat leaning in together over a birthday cake with lit candles, all three beaming with joy, a few pastel balloons and gift boxes floating around them
+- cat-life: A young Indian husband and wife lovingly hugging their little daughter as she blows out the candles on her pink birthday cake, both parents glowing with pride and happiness, a few balloons floating
 - cat-wedding: A bride and groom exchanging marigold garlands, rose petals falling around them
 - cat-festivals: A mother and daughter lighting clay diyas, the girl holding a sparkler
-- cat-school: A little schoolgirl in a dance costume twirling, her proud teacher clapping
+- cat-school: Two happy schoolchildren, a boy and a girl in neat school uniforms with striped ties and backpacks, proudly holding up a small gold trophy and a rolled certificate, their smiling woman teacher in a saree standing behind them with a hand on each shoulder
 - cat-college: Two graduates in gowns hugging, one throwing a graduation cap in the air
-- cat-corporate: A businesswoman holding an award trophy, smiling with pride
+- cat-corporate: A confident young Indian businessman in a navy suit with a lanyard ID badge, speaking at a sleek glass podium with a microphone, gesturing warmly, two colleagues in formal office wear applauding beside him
 - cat-nightlife: Three young friends dancing with arms raised, laughing
-- cat-public: A father carrying his daughter on his shoulders, both clapping at a show
+- cat-public: A classical Indian dancer in a bright silk costume and temple jewellery striking a graceful pose on a small stage under warm spotlights, a delighted family in the front row applauding her, red theatre curtain drapes at the edges
 - cat-sport: Two cricketers in whites celebrating, one raising a small trophy
 - cat-food: A smiling chef presenting a steaming brass handi of biryani
-- cat-retail: A young shop owner cutting a red ribbon with golden scissors, laughing
-- cat-property: A young couple holding a brass kalash with mango leaves, stepping into a new home
-- cat-community: A grandmother and a small boy planting a sapling together
-- cat-industry: A young founder speaking into a handheld microphone, holding a tablet
+- cat-retail: A joyful young woman shop owner in a stylish kurta cutting a red ribbon with golden scissors at the doorway of her new boutique, a rack of colourful clothes and shopping bags beside her, a friend clapping
+- cat-property: A delighted young Indian couple receiving a big shiny house key from a smiling property agent in a blazer, a small model of a beautiful house on the table beside them
+- cat-community: Smiling young volunteers in matching t-shirts handing a food packet and a warm blanket to a grateful elderly grandmother, a little boy helping carry a box, warmth and kindness on every face
+- cat-industry: A young woman engineer in a smart blazer and lanyard proudly presenting a small glowing robotic arm on an expo display table to two impressed delegates in suits who are shaking her hand
 - cat-themed: A woman lifting a gold masquerade mask mid-laugh, a man in a tuxedo beside her
-- cat-outdoor: Two friends wrapped in one blanket, one holding a guitar, the other a warm mug
+- cat-outdoor: A young couple in travel clothes with backpacks laughing beside a small camping tent and a glowing campfire, a hint of pine trees and mountains softly behind them
 - cat-online: A mother and son waving at a laptop video call, the boy holding a small cake
 - cat-special: A man kneeling with an open red ring box, a woman in an ivory saree covering her mouth in happy surprise
 
@@ -60,10 +61,10 @@ Regenerate any image that has: text or letters, extra/odd fingers, a background 
 - occ-cradle-ceremony: A baby in a flower-decorated wooden cradle, the mother gently rocking it, aunts smiling around
 - occ-rice-feeding-ceremony: A father feeding a baby its first spoon of kheer from a silver bowl, the baby in a tiny silk outfit
 - occ-housewarming-ceremony: A couple stepping through a door with a mango-leaf toran, the wife holding a lit lamp
-- occ-retirement-party: An older man in a blazer holding a farewell bouquet and a plaque, colleagues clapping
-- occ-graduation-celebration: A young woman in a graduation gown hugging her proud parents
+- occ-retirement-party: A grey-haired man in a blazer holding a farewell bouquet and a plaque, his wife beside him beaming, colleagues clapping
+- occ-graduation-celebration: A young woman in a graduation gown and cap hugging her proud mother and father, the father wiping a happy tear
 - occ-family-reunion: A big family of three generations squeezing together for a group photo, all laughing
-- occ-friends-get-together: Four friends sitting together laughing over chai and snacks
+- occ-friends-get-together: Four close friends in their twenties on a cosy sofa laughing together over chai and snacks, one showing old photos on a phone
 - occ-farewell-party: A young woman holding a farewell card and flowers, friends hugging her goodbye
 - occ-bachelor-party: Three young men in sunglasses laughing and clinking mocktail glasses
 - occ-bachelorette-party: A bride-to-be in a sash and tiara laughing with two friends holding balloons
@@ -142,14 +143,14 @@ Regenerate any image that has: text or letters, extra/odd fingers, a background 
 - occ-parent-teacher-gathering: A teacher showing a report card to happy parents with their child
 - occ-school-reunion: Old classmates in their thirties hugging and laughing, holding an old class photo
 - occ-school-fundraiser: Children selling homemade cookies at a small table, a parent buying one
-- occ-school-carnival: Kids holding cotton candy and a balloon, laughing
+- occ-school-carnival: Schoolchildren in uniforms at a school carnival holding cotton candy and balloons, a small toy stall and a merry-go-round behind them, laughing
 - occ-career-day: Children dressed as a doctor, a pilot and an engineer, posing proudly
 - occ-school-project-exhibition: Two students presenting a solar-panel model to an impressed teacher
 
 ### 5. College & university (20)
 
-- occ-college-fest: College students cheering with arms raised, wearing fest wristbands
-- occ-freshers-party: First-year students dancing and laughing, one wearing a "fresher" sash without words
+- occ-college-fest: College students at a campus fest cheering in front of a stage with lights, fest wristbands on, one on a friend's shoulders
+- occ-freshers-party: First-year college students dancing together at a welcome party, seniors cheering and showering them with confetti
 - occ-college-farewell: Final-year friends hugging tightly, one wiping a happy tear
 - occ-convocation-ceremony: A graduate in a gown receiving a degree scroll, parents beaming beside her
 - occ-graduation-party: Graduates tossing caps in the air, laughing
@@ -165,27 +166,27 @@ Regenerate any image that has: text or letters, extra/odd fingers, a background 
 - occ-student-awards-night: A student in formal wear holding an award, smiling proudly
 - occ-entrepreneurship-summit: A young student founder pitching with a microphone, holding a tablet
 - occ-campus-recruitment-event: A student in formal wear shaking hands with a smiling recruiter
-- occ-college-club-meetup: A group of students chatting around a table with snacks
+- occ-college-club-meetup: College students in hoodies gathered around a table with laptops, posters and snacks, excitedly planning a club event together
 - occ-innovation-showcase: Two students presenting a glowing prototype gadget
-- occ-youth-festival: Young people in colourful clothes dancing and laughing
+- occ-youth-festival: Young Indian college students on a festival stage, one dancing in folk costume, another drumming a dhol, friends cheering in front
 
 ### 6. Corporate & business (35)
 
 - occ-corporate-annual-day: A team on stage holding an award, colleagues applauding
 - occ-corporate-conference: A speaker at a podium mid-talk, attendees listening
-- occ-business-summit: Two business leaders shaking hands confidently
+- occ-business-summit: Business leaders in suits with lanyards on a summit stage panel, one speaking into a microphone while the others listen and smile, a glass podium beside them
 - occ-product-launch: A presenter unveiling a glowing new product from under a cloth
 - occ-brand-launch: A founder smiling as purple confetti falls around her
 - occ-store-opening: An owner cutting a red ribbon at a shop door with golden scissors
 - occ-office-inauguration: A woman lighting a brass lamp at a new office, colleagues clapping
 - occ-board-meeting: Three executives in a calm discussion at a table, one presenting a chart
-- occ-annual-general-meeting: A chairman speaking at a podium, calm and professional
-- occ-dealer-meet: A business owner shaking hands with a dealer, both smiling
+- occ-annual-general-meeting: A chairman in a suit addressing shareholders from a podium with a microphone, a row of smiling shareholders raising their hands to vote in agreement
+- occ-dealer-meet: A company head in a suit presenting a shining trophy to a proud dealer in a blazer on a stage, other dealers in the front row applauding
 - occ-distributor-conference: A manager presenting to a few attentive distributors
 - occ-employee-awards-night: An employee holding a trophy, a colleague hugging him
 - occ-employee-appreciation-event: A manager handing a gift box to a smiling employee
 - occ-team-building-event: Colleagues doing a group high-five, laughing
-- occ-corporate-retreat: Colleagues relaxing together with mugs, laughing
+- occ-corporate-retreat: Colleagues in casual resort wear laughing together around an outdoor table with coffee mugs and notebooks, a hint of hills and greenery behind them
 - occ-leadership-summit: A woman leader speaking confidently with a microphone
 - occ-investor-meet: A founder showing a tablet to an interested investor
 - occ-networking-event: Professionals exchanging business cards and smiling
@@ -243,7 +244,7 @@ Regenerate any image that has: text or letters, extra/odd fingers, a background 
 
 ### 8. Public shows & culture (28)
 
-- occ-public-festival: A family enjoying a festival, the child holding a pinwheel
+- occ-public-festival: A happy young husband and wife and their little son enjoying a city festival, the boy holding a pinwheel, colourful festive buntings and a ferris wheel softly behind them
 - occ-fashion-show: A model walking confidently in an elegant outfit
 - occ-film-premiere: A glamorous couple posing and smiling, camera flashes around them
 - occ-film-screening: Friends sharing popcorn, watching with wide eyes
@@ -372,7 +373,7 @@ Regenerate any image that has: text or letters, extra/odd fingers, a background 
 - occ-government-inauguration: An official cutting a ribbon, people clapping
 - occ-public-consultation: A community leader listening to residents with a notepad
 - occ-civic-awareness-campaign: A volunteer holding a blank placard, smiling
-- occ-community-gathering: Neighbours sharing food and laughing together
+- occ-community-gathering: Neighbours of all ages sitting together on mats in a courtyard sharing a feast on banana leaves, laughing, fairy lights strung above
 - occ-community-cultural-day: Neighbours in traditional clothes dancing together
 - occ-ngo-fundraiser: A volunteer receiving a donation box from a smiling donor
 - occ-charity-auction: An auctioneer raising a gavel, an elegant bidder raising a paddle
@@ -473,7 +474,7 @@ Regenerate any image that has: text or letters, extra/odd fingers, a background 
 - occ-destination-birthday: A woman in a sun hat holding a birthday cake, friends cheering
 - occ-travel-community-meetup: Travellers with backpacks sharing photos on a phone, smiling
 - occ-outdoor-festival: Friends dancing with flower garlands, laughing
-- occ-heritage-celebration: A family in traditional clothes smiling proudly
+- occ-heritage-celebration: A family in traditional Indian silks proudly standing before a heritage temple doorway with carved stone pillars, the little girl holding a brass lamp
 - occ-cultural-tourism-event: A tourist trying on a traditional turban, a local smiling
 - occ-mountain-retreat: A couple in warm jackets holding mugs, smiling peacefully
 - occ-luxury-yacht-party: Friends in white outfits toasting, wind in their hair

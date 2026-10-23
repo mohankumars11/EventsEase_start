@@ -3,7 +3,7 @@
  *
  * Laid out to Mohan's reference (2026-10-23): the two doors as big cards
  * at the top — Celebrations, Book a Service — then the hero, the search,
- * and the eighteen event categories four across as 3D illustrated cards
+ * and the eighteen event categories three across as 3D illustrated cards
  * with their names underneath. Below them, where the masters are.
  *
  * The doors switch the page in place rather than navigating, so the
@@ -17,7 +17,7 @@ import { useCity } from '../../context/CityContext'
 import { useAuth } from '../../context/AuthContext'
 import { BENGALURU_AREAS } from '../../data/bengaluruAreas'
 import { usePlan } from '../state/PlanContext'
-import { CATEGORIES, OCCASIONS } from '../data/occasions'
+import { CATEGORIES } from '../data/occasions'
 import { TRADE_GROUPS } from '../data/trades'
 import { artFor } from '../data/art'
 import { CategoryCard, ServiceCard } from '../ui/art'
@@ -55,8 +55,8 @@ export default function Home() {
 
       {/* The hero. */}
       <section className="relative mx-4 mt-4 h-[168px] overflow-hidden rounded-[24px] bg-gradient-to-br from-[#FDEBF5] via-[#F6EAFF] to-[#E9E0FF]" aria-label="Sambramo">
-        {hero && <img src={hero} alt="" className="absolute bottom-0 right-0 h-full w-[64%] object-cover object-left [mask-image:linear-gradient(90deg,transparent_0%,#000_22%)]" />}
-        <div className="relative z-10 flex h-full max-w-[52%] flex-col justify-center pl-4">
+        {hero && <img src={hero} alt="" className="absolute bottom-0 right-0 h-full w-[64%] object-cover object-[30%_40%] mix-blend-multiply [mask-image:linear-gradient(90deg,transparent_0%,#000_22%)]" />}
+        <div className="relative z-10 flex h-full max-w-[47%] flex-col justify-center pl-4">
           <h1 className="text-[22px] font-extrabold leading-[1.05] tracking-[-0.035em] text-[#1E0B4B]">Make Every Moment Special</h1>
           <p className="mt-1.5 text-[11.5px] font-semibold leading-snug text-[#5B4A86]">From birthdays to big milestones, we make it happen</p>
         </div>
@@ -71,10 +71,8 @@ export default function Home() {
       {door === 'occasions' ? (
         <section className="cx-enter mt-6" key="o">
           <Head title={`Explore ${CATEGORIES.length} Event Categories`} action={<Link to="/search" className="flex items-center gap-0.5 text-[13px] font-extrabold text-[var(--brand)]">View all<ChevronRight size={16} /></Link>} />
-          <div className="grid grid-cols-4 gap-2.5 px-4">
+          <div className="grid grid-cols-3 gap-2.5 px-4">
             {CATEGORIES.map(c => <CategoryCard key={c.id} category={c} />)}
-            <Helper onClick={() => choose('services')} title="Just one service" sub="34 kinds" />
-            <Helper onClick={() => navigate('/search')} title="Search all" sub={`${OCCASIONS.length} occasions`} />
           </div>
         </section>
       ) : (
@@ -125,11 +123,3 @@ function Head({ title, action = null }) {
   )
 }
 
-function Helper({ onClick, title, sub }) {
-  return (
-    <button type="button" onClick={onClick} className="cx-press flex flex-col items-center justify-center rounded-[16px] bg-[var(--am-50)] px-1.5 text-center border border-dashed border-[var(--am-300)]">
-      <span className="text-[11px] font-extrabold leading-tight text-[var(--am-ink)]">{title}</span>
-      <span className="mt-0.5 text-[10px] font-bold text-[var(--ink-3)]">{sub}</span>
-    </button>
-  )
-}

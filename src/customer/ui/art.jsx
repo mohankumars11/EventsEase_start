@@ -12,26 +12,33 @@
  * image is a different picture, never a hole.
  */
 import { Link } from 'react-router-dom'
-import { Check, Plus } from 'lucide-react'
+import { Check, ChevronRight, Plus } from 'lucide-react'
 import { categoryArt, occasionArt, serviceArt } from '../data/art'
 import { TRADE } from '../data/trades'
 
 export function ArtFill({ art, tone = '#F3EDFF', className = '', inset = '14%' }) {
   return (
-    <div className={'relative overflow-hidden ' + className} style={{ background: tone }}>
+    /* A generated illustration is drawn on pure white, so its card is white too (the reference look);
+       multiply lets that white vanish on any tinted ground it is placed over. */
+    <div className={'relative overflow-hidden ' + className} style={{ background: art?.kind === 'art' && tone !== 'transparent' ? '#fff' : tone }}>
       {art?.src && (art.kind === 'art'
-        ? <img src={art.src} alt="" loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover object-[50%_30%]" />
+        ? <img src={art.src} alt="" loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover object-[50%_30%] mix-blend-multiply" />
         : <span className="absolute" style={{ inset }}><img src={art.src} alt="" loading="lazy" decoding="async" className="h-full w-full object-contain drop-shadow-[0_8px_10px_rgba(43,14,102,.18)]" /></span>)}
     </div>
   )
 }
 
-/** Home grid, four across: picture on top, the name in two short lines. */
+/** Home grid, three across (Mohan, 2026-10-23): the picture, then the name,
+    one line of what it covers, and a small arrow — the reference card. */
 export function CategoryCard({ category }) {
   return (
-    <Link to={`/c/${category.id}`} className="cx-press cx-art-card block overflow-hidden rounded-[16px]" data-category={category.id}>
-      <ArtFill art={categoryArt(category)} tone={category.tone} className="aspect-[5/4]" inset="10%" />
-      <p className="flex min-h-[34px] items-center px-1.5 py-1.5 text-[10.5px] font-extrabold leading-[1.2] tracking-[-0.01em] text-[var(--ink)]">{category.short}</p>
+    <Link to={`/c/${category.id}`} className="cx-press cx-art-card relative block overflow-hidden rounded-[18px]" data-category={category.id}>
+      <ArtFill art={categoryArt(category)} tone={category.tone} className="aspect-[1/1.02]" inset="12%" />
+      <div className="px-2 pb-2.5 pt-1.5 pr-7">
+        <p className="line-clamp-2 min-h-[30px] text-[12.5px] font-extrabold leading-[1.18] tracking-[-0.015em] text-[var(--am-ink)]">{category.short}</p>
+        <p className="mt-0.5 truncate text-[10px] font-semibold text-[var(--ink-3)]">{category.line}</p>
+      </div>
+      <span className="absolute bottom-2.5 right-1.5 grid h-5 w-5 place-items-center rounded-full bg-[var(--am-100)] text-[var(--am-ink)]"><ChevronRight size={13} strokeWidth={2.6} /></span>
     </Link>
   )
 }

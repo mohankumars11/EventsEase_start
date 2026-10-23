@@ -66,11 +66,12 @@ mkdirSync(ART, { recursive: true })
 if (mode === 'import') {
   const from = join(ROOT, 'generated-images')
   const force = rest.includes('--force')
-  const pngs = existsSync(from) ? readdirSync(from).filter(f => /^(cat|occ|svc|hero)-[a-z0-9-]+\.png$/.test(f)) : []
+  const pngs = existsSync(from) ? readdirSync(from).filter(f => /^(cat|occ|svc|hero)-[a-z0-9_-]+\.png$/.test(f)) : []
   const todo = pngs.filter(f => force || !existsSync(join(ART, f.replace(/\.png$/, '.webp'))))
   console.log(`${pngs.length} generated, ${todo.length} to import`)
   for (const f of todo) {
-    const [webp] = await draw(join(from, f), [[0, 0, 0, 0, 512, 512]])
+    // the hero is generated 1536x1024 and shown wide; everything else is a square
+    const [webp] = await draw(join(from, f), [f.startsWith('hero-') ? [0, 0, 0, 0, 960, 640] : [0, 0, 0, 0, 512, 512]])
     writeFileSync(join(ART, f.replace(/\.png$/, '.webp')), webp)
     console.log(`  ${f} → ${(webp.length / 1024).toFixed(0)} KB`)
   }
