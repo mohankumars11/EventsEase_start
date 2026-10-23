@@ -24,7 +24,7 @@ import { isPartnerSurface as _isPartner } from './config/surface'
 // The landing page is the entry point for essentially all first-time
 // traffic, so it stays in the main bundle — code-splitting it would only
 // add a round-trip before anything renders.
-import HomeScreen from './pages/HomeScreen'
+import CustomerHomeExperience from './pages/CustomerHomeExperience'
 import PayBridge from './pages/PayBridge'
 
 // Everything else is split per route. Previously all 25 pages shipped in
@@ -208,7 +208,7 @@ function RootScreen() {
     return <Navigate to={homeFor(SURFACE.admin, { signedIn: !!profile, role: profile?.role ?? null })} replace />
   }
 
-  if (!isPartnerSurface()) return <ScreenShell><HomeScreen /></ScreenShell>
+  if (!isPartnerSurface()) return <ScreenShell><CustomerHomeExperience /></ScreenShell>
 
   return <Navigate to={homeFor(SURFACE.partner, { signedIn: !!profile, role: profile?.role ?? null })} replace />
 }
@@ -374,7 +374,7 @@ function AppRoutes() {
           planner, listed celebration types, pushed the shop and ran a festival
           rail — the same four things in two layouts. Signing in replaced the
           app you had just learned with another one doing the same job.
-          HomeScreen changes its contents by auth state instead.
+          The customer-specific shell now owns the first-paint experience.
 
           /dashboard/customer stays routed rather than redirecting: it is in
           the wild in the tab bar, in post-login redirects, in the profile menu
@@ -512,7 +512,7 @@ function AppRoutes() {
       {/* ── Customer ───────────────────────────────── */}
       <Route path="/dashboard/customer" element={
         <ProtectedRoute allowedRoles={['customer']}>
-          <ScreenShell><HomeScreen /></ScreenShell>
+          <ScreenShell><CustomerHomeExperience /></ScreenShell>
         </ProtectedRoute>
       } />
       {/* /dashboard/customer/browse, /vendors/:id, /vendors/:id/quote and
