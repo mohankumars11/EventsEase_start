@@ -7,27 +7,28 @@ import {
 import { useAuth } from '../context/AuthContext'
 import { useCity } from '../context/CityContext'
 import { SERVICE_GROUPS } from '../data/servicePricing'
+import { getSambramoTradePictogramDataUri } from '../assets/sambramo/pictograms/hd-34'
 import './CustomerHomeExperience.css'
 
 const CATEGORIES = [
-  { id: 'life', title: 'Personal Celebrations', short: 'Life’s Milestones', emoji: '🎂', tone: 'rose', query: 'birthday, anniversary, family milestones' },
-  { id: 'weddings', title: 'Indian Weddings', short: 'Weddings & Ceremonies', emoji: '💐', tone: 'peach', query: 'wedding, engagement, traditional ceremonies' },
-  { id: 'festivals', title: 'Religious & Cultural', short: 'Festivals & Culture', emoji: '🪔', tone: 'saffron', query: 'Diwali, Indian festivals, family traditions' },
-  { id: 'school', title: 'School Events', short: 'School Events', emoji: '🎒', tone: 'sky', query: 'school annual day, student celebrations' },
-  { id: 'college', title: 'College & University', short: 'College & University', emoji: '🎓', tone: 'lavender', query: 'college graduation, campus festivals' },
-  { id: 'corporate', title: 'Corporate & Business', short: 'Corporate & Business', emoji: '🏆', tone: 'ice', query: 'corporate award, business conference' },
-  { id: 'nightlife', title: 'Live Entertainment', short: 'Live Entertainment', emoji: '🎤', tone: 'pink', query: 'live music, DJ night, entertainment' },
-  { id: 'public', title: 'Public Shows', short: 'Public & Cultural Shows', emoji: '🎭', tone: 'lilac', query: 'public show, theatre, cultural performance' },
-  { id: 'sports', title: 'Sports & Wellness', short: 'Sports, Fitness & Wellness', emoji: '🏅', tone: 'mint', query: 'sports tournament, fitness, wellness' },
-  { id: 'food', title: 'Food & Dining', short: 'Food & Dining', emoji: '🍲', tone: 'cream', query: 'Indian chef, catering, dining event' },
-  { id: 'retail', title: 'Retail & Lifestyle', short: 'Retail, Fashion & Lifestyle', emoji: '🛍️', tone: 'pink', query: 'fashion, retail launch, lifestyle event' },
-  { id: 'property', title: 'Property & Real Estate', short: 'Property & Real Estate', emoji: '🏡', tone: 'mint', query: 'housewarming, real estate, new home' },
-  { id: 'community', title: 'Community & Charity', short: 'Government, Community & Charity', emoji: '🌱', tone: 'sage', query: 'community gathering, charity, volunteering' },
-  { id: 'industry', title: 'Industry & Professional', short: 'Industry & Professional', emoji: '🎙️', tone: 'ice', query: 'industry conference, innovation summit' },
-  { id: 'themed', title: 'Seasonal & Themed Parties', short: 'Seasonal & Themed Parties', emoji: '🎭', tone: 'lavender', query: 'themed party, masquerade, costume celebration' },
-  { id: 'outdoor', title: 'Travel & Outdoor', short: 'Travel & Outdoor', emoji: '🏕️', tone: 'sky', query: 'outdoor celebration, travel, picnic' },
-  { id: 'virtual', title: 'Virtual & Hybrid', short: 'Virtual & Hybrid Events', emoji: '💻', tone: 'lilac', query: 'virtual event, hybrid conference, livestream' },
-  { id: 'special', title: 'Special Occasions', short: 'Special & Private Experiences', emoji: '💝', tone: 'rose', query: 'romantic dinner, private proposal, special occasion' },
+  { id: 'life', title: 'Personal Celebrations', short: 'Life’s Milestones', artTrade: 'Cake & Desserts', tone: 'rose', query: 'birthday, anniversary, family milestones' },
+  { id: 'weddings', title: 'Indian Weddings', short: 'Weddings & Ceremonies', artTrade: 'Wedding Planning', tone: 'peach', query: 'wedding, engagement, traditional ceremonies' },
+  { id: 'festivals', title: 'Religious & Cultural', short: 'Festivals & Culture', artTrade: 'Priest & Rituals', tone: 'saffron', query: 'Diwali, Indian festivals, family traditions' },
+  { id: 'school', title: 'School Events', short: 'School Events', artTrade: 'Invitation & Printing', tone: 'sky', query: 'school annual day, student celebrations' },
+  { id: 'college', title: 'College & University', short: 'College & University', artTrade: 'Wedding Planning', tone: 'lavender', query: 'college graduation, campus festivals' },
+  { id: 'corporate', title: 'Corporate & Business', short: 'Corporate & Business', artTrade: 'Anchor & MC', tone: 'ice', query: 'corporate award, business conference' },
+  { id: 'nightlife', title: 'Live Entertainment', short: 'Live Entertainment', artTrade: 'DJ & Music', tone: 'pink', query: 'live music, DJ night, entertainment' },
+  { id: 'public', title: 'Public Shows', short: 'Public & Cultural Shows', artTrade: 'Live Entertainment', tone: 'lilac', query: 'public show, theatre, cultural performance' },
+  { id: 'sports', title: 'Sports & Wellness', short: 'Sports, Fitness & Wellness', artTrade: 'Safety & Facilities', tone: 'mint', query: 'sports tournament, fitness, wellness' },
+  { id: 'food', title: 'Food & Dining', short: 'Food & Dining', artTrade: 'Catering & Food', tone: 'cream', query: 'Indian chef, catering, dining event' },
+  { id: 'retail', title: 'Retail & Lifestyle', short: 'Retail, Fashion & Lifestyle', artTrade: 'Gifts & Favours', tone: 'pink', query: 'fashion, retail launch, lifestyle event' },
+  { id: 'property', title: 'Property & Real Estate', short: 'Property & Real Estate', artTrade: 'Venue', tone: 'mint', query: 'housewarming, real estate, new home' },
+  { id: 'community', title: 'Community & Charity', short: 'Government, Community & Charity', artTrade: 'Safety & Facilities', tone: 'sage', query: 'community gathering, charity, volunteering' },
+  { id: 'industry', title: 'Industry & Professional', short: 'Industry & Professional', artTrade: 'Event Equipment Rental', tone: 'ice', query: 'industry conference, innovation summit' },
+  { id: 'themed', title: 'Seasonal & Themed Parties', short: 'Seasonal & Themed Parties', artTrade: 'Decoration & Floral', tone: 'lavender', query: 'themed party, masquerade, costume celebration' },
+  { id: 'outdoor', title: 'Travel & Outdoor', short: 'Travel & Outdoor', artTrade: 'End-to-End Event Logistics', tone: 'sky', query: 'outdoor celebration, travel, picnic' },
+  { id: 'virtual', title: 'Virtual & Hybrid', short: 'Virtual & Hybrid Events', artTrade: 'Photography', tone: 'lilac', query: 'virtual event, hybrid conference, livestream' },
+  { id: 'special', title: 'Special Occasions', short: 'Special & Private Experiences', artTrade: 'Wedding Planning', tone: 'rose', query: 'romantic dinner, private proposal, special occasion' },
 ]
 
 const OCCASIONS = {
@@ -79,14 +80,14 @@ function getServiceEmoji(name, fallback) {
   return match?.[1] || fallback || '✨'
 }
 
-function CategoryArtwork({ emoji, tone }) {
+function CategoryArtwork({ trade, tone }) {
   return (
     <div className={`sambramo-art sambramo-art--${tone}`} aria-hidden="true">
       <span className="sambramo-art-orbit sambramo-art-orbit--one" />
       <span className="sambramo-art-orbit sambramo-art-orbit--two" />
+      <img className="sambramo-art-image" src={getSambramoTradePictogramDataUri(trade)} alt="" loading="lazy" />
       <span className="sambramo-art-spark sambramo-art-spark--one">✦</span>
       <span className="sambramo-art-spark sambramo-art-spark--two">✧</span>
-      <span className="sambramo-art-emoji">{emoji}</span>
     </div>
   )
 }
@@ -173,19 +174,18 @@ export default function CustomerHomeExperience() {
         <div className="sambramo-hero-art" aria-hidden="true">
           <span className="sambramo-hero-glow" />
           {mode === 'celebrations' ? (
-            <>
-              <span className="sambramo-hero-person sambramo-hero-person--dad">👨🏽</span>
-              <span className="sambramo-hero-person sambramo-hero-person--child">👧🏽</span>
-              <span className="sambramo-hero-person sambramo-hero-person--mom">👩🏽</span>
-              <span className="sambramo-hero-cake">🎂</span>
+            <div className="sambramo-hero-pictograms">
+              <img src={getSambramoTradePictogramDataUri('Cake & Desserts')} alt="" />
+              <img src={getSambramoTradePictogramDataUri('Wedding Planning')} alt="" />
+              <img src={getSambramoTradePictogramDataUri('Decoration & Floral')} alt="" />
               <span className="sambramo-confetti">✦ ✧ · ✦</span>
-            </>
+            </div>
           ) : (
-            <>
-              <span className="sambramo-hero-person sambramo-hero-person--pro">🧑🏽‍🔧</span>
-              <span className="sambramo-hero-tool">📸</span>
+            <div className="sambramo-hero-pictograms sambramo-hero-pictograms--service">
+              <img src={getSambramoTradePictogramDataUri('Anchor & MC')} alt="" />
+              <img src={getSambramoTradePictogramDataUri('Photography')} alt="" />
               <span className="sambramo-confetti">✦ ✧ · ✦</span>
-            </>
+            </div>
           )}
         </div>
       </section>
@@ -238,7 +238,7 @@ export default function CustomerHomeExperience() {
           <div className="sambramo-category-grid">
             {filteredCategories.map(category => (
               <button className="sambramo-category-card" key={category.id} onClick={() => goToCategory(category)}>
-                <CategoryArtwork emoji={category.emoji} tone={category.tone} />
+                <CategoryArtwork trade={category.artTrade} tone={category.tone} />
                 <span className="sambramo-category-title">{category.title}</span>
                 <span className="sambramo-card-arrow"><ChevronRight size={15} /></span>
               </button>
@@ -249,7 +249,7 @@ export default function CustomerHomeExperience() {
           <div className="sambramo-service-grid">
             {filteredServices.map(service => (
               <button className="sambramo-service-card" key={service.id} onClick={() => navigate('/book/instant')}>
-                <CategoryArtwork emoji={getServiceEmoji(service.name, service.emoji)} tone="lavender" />
+                <CategoryArtwork trade={service.name} tone="lavender" />
                 <span>{service.name}</span>
                 <ChevronRight size={14} />
               </button>
