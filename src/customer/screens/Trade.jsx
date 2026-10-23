@@ -56,7 +56,7 @@ export default function Trade() {
 
   return (
     <main className="cx-enter cx-bottom-pad-bar">
-      <BackHeader title={t.label} sub={occasion ? `For ${occasion.name}` : all ? `${plural(all.length, 'partner')} live · ${all.filter(x => x.instant).length} instant` : 'Loading partners…'}
+      <BackHeader title={t.label} sub={occasion ? `For ${occasion.name}` : all ? `${plural(all.length, 'master')} live · ${all.filter(x => x.instant).length} instant` : 'Loading masters…'}
         right={<button type="button" onClick={() => { setComparing(c => !c); setPicked([]) }} aria-pressed={comparing}
           className={'cx-press flex h-11 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-extrabold ' + (comparing ? 'bg-[var(--brand-deep)] text-white' : 'cx-btn')}>
           {comparing ? <X size={16} /> : <Scale size={16} />}{comparing ? 'Done' : 'Compare'}
@@ -78,7 +78,7 @@ export default function Trade() {
       </div>
 
       {comparing && (
-        <p className="mx-4 mb-3 rounded-[16px] bg-[var(--brand-tint)] px-3.5 py-2.5 text-[12.5px] font-bold text-[var(--brand-deep)]">Tap <b>Vs</b> on up to three partners to see them side by side.</p>
+        <p className="mx-4 mb-3 rounded-[16px] bg-[var(--brand-tint)] px-3.5 py-2.5 text-[12.5px] font-bold text-[var(--brand-deep)]">Tap <b>Vs</b> on up to three masters to see them side by side.</p>
       )}
 
       <div className="grid grid-cols-2 gap-3 px-4">
@@ -94,7 +94,7 @@ export default function Trade() {
         ))}
       </div>
       {list?.length === 0 && <Empty title={all?.length ? 'No one matches those filters' : `No ${t.label.toLowerCase()} live yet`}
-        body={all?.length ? 'Clear a filter to see everyone.' : 'Partners for this service are being verified in your city.'} />}
+        body={all?.length ? 'Clear a filter to see everyone.' : 'Masters for this service are being verified in your city.'} />}
 
       {comparing && picked.length >= 2 ? (
         <div className="fixed inset-x-0 z-[140] px-3" style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 72px)' }}>
@@ -104,7 +104,7 @@ export default function Trade() {
         </div>
       ) : <PlanBar />}
 
-      <Sheet open={sortOpen} onClose={() => setSortOpen(false)} title="Sort partners">
+      <Sheet open={sortOpen} onClose={() => setSortOpen(false)} title="Sort masters">
         <div className="pb-2">
           {Object.entries(SORTS).map(([k, s]) => (
             <button key={k} type="button" onClick={() => { setSort(k); setSortOpen(false) }}

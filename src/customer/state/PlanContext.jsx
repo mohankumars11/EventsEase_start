@@ -23,7 +23,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 const KEY = 'sbm.cx.plan.v1'
 /* `place`: where the event is ({ area, lat, lng, address }) — the engine checks travel and
    distance against it. `bookings`: what checkout sent, so Plans can show it at once. */
-const EMPTY = { event: { occasionId: null, date: null, time: null, hours: null, guests: null, venue: 'need' }, place: null, picks: {}, basket: [], saved: [], bookings: [] }
+const EMPTY = { event: { occasionId: null, date: null, time: null, hours: null, guests: null, venue: 'need', venueKind: null }, place: null, picks: {}, basket: [], saved: [], bookings: [] }
 
 function load() {
   try {
@@ -93,12 +93,13 @@ export function usePlan() {
 }
 
 /**
- * What an occasion needs, after the customer's own answers: the template's
- * must-haves are on unless they said they have it; the rest are off until
- * added. A venue they already have is never searched for.
+ * What an occasion needs, after the customer's own answers. Essentials and
+ * the recommended services are on unless they said they have it or took it
+ * off; add-ons (and the end-of-day services) are off until added. A venue
+ * they already have is never searched for.
  */
 export function needsFor(occasion, picks = {}, event = {}) {
-  const state = t => picks[t] ?? (occasion.must.includes(t) ? 'need' : 'off')
+  const state = t => picks[t] ?? (occasion.must.includes(t) || occasion.often.includes(t) ? 'need' : 'off')
   const rows = [
     ...occasion.must.map(t => ({ tradeId: t, tier: 'must' })),
     ...occasion.often.map(t => ({ tradeId: t, tier: 'often' })),

@@ -9,7 +9,7 @@
  * partner and operator routes, which keep working on any host exactly as
  * before.
  *
- * Three tabs (Celebrate, Plans, Account). The plan bar floats above them
+ * Four tabs (Home, Services, My Bookings, Account). The plan bar floats above them
  * whenever a partner has been picked; focused screens (an occasion, a
  * partner, checkout) hide the tabs and carry their own action bar.
  */
@@ -24,6 +24,7 @@ import './cx.css'
 const Category = lazy(() => import('./screens/Category'))
 const Occasion = lazy(() => import('./screens/Occasion'))
 const Match = lazy(() => import('./screens/Match'))
+const Recommend = lazy(() => import('./screens/Recommend'))
 const Trade = lazy(() => import('./screens/Trade'))
 const Partner = lazy(() => import('./screens/Partner'))
 const PlanReview = lazy(() => import('./screens/PlanReview'))
@@ -41,7 +42,7 @@ export const LEGACY_PATHS = ['/partner', '/dashboard/vendor', '/dashboard/admin'
 export const isLegacyPath = p => p === '/dashboard' || LEGACY_PATHS.some(x => p === x || p.startsWith(`${x}/`))
 
 const TAB_ROUTES = p => p === '/' || p.startsWith('/c/') || p === '/s' || p.startsWith('/s/') || p.startsWith('/plans') || p.startsWith('/me')
-const BAR_ROUTES = p => p === '/' || p.startsWith('/c/') || p.startsWith('/plans') || p.startsWith('/me')
+const BAR_ROUTES = p => p === '/' || p.startsWith('/c/') || p === '/s' || p.startsWith('/plans') || p.startsWith('/me')
 
 function Loading() {
   return <div className="grid min-h-[60dvh] place-items-center"><span className="h-8 w-8 animate-spin rounded-full border-[3px] border-[var(--brand)] border-t-transparent" /></div>
@@ -68,6 +69,7 @@ export default function CustomerApp() {
             <Route path="/search" element={<Search />} />
             <Route path="/c/:categoryId" element={<Category />} />
             <Route path="/o/:occasionId" element={<Occasion />} />
+            <Route path="/o/:occasionId/plan" element={<Recommend />} />
             <Route path="/o/:occasionId/match" element={<Match />} />
             <Route path="/s" element={<Services />} />
             <Route path="/s/:tradeId" element={<Trade />} />

@@ -1,4 +1,4 @@
-/** The three small screens: saved partners, notifications, and all services. */
+/** The three small screens: saved masters, notifications, and all services. */
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { BellRing, Check, Loader2 } from 'lucide-react'
@@ -6,16 +6,17 @@ import { useAuth } from '../../context/AuthContext'
 import { alertsAvailability, enableAlerts } from '../../lib/push'
 import { usePlan } from '../state/PlanContext'
 import { TRADE_GROUPS } from '../data/trades'
-import { BackHeader, Empty, PlanBar, SectionHead } from '../ui/kit'
-import { PartnerCard, TradeTile } from '../ui/cards'
+import { BackHeader, Empty, PlanBar } from '../ui/kit'
+import { PartnerCard } from '../ui/cards'
+import { ServiceCard } from '../ui/art'
 
 export function Saved() {
   const plan = usePlan()
   return (
     <main className="cx-enter cx-bottom-pad-bar">
-      <BackHeader title="Saved partners" sub={plan.saved.length ? `${plan.saved.length} saved` : null} />
-      {!plan.saved.length && <div className="pt-6"><Empty title="Nothing saved yet" body="Tap the heart on any partner to keep them here."
-        action={<Link to="/" className="font-extrabold text-[var(--brand)]">Browse partners</Link>} /></div>}
+      <BackHeader title="Saved masters" sub={plan.saved.length ? `${plan.saved.length} saved` : null} />
+      {!plan.saved.length && <div className="pt-6"><Empty title="Nothing saved yet" body="Tap the heart on any master to keep them here."
+        action={<Link to="/" className="font-extrabold text-[var(--brand)]">Browse masters</Link>} /></div>}
       <div className="grid grid-cols-2 gap-3 px-4 pt-1">
         {plan.saved.map(p => (
           <PartnerCard key={p.serviceId} partner={p} saved onSave={x => plan.toggleSaved(x)}
@@ -47,7 +48,7 @@ export function Notifications() {
           <span className="grid h-12 w-12 shrink-0 place-items-center rounded-[16px] bg-white shadow-sm"><BellRing size={22} className="text-[var(--brand)]" /></span>
           <div className="min-w-0">
             <p className="text-[15.5px] font-extrabold tracking-[-0.02em]">Know the moment it happens</p>
-            <p className="mt-1 text-[12.5px] font-semibold leading-relaxed text-[var(--ink-2)]">A partner sends a quote, accepts your offer, or your payment confirms them — you hear it first.</p>
+            <p className="mt-1 text-[12.5px] font-semibold leading-relaxed text-[var(--ink-2)]">A master sends a quote, accepts your offer, or your payment confirms them — you hear it first.</p>
           </div>
         </div>
         {!user ? <p className="mt-3 text-[12.5px] font-bold text-[var(--ink-3)]">Sign in from Account to turn alerts on.</p>
@@ -66,14 +67,16 @@ export function Notifications() {
 export function Services() {
   return (
     <main className="cx-enter cx-bottom-pad-bar">
-      <BackHeader title="All services" sub="34 kinds of partner, all verified" />
+      <header className="cx-safe-top px-4 pb-1">
+        <h1 className="pt-2 text-[24px] font-extrabold tracking-[-0.035em]">Book a master</h1>
+        <p className="mt-0.5 text-[12.5px] font-semibold text-[var(--ink-3)]">34 services, every master verified · confirm and pay in a minute</p>
+      </header>
       {TRADE_GROUPS.map(g => (
-        <section key={g.id} className="mt-3">
-          <SectionHead title={g.label} />
-          <div className="grid grid-cols-3 gap-2.5 px-4">{g.trades.map(t => <TradeTile key={t.id} tradeId={t.id} />)}</div>
+        <section key={g.id} className="mt-5">
+          <h2 className="px-4 pb-3 text-[17px] font-extrabold tracking-[-0.03em]">{g.label}</h2>
+          <div className="grid grid-cols-4 gap-2.5 px-4">{g.trades.map(t => <ServiceCard key={t.id} tradeId={t.id} />)}</div>
         </section>
       ))}
-      <PlanBar />
     </main>
   )
 }

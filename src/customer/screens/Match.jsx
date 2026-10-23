@@ -1,6 +1,7 @@
 /**
- * The match board: for every service the occasion needs, the partners who
- * can do it, best first, one tap to put each in the plan.
+ * Find masters: for every service the occasion needs, the masters who can
+ * do it, best first, one tap to put each in the cart — or "Best of each"
+ * to fill every service with its top-ranked master at once.
  *
  * One rail per service rather than one long list, because the decision is
  * made per service ("which photographer?") and a family compares within a
@@ -10,7 +11,7 @@
  */
 import { useEffect, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
-import { ChevronRight, MessageSquareQuote, Scale } from 'lucide-react'
+import { ChevronRight, Loader2, MessageSquareQuote, Scale, Wand2 } from 'lucide-react'
 import { OCCASION } from '../data/occasions'
 import { TRADE } from '../data/trades'
 import { usePlan, needsFor } from '../state/PlanContext'
@@ -25,15 +26,27 @@ export default function Match() {
   const o = OCCASION[occasionId]
   const plan = usePlan()
   const [compare, setCompare] = useState(null)
+  const [busy, setBusy] = useState(false)
   if (!o) return <Navigate to="/" replace />
   const ev = plan.event.occasionId === o.id ? plan.event : { venue: 'need' }
   const { needed } = needsFor(o, plan.picks[o.id] ?? {}, ev)
   const chosen = needed.filter(t => plan.lineFor(o.id, t)).length
   const facts = [plan.event.date && dayLabel(plan.event.date), ev.guests && `${ev.guests.toLocaleString('en-IN')} ${o.people.toLowerCase()}`].filter(Boolean).join(' · ')
 
+  async function bestOfEach() {
+    setBusy(true)
+    try {
+      for (const t of needed) {
+        if (plan.lineFor(o.id, t)) continue
+        const top = rank(await partnersFor(t).catch(() => []))[0]
+        if (top) plan.add(top, o.id)
+      }
+    } finally { setBusy(false) }
+  }
+
   return (
     <main className="cx-enter pb-[calc(env(safe-area-inset-bottom,0px)+110px)]">
-      <BackHeader title={o.name} sub={facts || 'Add a date and guest count for exact prices'} />
+      <BackHeader title={`Masters for ${o.name}`} sub={facts || 'Add a date and guest count for exact prices'} />
       <div className="px-4 pt-1">
         <div className="flex items-center gap-3 rounded-[20px] bg-[var(--brand-tint)] px-4 py-3">
           <div className="relative h-11 w-11 shrink-0">
@@ -44,9 +57,14 @@ export default function Match() {
             </svg>
             <span className="cx-num absolute inset-0 grid place-items-center text-[12px] font-extrabold text-[var(--brand-deep)]">{chosen}/{needed.length}</span>
           </div>
-          <p className="text-[13px] font-bold leading-snug text-[var(--brand-deep)]">
-            {chosen === needed.length && needed.length ? 'Every service has a partner. Review your plan when ready.' : `Pick a partner for each service — ${plural(needed.length - chosen, 'to go', 'to go')}.`}
+          <p className="min-w-0 flex-1 text-[13px] font-bold leading-snug text-[var(--brand-deep)]">
+            {chosen === needed.length && needed.length ? 'Every service has a master. Review your plan when ready.' : `Pick a master for each service — ${plural(needed.length - chosen, 'to go', 'to go')}.`}
           </p>
+          {chosen < needed.length && (
+            <button type="button" disabled={busy} onClick={bestOfEach} className="cx-press flex shrink-0 items-center gap-1 rounded-full bg-white px-3 py-2 text-[12px] font-extrabold text-[var(--am-ink)] shadow-[0_0_0_1px_var(--am-300)]" data-best>
+              {busy ? <Loader2 size={14} className="animate-spin" /> : <Wand2 size={14} />}Best of each
+            </button>
+          )}
         </div>
       </div>
       {needed.map(t => <Rail key={t} tradeId={t} occasion={o} onCompare={list => setCompare({ tradeId: t, list })} />)}
@@ -74,7 +92,7 @@ function Rail({ tradeId, occasion, onCompare }) {
         <div className="min-w-0">
           <h2 className="flex items-center gap-2 text-[19px] font-extrabold tracking-[-0.03em]"><t.icon size={19} className="text-[var(--brand)]" />{t.label}</h2>
           <p className="truncate text-[12.5px] font-semibold text-[var(--ink-3)]">
-            {line ? <span className="font-extrabold text-[var(--ok)]">✓ {line.name}</span> : list ? `${plural(list.length, 'partner')} live · ${instant} instant` : 'Finding partners…'}
+            {line ? <span className="font-extrabold text-[var(--ok)]">✓ {line.name}</span> : list ? `${plural(list.length, 'master')} live · ${instant} instant` : 'Finding masters…'}
           </p>
         </div>
         {list?.length > 1 && (
@@ -100,7 +118,7 @@ function Rail({ tradeId, occasion, onCompare }) {
         {(list?.length === 0 || err) && (
           <div className="w-[88%] rounded-[22px] bg-[var(--soft)] p-4">
             <p className="flex items-center gap-2 text-[14px] font-extrabold"><MessageSquareQuote size={18} className="text-[var(--brand)]" />No {t.label.toLowerCase()} live near you yet</p>
-            <p className="mt-1 text-[12.5px] font-semibold leading-relaxed text-[var(--ink-2)]">{err ? 'We could not load partners just now. Go back and open this again.' : 'Partners for this are being verified. Your other services can still be booked now.'}</p>
+            <p className="mt-1 text-[12.5px] font-semibold leading-relaxed text-[var(--ink-2)]">{err ? 'We could not load masters just now. Go back and open this again.' : 'Masters for this are being verified. Your other services can still be booked now.'}</p>
           </div>
         )}
       </div>

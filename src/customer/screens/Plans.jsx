@@ -63,7 +63,7 @@ export default function Plans() {
         {solo.length > 0 && (
           <Link to="/plan" className="cx-card cx-press flex items-center gap-3 p-3">
             <span className="flex -space-x-3">{solo.slice(0, 3).map(l => <span key={l.key} className="relative h-12 w-12 overflow-hidden rounded-[15px] ring-2 ring-white"><Photo src={l.cover} className="absolute inset-0 h-full w-full object-cover" /></span>)}</span>
-            <span className="min-w-0 flex-1"><span className="block text-[15px] font-extrabold">Single services</span><span className="block text-[12px] font-semibold text-[var(--ink-3)]">{plural(solo.length, 'partner')} picked</span></span>
+            <span className="min-w-0 flex-1"><span className="block text-[15px] font-extrabold">Single services</span><span className="block text-[12px] font-semibold text-[var(--ink-3)]">{plural(solo.length, 'master')} picked</span></span>
             <ArrowRight size={18} className="text-[var(--brand)]" />
           </Link>
         )}

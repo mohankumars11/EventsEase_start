@@ -45,18 +45,16 @@ function arc(m1, m2, r = R) {
   return `M ${x1} ${y1} A ${r} ${r} 0 ${sweep > 180 ? 1 : 0} 1 ${x2} ${y2}`
 }
 
-export default function WhenSheet({ open, onClose, date, time, hours, onPick }) {
+/** The picker's state. `open` going true resets it to the saved answer. */
+export function useWhen({ date, time, hours }, open = true) {
   const today = useMemo(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d }, [])
   const [d, setD] = useState(date ?? null)
   const [m, setM] = useState(toMin(time))
   const [span, setSpan] = useState(hours ?? 4)
-  const ribbon = useRef(null)
   useEffect(() => {
     if (!open) return
     setD(date ?? null); setM(toMin(time)); setSpan(hours ?? 4)
-    requestAnimationFrame(() => ribbon.current?.querySelector('[aria-pressed="true"]')?.scrollIntoView({ inline: 'center', block: 'nearest' }))
   }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
-
   const days = useMemo(() => Array.from({ length: 120 }, (_, i) => { const x = new Date(today); x.setDate(x.getDate() + i); return x }), [today])
   const isToday = d === iso(today)
   const earliest = useMemo(() => { const n = new Date(); return Math.ceil((n.getHours() * 60 + n.getMinutes() + 120) / 30) * 30 }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -64,14 +62,34 @@ export default function WhenSheet({ open, onClose, date, time, hours, onPick }) 
   const bad = m < minAllowed || minAllowed >= 1440
   useEffect(() => { if (isToday && m < earliest && earliest < 1440) setM(earliest) }, [isToday]) // eslint-disable-line react-hooks/exhaustive-deps
   const end = m + span * 60
-  const chosen = fromIso(d)
+  return {
+    d, setD, m, setM, span, setSpan, days, minAllowed, bad, end, chosen: fromIso(d),
+    value: () => ({ date: d, time: toTime(m), hours: span }),
+    label: !d ? 'Choose a day' : bad ? 'No start times left today' : `${timeLabel(toTime(m))} – ${timeLabel(toTime(end % 1440))}`,
+  }
+}
 
+export default function WhenSheet({ open, onClose, date, time, hours, onPick }) {
+  const w = useWhen({ date, time, hours }, open)
   return (
     <Sheet open={open} onClose={onClose} title="When is it?"
-      footer={<button type="button" disabled={!d || bad} onClick={() => onPick({ date: d, time: toTime(m), hours: span })} className="cx-press cx-cta h-14 w-full rounded-[18px] text-[15px] font-extrabold" data-when-done>
-        {!d ? 'Choose a day' : bad ? 'No start times left today' : `Lock in · ${timeLabel(toTime(m))} – ${timeLabel(toTime(end % 1440))}`}
+      footer={<button type="button" disabled={!w.d || w.bad} onClick={() => onPick(w.value())} className="cx-press cx-cta h-14 w-full rounded-[18px] text-[15px] font-extrabold" data-when-done>
+        {!w.d || w.bad ? w.label : `Lock in · ${w.label}`}
       </button>}>
+      <WhenBody w={w} />
+    </Sheet>
+  )
+}
 
+/** The day ribbon, the sky dial and the duration — inline or in the sheet. */
+export function WhenBody({ w }) {
+  const ribbon = useRef(null)
+  const { d, setD, m, setM, span, setSpan, days, minAllowed, chosen } = w
+  useEffect(() => {
+    requestAnimationFrame(() => ribbon.current?.querySelector('[aria-pressed="true"]')?.scrollIntoView({ inline: 'center', block: 'nearest' }))
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  return (
+    <>
       {/* The chosen day, read back large. */}
       <div className="flex items-end justify-between gap-3">
         <p className="text-[22px] font-extrabold leading-tight tracking-[-0.03em]">{chosen ? LONG.format(chosen) : 'Pick the day'}</p>
@@ -118,7 +136,7 @@ export default function WhenSheet({ open, onClose, date, time, hours, onPick }) 
           </button>
         ))}
       </div>
-    </Sheet>
+    </>
   )
 }
 

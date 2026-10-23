@@ -115,3 +115,11 @@
 .cx-bottom-pad { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 96px); }
 .cx-bottom-pad-bar { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 168px); }
 .cx-safe-top { padding-top: calc(env(safe-area-inset-top, 0px) + 10px); }
+
+/* The illustrated card (ui/art.jsx): white, a hairline, a violet lift. */
+.cx-art-card { background: #fff; box-shadow: 0 0 0 1px #EFE9F8, 0 10px 22px -16px rgba(59, 18, 149, .38); }
+.cx-art-card img { transition: transform .5s cubic-bezier(.2, .8, .2, 1); }
+.cx-art-card:active img { transform: scale(1.05); }
+/* A step screen's choice: a big tappable row that turns deep when picked. */
+.cx-choice { background: #fff; box-shadow: 0 0 0 1.5px var(--am-200); }
+.cx-choice[aria-pressed='true'] { background: var(--am-50); box-shadow: 0 0 0 2px var(--brand), 0 14px 26px -18px rgba(106, 43, 217, .8); }

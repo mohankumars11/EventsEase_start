@@ -54,7 +54,7 @@ export default function Partner() {
           className="cx-press cx-btn grid h-11 w-11 place-items-center rounded-full"><Heart size={19} className={saved ? 'fill-[#FF4D7E] text-[#FF4D7E]' : ''} /></button>} />
 
       {detail === undefined && <div className="grid place-items-center py-32"><Loader2 className="animate-spin text-[var(--brand)]" /></div>}
-      {detail === null && <div className="pt-10"><Empty title="This partner is not taking bookings" body="Their listing may be paused or under review." action={<Link to={`/s/${tradeId}`} className="font-extrabold text-[var(--brand)]">See other partners</Link>} /></div>}
+      {detail === null && <div className="pt-10"><Empty title="This master is not taking bookings" body="Their listing may be paused or under review." action={<Link to={`/s/${tradeId}`} className="font-extrabold text-[var(--brand)]">See other masters</Link>} /></div>}
       {detail && (detail.anchor ? (
         <AnchorProfileCard profile={detail.listing.profile ?? {}} city={detail.listing.city} media={detail.media}
           rating={detail.listing.rating ? Number(detail.listing.rating).toFixed(1) : null}

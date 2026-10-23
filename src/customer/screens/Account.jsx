@@ -13,7 +13,7 @@ export default function Account() {
   const [signIn, setSignIn] = useState(false)
   const name = profile?.full_name || user?.email?.split('@')[0]
   const rows = [
-    { icon: Heart, label: 'Saved partners', value: plan.saved.length || null, to: '/saved' },
+    { icon: Heart, label: 'Saved masters', value: plan.saved.length || null, to: '/saved' },
     { icon: CalendarHeart, label: 'Your plans', to: '/plans' },
     { icon: Bell, label: 'Notifications', to: '/notifications' },
     { icon: MessageCircle, label: 'Help on WhatsApp', href: `https://wa.me/${BRAND.whatsappNumber}` },

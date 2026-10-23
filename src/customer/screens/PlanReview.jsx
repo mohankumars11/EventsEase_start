@@ -34,7 +34,7 @@ export default function PlanReview() {
 
   return (
     <main className="cx-enter pb-[calc(env(safe-area-inset-bottom,0px)+150px)]">
-      <BackHeader title="Your plan" sub={plan.basket.length ? `${plural(plan.basket.length, 'partner')} · ${instant.length} instant · ${quote.length} on quote` : null} />
+      <BackHeader title="Your plan" sub={plan.basket.length ? `${plural(plan.basket.length, 'master')} · ${instant.length} instant · ${quote.length} on quote` : null} />
       {!plan.basket.length && (
         <div className="pt-8"><Empty title="Nothing in your plan yet" body="Pick an occasion and we will show you exactly what it needs."
           action={<Link to="/" className="cx-press cx-cta inline-flex h-12 items-center rounded-[16px] px-5 text-[14px] font-extrabold">Start planning</Link>} /></div>
@@ -103,7 +103,7 @@ export default function PlanReview() {
       )}
 
       {plan.basket.length > 0 && (
-        <ActionBar note="Paid through Razorpay. Held in escrow until the partner delivers.">
+        <ActionBar note="Paid through Razorpay. Held in escrow until the master delivers.">
           <button type="button" onClick={() => navigate('/checkout')} className="cx-press cx-cta flex h-14 w-full items-center justify-center gap-2 rounded-[18px] text-[15.5px] font-extrabold" data-checkout>
             Continue to checkout<ArrowRight size={18} />
           </button>

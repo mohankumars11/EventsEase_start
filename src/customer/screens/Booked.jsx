@@ -55,7 +55,7 @@ export default function Booked() {
     const r = await payLines({ lineIds, part: 'advance', description: label })
     const c = await confirmPaid(r)
     setBusy(null)
-    setMsg(r.ok ? (c?.ok ? 'Paid and confirmed — your partner has been told.' : 'Payment received — confirming with Razorpay.') : r.dismissed ? '' : r.error ?? 'Payment did not go through.')
+    setMsg(r.ok ? (c?.ok ? 'Paid and confirmed — your master has been told.' : 'Payment received — confirming with Razorpay.') : r.dismissed ? '' : r.error ?? 'Payment did not go through.')
     setTimeout(load, 1200)
   }
   async function accept(q) {
@@ -92,9 +92,9 @@ export default function Booked() {
 
       {due.length > 0 && (
         <div className="rounded-[22px] bg-[#FFF8E6] p-3.5 ring-1 ring-[#F6DFA2]">
-          <p className="flex items-center gap-1.5 text-[13.5px] font-extrabold text-[#7A4B00]"><Zap size={15} className="fill-[var(--gold)] text-[var(--gold)]" />{plural(due.length, 'partner')} holding your date</p>
+          <p className="flex items-center gap-1.5 text-[13.5px] font-extrabold text-[#7A4B00]"><Zap size={15} className="fill-[var(--gold)] text-[var(--gold)]" />{plural(due.length, 'master')} holding your date</p>
           <p className="mt-0.5 text-[12px] font-semibold text-[#8A6420]">Pay to confirm. One payment covers them all.</p>
-          <button type="button" disabled={!!busy} onClick={() => pay(due.map(l => l.id), `Sambramo · ${plural(due.length, 'partner')}`)}
+          <button type="button" disabled={!!busy} onClick={() => pay(due.map(l => l.id), `Sambramo · ${plural(due.length, 'master')}`)}
             className="cx-press cx-cta mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-[16px] text-[14px] font-extrabold" data-pay-due>
             {busy && due.some(l => l.id === busy) ? <Loader2 size={16} className="animate-spin" /> : null}Pay {rupees(due.reduce((s, l) => s + l.advancePaise, 0))} to confirm
           </button>
@@ -151,7 +151,7 @@ export default function Booked() {
       {closed.slice(0, 6).map(q => (
         <article key={q.id} className="flex items-center gap-3 rounded-[18px] bg-[#FAF9FC] p-3 ring-1 ring-[var(--line)]">
           <XCircle size={17} className="text-[var(--ink-3)]" />
-          <p className="min-w-0 flex-1 truncate text-[13px] font-bold text-[var(--ink-2)]">{q.service_name} · {q.state === 'UNAVAILABLE' ? 'Partner declined' : q.state === 'EXPIRED' ? 'No reply in time' : q.state.toLowerCase().replace(/_/g, ' ')}</p>
+          <p className="min-w-0 flex-1 truncate text-[13px] font-bold text-[var(--ink-2)]">{q.service_name} · {q.state === 'UNAVAILABLE' ? 'Master declined' : q.state === 'EXPIRED' ? 'No reply in time' : q.state.toLowerCase().replace(/_/g, ' ')}</p>
         </article>
       ))}
 

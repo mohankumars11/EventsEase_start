@@ -61,7 +61,7 @@ export default function Negotiate() {
       const line = { serviceId, tradeId, fromRef: p.fromRef, fromKind: p.fromKind, fromUnit: p.fromUnit, fromLabel: p.fromLabel, qty: null }
       const r = await sendOffer(line, ev, place, { offer_paise: offer, reasons, message: msg.trim() || undefined },
         { venue: { address: place.address, area: place.area, city: 'Bengaluru' } })
-      if (!r?.quoteRequestId) throw new Error(r?.reasons_text?.[0] ?? r?.error ?? 'The partner cannot take this request.')
+      if (!r?.quoteRequestId) throw new Error(r?.reasons_text?.[0] ?? r?.error ?? 'The master cannot take this request.')
       plan.recordBookings([{ key: `offer:${serviceId}:${Date.now()}`, tradeId, serviceId, name: p.name, cover: p.cover, occasionId: occasion?.id ?? null,
         path: 'QUOTE', quoteRequestId: r.quoteRequestId, bookingRequestId: r.bookingRequestId, offerPaise: offer, at: Date.now() }])
       if (profile?.id) enableAlerts({ profileId: profile.id, app: 'customer' }).catch(() => {})

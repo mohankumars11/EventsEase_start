@@ -125,7 +125,7 @@ export default function Checkout() {
     if (profile?.id) enableAlerts({ profileId: profile.id, app: 'customer' }).catch(() => {})
     if (!lineIds.length) { setOutcome({ paid: 0, sent, failed }); setPhase(sent ? 'done' : 'error'); return }
     setPhase('paying')
-    const p = await payLines({ lineIds, part: 'advance', description: occ ? `${occ.name} · ${plural(lineIds.length, 'partner')}` : `Sambramo · ${plural(lineIds.length, 'partner')}` })
+    const p = await payLines({ lineIds, part: 'advance', description: occ ? `${occ.name} · ${plural(lineIds.length, 'master')}` : `Sambramo · ${plural(lineIds.length, 'master')}` })
     const confirmed = await confirmPaid(p)
     setOutcome({ paid: lineIds.length, sent, failed, error: p.error ?? null, confirmed: !!confirmed?.ok })
     setPhase(p.ok ? 'done' : p.dismissed ? 'unpaid' : 'error')
@@ -133,14 +133,14 @@ export default function Checkout() {
 
   return (
     <main className="cx-enter pb-[calc(env(safe-area-inset-bottom,0px)+170px)]">
-      <BackHeader title="Checkout" sub={`${plural(lines.length, 'partner')}${occ ? ` · ${occ.name}` : ''}`} />
+      <BackHeader title="Checkout" sub={`${plural(lines.length, 'master')}${occ ? ` · ${occ.name}` : ''}`} />
 
       <Block title="When & where">
         <Row icon={CalendarDays} onClick={() => setSheet('when')} value={ev.date ? whenLabel(ev.date, ev.time) + (ev.hours ? ` · ${ev.hours} h` : '') : null} placeholder="Pick the day and start time" />
         <Row icon={MapPin} onClick={() => setSheet('place')} value={place ? `${place.area}${place.address ? ` · ${place.address}` : ''}` : null} placeholder="Where is the event?" />
       </Block>
 
-      <Block title="Who partners should call">
+      <Block title="Who masters should call">
         <label className="flex items-center gap-3 rounded-[16px] bg-[var(--am-50)] px-4 py-3.5 ring-1 ring-[var(--am-200)]">
           <Phone size={19} className="text-[var(--brand)]" />
           <span className="text-[15px] font-extrabold text-[var(--ink-3)]">+91</span>
@@ -148,7 +148,7 @@ export default function Checkout() {
         </label>
       </Block>
 
-      <Block title={ready ? (loading ? 'Getting exact prices…' : 'Your exact total') : 'Your partners'}>
+      <Block title={ready ? (loading ? 'Getting exact prices…' : 'Your exact total') : 'Your masters'}>
         <ul className="overflow-hidden rounded-[22px] shadow-[0_0_0_1px_var(--line)]">
           {res.map(({ line: l, q }, i) => (
             <li key={l.key} className={(i ? 'border-t border-[var(--line)] ' : '') + 'flex items-center gap-3 bg-white p-3'} data-checkout-line={l.tradeId} data-path={q?.path ?? ''}>
@@ -159,7 +159,7 @@ export default function Checkout() {
                   {!ready ? TRADE[l.tradeId]?.label
                     : !q || q.loading ? 'Checking availability…'
                       : q.path === 'INSTANT' ? <span className="text-[#946200]"><Zap size={11} className="mr-0.5 inline fill-[var(--gold)] text-[var(--gold)]" />Confirms now{q.advance_paise && q.advance_paise < q.customer_paise ? ` · ${rupees(q.advance_paise)} now` : ''}</span>
-                        : q.path === 'QUOTE' ? <span><Clock3 size={11} className="mr-0.5 inline" />Partner prices it · {q.reasons_text?.[0] ?? 'custom request'}</span>
+                        : q.path === 'QUOTE' ? <span><Clock3 size={11} className="mr-0.5 inline" />Master prices it · {q.reasons_text?.[0] ?? 'custom request'}</span>
                           : <span className="text-[#C8112A]">{q.reasons_text?.[0] ?? 'Not available'}</span>}
                 </p>
               </div>
@@ -174,18 +174,18 @@ export default function Checkout() {
         </ul>
         {blocked.length > 0 && (
           <p className="mt-2 flex items-start gap-2 rounded-[14px] bg-[#FFF1F2] px-3 py-2.5 text-[12.5px] font-bold text-[#9B1A2A]">
-            <AlertTriangle size={15} className="mt-0.5 shrink-0" />{plural(blocked.length, 'partner')} cannot take this booking. Change them, or continue without.
+            <AlertTriangle size={15} className="mt-0.5 shrink-0" />{plural(blocked.length, 'master')} cannot take this booking. Change them, or continue without.
           </p>
         )}
       </Block>
 
       <Block title="What happens next">
-        {instant.length > 0 && <Step icon={Zap} gold title={`${plural(instant.length, 'partner')} confirm the moment you pay`} body={`${instant.map(r => TRADE[r.line.tradeId]?.label).join(', ')}. One payment, held in escrow until each delivers.`} />}
-        {quoteLines.length > 0 && <Step icon={Clock3} title={`${plural(quoteLines.length, 'partner')} send you a quote`} body={`${quoteLines.map(r => TRADE[r.line.tradeId]?.label).join(', ')}. Compare and accept in Plans; you pay only then.`} />}
-        <Step icon={ShieldCheck} title="Safe if plans change" body="Each partner’s own cancellation terms apply, shown on their page." />
+        {instant.length > 0 && <Step icon={Zap} gold title={`${plural(instant.length, 'master')} confirm the moment you pay`} body={`${instant.map(r => TRADE[r.line.tradeId]?.label).join(', ')}. One payment, held in escrow until each delivers.`} />}
+        {quoteLines.length > 0 && <Step icon={Clock3} title={`${plural(quoteLines.length, 'master')} send you a quote`} body={`${quoteLines.map(r => TRADE[r.line.tradeId]?.label).join(', ')}. Compare and accept in Plans; you pay only then.`} />}
+        <Step icon={ShieldCheck} title="Safe if plans change" body="Each master’s own cancellation terms apply, shown on their page." />
       </Block>
 
-      <Block title="Anything partners should know?">
+      <Block title="Anything masters should know?">
         <textarea rows={3} value={note} onChange={e => setNote(e.target.value)} maxLength={500} placeholder="Theme, colours, traditions, timings…"
           className="w-full resize-none rounded-[16px] bg-[var(--am-50)] px-4 py-3.5 text-[14px] font-semibold outline-none ring-1 ring-[var(--am-200)] placeholder:text-[var(--ink-3)]" />
       </Block>
@@ -196,7 +196,7 @@ export default function Checkout() {
           <span className="cx-num text-[24px] font-extrabold tracking-[-0.03em]">{instant.length ? rupees(dueNow) : '—'}</span>
         </div>
         <button type="button" disabled={!canPay} onClick={pay} className="cx-press cx-cta flex h-14 w-full items-center justify-center gap-2 rounded-[18px] text-[15.5px] font-extrabold" data-pay>
-          {phase === 'booking' ? <><Loader2 size={18} className="animate-spin" />Booking your partners…</>
+          {phase === 'booking' ? <><Loader2 size={18} className="animate-spin" />Booking your masters…</>
             : phase === 'paying' ? <><Loader2 size={18} className="animate-spin" />Opening payment…</>
               : <><Lock size={17} />{!user ? 'Sign in & confirm' : instant.length ? `Confirm & pay ${rupees(dueNow) ?? ''}` : 'Send requests'}</>}
         </button>
@@ -209,9 +209,9 @@ export default function Checkout() {
         <div className="pb-4">
           {phase === 'done' && <CheckCircle2 size={44} className="text-[var(--ok)]" />}
           <p className="mt-3 text-[14px] font-semibold leading-relaxed text-[var(--ink-2)]">
-            {phase === 'done' && (outcome?.paid ? (outcome.confirmed ? `${plural(outcome.paid, 'partner')} confirmed. They have been told and will call you before the day.` : `${plural(outcome.paid, 'partner')} confirmed once Razorpay reports the payment — usually seconds.`) : '')}
+            {phase === 'done' && (outcome?.paid ? (outcome.confirmed ? `${plural(outcome.paid, 'master')} confirmed. They have been told and will call you before the day.` : `${plural(outcome.paid, 'master')} confirmed once Razorpay reports the payment — usually seconds.`) : '')}
             {phase === 'done' && outcome?.sent ? ` ${plural(outcome.sent, 'quote request')} sent; you will be notified when they reply.` : ''}
-            {phase === 'unpaid' && 'Your partners are holding the date. Finish the payment from Plans to confirm them.'}
+            {phase === 'unpaid' && 'Your masters are holding the date. Finish the payment from Plans to confirm them.'}
             {phase === 'error' && (outcome?.error ?? outcome?.failed?.[0]?.reasons?.[0] ?? 'Nothing was booked. Please try again.')}
           </p>
           {outcome?.failed?.length > 0 && phase !== 'error' && <p className="mt-2 text-[12.5px] font-bold text-[#9B1A2A]">Not booked: {outcome.failed.map(f => f.name).join(', ')}.</p>}

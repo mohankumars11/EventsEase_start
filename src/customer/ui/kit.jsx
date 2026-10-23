@@ -5,7 +5,7 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { ArrowLeft, ArrowRight, CalendarHeart, PartyPopper, Star, UserRound, X, Zap } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CalendarDays, House, LayoutGrid, Star, UserRound, X, Zap } from 'lucide-react'
 import { usePlan } from '../state/PlanContext'
 import { rupees, plural } from '../lib/format'
 import { planFloor } from '../lib/estimate'
@@ -17,21 +17,22 @@ export function Photo({ src, alt = '', className = '', eager = false }) {
   return <img src={src} alt={alt} loading={eager ? 'eager' : 'lazy'} decoding="async" className={className} onError={() => setOk(false)} />
 }
 
-/* ── Three tabs, and no more ───────────────────────────────────────────
- * Celebrate is where everything starts (occasions AND single services);
- * Plans is everything in flight; Account is the person. The basket is
- * not a tab — it is the bar that appears above this one when there is
- * something in it, the way a quick-commerce app does it. */
+/* ── Four tabs (Mohan, 2026-10-23) ─────────────────────────────────────
+ * Home is where everything starts; Services is the 34 trades on their
+ * own; My Bookings is everything in flight; Account is the person. The
+ * basket is not a tab — it is the bar that appears above this one when
+ * there is something in it, the way a quick-commerce app does it. */
 const TABS = [
-  { to: '/', label: 'Celebrate', icon: PartyPopper, match: p => p === '/' || p.startsWith('/c/') || p.startsWith('/s') },
-  { to: '/plans', label: 'Plans', icon: CalendarHeart, match: p => p.startsWith('/plans') },
+  { to: '/', label: 'Home', icon: House, match: p => p === '/' || p.startsWith('/c/') },
+  { to: '/s', label: 'Services', icon: LayoutGrid, match: p => p === '/s' || p.startsWith('/s/') },
+  { to: '/plans', label: 'My Bookings', icon: CalendarDays, match: p => p.startsWith('/plans') },
   { to: '/me', label: 'Account', icon: UserRound, match: p => p.startsWith('/me') },
 ]
 export function TabBar() {
   const { pathname } = useLocation()
   return (
     <nav className="fixed inset-x-0 bottom-0 z-[150] border-t border-[var(--line)] bg-white/95 backdrop-blur-xl" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }} aria-label="Main">
-      <div className="mx-auto grid max-w-[560px] grid-cols-3 px-6">
+      <div className="mx-auto grid max-w-[560px] grid-cols-4 px-2">
         {TABS.map(t => {
           const on = t.match(pathname)
           return (
@@ -39,7 +40,7 @@ export function TabBar() {
               <span className={'grid h-8 w-14 place-items-center rounded-full transition ' + (on ? 'bg-[var(--brand-tint)] text-[var(--brand)]' : 'text-[var(--ink-3)]')}>
                 <t.icon size={21} strokeWidth={on ? 2.4 : 2} />
               </span>
-              <span className={'text-[11.5px] font-bold ' + (on ? 'text-[var(--ink)]' : 'text-[var(--ink-3)]')}>{t.label}</span>
+              <span className={'text-[11.5px] font-bold ' + (on ? 'text-[var(--brand)]' : 'text-[var(--ink-3)]')}>{t.label}</span>
             </Link>
           )
         })}
