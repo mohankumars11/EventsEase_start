@@ -1,135 +1,214 @@
 /**
- * Home (Mohan, 2026-10-23).
+ * Home (Mohan, 2026-10-26 — built to his two reference screens).
  *
- *   location ·························· bell · you
- *   [ Celebrations ]  [ Book a Service ]      the two doors, up top
- *   ┌ promo: moments → how it works → refer ┐ one card at a time, on its own
- *   ● Instant booking                         what the app does, live
- *   ( Search "Haldi Ceremony"… )              the box names real things
- *   Celebrate anything. Book it in minutes.   + View all
- *   ▢ ▢ ▢  18 categories, their occasions taking turns underneath
- *   Crafted with love in Mysuru               the sign-off
+ *   cream, edge to edge ─────────────────────────────────────────────
+ *     location · help · bell · you
+ *     Book Your Celebration / the Right Service — in Minutes   + hero
+ *     search (voice where the phone supports it)
+ *     [ Celebrations | Book a Service ]  one pill, no icons
+ *     icon row: All · each category (or service family)
+ *   white ─────────────────────────────────────────────────────────────
+ *     Weekend rail: the next Saturday, the parties people book for it
+ *   cream ──────────────────────────────────────────────────────────────
+ *     Book a Celebration / Popular Services — 3 across, short cards,
+ *     the green live line naming what is inside each
+ *   white ─────────────────────────────────────────────────────────────
+ *     four promises, four colours · the offer · refer & earn · sign-off
  *
- * No brand name or logo anywhere on the screen, by instruction.
- *
- * ── The promo cards are Mohan's artwork, with real buttons ──────────
- * Each image had its button painted in, at a different place on each
- * card. The art is cropped just above it and one real button sits under
- * every card, same size, same place: Book a Celebration Instantly → the
- * categories below; Book a Service Instantly → Services; Refer Your
- * Friend → Refer. The whole card answers a tap the same way. They move
- * every 1.5 s (as asked), stop while a thumb is on them, and have no dots.
+ * No brand name or logo of our own. The one logo is the payment
+ * partner's, because "secured by Razorpay" is a fact the customer can
+ * check. Cashfree is not shown: no payment in this app goes through it.
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowRight, Bell, CalendarDays, ChevronDown, ChevronRight, Loader2, LocateFixed, MapPin, Search, Users, Zap } from 'lucide-react'
+import { ArrowRight, BadgeCheck, Bell, CalendarClock, ChevronDown, ChevronRight, Gift, Headset, Loader2, LocateFixed, MapPin, Mic, Search, ShieldCheck, Users, Zap } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { BENGALURU_AREAS } from '../../data/bengaluruAreas'
-import { CATEGORIES, OCCASIONS } from '../data/occasions'
-import { TRADES, TRADE_GROUPS } from '../data/trades'
-import { artFor } from '../data/art'
-import { CategoryCard, Rotator, ServiceCard } from '../ui/art'
+import { CATEGORIES, OCCASION, OCCASIONS } from '../data/occasions'
+import { TRADES } from '../data/trades'
+import { FAMILIES } from '../data/families'
+import { artFor, categoryArt, serviceArt } from '../data/art'
+import { CategoryCard, FamilyCard, Rotator } from '../ui/art'
 import { Sheet } from '../ui/kit'
 import { locate, saveWhere, savedWhere } from '../lib/where'
+import { listen, canListen } from '../lib/voice'
 
-/* The artwork is cropped just above its painted button; the button is a
-   real one, the same size and place on all three, so the deck lines up. */
-const PROMOS = [
-  { id: 'promo-moments', alt: 'Make every moment special', label: 'Book a Celebration Instantly', icon: Zap, go: 'celebrate' },
-  { id: 'promo-how', alt: 'From a thought to a celebration — how it works', label: 'Book a Service Instantly', icon: CalendarDays, go: '/s' },
-  { id: 'promo-refer', alt: 'Celebrate together — refer and earn', label: 'Refer Your Friend', icon: Users, go: '/refer' },
-]
-const HOLD_MS = 1500
-const SLIDE_MS = 600
+const CREAM = '#FFF7EE'
 
-/* What the app really does, said one at a time. Only shipped features. */
-const LIVE = [
-  ['Instant booking', 'confirm a master in seconds'],
-  ['Instant payment', 'UPI, cards, netbanking'],
-  ['Escrow-safe', 'paid out only after your event'],
-  ['Verified masters', 'checked before they go live'],
-  ['Negotiate', 'send your price, they reply'],
-  ['Compare', 'three masters side by side'],
+/* The hero says the one thing, then why it is different: no quotes to
+   chase, no replies to wait for — each line holds 2.8 s, then the next. */
+const CELEBRATE_LINES = [['Book Your', 'Celebration', 'in Minutes'], ['No Waiting', 'for Quotes.', 'Prices Upfront'], ['No Chasing', 'for Replies.', 'Masters Ready'], ['Confirmed', 'the Moment', 'You Pay']]
+const SERVICE_LINES = [['Book the', 'Right Service', 'in Minutes'], ['No Enquiries.', 'No Waiting.', 'Just Book'], ['Masters Are', 'Ready for', 'Your Date'], ['Confirmed', 'the Moment', 'You Pay']]
+
+/* The four promises, each its own colour. */
+const PROMISES = [
+  [Zap, 'Instant Booking', 'No quote, no waiting', '#7C3AED', '#F3ECFF'],
+  [MapPin, 'GPS Navigation', 'Straight to your venue', '#2563EB', '#EAF1FF'],
+  [ShieldCheck, 'Secure Payment', 'Held safe till delivered', '#0F9D58', '#E7F8EF'],
+  [CalendarClock, 'On-Time Service', 'For your event date', '#EA580C', '#FFF1E6'],
 ]
+
+/* The parties people book for a weekend — real occasions, in our names. */
+const WEEKEND = ['birthday-party', 'surprise-birthday-party', 'friends-get-together', 'rooftop-party', 'pool-party', 'private-dinner-party', 'bbq-party', 'karaoke-night', 'bachelorette-party', 'kids-birthday-party']
+
+function nextSaturday() {
+  const d = new Date(); d.setHours(0, 0, 0, 0)
+  d.setDate(d.getDate() + ((6 - d.getDay() + 7) % 7 || 7))
+  return d
+}
 
 export default function Home() {
   const { profile, user } = useAuth()
   const navigate = useNavigate()
   const [door, setDoor] = useState(() => { try { return sessionStorage.getItem('sbm.cx.door') ?? 'occasions' } catch { return 'occasions' } })
+  const [filter, setFilter] = useState('all')
   const [whereOpen, setWhereOpen] = useState(false)
   const [where, setWhere] = useState(savedWhere)
   const grid = useRef(null)
-  const choose = d => { setDoor(d); try { sessionStorage.setItem('sbm.cx.door', d) } catch { /* storage off */ } }
+  const choose = d => { setDoor(d); setFilter('all'); try { sessionStorage.setItem('sbm.cx.door', d) } catch { /* storage off */ } }
   const name = profile?.full_name?.trim()
   const photo = profile?.avatar_url ?? user?.user_metadata?.avatar_url ?? user?.user_metadata?.picture ?? null
   const initial = (name || user?.email || 'S').trim()[0].toUpperCase()
-  const hints = useMemo(() => shuffle([...OCCASIONS.filter(o => o.featured).map(o => o.name), ...TRADES.map(t => t.label)]).slice(0, 40), [])
-  const celebrate = () => { choose('occasions'); requestAnimationFrame(() => grid.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })) }
+  const celebrate = door === 'occasions'
+  const hints = useMemo(() => shuffle([...OCCASIONS.filter(o => o.featured).map(o => o.name), ...TRADES.map(t => t.label), ...CATEGORIES.map(c => c.short)]).slice(0, 50), [])
+  const sat = useMemo(nextSaturday, [])
+  const days = Math.round((sat - new Date().setHours(0, 0, 0, 0)) / 864e5)
+  const satLabel = sat.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })
+  const cats = filter === 'all' ? CATEGORIES : CATEGORIES.filter(c => c.id === filter)
+  const fams = filter === 'all' ? FAMILIES : FAMILIES.filter(f => f.id === filter)
+  const toGrid = () => requestAnimationFrame(() => grid.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+  const voice = async () => { const said = await listen().catch(() => null); navigate(said ? `/search?q=${encodeURIComponent(said)}` : '/search') }
 
   return (
-    <main className="cx-enter pb-[calc(env(safe-area-inset-bottom,0px)+150px)]">
-      <header className="cx-safe-top flex items-center justify-between gap-3 px-3">
-        {/* Where you are, said plainly in the corner — not a button. Tapping it still changes it. */}
-        <button type="button" onClick={() => setWhereOpen(true)} className="flex min-w-0 items-start gap-1.5 py-1 text-left" data-where>
-          <MapPin size={20} className="mt-[3px] shrink-0 fill-[var(--brand)] text-white" strokeWidth={1.8} />
-          <span className="min-w-0">
-            <span className="flex items-center gap-0.5 text-[17px] font-extrabold leading-tight tracking-[-0.025em]"><span className="truncate">{where?.area ?? 'Bengaluru'}</span><ChevronDown size={16} className="shrink-0" /></span>
-            <span className="block truncate text-[11.5px] font-semibold text-[var(--ink-3)]">{[where?.city ?? 'Bengaluru', where?.pincode].filter(Boolean).join(' · ')}{where?.test ? ' · testing' : ''}</span>
-          </span>
-        </button>
-        <div className="flex shrink-0 items-center gap-2">
-          <Link to="/notifications" aria-label="Notifications" className="cx-press grid h-11 w-11 place-items-center rounded-full bg-[var(--am-50)] text-[var(--am-ink)]"><Bell size={20} /></Link>
-          <Link to="/me" aria-label="Your profile" className="cx-press relative grid h-11 w-11 place-items-center overflow-hidden rounded-full bg-gradient-to-br from-[#A57BFF] to-[#6D35E0] text-[16px] font-extrabold text-white ring-2 ring-white shadow-[0_8px_20px_-12px_rgba(58,18,144,.8)]" data-avatar>
-            {photo ? <img src={photo} alt="" className="absolute inset-0 h-full w-full object-cover" referrerPolicy="no-referrer" /> : initial}
-          </Link>
-        </div>
-      </header>
-
-      {/* The two doors. */}
-      <div className="mt-3.5 grid grid-cols-2 gap-2 px-3" role="tablist">
-        <Door on={door === 'occasions'} onClick={() => choose('occasions')} title="Celebrations" sub="Planned in minutes" />
-        <Door on={door === 'services'} onClick={() => choose('services')} title="Book a Service" sub="Masters are ready" />
-      </div>
-
-      <Promos onGo={g => (g === 'celebrate' ? celebrate() : navigate(g))} />
-
-      {/* Live: what the app does, one line at a time. */}
-      <div className="mt-3.5 flex justify-center px-3">
-        <span className="flex max-w-full items-center gap-2 rounded-full bg-[#F1FBF5] px-3 py-1.5 ring-1 ring-[#CDEFDC]" data-live>
-          <span className="cx-live-dot h-2 w-2 shrink-0 rounded-full bg-[var(--ok)]" />
-          <Rotator items={LIVE.map(([a, b]) => <><b className="font-extrabold text-[#0B6B3D]">{a}</b><span className="text-[#3C7A5A]"> · {b}</span></>)} every={2200} className="text-[12px] font-semibold" />
-        </span>
-      </div>
-
-      <button type="button" onClick={() => navigate('/search')} className="cx-press mx-3 mt-3.5 flex h-[54px] w-[calc(100%-24px)] items-center gap-2.5 rounded-[22px] bg-white px-3 text-left shadow-[0_0_0_1.5px_var(--am-200),0_12px_26px_-18px_rgba(58,18,144,.65)]" data-search>
-        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[13px] bg-[var(--am-50)] text-[var(--brand)]"><Search size={19} /></span>
-        <span className="flex min-w-0 flex-1 items-center gap-1 text-[14px] font-semibold text-[var(--ink-3)]">
-          Search<Rotator items={hints.map(h => <span className="font-extrabold text-[var(--am-ink)]">“{h}”</span>)} every={2000} />
-        </span>
-      </button>
-
-      <section ref={grid} className="mt-7 scroll-mt-4" key={door}>
-        <div className="flex items-end justify-between gap-3 px-3 pb-3.5">
-          <div className="min-w-0">
-            <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[var(--brand)]">{door === 'occasions' ? 'Your moment · our masters' : 'One tap · one master'}</p>
-            <h2 className="mt-1 text-[21px] font-extrabold leading-[1.1] tracking-[-0.035em]">{door === 'occasions' ? <>Celebrate anything.<br />Book it in minutes.</> : <>The right master,<br />at your door.</>}</h2>
+    <main className="cx-enter bg-white pb-[calc(env(safe-area-inset-bottom,0px)+130px)]">
+      {/* ── The cream top, edge to edge ─────────────────────────────── */}
+      <section style={{ background: CREAM }} className="pb-4">
+        <header className="cx-safe-top flex items-center justify-between gap-2 px-4">
+          <button type="button" onClick={() => setWhereOpen(true)} className="flex min-w-0 items-center gap-2 py-1 text-left" data-where>
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#EFE6FF]"><MapPin size={18} className="fill-[var(--brand)] text-[#EFE6FF]" strokeWidth={1.6} /></span>
+            <span className="min-w-0">
+              <span className="flex items-center gap-0.5 text-[17px] font-extrabold leading-tight tracking-[-0.025em]"><span className="truncate">{where?.area ?? 'Bengaluru'}</span><ChevronDown size={16} className="shrink-0" /></span>
+              <span className="block truncate text-[11.5px] font-semibold text-[var(--ink-3)]">{[where?.city ?? 'Bengaluru', where?.pincode].filter(Boolean).join(', ')}{where?.test ? ' · testing' : ''}</span>
+            </span>
+          </button>
+          <div className="flex shrink-0 items-center gap-1.5">
+            <Link to="/help" aria-label="Help" className="cx-press grid h-10 w-10 place-items-center rounded-full bg-white text-[var(--am-ink)] shadow-[0_4px_12px_-6px_rgba(58,18,144,.35)]" data-help><Headset size={18} /></Link>
+            <Link to="/notifications" aria-label="Notifications" className="cx-press grid h-10 w-10 place-items-center rounded-full bg-white text-[var(--am-ink)] shadow-[0_4px_12px_-6px_rgba(58,18,144,.35)]"><Bell size={18} /></Link>
+            <Link to="/me" aria-label="Your profile" className="cx-press relative grid h-10 w-10 place-items-center overflow-hidden rounded-full bg-gradient-to-br from-[#A57BFF] to-[#6D35E0] text-[15px] font-extrabold text-white ring-2 ring-white" data-avatar>
+              {photo ? <img src={photo} alt="" className="absolute inset-0 h-full w-full object-cover" referrerPolicy="no-referrer" /> : initial}
+            </Link>
           </div>
-          <Link to="/explore" className="cx-press flex shrink-0 items-center gap-0.5 rounded-full bg-white px-3 py-2 text-[12.5px] font-extrabold text-[var(--brand)] shadow-[0_0_0_1px_var(--am-200)]" data-view-all>View all<ChevronRight size={15} /></Link>
-        </div>
-        {door === 'occasions' ? (
-          <div className="cx-enter grid grid-cols-3 gap-2 px-3">
-            {CATEGORIES.map((c, i) => <CategoryCard key={c.id} category={c} index={i} />)}
+        </header>
+
+        {/* Hero: words left, the moment of confirmation right. */}
+        <div className="relative mt-2 flex min-h-[190px] items-start">
+          <div className="relative z-10 w-[58%] pl-4 pt-2">
+            <Headline lines={celebrate ? CELEBRATE_LINES : SERVICE_LINES} />
+            <p className="mt-2 text-[11.5px] font-semibold leading-snug text-[#5F5675]">Verified masters. Instant booking.<br />Secure payment. Hassle-free.</p>
           </div>
-        ) : (
-          <div className="cx-enter">
-            {TRADE_GROUPS.map((g, i) => (
-              <div key={g.id} className={i ? 'mt-5' : ''}>
-                <h3 className="px-3 pb-2.5 text-[14px] font-extrabold tracking-[-0.02em] text-[var(--ink-2)]">{g.label}</h3>
-                <div className="grid grid-cols-3 gap-2 px-3">{g.trades.map(t => <ServiceCard key={t.id} tradeId={t.id} />)}</div>
-              </div>
+          <div className="absolute bottom-0 right-0 top-0 w-[52%]">
+            <img src={artFor('hero-booking') ?? artFor('hero-family')} alt="" className="absolute inset-0 h-full w-full object-cover object-[60%_30%] mix-blend-multiply [mask-image:linear-gradient(90deg,transparent_0%,#000_20%)]" />
+            <Pop className="right-2 top-2" delay={0}><span className="grid h-6 w-6 place-items-center rounded-full bg-[#0F9D58] text-white"><BadgeCheck size={14} /></span>{celebrate ? 'Booking confirmed' : 'Master booked'}</Pop>
+            <Pop className="bottom-11 right-2" delay={900}><span className="grid h-6 w-6 place-items-center rounded-full bg-[#EDE4FF] text-[var(--brand)]"><Zap size={13} /></span>You’re all set!</Pop>
+            <span className="absolute bottom-2 right-2 flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-bold text-[#5F5675] shadow-[0_4px_12px_-6px_rgba(0,0,0,.25)]">
+              <ShieldCheck size={12} className="text-[#0F9D58]" />Secured by <RazorpayMark />
+            </span>
+          </div>
+        </div>
+
+        {/* Search: real names cycle; the mic listens where the phone can. */}
+        <div className="mx-4 mt-3 flex h-[52px] items-center gap-3 rounded-[14px] bg-white pl-3.5 pr-1 shadow-[0_0_0_1px_#EDE6DC,0_8px_20px_-12px_rgba(20,15,31,.3)]">
+          <button type="button" onClick={() => navigate('/search')} className="flex min-w-0 flex-1 items-center gap-3 text-left" data-search>
+            <Search size={20} className="shrink-0 text-[var(--ink)]" />
+            <span className="flex min-w-0 flex-1 items-center gap-1 text-[15px] font-medium text-[#8E889C]">Search<Rotator items={hints.map(h => <span>“{h}”</span>)} every={1900} /></span>
+          </button>
+          {canListen() && <><span className="h-6 w-px shrink-0 bg-[#E7E2EE]" /><button type="button" onClick={voice} aria-label="Search by voice" className="cx-press grid h-10 w-10 shrink-0 place-items-center rounded-full text-[var(--ink)]" data-mic><Mic size={20} /></button></>}
+        </div>
+
+        {/* The two doors, one pill, no icons. */}
+        <div className="mx-4 mt-3.5 grid grid-cols-2 rounded-full bg-white p-1 shadow-[0_0_0_1px_#D9EEDD]" role="tablist">
+          {[['occasions', 'Celebrations', 'Book by occasion'], ['services', 'Book a Service', 'Masters are ready']].map(([id, t, s]) => (
+            <button key={id} type="button" role="tab" aria-selected={door === id} onClick={() => choose(id)} data-door={t}
+              className={'cx-press relative overflow-hidden rounded-full px-3 py-2.5 text-center transition-all duration-300 ' + (door === id ? 'cx-door-on bg-gradient-to-r from-[#0C831F] to-[#16A34A] text-white shadow-[0_10px_22px_-10px_rgba(12,131,31,.85)]' : 'text-[#14532D]')}>
+              <span className="block text-[15.5px] font-black leading-tight tracking-[-0.03em]">{t}</span>
+              <span className={'block text-[10.5px] font-semibold ' + (door === id ? 'text-white/80' : 'text-[var(--ink-3)]')}>{s}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Icon row: filters the grid below. */}
+        <div className="cx-noscroll mt-3.5 flex gap-1 overflow-x-auto px-3" key={door}>
+          <IconChip on={filter === 'all'} onClick={() => setFilter('all')} label="All" all />
+          {(celebrate ? CATEGORIES.map(c => ({ id: c.id, label: c.short, src: categoryArt(c).src })) : FAMILIES.map(f => ({ id: f.id, label: f.label, src: serviceArt(f.trades[0]).src })))
+            .map(x => <IconChip key={x.id} on={filter === x.id} onClick={() => { setFilter(x.id); toGrid() }} label={x.label} src={x.src} />)}
+        </div>
+      </section>
+
+      {/* ── Weekend: the next Saturday, and what people book for it ──── */}
+      {celebrate && (
+        <section className="pt-5">
+          <div className="flex items-end justify-between gap-3 px-4 pb-3">
+            <div className="min-w-0">
+              <p className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#E11D48]"><span className="h-2 w-2 animate-pulse rounded-full bg-[#E11D48]" />This weekend · {satLabel}</p>
+              <h2 className="mt-1 text-[20px] font-black leading-tight tracking-[-0.035em]">Weekends go fast.<br />Book your party today.</h2>
+            </div>
+            <span className="shrink-0 rounded-full bg-[#FFF1F2] px-2.5 py-1 text-[11px] font-extrabold text-[#BE123C]">{days === 1 ? 'Tomorrow' : `${days} days to go`}</span>
+          </div>
+          <div className="cx-rail cx-noscroll !gap-2.5 !px-3">
+            {WEEKEND.map(id => OCCASION[id]).filter(Boolean).map(o => (
+              <Link key={o.id} to={`/o/${o.id}`} className="cx-press cx-art-card block w-[31%] max-w-[150px] overflow-hidden rounded-[18px]" data-weekend={o.id}>
+                <img src={artFor(`occ-${o.id}`) ?? categoryArt(CATEGORIES.find(c => c.id === o.category)).src} alt="" className="block aspect-[1.15/1] w-full object-cover object-[50%_20%] mix-blend-multiply" loading="lazy" />
+                <p className="truncate px-2 pt-1.5 text-[12px] font-extrabold text-[var(--am-ink)]">{o.name}</p>
+                <p className="flex items-center gap-1 px-2 pb-2 text-[10px] font-bold text-[#BE123C]"><Zap size={10} className="fill-current" />Book for {sat.toLocaleDateString('en-IN', { weekday: 'long' })}</p>
+              </Link>
             ))}
           </div>
-        )}
+        </section>
+      )}
+
+      {/* ── The grid, on cream ───────────────────────────────────────── */}
+      <section ref={grid} style={{ background: CREAM }} className="mt-4 scroll-mt-2 py-5">
+        <div className="flex items-end justify-between gap-3 px-4 pb-3">
+          <div className="min-w-0">
+            <h2 className="text-[20px] font-black leading-tight tracking-[-0.035em]">{celebrate ? 'Book a Celebration' : 'Popular Services Near You'}</h2>
+            <p className="mt-0.5 text-[12px] font-semibold text-[var(--ink-3)]">{celebrate ? 'Pick the moment — we line up every master' : 'Verified masters · instant booking'}</p>
+          </div>
+          <Link to={celebrate ? '/explore#celebrations' : '/s'} className="cx-press flex shrink-0 items-center gap-0.5 rounded-full bg-white px-3 py-2 text-[12.5px] font-extrabold text-[var(--brand)] shadow-[0_0_0_1px_#E9DDFB]" data-view-all>View all<ChevronRight size={15} /></Link>
+        </div>
+        <div className="grid grid-cols-3 gap-2 px-3">
+          {celebrate ? cats.map((c, i) => <CategoryCard key={c.id} category={c} index={i} />) : fams.map((f, i) => <FamilyCard key={f.id} family={f} index={i} />)}
+        </div>
+      </section>
+
+      {/* ── Four promises ────────────────────────────────────────────── */}
+      <section className="mx-3 mt-5 grid grid-cols-4 overflow-hidden rounded-[22px] bg-white shadow-[0_0_0_1px_#EEE6FA]">
+        {PROMISES.map(([I, t, d, c, bg], k) => (
+          <div key={t} className={'flex flex-col items-center px-1 py-3 text-center ' + (k ? 'border-l border-[#F1ECF8]' : '')}>
+            <span className="grid h-10 w-10 place-items-center rounded-[14px]" style={{ background: bg, color: c }}><I size={20} strokeWidth={2.3} /></span>
+            <p className="mt-1.5 text-[11px] font-extrabold leading-tight" style={{ color: c }}>{t}</p>
+            <p className="mt-0.5 text-[9.5px] font-semibold leading-tight text-[var(--ink-3)]">{d}</p>
+          </div>
+        ))}
+      </section>
+
+      {/* ── The offer, edge to edge ──────────────────────────────────── */}
+      <section className="relative mt-5 overflow-hidden bg-gradient-to-r from-[#FFF4D6] via-[#FFEBD2] to-[#FFE0EC] px-4 py-5" data-offer>
+        <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#B45309]">Welcome offer</p>
+        <p className="mt-1 text-[30px] font-black leading-none tracking-[-0.04em] text-[#1C1033]">10% OFF</p>
+        <p className="mt-1 max-w-[62%] text-[12.5px] font-semibold leading-snug text-[#5B4A3A]">On your first celebration booking, plus a welcome hamper.</p>
+        <button type="button" onClick={() => { choose('occasions'); toGrid() }} className="cx-press mt-3 inline-flex h-10 items-center gap-1.5 rounded-full bg-[#1C1033] px-4 text-[13px] font-extrabold text-white">Book a celebration<ArrowRight size={15} /></button>
+        <Gift size={92} strokeWidth={1.2} className="absolute -right-2 bottom-2 text-[#F59E0B]/40" />
+      </section>
+
+      {/* ── Refer & earn, edge to edge ───────────────────────────────── */}
+      <section className="relative overflow-hidden bg-gradient-to-r from-[#F3ECFF] to-[#FCE7F3] px-4 py-5" data-refer-band>
+        <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[var(--brand)]">Refer & earn</p>
+        <p className="mt-1 text-[24px] font-black leading-[1.05] tracking-[-0.04em] text-[#1C1033]">Celebrate<br /><span className="bg-gradient-to-r from-[#7C3AED] to-[#DB2777] bg-clip-text text-transparent">Together</span></p>
+        <p className="mt-1 max-w-[56%] text-[12.5px] font-semibold leading-snug text-[#5F5675]">Invite the people you celebrate with.</p>
+        <Link to="/refer" className="cx-press relative z-10 mt-3 inline-flex h-11 items-center gap-2 rounded-full bg-gradient-to-r from-[#6D28D9] to-[#8B5CF6] pl-4 pr-1.5 text-[13.5px] font-extrabold text-white shadow-[0_10px_22px_-10px_rgba(109,40,217,.9)]" data-refer>
+          <Users size={16} />Refer your friend<span className="grid h-8 w-8 place-items-center rounded-full bg-white text-[var(--brand)]"><ArrowRight size={16} /></span>
+        </Link>
+        <img src={artFor('cat-life')} alt="" className="absolute -right-3 bottom-0 h-[130px] w-auto mix-blend-multiply" loading="lazy" />
       </section>
 
       <SignOff />
@@ -141,70 +220,55 @@ export default function Home() {
 
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]] } return a }
 
-/* The two doors are the brand's two promises, so they are words, not
-   icons: bold, large, a living amethyst when chosen (the splash colour,
-   lifted), a soft amethyst when not — clearly a toggle either way. */
-function Door({ on, onClick, title, sub }) {
+function Headline({ lines }) {
+  const [i, setI] = useState(0)
+  useEffect(() => { setI(0); const t = setInterval(() => setI(n => (n + 1) % lines.length), 2800); return () => clearInterval(t) }, [lines])
+  const [a, b, c] = lines[i]
   return (
-    <button type="button" role="tab" aria-selected={on} onClick={onClick} data-door={title}
-      className={'cx-press relative min-w-0 overflow-hidden rounded-[22px] px-4 py-3.5 text-left transition-all duration-300 ' +
-        (on ? 'cx-door-on bg-gradient-to-br from-[#A57BFF] via-[#8650F2] to-[#6D35E0] text-white shadow-[0_16px_30px_-14px_rgba(91,33,168,.95),inset_0_1px_0_rgba(255,255,255,.35)]'
-            : 'bg-[#EEE5FF] text-[#3A1290] shadow-[inset_0_0_0_1.5px_#DCCBFF]')}>
-      <span className={'absolute right-3 top-3 h-2 w-2 rounded-full transition ' + (on ? 'bg-white shadow-[0_0_0_4px_rgba(255,255,255,.25),0_0_10px_2px_rgba(255,255,255,.8)]' : 'bg-[#C8B2FF]')} />
-      <span className="block truncate pr-3 text-[17.5px] font-black leading-tight tracking-[-0.035em]">{title}</span>
-      <span className={'mt-0.5 block truncate text-[11.5px] font-bold ' + (on ? 'text-white/85' : 'text-[#6B5C92]')}>{sub}</span>
-    </button>
+    <h1 key={`${lines[0][1]}-${i}`} className="cx-rise min-h-[90px] text-[29px] font-black leading-[1.02] tracking-[-0.045em] text-[#16092E]" aria-live="polite">
+      {a}<br />{b}<br />
+      <span className="bg-gradient-to-r from-[#7C3AED] to-[#A855F7] bg-clip-text text-transparent">{c}</span>
+    </h1>
   )
 }
 
-/* ── The promo cards ─────────────────────────────────────────────── */
-function Promos({ onGo }) {
-  const slides = [...PROMOS, PROMOS[0]]          // a copy of the first, so the loop never runs backwards
-  const [i, setI] = useState(0)
-  const [animate, setAnimate] = useState(true)
-  const held = useRef(0)
-  const touch = useRef(null)
-  useEffect(() => {
-    const t = setInterval(() => { if (Date.now() > held.current) { setAnimate(true); setI(n => n + 1) } }, HOLD_MS + SLIDE_MS)
-    return () => clearInterval(t)
-  }, [])
-  /* Landing on the copy: jump, unanimated, to the real first card. */
-  useEffect(() => {
-    if (i !== PROMOS.length) return
-    const t = setTimeout(() => { setAnimate(false); setI(0) }, SLIDE_MS + 20)
-    return () => clearTimeout(t)
-  }, [i])
-  const hold = () => { held.current = Date.now() + 5000 }
-  const swipe = dx => { hold(); setAnimate(true); setI(n => (dx < 0 ? Math.min(n + 1, PROMOS.length) : Math.max(n - 1, 0))) }
+/* A floating confirmation chip on the hero, popping in after `delay`. */
+function Pop({ className, delay, children }) {
+  const [on, setOn] = useState(false)
+  useEffect(() => { const t = setTimeout(() => setOn(true), 500 + delay); return () => clearTimeout(t) }, [delay])
+  if (!on) return null
+  return <span className={'cx-pop absolute flex items-center gap-1.5 rounded-[14px] bg-white/95 py-1.5 pl-1.5 pr-2.5 text-[10.5px] font-extrabold text-[#1C1033] shadow-[0_8px_20px_-10px_rgba(58,18,144,.6)] ' + className}>{children}</span>
+}
 
+/* Razorpay's mark. Drop the official SVG from their brand kit in as
+   src/customer/art/logo-razorpay.svg and it replaces this drawing. */
+function RazorpayMark() {
+  const official = artFor('logo-razorpay')
+  if (official) return <img src={official} alt="Razorpay" className="h-3 w-auto" />
   return (
-    <section className="mx-3 mt-3.5 overflow-hidden rounded-[22px] bg-white shadow-[0_0_0_1px_#EEE6FA,0_20px_36px_-24px_rgba(58,18,144,.75)]" aria-roledescription="carousel" aria-label="Offers"
-      onTouchStart={e => { hold(); touch.current = e.touches[0].clientX }}
-      onTouchEnd={e => { const dx = e.changedTouches[0].clientX - (touch.current ?? 0); if (Math.abs(dx) > 40) swipe(dx) }}>
-      <div className="cx-track" style={{ transform: `translateX(-${i * 100}%)`, transition: animate ? undefined : 'none' }}>
-        {slides.map((p, k) => (
-          <div key={`${p.id}-${k}`} className="bg-white" data-promo={p.id} aria-hidden={k !== i}>
-            <button type="button" onClick={() => onGo(p.go)} tabIndex={-1} className="relative block aspect-[1200/553] w-full bg-[#F6F0FF]" aria-label={p.alt}>
-              <img src={artFor(p.id)} alt="" className="absolute inset-0 h-full w-full object-cover" loading={k ? 'lazy' : 'eager'} />
-            </button>
-            <div className="p-2">
-              <button type="button" onClick={() => onGo(p.go)} tabIndex={k === i ? 0 : -1} className="cx-press cx-cta flex h-12 w-full items-center gap-2.5 rounded-[16px] pl-3 pr-1.5 text-left" data-promo-go={p.id}>
-                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[11px] bg-white text-[var(--brand)] shadow-[0_4px_10px_-6px_rgba(58,18,144,.7)]"><p.icon size={17} strokeWidth={2.4} /></span>
-                <span className="flex-1 truncate text-[14.5px] font-extrabold tracking-[-0.02em]">{p.label}</span>
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[12px] bg-[var(--brand)] text-white"><ArrowRight size={18} /></span>
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
+    <span className="inline-flex items-center gap-0.5 font-black tracking-[-0.02em] text-[#072654]">
+      <svg viewBox="0 0 12 14" className="h-3 w-auto" aria-hidden><path d="M4.6 0 12 0 6.4 14H1.8L5 6.2 2.6 8.4Z" fill="#3395FF" /></svg>Razorpay
+    </span>
+  )
+}
+
+function IconChip({ on, onClick, label, src, all = false }) {
+  return (
+    <button type="button" onClick={onClick} aria-pressed={on} className="cx-press flex w-[66px] shrink-0 flex-col items-center gap-1 pb-1" data-chip={label}>
+      <span className={'relative grid h-[54px] w-[54px] place-items-center overflow-hidden rounded-[16px] transition ' + (on ? 'bg-gradient-to-br from-[#8B5CF6] to-[#6D28D9] shadow-[0_8px_18px_-8px_rgba(109,40,217,.9)]' : 'bg-white shadow-[0_0_0_1px_#EFE7DD]')}>
+        {all ? <span className="grid grid-cols-2 gap-[3px]">{[0, 1, 2, 3].map(i => <span key={i} className={'h-[9px] w-[9px] rounded-[3px] ' + (on ? 'bg-white' : 'bg-[var(--brand)]')} />)}</span>
+          : <img src={src} alt="" className={'h-full w-full object-cover object-[50%_20%] ' + (on ? 'opacity-90' : 'mix-blend-multiply')} loading="lazy" />}
+      </span>
+      <span className={'line-clamp-2 text-center text-[10.5px] font-bold leading-tight ' + (on ? 'text-[var(--brand)]' : 'text-[var(--ink-2)]')}>{label}</span>
+      {on && <span className="h-[3px] w-6 rounded-full bg-[var(--brand)]" />}
+    </button>
   )
 }
 
 /* ── The sign-off ────────────────────────────────────────────────── */
 function SignOff() {
   return (
-    <footer className="mt-14 overflow-hidden" aria-label="Crafted with love in Mysuru">
+    <footer className="mt-12 overflow-hidden" aria-label="Crafted with love in Mysuru">
       <div className="px-6">
         <p className="text-[42px] font-extrabold leading-[0.96] tracking-[-0.05em] text-[#E6DDF6]">Crafted<br />with love <Heart /><br /><span className="text-[#D8CAF1]">in Mysuru.</span></p>
         <p className="mt-3 text-[12.5px] font-bold text-[#A79BC2]">For every celebration across India.</p>
@@ -216,13 +280,54 @@ function SignOff() {
   )
 }
 
-/* A real red heart, beating slowly. */
 function Heart() {
   return (
     <svg viewBox="0 0 32 29" className="cx-beat inline-block h-[0.78em] w-auto align-baseline drop-shadow-[0_4px_8px_rgba(255,0,32,.35)]" aria-label="love">
       <path d="M16 28.5S1 19.6 1 9.4C1 4.6 4.7 1 9.2 1c2.9 0 5.4 1.5 6.8 3.8C17.4 2.5 19.9 1 22.8 1 27.3 1 31 4.6 31 9.4 31 19.6 16 28.5 16 28.5z" fill="#FF0F2E" />
       <path d="M8.6 5.2c-2 .3-3.6 2-3.8 4.1" stroke="#FFC2CB" strokeWidth="2" strokeLinecap="round" fill="none" />
     </svg>
+  )
+}
+
+/* ── Where am I ──────────────────────────────────────────────────── */
+function WhereSheet({ open, onClose, onPick }) {
+  const [q, setQ] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState('')
+  const list = useMemo(() => {
+    const t = q.trim().toLowerCase()
+    return BENGALURU_AREAS.filter(a => !t || a.name.toLowerCase().includes(t)).sort((a, b) => a.tier - b.tier || a.name.localeCompare(b.name))
+  }, [q])
+  async function here() {
+    setBusy(true); setErr('')
+    const r = await locate()
+    setBusy(false)
+    if (!r.ok) { setErr('Location is off. Pick your area below.'); return }
+    if (!r.market?.live) { setErr(`You are in ${r.place.area}. We are live in Bengaluru — pick an area below.`); return }
+    onPick({ ...r.place, market: r.market.id, test: !!r.market.test })
+  }
+  return (
+    <Sheet open={open} onClose={onClose} title="Where are you?">
+      <button type="button" onClick={here} className="cx-press cx-btn flex w-full items-center gap-3 rounded-[18px] px-4 py-3.5 text-left">
+        {busy ? <Loader2 size={20} className="animate-spin" /> : <LocateFixed size={20} />}
+        <span className="flex-1 text-[14.5px] font-extrabold">Use my current location</span><ArrowRight size={16} />
+      </button>
+      {err && <p className="mt-2 text-[12.5px] font-bold text-[#9B1A2A]">{err}</p>}
+      <label className="mt-4 flex h-12 items-center gap-2.5 rounded-[16px] bg-[var(--am-50)] px-3.5 ring-1 ring-[var(--am-200)]">
+        <Search size={17} className="text-[var(--brand)]" />
+        <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search your area" className="h-full flex-1 bg-transparent text-[14px] font-bold outline-none placeholder:text-[var(--ink-3)]" />
+      </label>
+      <ul className="mt-2 max-h-[40dvh] overflow-y-auto pb-2">
+        {list.map(a => (
+          <li key={a.name}>
+            <button type="button" onClick={() => onPick({ area: a.name, city: 'Bengaluru', lat: a.lat, lng: a.lng, market: 'BLR', source: 'picked' })}
+              className="cx-press flex w-full items-center gap-3 border-b border-[var(--line)] py-3 text-left text-[14.5px] font-bold last:border-0">
+              <MapPin size={16} className="text-[var(--brand)]" />{a.name}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </Sheet>
   )
 }
 
@@ -324,47 +429,5 @@ function Palace({ className }) {
       <rect x="0" y="150" width="400" height="2" fill={C.line} opacity=".7" />
       <rect x="146" y="146" width="108" height="4" fill={C.cornice} /><rect x="154" y="142" width="92" height="4" fill={C.wall} stroke={C.line} strokeWidth=".4" />
     </svg>
-  )
-}
-
-/* ── Where am I ──────────────────────────────────────────────────── */
-function WhereSheet({ open, onClose, onPick }) {
-  const [q, setQ] = useState('')
-  const [busy, setBusy] = useState(false)
-  const [err, setErr] = useState('')
-  const list = useMemo(() => {
-    const t = q.trim().toLowerCase()
-    return BENGALURU_AREAS.filter(a => !t || a.name.toLowerCase().includes(t)).sort((a, b) => a.tier - b.tier || a.name.localeCompare(b.name))
-  }, [q])
-  async function here() {
-    setBusy(true); setErr('')
-    const r = await locate()
-    setBusy(false)
-    if (!r.ok) { setErr('Location is off. Pick your area below.'); return }
-    if (!r.market?.live) { setErr(`You are in ${r.place.area}. We are live in Bengaluru — pick an area below.`); return }
-    onPick({ ...r.place, market: r.market.id, test: !!r.market.test })
-  }
-  return (
-    <Sheet open={open} onClose={onClose} title="Where are you?">
-      <button type="button" onClick={here} className="cx-press cx-btn flex w-full items-center gap-3 rounded-[18px] px-4 py-3.5 text-left">
-        {busy ? <Loader2 size={20} className="animate-spin" /> : <LocateFixed size={20} />}
-        <span className="flex-1 text-[14.5px] font-extrabold">Use my current location</span><ArrowRight size={16} />
-      </button>
-      {err && <p className="mt-2 text-[12.5px] font-bold text-[#9B1A2A]">{err}</p>}
-      <label className="mt-4 flex h-12 items-center gap-2.5 rounded-[16px] bg-[var(--am-50)] px-3.5 ring-1 ring-[var(--am-200)]">
-        <Search size={17} className="text-[var(--brand)]" />
-        <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search your area" className="h-full flex-1 bg-transparent text-[14px] font-bold outline-none placeholder:text-[var(--ink-3)]" />
-      </label>
-      <ul className="mt-2 max-h-[40dvh] overflow-y-auto pb-2">
-        {list.map(a => (
-          <li key={a.name}>
-            <button type="button" onClick={() => onPick({ area: a.name, city: 'Bengaluru', lat: a.lat, lng: a.lng, market: 'BLR', source: 'picked' })}
-              className="cx-press flex w-full items-center gap-3 border-b border-[var(--line)] py-3 text-left text-[14.5px] font-bold last:border-0">
-              <MapPin size={16} className="text-[var(--brand)]" />{a.name}
-            </button>
-          </li>
-        ))}
-      </ul>
-    </Sheet>
   )
 }

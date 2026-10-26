@@ -47,7 +47,7 @@ function Card({ to, art, tone, title, children, data }) {
   return (
     <Link to={to} className="cx-press cx-art-card relative flex flex-col overflow-hidden rounded-[20px]" {...data}>
       <div className="relative">
-        <ArtFill art={art} tone={tone} className="aspect-[1.25/1]" inset="12%" />
+        <ArtFill art={art} tone={tone} className="aspect-[1.35/1]" inset="12%" />
         <span className="absolute bottom-1.5 right-1.5 grid h-[22px] w-[22px] place-items-center rounded-full bg-white/95 text-[var(--am-ink)] shadow-[0_4px_10px_-4px_rgba(58,18,144,.55)]"><ChevronRight size={14} strokeWidth={2.6} /></span>
       </div>
       <div className="flex flex-1 flex-col px-2.5 pb-2.5 pt-1.5">
@@ -63,7 +63,17 @@ export function CategoryCard({ category, index = 0 }) {
   const names = (category.occasions ?? category.events ?? []).map(o => o.name)
   return (
     <Card to={`/c/${category.id}`} art={categoryArt(category)} tone={category.tone} title={category.short} data={{ 'data-category': category.id }}>
-      <span className="flex items-start gap-1"><span className="mt-[4px] h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-[var(--ok)]" /><Rotator items={names} delay={index * 380} wrap className="text-[var(--ink-2)]" /></span>
+      <span className="flex items-start gap-1"><span className="mt-[4px] h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-[var(--ok)]" /><Rotator items={names} delay={index * 380} wrap className="text-[#0B7A45]" /></span>
+    </Card>
+  )
+}
+
+/** A service family: its masters' trades take turns in the live line. */
+export function FamilyCard({ family, index = 0 }) {
+  const to = family.trades.length === 1 ? `/s/${family.trades[0]}` : `/f/${family.id}`
+  return (
+    <Card to={to} art={serviceArt(family.trades[0])} tone={family.tone} title={family.label} data={{ 'data-family': family.id }}>
+      <span className="flex items-start gap-1"><span className="mt-[4px] h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-[var(--ok)]" /><Rotator items={family.trades.length > 1 ? family.trades.map(t => TRADE[t].label) : family.line.split(' · ')} delay={index * 380} wrap className="text-[#0B7A45]" /></span>
     </Card>
   )
 }

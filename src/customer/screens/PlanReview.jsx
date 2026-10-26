@@ -17,7 +17,7 @@ import { usePlan } from '../state/PlanContext'
 import { dayLabel, plural, rupees } from '../lib/format'
 import { planFloor, lineFloor, hasQty } from '../lib/estimate'
 import { qtyOf } from '../lib/booking'
-import { ActionBar, BackHeader, Empty, Photo } from '../ui/kit'
+import { ActionBar, BackHeader, Empty, Photo, Journey } from '../ui/kit'
 
 export default function PlanReview() {
   const plan = usePlan()
@@ -35,6 +35,7 @@ export default function PlanReview() {
   return (
     <main className="cx-enter pb-[calc(env(safe-area-inset-bottom,0px)+150px)]">
       <BackHeader title="Your plan" sub={plan.basket.length ? `${plural(plan.basket.length, 'master')} · ${instant.length} instant · ${quote.length} on quote` : null} />
+      {plan.basket.length > 0 && <Journey flow={plan.basket.some(l => l.occasionId) ? 'celebration' : 'service'} at={plan.basket.some(l => l.occasionId) ? 3 : 1} />}
       {!plan.basket.length && (
         <div className="pt-8"><Empty title="Nothing in your plan yet" body="Pick an occasion and we will show you exactly what it needs."
           action={<Link to="/" className="cx-press cx-cta inline-flex h-12 items-center rounded-[16px] px-5 text-[14px] font-extrabold">Start planning</Link>} /></div>

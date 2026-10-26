@@ -20,7 +20,7 @@ import { TRADE } from '../data/trades'
 import { serviceArt } from '../data/art'
 import { usePlan, needsFor } from '../state/PlanContext'
 import { dayLabel, plural, timeLabel } from '../lib/format'
-import { ActionBar, BackHeader } from '../ui/kit'
+import { ActionBar, BackHeader, Journey } from '../ui/kit'
 import { AddOnCard, ArtFill } from '../ui/art'
 import { VENUE_KINDS } from './Occasion'
 
@@ -57,6 +57,7 @@ export default function Recommend() {
   return (
     <main className="cx-enter pb-[calc(env(safe-area-inset-bottom,0px)+150px)]">
       <BackHeader title={o.name} sub={o.categoryShort} />
+      <Journey at={1} />
 
       <section className="px-4 pt-1">
         <h2 className="text-[25px] font-extrabold leading-[1.08] tracking-[-0.035em]">Everything your {o.name} needs</h2>

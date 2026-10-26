@@ -1,7 +1,7 @@
 /** Account — the person, their saved partners, help, and the way out. */
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Bell, ChevronRight, Heart, LogOut, MessageCircle, Phone, Store, CalendarHeart } from 'lucide-react'
+import { Bell, CalendarHeart, ChevronRight, Headset, Heart, LogOut, MessageCircle, Phone, Store, Wallet } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { BRAND } from '../../config/sambramo'
 import { usePlan } from '../state/PlanContext'
@@ -13,8 +13,10 @@ export default function Account() {
   const [signIn, setSignIn] = useState(false)
   const name = profile?.full_name || user?.email?.split('@')[0]
   const rows = [
+    { icon: Wallet, label: 'Celebration wallet', to: '/wallet' },
+    { icon: CalendarHeart, label: 'My bookings', to: '/plans' },
     { icon: Heart, label: 'Saved masters', value: plan.saved.length || null, to: '/saved' },
-    { icon: CalendarHeart, label: 'Your plans', to: '/plans' },
+    { icon: Headset, label: 'Help & cancellation policy', to: '/help' },
     { icon: Bell, label: 'Notifications', to: '/notifications' },
     { icon: MessageCircle, label: 'Help on WhatsApp', href: `https://wa.me/${BRAND.whatsappNumber}` },
     { icon: Phone, label: `Call ${BRAND.supportPhone}`, href: `tel:${BRAND.supportPhone.replace(/\s/g, '')}` },

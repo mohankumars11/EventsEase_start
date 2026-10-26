@@ -31,7 +31,7 @@ import { plural, rupees, whenLabel } from '../lib/format'
 import { previewLine, bookLine } from '../lib/booking'
 import { partnersFor } from '../lib/market'
 import { confirmPaid } from '../lib/bookings'
-import { ActionBar, BackHeader, Photo, Sheet } from '../ui/kit'
+import { ActionBar, BackHeader, Photo, Sheet, Journey } from '../ui/kit'
 import SignInSheet from './SignInSheet'
 import WhenSheet from './WhenSheet'
 import PlaceSheet from './PlaceSheet'
@@ -134,6 +134,7 @@ export default function Checkout() {
   return (
     <main className="cx-enter pb-[calc(env(safe-area-inset-bottom,0px)+170px)]">
       <BackHeader title="Checkout" sub={`${plural(lines.length, 'master')}${occ ? ` · ${occ.name}` : ''}`} />
+      <Journey flow={occ ? 'celebration' : 'service'} at={occ ? 3 : 2} />
 
       <Block title="When & where">
         <Row icon={CalendarDays} onClick={() => setSheet('when')} value={ev.date ? whenLabel(ev.date, ev.time) + (ev.hours ? ` · ${ev.hours} h` : '') : null} placeholder="Pick the day and start time" />
@@ -207,6 +208,7 @@ export default function Checkout() {
       <SignInSheet open={sheet === 'signin'} onClose={() => setSheet(null)} onDone={() => setSheet(null)} />
       <Sheet open={['done', 'unpaid', 'error'].includes(phase)} onClose={() => navigate('/plans')} title={phase === 'done' ? 'You are booked' : phase === 'unpaid' ? 'Booked — payment pending' : 'Something went wrong'}>
         <div className="pb-4">
+          {phase === 'done' && <Journey flow={occ ? 'celebration' : 'service'} at={9} className="-mx-4 mb-2" />}
           {phase === 'done' && <CheckCircle2 size={44} className="text-[var(--ok)]" />}
           <p className="mt-3 text-[14px] font-semibold leading-relaxed text-[var(--ink-2)]">
             {phase === 'done' && (outcome?.paid ? (outcome.confirmed ? `${plural(outcome.paid, 'master')} confirmed. They have been told and will call you before the day.` : `${plural(outcome.paid, 'master')} confirmed once Razorpay reports the payment — usually seconds.`) : '')}

@@ -5,7 +5,7 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { ArrowLeft, ArrowRight, CalendarDays, Gift, House, LayoutGrid, PartyPopper, ShoppingBag, Star, UserRound, X, Zap } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CalendarDays, House, LayoutGrid, Search, Star, UserRound, X, Zap } from 'lucide-react'
 import { usePlan } from '../state/PlanContext'
 import { rupees, plural } from '../lib/format'
 import { planFloor } from '../lib/estimate'
@@ -17,87 +17,77 @@ export function Photo({ src, alt = '', className = '', eager = false }) {
   return <img src={src} alt={alt} loading={eager ? 'eager' : 'lazy'} decoding="async" className={className} onError={() => setOk(false)} />
 }
 
-/* ── The navigation: a floating bar with a living centre ─────────────
- * Four places (Home, Services, My Bookings, Account) on a white pill that
- * floats off the bottom edge, and between them an amethyst orb ringed by
- * a slow band of light. The orb is the fastest way to start anything —
- * plan a celebration, book one master, pick up the plan in progress,
- * invite a friend — so it opens a sheet of exactly those, never a fifth
- * page. The basket is still not a tab: it is the bar above this one. */
+/* ── The navigation (Mohan, 2026-10-26) ─────────────────────────────
+ * Home · My Bookings · search · Services · Account, on a white pill that
+ * floats off the bottom edge. The centre is search: the one thing that
+ * gets anyone anywhere in the app, and the search hub holds everything
+ * else (book again, help, policies). It slides away while the page
+ * scrolls and comes back the moment scrolling stops, so the content has
+ * the whole screen while it moves. */
 const TABS = [
   { to: '/', label: 'Home', icon: House, match: p => p === '/' || p.startsWith('/c/') || p === '/explore' },
-  { to: '/s', label: 'Services', icon: LayoutGrid, match: p => p === '/s' || p.startsWith('/s/') },
-  null,
   { to: '/plans', label: 'My Bookings', icon: CalendarDays, match: p => p.startsWith('/plans') },
+  null,
+  { to: '/s', label: 'Services', icon: LayoutGrid, match: p => p === '/s' || p.startsWith('/s/') || p.startsWith('/f/') },
   { to: '/me', label: 'Account', icon: UserRound, match: p => p.startsWith('/me') },
 ]
-export function TabBar() {
-  const { pathname } = useLocation()
-  const [quick, setQuick] = useState(false)
-  return (
-    <>
-      <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-[150] px-3" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 10px)' }} aria-label="Main">
-        <div className="pointer-events-auto relative mx-auto grid h-[66px] max-w-[540px] grid-cols-5 items-center rounded-[26px] bg-white/95 px-1 shadow-[0_0_0_1px_#EEE6FA,0_18px_40px_-18px_rgba(58,18,144,.55)] backdrop-blur-xl">
-          {TABS.map((t, i) => t ? (
-            <Link key={t.to} to={t.to} className="cx-press relative flex flex-col items-center gap-0.5" aria-current={t.match(pathname) ? 'page' : undefined} data-tab={t.label}>
-              <span className={'grid h-8 w-12 place-items-center rounded-full transition-all duration-300 ' + (t.match(pathname) ? 'bg-[var(--am-100)] text-[var(--brand)]' : 'text-[#A49DB8]')}>
-                <t.icon size={21} strokeWidth={t.match(pathname) ? 2.5 : 2} />
-              </span>
-              <span className={'text-[10.5px] font-extrabold tracking-[-0.01em] ' + (t.match(pathname) ? 'text-[var(--brand)]' : 'text-[#A49DB8]')}>{t.label}</span>
-            </Link>
-          ) : (
-            <div key={i} className="relative flex justify-center">
-              <button type="button" onClick={() => setQuick(true)} aria-label="Start something" data-orb
-                className="cx-press cx-orb absolute -top-[42px] h-[60px] w-[60px] rounded-full ring-[5px] ring-white">
-                <span className="cx-orb-track" aria-hidden />
-                <span className="cx-orb-ring" aria-hidden />
-              </button>
-            </div>
-          ))}
-        </div>
-      </nav>
-      <QuickSheet open={quick} onClose={() => setQuick(false)} />
-    </>
-  )
+
+/** True while the page is scrolling; false 220 ms after it stops. */
+export function useScrolling() {
+  const [moving, setMoving] = useState(false)
+  useEffect(() => {
+    let t, lastY = window.scrollY
+    const on = () => {
+      if (Math.abs(window.scrollY - lastY) < 4) return
+      lastY = window.scrollY
+      setMoving(true); clearTimeout(t); t = setTimeout(() => setMoving(false), 220)
+    }
+    window.addEventListener('scroll', on, { passive: true })
+    return () => { window.removeEventListener('scroll', on); clearTimeout(t) }
+  }, [])
+  return moving
 }
 
-function QuickSheet({ open, onClose }) {
+export function TabBar() {
+  const { pathname } = useLocation()
   const navigate = useNavigate()
-  const { basket } = usePlan()
-  const go = to => { onClose(); navigate(to) }
-  const items = [
-    { icon: PartyPopper, title: 'Plan a celebration', sub: '438 occasions, every master it needs', to: '/explore#celebrations' },
-    { icon: Zap, title: 'Book one master now', sub: 'A photographer, a cook, a DJ — instantly', to: '/s' },
-    ...(basket.length ? [{ icon: ShoppingBag, title: `Your plan · ${plural(basket.length, 'master')}`, sub: 'Review, negotiate and pay', to: '/plan' }] : []),
-    { icon: Gift, title: 'Invite a friend', sub: 'Celebrate together', to: '/refer' },
-  ]
+  const hidden = useScrolling()
   return (
-    <Sheet open={open} onClose={onClose} title="What shall we start?">
-      <div className="grid gap-2.5 pb-3">
-        {items.map(x => (
-          <button key={x.title} type="button" onClick={() => go(x.to)} className="cx-press flex items-center gap-3 rounded-[20px] bg-[var(--am-50)] p-3.5 text-left ring-1 ring-[var(--am-200)]" data-quick={x.title}>
-            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-[16px] bg-white text-[var(--brand)] shadow-[0_8px_18px_-12px_rgba(58,18,144,.8)]"><x.icon size={22} /></span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-[15px] font-extrabold tracking-[-0.02em]">{x.title}</span>
-              <span className="block truncate text-[12px] font-semibold text-[var(--ink-3)]">{x.sub}</span>
+    <nav className={'pointer-events-none fixed inset-x-0 bottom-0 z-[150] px-3 transition-transform duration-300 ease-out ' + (hidden ? 'translate-y-[130%]' : 'translate-y-0')}
+      style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 10px)' }} aria-label="Main" data-tabbar={hidden ? 'hidden' : 'shown'}>
+      <div className="pointer-events-auto relative mx-auto grid h-[66px] max-w-[540px] grid-cols-5 items-center rounded-[26px] bg-white/95 px-1 shadow-[0_0_0_1px_#EEE6FA,0_18px_40px_-18px_rgba(58,18,144,.55)] backdrop-blur-xl">
+        {TABS.map((t, i) => t ? (
+          <Link key={t.to} to={t.to} className="cx-press relative flex flex-col items-center gap-0.5" aria-current={t.match(pathname) ? 'page' : undefined} data-tab={t.label}>
+            <span className={'grid h-8 w-12 place-items-center rounded-full transition-all duration-300 ' + (t.match(pathname) ? 'bg-[var(--am-100)] text-[var(--brand)]' : 'text-[#A49DB8]')}>
+              <t.icon size={21} strokeWidth={t.match(pathname) ? 2.5 : 2} />
             </span>
-            <ArrowRight size={17} className="shrink-0 text-[var(--am-ink)]" />
-          </button>
+            <span className={'whitespace-nowrap text-[10.5px] font-extrabold tracking-[-0.01em] ' + (t.match(pathname) ? 'text-[var(--brand)]' : 'text-[#A49DB8]')}>{t.label}</span>
+          </Link>
+        ) : (
+          <div key={i} className="relative flex justify-center">
+            <button type="button" onClick={() => navigate('/search')} aria-label="Search" data-orb
+              className="cx-press cx-orb absolute -top-[42px] grid h-[60px] w-[60px] place-items-center rounded-full text-white ring-[5px] ring-white">
+              <span className="cx-orb-track" aria-hidden />
+              <span className="cx-orb-ring" aria-hidden />
+              <Search size={24} strokeWidth={2.6} />
+            </button>
+          </div>
         ))}
       </div>
-    </Sheet>
+    </nav>
   )
 }
 
 /* ── The plan bar: what is chosen, what it comes to, one tap to review ── */
 export function PlanBar({ withTabs = true }) {
   const { basket, event } = usePlan()
+  const moving = useScrolling()
   const navigate = useNavigate()
   if (!basket.length) return null
   const { paise: total } = planFloor(basket, event)
   const instant = basket.filter(l => l.instant).length
   return (
-    <div className="pointer-events-none fixed inset-x-0 z-[140] px-3" style={{ bottom: withTabs ? 'calc(env(safe-area-inset-bottom, 0px) + 88px)' : 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}>
+    <div className="pointer-events-none fixed inset-x-0 z-[140] px-3 transition-[bottom] duration-300 ease-out" style={{ bottom: withTabs && !moving ? 'calc(env(safe-area-inset-bottom, 0px) + 88px)' : 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}>
       <button type="button" onClick={() => navigate('/plan')} data-plan-bar
         className="cx-press cx-pop pointer-events-auto mx-auto flex w-full max-w-[540px] items-center gap-3 rounded-[22px] bg-gradient-to-b from-[#F1E9FF] to-[#E2D2FF] p-2 pr-2.5 text-left text-[var(--am-ink)] shadow-[0_0_0_1px_#D6C2FF,0_18px_36px_-16px_rgba(58,18,144,.75)]">
         <span className="flex shrink-0 -space-x-3 pl-1">
@@ -252,5 +242,37 @@ export function ActionBar({ children, note = null }) {
         {note && <p className="mt-2 text-center text-[11.5px] font-semibold text-[var(--ink-3)]">{note}</p>}
       </div>
     </div>
+  )
+}
+
+/* ── The journey strip ───────────────────────────────────────────────
+ * Where the customer is in the booking, at the top of every step: done
+ * steps turn green with a tick, the current one is amethyst and pulses,
+ * the rest wait in grey. A celebration is five steps; one service skips
+ * the plan. `at` is the 0-based current step; `at` past the end = all done. */
+const JOURNEYS = {
+  celebration: ['Details', 'Your plan', 'Masters', 'Pay', 'Done'],
+  service: ['Masters', 'Details', 'Pay', 'Done'],
+}
+export function Journey({ flow = 'celebration', at = 0, className = '' }) {
+  const steps = JOURNEYS[flow]
+  return (
+    <ol className={'flex items-center px-4 py-2 ' + className} aria-label={`Step ${Math.min(at + 1, steps.length)} of ${steps.length}`} data-journey={at}>
+      {steps.map((s, i) => {
+        const done = i < at, now = i === at
+        return (
+          <li key={s} className="flex min-w-0 flex-1 items-center last:flex-none">
+            <span className="flex flex-col items-center gap-1">
+              <span className={'grid h-6 w-6 place-items-center rounded-full text-[11px] font-black transition-all duration-500 ' +
+                (done ? 'bg-[#0C831F] text-white' : now ? 'bg-[var(--brand)] text-white ring-4 ring-[#EDE4FF]' : 'bg-[#F1EEF6] text-[#A49DB8]')}>
+                {done ? <svg viewBox="0 0 12 12" className="h-3 w-3"><path d="M2.5 6.2 5 8.6 9.5 3.6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg> : i + 1}
+              </span>
+              <span className={'whitespace-nowrap text-[9.5px] font-extrabold ' + (done ? 'text-[#0C831F]' : now ? 'text-[var(--brand)]' : 'text-[#A49DB8]')}>{s}</span>
+            </span>
+            {i < steps.length - 1 && <span className={'mx-1 mb-4 h-[2px] flex-1 rounded-full transition-colors duration-500 ' + (done ? 'bg-[#0C831F]' : 'bg-[#ECE8F2]')} />}
+          </li>
+        )
+      })}
+    </ol>
   )
 }

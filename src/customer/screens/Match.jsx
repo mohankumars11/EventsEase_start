@@ -17,7 +17,7 @@ import { TRADE } from '../data/trades'
 import { usePlan, needsFor } from '../state/PlanContext'
 import { partnersFor, rank } from '../lib/market'
 import { dayLabel, plural } from '../lib/format'
-import { BackHeader, PlanBar } from '../ui/kit'
+import { BackHeader, PlanBar, Journey } from '../ui/kit'
 import { PartnerCard, PartnerCardSkeleton } from '../ui/cards'
 import CompareSheet from './CompareSheet'
 
@@ -47,6 +47,7 @@ export default function Match() {
   return (
     <main className="cx-enter pb-[calc(env(safe-area-inset-bottom,0px)+110px)]">
       <BackHeader title={`Masters for ${o.name}`} sub={facts || 'Add a date and guest count for exact prices'} />
+      <Journey at={2} />
       <div className="px-4 pt-1">
         <div className="flex items-center gap-3 rounded-[20px] bg-[var(--brand-tint)] px-4 py-3">
           <div className="relative h-11 w-11 shrink-0">

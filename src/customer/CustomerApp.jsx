@@ -39,13 +39,16 @@ const Saved = lazy(() => import('./screens/Small').then(m => ({ default: m.Saved
 const Notifications = lazy(() => import('./screens/Small').then(m => ({ default: m.Notifications })))
 const Services = lazy(() => import('./screens/Small').then(m => ({ default: m.Services })))
 const Explore = lazy(() => import('./screens/Explore'))
+const Family = lazy(() => import('./screens/Family'))
+const Help = lazy(() => import('./screens/Help'))
+const Wallet = lazy(() => import('./screens/Wallet'))
 const Refer = lazy(() => import('./screens/Refer'))
 
 /** Paths that stay on the shared routes on every surface. */
 export const LEGACY_PATHS = ['/partner', '/dashboard/vendor', '/dashboard/admin', '/admin', '/login', '/signup', '/auth', '/pay']
 export const isLegacyPath = p => p === '/dashboard' || LEGACY_PATHS.some(x => p === x || p.startsWith(`${x}/`))
 
-const TAB_ROUTES = p => p === '/' || p.startsWith('/c/') || p === '/s' || p.startsWith('/s/') || p.startsWith('/plans') || p.startsWith('/me') || p === '/explore'
+const TAB_ROUTES = p => p === '/' || p.startsWith('/c/') || p === '/s' || p.startsWith('/s/') || p.startsWith('/plans') || p.startsWith('/me') || p === '/explore' || p.startsWith('/f/')
 const BAR_ROUTES = p => p === '/' || p.startsWith('/c/') || p === '/s' || p.startsWith('/plans') || p.startsWith('/me')
 
 function Loading() {
@@ -100,6 +103,9 @@ export default function CustomerApp() {
             <Route path="/saved" element={<Saved />} />
             <Route path="/notifications" element={<Notifications />} />
             <Route path="/explore" element={<Explore />} />
+            <Route path="/f/:familyId" element={<Family />} />
+            <Route path="/help" element={<Help />} />
+            <Route path="/wallet" element={<Wallet />} />
             <Route path="/refer" element={<Refer />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

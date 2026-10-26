@@ -26,6 +26,11 @@
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="upi" />
         </intent>
+        <!-- Voice search (customer app): Android 11+ hides the speech
+             recogniser unless the app says it is looking for one. -->
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
     </queries>
 
 
@@ -92,6 +97,10 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Voice search on the customer home and search screens. Asked for
+         only when the mic is tapped. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <!-- Android 13 (API 33) made notifications an explicit runtime
          permission. targetSdk here is 36, so without this the OS silently

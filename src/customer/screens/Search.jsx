@@ -14,8 +14,10 @@
  * with the side the customer chose shown first.
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, LayoutGrid, PartyPopper, Search as SearchIcon, Sparkles, X } from 'lucide-react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { ArrowLeft, CalendarDays, Headset, Wallet, LayoutGrid, Mic, PartyPopper, RotateCcw, Search as SearchIcon, ShieldCheck, Sparkles, Users, X } from 'lucide-react'
+import { usePlan } from '../state/PlanContext'
+import { listen, canListen } from '../lib/voice'
 import { CATEGORIES, CATEGORY, FEATURED, OCCASIONS } from '../data/occasions'
 import { TRADES, TRADE_GROUPS } from '../data/trades'
 import { OccasionCard, ServiceCard } from '../ui/art'
@@ -33,7 +35,11 @@ function score(text, q) {
 
 export default function Search() {
   const navigate = useNavigate()
-  const [q, setQ] = useState('')
+  const [params] = useSearchParams()
+  const [q, setQ] = useState(params.get('q') ?? '')
+  const plan = usePlan()
+  const [hearing, setHearing] = useState(false)
+  const voice = async () => { setHearing(true); const said = await listen().catch(() => null); setHearing(false); if (said) setQ(said) }
   const [mode, setMode] = useState(() => { try { return sessionStorage.getItem('sbm.cx.door') === 'services' ? 'services' : 'occasions' } catch { return 'occasions' } })
   const [cat, setCat] = useState('trending')
   const chips = useRef(null)
@@ -59,11 +65,12 @@ export default function Search() {
       <header className="cx-safe-top sticky top-0 z-[120] bg-white/95 px-3 pb-3 backdrop-blur-xl">
         <div className="flex items-center gap-2">
           <button type="button" onClick={() => navigate(-1)} aria-label="Back" className="cx-press cx-btn grid h-11 w-11 shrink-0 place-items-center rounded-full"><ArrowLeft size={20} /></button>
-          <label className="flex h-12 flex-1 items-center gap-2.5 rounded-full bg-white px-4 shadow-[0_0_0_2px_#D9C6FF]">
-            <SearchIcon size={19} className="shrink-0 text-[var(--brand)]" />
-            <input autoFocus value={q} onChange={e => setQ(e.target.value)} placeholder={`Search “${hint}”`} enterKeyHint="search"
-              className="h-full min-w-0 flex-1 bg-transparent text-[15px] font-bold outline-none placeholder:font-semibold placeholder:text-[var(--ink-3)]" data-search-input />
-            {q && <button type="button" onClick={() => setQ('')} aria-label="Clear" className="grid h-7 w-7 place-items-center rounded-full bg-[var(--am-100)]"><X size={14} /></button>}
+          <label className="flex h-[50px] flex-1 items-center gap-3 rounded-[14px] bg-white pl-3.5 pr-1 shadow-[0_0_0_1px_#E7E2EE,0_6px_16px_-10px_rgba(20,15,31,.35)]">
+            <SearchIcon size={20} className="shrink-0 text-[var(--ink)]" />
+            <input autoFocus value={q} onChange={e => setQ(e.target.value)} placeholder={hearing ? 'Listening…' : `Search “${hint}”`} enterKeyHint="search"
+              className="h-full min-w-0 flex-1 bg-transparent text-[15px] font-semibold text-[var(--ink)] outline-none placeholder:font-medium placeholder:text-[#8E889C]" data-search-input />
+            {q && <button type="button" onClick={() => setQ('')} aria-label="Clear" className="grid h-8 w-8 place-items-center rounded-full text-[var(--ink-3)]"><X size={17} /></button>}
+            {canListen() && <><span className="h-6 w-px bg-[#E7E2EE]" /><button type="button" onClick={voice} aria-label="Search by voice" className={'grid h-10 w-10 place-items-center rounded-full ' + (hearing ? 'animate-pulse text-[var(--brand)]' : 'text-[var(--ink)]')} data-mic><Mic size={20} /></button></>}
           </label>
         </div>
         <div className="mt-3 px-1">
@@ -73,6 +80,26 @@ export default function Search() {
           ]} />
         </div>
       </header>
+
+      {!res && (
+        <section className="grid grid-cols-4 gap-2 px-3 pb-4" aria-label="Shortcuts" data-hub>
+          {[
+            [PartyPopper, 'Book a celebration', '/explore#celebrations', '#7C3AED', '#F3ECFF'],
+            [LayoutGrid, 'Book a service', '/s', '#2563EB', '#EAF1FF'],
+            [CalendarDays, 'My bookings', '/plans', '#0F9D58', '#E7F8EF'],
+            [RotateCcw, plan.bookings.length ? 'Book again' : 'Saved masters', plan.bookings.length ? '/plans' : '/saved', '#EA580C', '#FFF1E6'],
+            [Headset, 'Help', '/help', '#DB2777', '#FDEBF3'],
+            [ShieldCheck, 'Cancellation', '/help#cancellation', '#0F766E', '#E6F6F4'],
+            [Users, 'Refer & earn', '/refer', '#7C3AED', '#F3ECFF'],
+            [Wallet, 'Wallet', '/wallet', '#0C831F', '#E9F8EF'],
+          ].map(([I, t, to, c, bg]) => (
+            <Link key={t} to={to} className="cx-press flex flex-col items-center gap-1.5 rounded-[18px] bg-white px-1 py-2.5 text-center shadow-[0_0_0_1px_#F0EBF7]">
+              <span className="grid h-10 w-10 place-items-center rounded-[13px]" style={{ background: bg, color: c }}><I size={19} /></span>
+              <span className="text-[10.5px] font-extrabold leading-tight text-[var(--ink-2)]">{t}</span>
+            </Link>
+          ))}
+        </section>
+      )}
 
       {!res && mode === 'occasions' && (
         <section className="cx-enter" key="o">

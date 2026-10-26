@@ -25,7 +25,7 @@ import { Building, Building2, Check, ChevronRight, CircleHelp, Hotel, KeyRound, 
 import { OCCASION } from '../data/occasions'
 import { occasionArt } from '../data/art'
 import { usePlan } from '../state/PlanContext'
-import { ActionBar, BackHeader } from '../ui/kit'
+import { ActionBar, BackHeader, Journey } from '../ui/kit'
 import { ArtFill } from '../ui/art'
 import { useWhen, WhenBody } from './WhenSheet'
 
@@ -77,9 +77,7 @@ export default function Occasion() {
     <main className="cx-enter pb-[calc(env(safe-area-inset-bottom,0px)+150px)]">
       <BackHeader title={o.name} sub={`Step ${at + 1} of ${steps.length} · ${o.categoryShort}`}
         right={<ArtFill art={occasionArt(o)} tone={o.tone} className="h-11 w-11 shrink-0 rounded-[14px]" inset="10%" />} />
-      <div className="flex gap-1.5 px-4 pt-1" aria-hidden>
-        {steps.map((s, i) => <span key={s} className={'h-1.5 flex-1 rounded-full transition-colors duration-300 ' + (i <= at ? 'bg-[var(--brand)]' : 'bg-[var(--am-100)]')} />)}
-      </div>
+      <Journey at={0} />
 
       {step === 'when' && (
         <section className="cx-enter px-5 pt-6" key="when">

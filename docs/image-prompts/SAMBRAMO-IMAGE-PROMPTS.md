@@ -17,6 +17,7 @@ Regenerate any image that has: text or letters, extra/odd fingers, a background 
 
 ## A. Categories (18) — make these first
 
+- hero-booking: A joyful young Indian woman in a purple silk saree with gold jewellery smiling and pointing at the smartphone she holds up toward the viewer; the phone screen shows only a large green tick, nothing written; a few colourful confetti pieces floating around her
 - hero-family: A young Indian father in a cream kurta, a mother in a pink silk saree and their little daughter in a party hat leaning in together over a birthday cake with lit candles, all three beaming with joy, a few pastel balloons and gift boxes floating around them
 - cat-life: A young Indian husband and wife lovingly hugging their little daughter as she blows out the candles on her pink birthday cake, both parents glowing with pride and happiness, a few balloons floating
 - cat-wedding: A bride and groom exchanging marigold garlands, rose petals falling around them
