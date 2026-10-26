@@ -88,10 +88,13 @@ export function FamilyCard({ family, index = 0 }) {
   )
 }
 
-export function OccasionCard({ occasion }) {
+/* The line under an occasion: short, true, and it moves — staggered so a
+   grid of them ripples instead of flashing together. */
+const HOOKS = ['Ready to book', 'Book in minutes', '10% off first', 'Masters ready', 'Enjoy it all']
+export function OccasionCard({ occasion, index = 0 }) {
   return (
     <Card to={`/o/${occasion.id}`} art={occasionArt(occasion)} tone={occasion.tone} title={occasion.name} data={{ 'data-occasion': occasion.id }}>
-      {null}
+      <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-[var(--ok)]" /><Rotator items={HOOKS} delay={(index % 6) * 420} every={2400} className="text-[#0B7A45]" /></span>
     </Card>
   )
 }

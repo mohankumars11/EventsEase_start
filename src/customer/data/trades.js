@@ -42,7 +42,7 @@ export const TRADES = [
   t('passenger_transport', 'Guest transport', 'Cars, Tempo Travellers and coaches', Bus, 'guests'),
   t('valet_parking', 'Valet parking', 'Uniformed valets so arrivals stay smooth', SquareParking, 'guests'),
   t('security_services', 'Security', 'Guards and bouncers at the door', ShieldCheck, 'guests'),
-  t('safety_facilities', 'Safety & facilities', 'First aid, fire safety and clean washrooms', LifeBuoy, 'guests'),
+  t('safety_facilities', 'Clean-up & safety', 'Cleaning crew, washrooms, first aid and fire safety', LifeBuoy, 'guests'),
   t('gifts_favours', 'Return gifts', 'Favours your guests actually keep', Gift, 'gifts'),
   t('invitation_printing', 'Invitations', 'Printed cards, boxed invites and e-invites', Mail, 'gifts'),
   t('event_materials_supplier', 'Event supplies', 'Plates, banners, pooja items in bulk', Boxes, 'gifts'),

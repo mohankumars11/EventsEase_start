@@ -21,24 +21,22 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowRight, BadgeCheck, Bell, CalendarClock, ChevronDown, ChevronRight, Gift, Headset, Loader2, LocateFixed, MapPin, Mic, Search, ShieldCheck, Users, Zap } from 'lucide-react'
+import { ArrowRight, BadgeCheck, Bell, CalendarCheck2, CalendarClock, ChevronDown, ChevronRight, Gift, Headset, IndianRupee, Loader2, LocateFixed, MapPin, Mic, Music2, PartyPopper, RotateCcw, Search, ShieldCheck, Users, UtensilsCrossed, Zap } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { BENGALURU_AREAS } from '../../data/bengaluruAreas'
 import { CATEGORIES, OCCASION, OCCASIONS } from '../data/occasions'
 import { TRADES } from '../data/trades'
 import { FAMILIES } from '../data/families'
 import { artFor, categoryArt, occasionArt, serviceArt } from '../data/art'
-import { Card, CategoryCard, FamilyCard, Rotator } from '../ui/art'
+import { Card, CategoryCard, FamilyCard, Rotator, ServiceCard } from '../ui/art'
 import { Sheet } from '../ui/kit'
+import { OFFERS } from '../ui/offers'
 import { locate, saveWhere, savedWhere } from '../lib/where'
 import { listen, canListen } from '../lib/voice'
 
 const CREAM = '#FFF7EE'
-
-/* The hero says the one thing, then why it is different: no quotes to
-   chase, no replies to wait for — each line holds 2.8 s, then the next. */
-const CELEBRATE_LINES = [['Book Your', 'Celebration', 'in Minutes'], ['No Waiting', 'for Quotes.', 'Prices Upfront'], ['No Chasing', 'for Replies.', 'Masters Ready'], ['Confirmed', 'the Moment', 'You Pay']]
-const SERVICE_LINES = [['Book the', 'Right Service', 'in Minutes'], ['No Enquiries.', 'No Waiting.', 'Just Book'], ['Masters Are', 'Ready for', 'Your Date'], ['Confirmed', 'the Moment', 'You Pay']]
+const POPULAR_OCC = ['birthday-party', 'wedding-reception', 'haldi-ceremony', 'housewarming-ceremony', 'naming-ceremony', 'wedding-anniversary', 'baby-shower', 'engagement-ceremony', 'corporate-annual-day', 'mehendi-ceremony']
+const POPULAR_SVC = ['photography', 'catering_food', 'decoration_floral', 'cake_desserts', 'bridal_makeup_hair', 'dj_music', 'mehendi_artist', 'priest_rituals']
 
 /* The four promises, each its own colour. */
 const PROMISES = [
@@ -101,21 +99,7 @@ export default function Home() {
           </div>
         </header>
 
-        {/* Hero: words left, the moment of confirmation right. */}
-        <div className="relative mt-2 flex min-h-[190px] items-start">
-          <div className="relative z-10 w-[58%] pl-4 pt-2">
-            <Headline lines={celebrate ? CELEBRATE_LINES : SERVICE_LINES} />
-            <p className="mt-2 text-[11.5px] font-semibold leading-snug text-[#5F5675]">Verified masters. Instant booking.<br />Secure payment. Hassle-free.</p>
-          </div>
-          <div className="absolute bottom-0 right-0 top-0 w-[52%]">
-            <img src={artFor('hero-booking') ?? artFor('hero-family')} alt="" className="absolute inset-0 h-full w-full object-cover object-[60%_30%] mix-blend-multiply [mask-image:linear-gradient(90deg,transparent_0%,#000_20%)]" />
-            <Pop className="right-2 top-2" delay={0}><span className="grid h-6 w-6 place-items-center rounded-full bg-[#0F9D58] text-white"><BadgeCheck size={14} /></span>{celebrate ? 'Booking confirmed' : 'Master booked'}</Pop>
-            <Pop className="bottom-11 right-2" delay={900}><span className="grid h-6 w-6 place-items-center rounded-full bg-[#EDE4FF] text-[var(--brand)]"><Zap size={13} /></span>You’re all set!</Pop>
-            <span className="absolute bottom-2 right-2 flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-bold text-[#5F5675] shadow-[0_4px_12px_-6px_rgba(0,0,0,.25)]">
-              <ShieldCheck size={12} className="text-[#0F9D58]" />Secured by <RazorpayMark />
-            </span>
-          </div>
-        </div>
+        <Hero door={door} />
 
         {/* Search: real names cycle; the mic listens where the phone can. */}
         <div className="mx-4 mt-3 flex h-[52px] items-center gap-3 rounded-[14px] bg-white pl-3.5 pr-1 shadow-[0_0_0_1px_#EDE6DC,0_8px_20px_-12px_rgba(20,15,31,.3)]">
@@ -142,6 +126,20 @@ export default function Home() {
           <IconChip on={filter === 'all'} onClick={() => setFilter('all')} label="All" all />
           {(celebrate ? CATEGORIES.map(c => ({ id: c.id, label: c.short, src: categoryArt(c).src })) : FAMILIES.map(f => ({ id: f.id, label: f.label, src: serviceArt(f.trades[0]).src })))
             .map(x => <IconChip key={x.id} on={filter === x.id} onClick={() => { setFilter(x.id); toGrid() }} label={x.label} src={x.src} />)}
+        </div>
+      </section>
+
+      {/* ── Offers for you: quick-commerce tickets ───────────────────── */}
+      <section className="pt-5" data-offers>
+        <h2 className="px-4 pb-2.5 text-[18px] font-black tracking-[-0.03em]">Offers for you</h2>
+        <div className="cx-noscroll flex gap-2.5 overflow-x-auto px-3 pb-1">
+          {OFFERS.map(o => (
+            <Link key={o.text} to={o.to} className="cx-press relative flex w-[190px] shrink-0 items-center gap-2.5 overflow-hidden rounded-[16px] p-3" style={{ background: o.bg, color: o.fg }}>
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/80"><o.icon size={19} /></span>
+              <span className="text-[12.5px] font-extrabold leading-snug">{o.text}</span>
+              <span className="absolute -right-2 top-1/2 h-4 w-4 -translate-y-1/2 rounded-full bg-white" aria-hidden />
+            </Link>
+          ))}
         </div>
       </section>
 
@@ -181,6 +179,44 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── Most popular: what people actually book ─────────────────── */}
+      <section className="pt-6" data-popular>
+        <div className="flex items-end justify-between gap-3 px-4 pb-3">
+          <div className="min-w-0">
+            <h2 className="text-[20px] font-black leading-tight tracking-[-0.035em]">Most popular celebrations</h2>
+            <p className="mt-0.5 text-[12px] font-semibold text-[var(--ink-3)]">What families book again and again</p>
+          </div>
+          <Link to="/explore#celebrations" className="cx-press flex shrink-0 items-center gap-0.5 rounded-full bg-white px-3 py-2 text-[12.5px] font-extrabold text-[var(--brand)] shadow-[0_0_0_1px_#E9DDFB]">View all<ChevronRight size={15} /></Link>
+        </div>
+        <div className="cx-rail cx-noscroll !gap-2.5 !px-3">
+          {POPULAR_OCC.map(id => OCCASION[id]).filter(Boolean).map(o => (
+            <div key={o.id} className="w-[31%] max-w-[150px]"><Card to={`/o/${o.id}`} art={occasionArt(o)} tone={o.tone} title={o.name}>{null}</Card></div>
+          ))}
+        </div>
+      </section>
+      <section className="pt-3" data-popular-services>
+        <div className="flex items-end justify-between gap-3 px-4 pb-3">
+          <div className="min-w-0">
+            <h2 className="text-[20px] font-black leading-tight tracking-[-0.035em]">Most popular services</h2>
+            <p className="mt-0.5 text-[12px] font-semibold text-[var(--ink-3)]">Book one master, instantly</p>
+          </div>
+          <Link to="/s" className="cx-press flex shrink-0 items-center gap-0.5 rounded-full bg-white px-3 py-2 text-[12.5px] font-extrabold text-[var(--brand)] shadow-[0_0_0_1px_#E9DDFB]">View all<ChevronRight size={15} /></Link>
+        </div>
+        <div className="cx-rail cx-noscroll !gap-2.5 !px-3">
+          {POPULAR_SVC.map(t => <div key={t} className="w-[31%] max-w-[150px]"><ServiceCard tradeId={t} /></div>)}
+        </div>
+      </section>
+
+      {/* ── Refunds & cancellation, said up front ───────────────────── */}
+      <Link to="/help#cancellation" className="cx-press mx-3 mt-5 flex items-center gap-3 rounded-[20px] bg-[#F1FBF5] p-3.5 ring-1 ring-[#CDEFDC]" data-refunds>
+        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[14px] bg-white text-[#0C831F]"><RotateCcw size={21} /></span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[14.5px] font-extrabold text-[#0B4F2A]">Refunds & cancellation, made clear</span>
+          <span className="block text-[12px] font-semibold leading-snug text-[#3C7A5A]">100% back before a master accepts · 90% up to 2 days before · see the full policy</span>
+        </span>
+        <ChevronRight size={18} className="shrink-0 text-[#0C831F]" />
+      </Link>
+
       {/* ── Four promises ────────────────────────────────────────────── */}
       <section className="mx-3 mt-5 grid grid-cols-4 overflow-hidden rounded-[22px] bg-white shadow-[0_0_0_1px_#EEE6FA]">
         {PROMISES.map(([I, t, d, c, bg], k) => (
@@ -199,6 +235,17 @@ export default function Home() {
         <p className="mt-1 max-w-[62%] text-[12.5px] font-semibold leading-snug text-[#5B4A3A]">On your first celebration booking, plus a welcome hamper.</p>
         <button type="button" onClick={() => { choose('occasions'); toGrid() }} className="cx-press mt-3 inline-flex h-10 items-center gap-1.5 rounded-full bg-[#1C1033] px-4 text-[13px] font-extrabold text-white">Book a celebration<ArrowRight size={15} /></button>
         <Gift size={92} strokeWidth={1.2} className="absolute -right-2 bottom-2 text-[#F59E0B]/40" />
+      </section>
+
+      {/* ── Book a service, edge to edge ─────────────────────────────── */}
+      <section className="relative overflow-hidden bg-gradient-to-r from-[#E8F8EE] to-[#E6F2FF] px-4 py-5" data-service-band>
+        <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#0C831F]">Book a service</p>
+        <p className="mt-1 text-[24px] font-black leading-[1.05] tracking-[-0.04em] text-[#1C1033]">One master,<br /><span className="text-[#0C831F]">booked in a minute</span></p>
+        <p className="mt-1 max-w-[56%] text-[12.5px] font-semibold leading-snug text-[#3F5A4B]">A photographer, a cook, a DJ — price upfront, 10% off your first booking.</p>
+        <Link to="/s" className="cx-press relative z-10 mt-3 inline-flex h-11 items-center gap-2 rounded-full bg-[#0C831F] pl-4 pr-1.5 text-[13.5px] font-extrabold text-white shadow-[0_10px_22px_-10px_rgba(12,131,31,.9)]" data-book-service>
+          <Zap size={16} />Book a service<span className="grid h-8 w-8 place-items-center rounded-full bg-white text-[#0C831F]"><ArrowRight size={16} /></span>
+        </Link>
+        <img src={artFor('svc-photography')} alt="" className="absolute -right-2 bottom-0 h-[130px] w-auto mix-blend-multiply" loading="lazy" />
       </section>
 
       {/* ── Refer & earn, edge to edge ───────────────────────────────── */}
@@ -221,24 +268,81 @@ export default function Home() {
 
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]] } return a }
 
-function Headline({ lines }) {
-  const [i, setI] = useState(0)
-  useEffect(() => { setI(0); const t = setInterval(() => setI(n => (n + 1) % lines.length), 2800); return () => clearInterval(t) }, [lines])
-  const [a, b, c] = lines[i]
-  return (
-    <h1 key={`${lines[0][1]}-${i}`} className="cx-rise min-h-[90px] text-[29px] font-black leading-[1.02] tracking-[-0.045em] text-[#16092E]" aria-live="polite">
-      {a}<br />{b}<br />
-      <span className="bg-gradient-to-r from-[#7C3AED] to-[#A855F7] bg-clip-text text-transparent">{c}</span>
-    </h1>
-  )
+/* ── The hero: four scenes, each a headline with its own picture ──────
+   Every 3 s the headline, the question chips and the little live card
+   change together, so what the words promise is what the card shows:
+   "Prices Upfront" shows a price, "Confirmed the Moment You Pay" shows
+   the payment going through. The chips ask, they do not boast. */
+const SCENES = {
+  occasions: [
+    { lines: ['Book Your', 'Celebration', 'in Minutes'], ask: ['Booked your party yet?', '10% off your first booking'],
+      card: { icon: CalendarCheck2, tone: '#7C3AED', title: 'Birthday Party', sub: '6 masters lined up', meter: 1 } },
+    { lines: ['No Waiting', 'for Quotes.', 'Prices Upfront'], ask: ['Seen the price before you book?', 'No “we’ll call you back”'],
+      card: { icon: IndianRupee, tone: '#B45309', title: '₹815 / plate', sub: 'Catering · price shown upfront' } },
+    { lines: ['No Chasing', 'for Replies.', 'Masters Ready'], ask: ['Tried instant booking?', 'Ready on your date'],
+      card: { icon: Zap, tone: '#0C831F', title: 'Accepted', sub: 'Photographer · 0 min wait' } },
+    { lines: ['Confirmed', 'the Moment', 'You Pay'], ask: ['Your money stays safe', 'Full refund before acceptance'],
+      card: { icon: ShieldCheck, tone: '#0C831F', title: 'Payment secured', sub: 'Booking confirmed', razorpay: true } },
+    { lines: ['Plan a', 'Surprise', 'Birthday'], ask: ['They’ll never see it coming', 'Cake, décor & a photographer'],
+      card: { icon: PartyPopper, tone: '#DB2777', title: 'Surprise Birthday', sub: 'Ready in 4 taps', to: '/o/surprise-birthday-party' } },
+    { lines: ['Weekend', 'Party?', 'Sorted.'], ask: ['This Saturday, all set', 'DJ, food & lights in one go'],
+      card: { icon: Music2, tone: '#7C3AED', title: 'Rooftop party', sub: 'Book it for this Saturday', to: '/o/rooftop-party' } },
+    { lines: ['Private', 'Dining,', 'Booked'], ask: ['A table that’s all yours', 'Chef, décor & music'],
+      card: { icon: UtensilsCrossed, tone: '#B45309', title: 'Private dinner', sub: 'For 2 to 50 guests', to: '/o/private-dinner-party' } },
+  ],
+  services: [
+    { lines: ['Book the', 'Right Service', 'in Minutes'], ask: ['Need a photographer today?', '10% off your first booking'],
+      card: { icon: CalendarCheck2, tone: '#7C3AED', title: '11 photographers', sub: 'Near you · instant' } },
+    { lines: ['No Enquiries.', 'No Waiting.', 'Just Book'], ask: ['Seen the price before you book?', 'Pick, pay, done'],
+      card: { icon: IndianRupee, tone: '#B45309', title: '₹4,348', sub: 'Photography · price upfront' } },
+    { lines: ['Masters Are', 'Ready for', 'Your Date'], ask: ['Tried instant booking?', 'Verified before they go live'],
+      card: { icon: BadgeCheck, tone: '#0C831F', title: 'Verified master', sub: 'ID and work checked' } },
+    { lines: ['Confirmed', 'the Moment', 'You Pay'], ask: ['Your money stays safe', 'Full refund before acceptance'],
+      card: { icon: ShieldCheck, tone: '#0C831F', title: 'Payment secured', sub: 'Master confirmed', razorpay: true } },
+  ],
 }
+const FEATURES = [[Zap, 'Instant booking', '#7C3AED'], [BadgeCheck, 'Verified masters', '#0C831F'], [ShieldCheck, 'Safe payment', '#2563EB'], [RotateCcw, 'Easy refunds', '#EA580C']]
 
-/* A floating confirmation chip on the hero, popping in after `delay`. */
-function Pop({ className, delay, children }) {
-  const [on, setOn] = useState(false)
-  useEffect(() => { const t = setTimeout(() => setOn(true), 500 + delay); return () => clearTimeout(t) }, [delay])
-  if (!on) return null
-  return <span className={'cx-pop absolute flex items-center gap-1.5 rounded-[14px] bg-white/95 py-1.5 pl-1.5 pr-2.5 text-[10.5px] font-extrabold text-[#1C1033] shadow-[0_8px_20px_-10px_rgba(58,18,144,.6)] ' + className}>{children}</span>
+function Hero({ door }) {
+  const navigate = useNavigate()
+  const scenes = SCENES[door] ?? SCENES.occasions
+  const [i, setI] = useState(0)
+  useEffect(() => { setI(0); const t = setInterval(() => setI(n => (n + 1) % scenes.length), 3000); return () => clearInterval(t) }, [scenes])
+  const s = scenes[i]
+  const C = s.card
+  return (
+    <div className="relative mt-2 min-h-[200px]" data-hero={i}>
+      <div className="relative z-10 w-[56%] pl-4 pt-2">
+        <h1 key={`${door}-${i}`} className="cx-rise min-h-[90px] text-[28px] font-black leading-[1.02] tracking-[-0.045em] text-[#16092E]" aria-live="polite">
+          {s.lines[0]}<br />{s.lines[1]}<br />
+          <span className="bg-gradient-to-r from-[#7C3AED] to-[#A855F7] bg-clip-text text-transparent">{s.lines[2]}</span>
+        </h1>
+        <div className="mt-3 grid grid-cols-2 gap-x-2 gap-y-1.5">
+          {FEATURES.map(([I, t, c]) => (
+            <span key={t} className="flex items-center gap-1.5 text-[10.5px] font-extrabold leading-tight text-[#3B3350]">
+              <span className="grid h-6 w-6 shrink-0 place-items-center rounded-[8px] bg-white shadow-[0_2px_8px_-4px_rgba(0,0,0,.25)]" style={{ color: c }}><I size={13} strokeWidth={2.6} /></span>{t}
+            </span>
+          ))}
+        </div>
+      </div>
+      <div className="absolute bottom-0 right-0 top-0 w-[50%]" onClick={() => C.to && navigate(C.to)} role={C.to ? 'link' : undefined}>
+        <img src={artFor('hero-booking') ?? artFor('hero-family')} alt="" className="absolute inset-0 h-full w-full object-cover object-[60%_30%] mix-blend-multiply [mask-image:linear-gradient(90deg,transparent_0%,#000_20%)]" />
+        <span key={`a${door}${i}`} className="cx-pop absolute right-2 top-1 max-w-[92%] truncate rounded-[12px] bg-white/95 px-2.5 py-1.5 text-[10.5px] font-extrabold text-[#1C1033] shadow-[0_8px_20px_-10px_rgba(58,18,144,.6)]">{s.ask[0]}</span>
+        <div key={`c${door}${i}`} className="cx-pop absolute bottom-9 right-2 w-[86%] rounded-[16px] bg-white p-2 shadow-[0_14px_28px_-14px_rgba(58,18,144,.75)]" style={{ animationDelay: '.15s' }}>
+          <div className="flex items-center gap-2">
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[10px] text-white" style={{ background: C.tone }}><C.icon size={16} strokeWidth={2.6} /></span>
+            <span className="min-w-0">
+              <span className="block truncate text-[12.5px] font-black tracking-[-0.02em] text-[#1C1033]">{C.title}</span>
+              <span className="block truncate text-[10px] font-bold text-[#6B6480]">{C.sub}</span>
+            </span>
+          </div>
+          {C.meter && <span className="mt-1.5 block h-1 overflow-hidden rounded-full bg-[#EDE6FB]"><span className="block h-full w-[78%] animate-pulse rounded-full bg-[#7C3AED]" /></span>}
+          {C.razorpay && <span className="mt-1 flex items-center gap-1 text-[9.5px] font-bold text-[#5F5675]"><ShieldCheck size={10} className="text-[#0F9D58]" />Secured by <RazorpayMark /></span>}
+        </div>
+        <span key={`b${door}${i}`} className="cx-pop absolute bottom-1 right-2 max-w-[92%] truncate rounded-[12px] bg-[#0C831F] px-2.5 py-1 text-[10.5px] font-extrabold text-white shadow-[0_8px_18px_-10px_rgba(12,131,31,.9)]" style={{ animationDelay: '.3s' }}>{s.ask[1]}</span>
+      </div>
+    </div>
+  )
 }
 
 /* Razorpay's mark. Drop the official SVG from their brand kit in as

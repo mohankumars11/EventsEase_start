@@ -1,9 +1,6 @@
 /**
- * The requirement picker and the "setting up" moment.
- *
- * NeedsPicker asks one service's questions (lib/needs.js) as chips: tap to
- * choose, green when chosen, single-choice questions swap rather than
- * stack. Everything is optional — a question left alone filters nothing.
+ * The requirement summary and the "setting up" moment. (The questions
+ * themselves are asked full-screen by screens/Brief.jsx.)
  *
  * SettingUp is the beat between telling us about the event and seeing
  * the plan: a ring fills while four honest lines tick green (each is what
@@ -14,39 +11,13 @@ import { useEffect, useState } from 'react'
 import { Check } from 'lucide-react'
 import { needsFor } from '../lib/needs'
 
-export function NeedsPicker({ tradeId, value = {}, onChange }) {
-  const qs = needsFor(tradeId)
-  if (!qs.length) return null
-  const toggle = (q, id) => {
-    const cur = value[q.key] ?? []
-    const next = q.kind === 'single' ? (cur[0] === id ? [] : [id]) : cur.includes(id) ? cur.filter(x => x !== id) : [...cur, id]
-    onChange({ ...value, [q.key]: next })
-  }
-  return (
-    <div className="space-y-3.5">
-      {qs.map(q => (
-        <div key={q.key} data-need-q={q.key}>
-          <p className="text-[13px] font-extrabold tracking-[-0.01em] text-[var(--ink)]">{q.title}{q.kind === 'multi' && <span className="ml-1.5 text-[11px] font-semibold text-[var(--ink-3)]">pick any</span>}</p>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {q.options.map(o => {
-              const on = (value[q.key] ?? []).includes(o.id)
-              return (
-                <button key={o.id} type="button" onClick={() => toggle(q, o.id)} aria-pressed={on}
-                  className={'cx-press flex items-center gap-1 rounded-full px-3 py-1.5 text-[12.5px] font-bold transition ' + (on ? 'bg-[#E9F8EF] text-[#0B6B3D] shadow-[inset_0_0_0_1.5px_#0C831F]' : 'bg-white text-[var(--ink-2)] shadow-[inset_0_0_0_1px_#E3DEEA]')}>
-                  {on && <Check size={13} strokeWidth={3} />}{o.label}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
 /** "pick any" answers as one short line: "Candid, Traditional · Kannada". */
 export function needsSummary(tradeId, value = {}) {
-  return needsFor(tradeId).map(q => (value[q.key] ?? []).map(id => q.options.find(o => o.id === id)?.label).filter(Boolean).join(', ')).filter(Boolean).join(' · ')
+  const qs = needsFor(tradeId)
+  const picked = qs.filter(q => q.kind !== 'toggle').map(q => (Array.isArray(value[q.key]) ? value[q.key] : []).map(id => q.options.find(o => o.id === id)?.label).filter(Boolean).join(', ')).filter(Boolean)
+  const musts = qs.filter(q => q.kind === 'toggle' && value[q.key] === true).length
+  const typed = Object.entries(value).filter(([k, v]) => k.endsWith('__typed') && Array.isArray(v)).flatMap(([, v]) => v)
+  return [...picked, ...typed.map(x => `“${x}”`), musts ? `${musts} must-have${musts > 1 ? 's' : ''}` : null].filter(Boolean).join(' · ')
 }
 
 const SEEN = 'sbm.cx.setup.'

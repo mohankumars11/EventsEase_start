@@ -128,7 +128,8 @@ export function partnersFor(tradeId, { lat = BLR.lat, lng = BLR.lng, limit = 40 
          kept — never licence numbers or declarations. */
       const menus = (mn.data ?? []).filter(m => m.listing_version_id === v?.id)
       p.facets = { ...pickFacets(tradeId, v?.answers), diets: [...new Set(menus.map(m => m.diet).filter(Boolean))],
-        cuisines: [...new Set([...(v?.answers?.cuisines ?? []), ...menus.flatMap(m => m.cuisine_ids ?? [])])] }
+        cuisines: [...new Set([...(v?.answers?.cuisines ?? []), ...menus.flatMap(m => m.cuisine_ids ?? [])])],
+        dishes: tradeId === 'catering_food' ? (ct.data ?? []).filter(x => x.listing_version_id === v?.id && String(x.item_key).startsWith('d_')).map(x => x.item_key) : [] }
       return p
     })
   })()

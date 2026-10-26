@@ -32,20 +32,32 @@ const TABS = [
   { to: '/me', label: 'Account', icon: UserRound, match: p => p.startsWith('/me') },
 ]
 
-/** True while the page is scrolling; false 220 ms after it stops. */
+/**
+ * Should the bars step aside? Yes the moment the page moves DOWN; no the
+ * moment it moves up, and 120 ms after it stops. Read on the scroll
+ * frame itself (no React render per pixel), so it reacts within a frame.
+ */
 export function useScrolling() {
-  const [moving, setMoving] = useState(false)
+  const [hide, setHide] = useState(false)
   useEffect(() => {
-    let t, lastY = window.scrollY
+    let lastY = window.scrollY, t, raf = 0, cur = false
+    const set = v => { if (v !== cur) { cur = v; setHide(v) } }
     const on = () => {
-      if (Math.abs(window.scrollY - lastY) < 4) return
-      lastY = window.scrollY
-      setMoving(true); clearTimeout(t); t = setTimeout(() => setMoving(false), 220)
+      if (raf) return
+      raf = requestAnimationFrame(() => {
+        raf = 0
+        const y = window.scrollY, dy = y - lastY
+        lastY = y
+        if (y < 40) set(false)
+        else if (dy > 2) set(true)
+        else if (dy < -2) set(false)
+        clearTimeout(t); t = setTimeout(() => set(false), 120)
+      })
     }
     window.addEventListener('scroll', on, { passive: true })
-    return () => { window.removeEventListener('scroll', on); clearTimeout(t) }
+    return () => { window.removeEventListener('scroll', on); clearTimeout(t); cancelAnimationFrame(raf) }
   }, [])
-  return moving
+  return hide
 }
 
 export function TabBar() {
@@ -53,7 +65,7 @@ export function TabBar() {
   const navigate = useNavigate()
   const hidden = useScrolling()
   return (
-    <nav className={'pointer-events-none fixed inset-x-0 bottom-0 z-[150] px-3 transition-transform duration-300 ease-out ' + (hidden ? 'translate-y-[130%]' : 'translate-y-0')}
+    <nav className={'pointer-events-none fixed inset-x-0 bottom-0 z-[150] px-3 transition-transform duration-200 ease-out will-change-transform ' + (hidden ? 'translate-y-[130%]' : 'translate-y-0')}
       style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 10px)' }} aria-label="Main" data-tabbar={hidden ? 'hidden' : 'shown'}>
       <div className="pointer-events-auto relative mx-auto grid h-[66px] max-w-[540px] grid-cols-5 items-center rounded-[26px] bg-white/95 px-1 shadow-[0_0_0_1px_#EEE6FA,0_18px_40px_-18px_rgba(58,18,144,.55)] backdrop-blur-xl">
         {TABS.map((t, i) => t ? (
@@ -87,7 +99,7 @@ export function PlanBar({ withTabs = true }) {
   const { paise: total } = planFloor(basket, event)
   const instant = basket.filter(l => l.instant).length
   return (
-    <div className="pointer-events-none fixed inset-x-0 z-[140] px-3 transition-[bottom] duration-300 ease-out" style={{ bottom: withTabs && !moving ? 'calc(env(safe-area-inset-bottom, 0px) + 88px)' : 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}>
+    <div className="pointer-events-none fixed inset-x-0 z-[140] px-3 transition-[bottom] duration-200 ease-out" style={{ bottom: withTabs && !moving ? 'calc(env(safe-area-inset-bottom, 0px) + 88px)' : 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}>
       <button type="button" onClick={() => navigate('/plan')} data-plan-bar
         className="cx-press cx-pop pointer-events-auto mx-auto flex w-full max-w-[540px] items-center gap-3 rounded-[22px] bg-gradient-to-b from-[#F1E9FF] to-[#E2D2FF] p-2 pr-2.5 text-left text-[var(--am-ink)] shadow-[0_0_0_1px_#D6C2FF,0_18px_36px_-16px_rgba(58,18,144,.75)]">
         <span className="flex shrink-0 -space-x-3 pl-1">

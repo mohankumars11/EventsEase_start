@@ -30,8 +30,8 @@ const PHASES = [
   { id: 'prep', title: 'Before the day', sub: 'Planning, invitations and the looks', trades: ['wedding_planning', 'invitation_printing', 'bridal_makeup_hair', 'mehendi_artist', 'trousseau_gift_packing'] },
   { id: 'place', title: 'The venue & set-up', sub: 'Where it happens and how it looks', trades: ['venue', 'decoration_floral', 'tent_furniture', 'event_lighting', 'sound_av', 'power_cooling', 'event_equipment_rental', 'event_materials_supplier'] },
   { id: 'day', title: 'On the day', sub: 'Rituals, food, music and the memories', trades: ['priest_rituals', 'catering_food', 'cake_desserts', 'bar_beverages', 'photography', 'videography', 'anchor_mc', 'dj_music', 'live_entertainment', 'guest_services', 'gifts_favours'] },
-  { id: 'care', title: 'Guests & safety', sub: 'Arrivals, security and care', trades: ['valet_parking', 'security_services', 'safety_facilities'] },
-  { id: 'after', title: 'Wrap-up & home', sub: 'Pack-up, clean-up and getting everyone home', trades: ['end_to_end_event_logistics', 'transportation', 'passenger_transport', 'loading_unloading_crew', 'mini_truck_pickup', 'medium_large_goods_vehicle', 'warehouse_storage'] },
+  { id: 'care', title: 'Guests & security', sub: 'Arrivals, parking and the door', trades: ['valet_parking', 'security_services'] },
+  { id: 'after', title: 'Clean-up & getting home', sub: 'Cleaning, pack-up and everyone home safe', trades: ['safety_facilities', 'end_to_end_event_logistics', 'transportation', 'passenger_transport', 'loading_unloading_crew', 'mini_truck_pickup', 'medium_large_goods_vehicle', 'warehouse_storage'] },
 ]
 const PHASE_OF = Object.fromEntries(PHASES.flatMap(p => p.trades.map(t => [t, p.id])))
 const IN_JOURNEY = new Set(['care', 'after'])

@@ -1,100 +1,67 @@
 /**
- * What the customer needs from each master — asked in their words,
- * answered in the partner's.
+ * What the customer needs from each master — every question the partner
+ * answered when they listed, asked back in the customer's words.
  *
- * Every question here is one a partner already answered when they listed
- * (src/data/trades/<trade>.js), and its options are read from that same
- * definition at load, so a customer's "Candid" is exactly the `candid` a
- * photographer ticked. Nothing is matched on free text and nothing is
- * invented: a master who never answered a question is not claimed to
- * match it.
+ * The questions are GENERATED from the partner app's own definitions
+ * (src/data/trades/<trade>.js): every choice question and every yes/no on
+ * the partner's listing screens, with the partner's own options, so a
+ * customer's "Candid" is exactly the `candid` a photographer ticked and
+ * nothing is matched on free text. A short list per trade is skipped —
+ * questions about the partner's own operation that a customer would never
+ * choose by (where the food is cooked, who drives the truck).
  *
- *   needsFor(tradeId)          → the questions to ask (0–3 per service)
- *   matchNeeds(partner, picks) → { ok, met, unmet } for one master
- *   filterByNeeds(list, picks) → matches first; if none, the closest,
- *                                marked so the screen can say so
+ * Specials the onboarding answers do not hold, read from the listing:
+ *   $diet     a caterer's menus, in the partner app's five diets
+ *   $cuisine  cuisines from answers + menus, as 10 regions
+ *   $dishes   the dishes caterers really list (sambramo_catalogue_items)
+ *   $years    "at least N years", against the partner's years
+ *   capacity  the event's guests against the master's own maximum
  *
- * Two answers are not in the onboarding answers and are read from the
- * listing instead: a caterer's diets come from their menus (`veg` /
- * `mixed`), and cuisines from both their answers and their menus.
- * Capacity questions compare the event's guest count with the master's
- * own maximum.
+ * A master who never answered a question is not claimed to meet it.
  */
 import { configFor, questionsOf } from '../../data/trades/index'
 
-/* Per trade: the onboarding question key, how the customer is asked, and
-   (optionally) which of the partner's options make sense to a customer. */
-const ASK = {
-  photography: [
-    { key: 'specialties', title: 'What style of photos?', only: ['candid', 'traditional', 'pre_wedding', 'portrait', 'haldi_and_mehendi', 'baby_and_kids', 'drone_photography', 'event_conference'] },
-    { key: 'languages', title: 'Language the photographer speaks', single: true },
-  ],
-  videography: [
-    { key: 'deliverables', title: 'What should the film include?' },
-    { key: 'languages', title: 'Language the crew speaks', single: true },
-  ],
-  catering_food: [
-    { key: '$diet', title: 'Veg or non-veg?', single: true, options: [{ id: 'veg', label: 'Pure veg' }, { id: 'mixed', label: 'Veg & non-veg' }] },
-    { key: '$cuisine', title: 'Which food style?' },
-    { key: 'service_styles', title: 'How should it be served?', only: ['buffet', 'traditional_banana_leaf_meal', 'seated_plated_service', 'food_counters', 'live_cooking', 'packed_meals'] },
-  ],
-  decoration_floral: [
-    { key: 'themes', title: 'Which look do you love?' },
-    { key: 'flowers', title: 'Fresh or artificial flowers?', single: true },
-  ],
-  bridal_makeup_hair: [
-    { key: 'who', title: 'Who needs the look?' },
-    { key: 'styles', title: 'Which makeup style?' },
-  ],
-  mehendi_artist: [
-    { key: 'who', title: 'Mehendi for whom?' },
-    { key: 'styles', title: 'Which design style?' },
-  ],
-  dj_music: [
-    { key: 'performance_kinds', title: 'What kind of music?' },
-    { key: 'styles', title: 'Music that gets your crowd dancing' },
-  ],
-  live_entertainment: [{ key: 'act_types', title: 'What would you love on stage?' }],
-  venue: [
-    { key: 'venue_type', title: 'What kind of venue?' },
-    { key: 'catering_rule', title: 'Bringing your own caterer?', single: true },
-    { key: '$capacity', field: 'max_capacity' },
-  ],
-  cake_desserts: [
-    { key: 'product_types', title: 'What are you ordering?' },
-    { key: 'dietary', title: 'Any dietary needs?' },
-    { key: 'flavours', title: 'Favourite flavour?' },
-  ],
-  priest_rituals: [
-    { key: 'traditions', title: 'Which tradition does your family follow?' },
-    { key: 'languages', title: 'Mantras / guidance in which language?', single: true },
-  ],
-  invitation_printing: [{ key: 'products', title: 'What do you need made?' }, { key: 'card_styles', title: 'Which style?' }],
-  gifts_favours: [{ key: 'gift_types', title: 'What kind of gifts?' }, { key: 'personalisation_methods', title: 'Personalise them?' }],
-  trousseau_gift_packing: [{ key: 'types', title: 'What should be packed?' }],
-  event_lighting: [{ key: 'service_types', title: 'What lighting?' }, { key: 'suitability', title: 'Indoor or outdoor?' }],
-  sound_av: [{ key: 'groups', title: 'What equipment?' }],
-  tent_furniture: [{ key: 'groups', title: 'What do you need set up?' }, { key: 'surfaces', title: 'On what ground?' }],
-  event_equipment_rental: [{ key: 'equipment_types', title: 'What do you need to rent?' }],
-  passenger_transport: [{ key: 'vehicle_services', title: 'Which vehicles?' }],
-  guest_services: [{ key: 'roles', title: 'Who should greet your guests?' }, { key: 'languages', title: 'Languages they speak', single: true }],
-  security_services: [{ key: 'services', title: 'What should security cover?' }, { key: 'uniform', title: 'How should they dress?' }],
-  safety_facilities: [{ key: 'kit', title: 'What do you need on site?' }],
-  power_cooling: [{ key: 'services', title: 'Power or cooling?' }],
-  wedding_planning: [{ key: 'services', title: 'How much planning do you need?' }, { key: 'wedding_styles', title: 'Which wedding style?' }],
-  valet_parking: [{ key: 'services', title: 'What do you need?' }],
-  bar_beverages: [{ key: 'service_lines', title: 'Which drinks and counters?' }],
-  event_materials_supplier: [{ key: 'supplies', title: 'What supplies?' }],
-  mini_truck_pickup: [{ key: 'loads', title: 'What are you moving?' }],
-  medium_large_goods_vehicle: [{ key: 'loads', title: 'What are you moving?' }],
-  loading_unloading_crew: [{ key: 'materials', title: 'What needs lifting?' }],
-  warehouse_storage: [{ key: 'item_types', title: 'What needs storing?' }, { key: 'storage_kind', title: 'What kind of storage?' }],
-  transportation: [{ key: 'vehicle_types', title: 'Which vehicles?' }],
-  end_to_end_event_logistics: [{ key: 'scope', title: 'What should be handled?' }],
+/* Never asked: the partner's operation, or something the occasion already says. */
+const SKIP = new Set([
+  'events', 'event_types', 'occasions', 'sites', 'cities', 'service_area', 'prep_location', 'supply_scope', 'supply_scope_custom',
+  'child_policy', 'fuel_policy', 'delivered_by', 'driver_type', 'operation', 'cone', 'travel', 'permit_scope', 'notice', 'min_period',
+  'max_period', 'setup_charging', 'flower_sourcing', 'access_needs', 'brands', 'sound_covers', 'shifts', 'safety_equipment', 'tools',
+  'skills', 'handover', 'fulfilment', 'routes', 'handling', 'subtype', 'needs_water_power', 'own_cold_storage', 'backup_power',
+  'custom_design_fee', 'own_transport', 'own_storage', 'gst_invoice', 'returns_unused', 'bulk', 'grooming', 'transport', 'travel_applies',
+  'refrigeration', 'proof_required', 'materials',
+])
+
+/* Customer wording, where the partner's would read oddly to a customer. */
+const TITLE = {
+  'photography.specialties': 'What should they shoot?', 'photography.styles': 'Which photo style do you love?',
+  'photography.equipment': 'Gear that matters to you', 'photography.formats': 'How do you want the photos?',
+  'photography.same_day_edit': 'Same-day slideshow at the reception', 'photography.outstation': 'Will travel for a destination shoot',
+  'videography.specialties': 'What kind of film?', 'videography.deliverables': 'What should the film include?', 'videography.equipment': 'Gear that matters to you',
+  'catering_food.services': 'What kind of catering?', 'catering_food.service_styles': 'How should it be served?',
+  'decoration_floral.services': 'What should be decorated?', 'decoration_floral.themes': 'Which look do you love?', 'decoration_floral.flowers': 'Fresh or artificial flowers?',
+  'decoration_floral.flower_types': 'Favourite flowers', 'decoration_floral.props': 'What should the décor include?', 'decoration_floral.venues': 'Where is it?',
+  'bridal_makeup_hair.services_offered': 'Which looks do you need?', 'bridal_makeup_hair.styles': 'Which makeup style?', 'bridal_makeup_hair.who': 'Who needs a look?',
+  'mehendi_artist.who': 'Mehendi for whom?', 'mehendi_artist.styles': 'Which design style?', 'mehendi_artist.coverage': 'How much coverage?',
+  'dj_music.performance_kinds': 'What kind of music act?', 'dj_music.styles': 'Music that gets your crowd dancing', 'dj_music.own_equipment': 'Should they bring the sound & lights?',
+  'dj_music.settings': 'Where will they play?', 'dj_music.formats': 'Performance format', 'dj_music.duration_options': 'How long should they play?',
+  'venue.venue_type': 'What kind of venue?', 'venue.facilities': 'Must-have facilities', 'venue.catering_rule': 'Bringing your own caterer?', 'venue.decor_rule': 'Bringing your own decorator?',
+  'cake_desserts.product_types': 'What are you ordering?', 'cake_desserts.flavours': 'Favourite flavour?', 'cake_desserts.sizes': 'What size?', 'cake_desserts.dietary': 'Any dietary needs?',
+  'priest_rituals.ceremonies': 'Which ceremony?', 'priest_rituals.traditions': 'Which tradition does your family follow?', 'priest_rituals.languages': 'Mantras and guidance in which language?',
+  'live_entertainment.act_types': 'What would you love on stage?', 'wedding_planning.services': 'How much planning do you need?', 'wedding_planning.budget_band': 'Your wedding budget',
 }
 
-/* Catering caps by the master's own most-guests answer. */
-const CAPACITY = { venue: 'max_capacity', catering_food: 'max_guests' }
+const customerise = s => String(s).trim()
+  .replace(/^Do you provide /i, 'Should they provide ').replace(/^Do you offer /i, 'Should they offer ').replace(/^Do you /i, 'Should they ')
+  .replace(/^Can you /i, 'Can they ').replace(/^You /, 'They ').replace(/^Are /i, 'Are ').replace(/^Is /i, 'Is ')
+  .replace(/do you provide\?$/i, 'do you need?').replace(/do you offer\?$/i, 'would you like?').replace(/\bdo you\b/gi, 'do they')
+  .replace(/\byour\b/gi, 'their').replace(/\byou\b/gi, 'they')
+
+const YEARS = [{ id: '3', label: '3+ years' }, { id: '5', label: '5+ years' }, { id: '10', label: '10+ years' }]
+/* The caterer's own menu diets — the same list the partner app offers
+   (MENU_DIETS in components/vendor/listing/catering/options.js; copied, not
+   imported, because that module pulls the whole food-catalogue seed in). */
+const DIETS = [['veg', 'Pure vegetarian'], ['non_veg', 'Non-vegetarian'], ['mixed', 'Veg + non-veg'], ['vegan', 'Vegan'], ['jain', 'Jain']].map(([id, label]) => ({ id, label }))
+export const CAPACITY = { venue: 'max_capacity', catering_food: 'max_guests' }
 
 let CUISINES = null
 /** Cuisine regions (Karnataka, North India…) for the catering question. */
@@ -104,56 +71,93 @@ export async function loadCuisines(supabase) {
   const groups = []
   for (const r of data ?? []) {
     let g = groups.find(x => x.id === r.group_id)
-    if (!g) groups.push(g = { id: r.group_id, label: r.group_name.replace(' & ', ' & '), members: [] })
+    if (!g) groups.push(g = { id: r.group_id, label: r.group_name, members: [] })
     g.members.push(r.id)
   }
   CUISINES = groups
   return groups
 }
 
+let DISHES = null
+/** Every dish a live caterer lists, by course: [{ id, label, course }]. */
+export async function loadDishes(supabase) {
+  if (DISHES) return DISHES
+  const { data: v } = await supabase.from('sambramo_listing_versions').select('id').eq('status', 'LIVE').eq('trade', 'Catering & Food')
+  const ids = (v ?? []).map(x => x.id)
+  if (!ids.length) return (DISHES = [])
+  const [items, courses] = await Promise.all([
+    supabase.from('sambramo_catalogue_items').select('item_key, name').eq('active', true).like('item_key', 'd_%').in('listing_version_id', ids),
+    supabase.from('sambramo_catering_menu_items').select('dish_key, course_group').in('listing_version_id', ids),
+  ])
+  const course = Object.fromEntries((courses.data ?? []).map(x => [x.dish_key, x.course_group]))
+  const seen = new Map()
+  for (const x of items.data ?? []) if (!seen.has(x.item_key)) seen.set(x.item_key, { id: x.item_key, label: x.name, course: course[x.item_key] ?? 'other' })
+  DISHES = [...seen.values()].sort((a, b) => a.label.localeCompare(b.label))
+  return DISHES
+}
+export const courseLabel = c => String(c ?? 'other').replace(/_/g, ' ').replace(/^\w/, x => x.toUpperCase())
+
 const cache = {}
-/** The questions to ask for one trade, with the partner's own options. */
+/**
+ * The questions for one trade: [{ key, title, kind: single|multi|toggle,
+ * options, group: 'choose'|'must' }]. Choices first, must-haves last.
+ */
 export function needsFor(tradeId) {
   if (cache[tradeId]) return cache[tradeId]
   const cfg = configFor(tradeId)
-  const qs = cfg ? questionsOf(cfg) : []
-  const out = (ASK[tradeId] ?? []).filter(a => a.key !== '$capacity').map(a => {
-    if (a.key === '$diet') return { ...a, kind: 'single' }
-    if (a.key === '$cuisine') return { ...a, kind: 'multi', options: CUISINES ?? [] }
-    const q = qs.find(x => x.id === a.key && x.options?.length)
-    if (!q) return null
-    const options = (a.only ? a.only.map(id => q.options.find(o => o.id === id)).filter(Boolean) : q.options).slice(0, 12)
-    return { ...a, kind: a.single || q.type === 'single' ? 'single' : 'multi', options }
-  }).filter(Boolean)
-  if (!(ASK[tradeId] ?? []).some(a => a.key === '$cuisine') || CUISINES) cache[tradeId] = out
+  const all = cfg ? questionsOf(cfg).filter(q => q.scope.startsWith('screen')) : []
+  const out = []
+  if (tradeId === 'catering_food') {
+    out.push({ key: '$diet', title: 'What should the menu be?', kind: 'multi', options: DIETS, group: 'choose' })
+    out.push({ key: '$cuisine', title: 'Which food style?', kind: 'multi', options: CUISINES ?? [], group: 'choose' })
+    out.push({ key: '$dishes', title: 'Dishes you must have', kind: 'dishes', options: DISHES ?? [], group: 'choose' })
+  }
+  for (const q of all) {
+    if (SKIP.has(q.id)) continue
+    const title = TITLE[`${tradeId}.${q.id}`] ?? customerise(q.label)
+    if ((q.type === 'multi' || q.type === 'single') && q.options?.length) out.push({ key: q.id, title, kind: q.type, options: q.options, group: 'choose' })
+    else if (q.type === 'toggle') out.push({ key: q.id, title, kind: 'toggle', options: [], group: 'must' })
+  }
+  if (all.some(q => q.id === 'years')) out.push({ key: '$years', title: 'Experience', kind: 'single', options: YEARS, group: 'choose' })
+  const ready = tradeId !== 'catering_food' || (CUISINES && DISHES)
+  if (ready) cache[tradeId] = out
   return out
 }
 
 /** Keep only the onboarding answers a requirement can read. */
 export function pickFacets(tradeId, answers) {
   if (!answers) return {}
-  const keys = new Set([...(ASK[tradeId] ?? []).map(a => a.key).filter(k => !k.startsWith('$')), CAPACITY[tradeId]].filter(Boolean))
+  const keys = new Set([...needsFor(tradeId).map(q => q.key).filter(k => !k.startsWith('$')), CAPACITY[tradeId], 'years'].filter(Boolean))
   return Object.fromEntries(Object.entries(answers).filter(([k]) => keys.has(k)))
 }
 
-const asList = v => (Array.isArray(v) ? v : v == null || v === '' ? [] : [v]).map(x => String(x).toLowerCase())
+/* A typed answer ("Not listed? Type it") lives under `<key>__typed`: it is
+   shown and sent to the master in the booking note, but never filters —
+   free text cannot be matched honestly against a ticked option. */
+export const TYPED = '__typed'
 
-/**
- * Does one master meet the customer's picks? `picks` is { key: [ids] }.
- * `guests` checks capacity. Unanswered questions count as unmet.
- */
+const asList = v => (Array.isArray(v) ? v : v == null || v === '' ? [] : [v]).map(x => String(x).toLowerCase())
+export const answered = picks => Object.entries(picks ?? {}).filter(([, v]) => (Array.isArray(v) ? v.length : v === true)).length
+
+/** Does one master meet the customer's picks? Unanswered questions count as unmet. */
 export function matchNeeds(partner, tradeId, picks = {}, guests = null) {
   const f = partner.facets ?? {}
   const met = [], unmet = []
   for (const q of needsFor(tradeId)) {
     const want = picks[q.key]
-    if (!want?.length) continue
+    if (q.kind === 'toggle' ? want !== true : !want?.length) continue
     let ok
-    if (q.key === '$diet') ok = want.includes('mixed') ? f.diets?.includes('mixed') : (f.diets ?? []).includes('veg')
+    if (q.kind === 'toggle') ok = f[q.key] === true
+    else if (q.key === '$diet') {
+      const d = f.diets ?? []
+      ok = want.some(w => d.includes(w) || (w === 'non_veg' && d.includes('mixed')) || (w === 'mixed' && d.includes('non_veg')))
+    }
     else if (q.key === '$cuisine') {
       const members = (CUISINES ?? []).filter(g => want.includes(g.id)).flatMap(g => g.members)
       ok = (f.cuisines ?? []).some(c => members.includes(c))
-    } else {
+    } else if (q.key === '$dishes') ok = want.every(d => (f.dishes ?? []).includes(d))
+    else if (q.key === '$years') ok = Number(f.years) >= Number(want[0])
+    else {
       const have = asList(f[q.key])
       ok = want.some(w => have.includes(String(w).toLowerCase()))
     }
@@ -165,16 +169,16 @@ export function matchNeeds(partner, tradeId, picks = {}, guests = null) {
 }
 
 /**
- * Masters that meet every pick, best first. With picks and no exact match,
- * the closest ones (fewest unmet) come back with `exact: false`.
+ * Masters that meet every pick. With picks and no exact match, the
+ * closest ones (fewest unmet) come back with `exact: false`.
  */
 export function filterByNeeds(list, tradeId, picks = {}, guests = null) {
-  if (!list) return { list: null, exact: true, asked: false }
-  const asked = Object.values(picks).some(v => v?.length) || (!!guests && !!CAPACITY[tradeId])
-  if (!asked) return { list, exact: true, asked }
+  if (!list) return { list: null, exact: true, asked: false, total: 0 }
+  const asked = answered(picks) > 0 || (!!guests && !!CAPACITY[tradeId])
+  if (!asked) return { list, exact: true, asked, total: list.length }
   const scored = list.map(p => ({ p, m: matchNeeds(p, tradeId, picks, guests) }))
   const exact = scored.filter(x => x.m.ok)
-  if (exact.length) return { list: exact.map(x => ({ ...x.p, matched: x.m.met })), exact: true, asked }
+  if (exact.length) return { list: exact.map(x => ({ ...x.p, matched: x.m.met })), exact: true, asked, total: list.length }
   const best = Math.min(...scored.map(x => x.m.unmet.length))
-  return { list: scored.filter(x => x.m.unmet.length === best).map(x => ({ ...x.p, matched: x.m.met, missing: x.m.unmet })), exact: false, asked }
+  return { list: scored.filter(x => x.m.unmet.length === best).map(x => ({ ...x.p, matched: x.m.met, missing: x.m.unmet })), exact: false, asked, total: list.length }
 }

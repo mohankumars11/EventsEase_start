@@ -216,11 +216,15 @@ export const CATEGORIES = [
 const slug = s => s.toLowerCase().normalize('NFKD').replace(/[’']/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 
 const AT_HOME = new Set(['home', 'newhome', 'online'])
+/* The end of the day, recommended and pre-ticked (Mohan, 2026-10-27:
+   "from the venue till cleaning — never ignore cleaning"): every physical
+   event gets clean-up; anything away from home gets guests driven home;
+   big ones get the pack-up crew and storage. Online events get none. */
 function journeyFor(t) {
   if (t.where === 'online') return []
-  const out = []
+  const out = ['safety_facilities']
   if (t.scale !== 'intimate' && !AT_HOME.has(t.where)) out.push('passenger_transport')
-  if (t.scale === 'large' || t.scale === 'massive') out.push('safety_facilities', 'loading_unloading_crew')
+  if (t.scale === 'large' || t.scale === 'massive') out.push('loading_unloading_crew', 'end_to_end_event_logistics')
   return out
 }
 
@@ -243,7 +247,7 @@ export const OCCASIONS = CATEGORIES.flatMap(c => c.events.map(e => {
   /* The end of the day is part of the plan too: getting everyone home, and
      clearing a big site. Offered, never pre-selected, and only where it is
      real — nobody books cabs for guests at their own house-warming. */
-  for (const x of journeyFor(t)) if (!must.includes(x) && !often.includes(x) && !extra.includes(x)) extra.push(x)
+  for (const x of journeyFor(t)) if (!must.includes(x) && !often.includes(x)) { const i = extra.indexOf(x); if (i >= 0) extra.splice(i, 1); often.push(x) }
   for (const x of [...must, ...often, ...extra]) if (!TRADE[x]) throw new Error(`occasions: unknown trade ${x} in ${e.name}`)
   /* "Where" is settled for most occasions. Only `ask` lets the customer say
      whether they need a venue, and only then is the venue a choice. */
