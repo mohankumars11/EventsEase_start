@@ -52,7 +52,7 @@ export default function Explore() {
   const part = id => el => { refs.current[id] = el }
 
   return (
-    <main className="cx-enter pb-[calc(env(safe-area-inset-bottom,0px)+150px)]">
+    <main className="cx-enter cx-cream min-h-[100dvh] pb-[calc(env(safe-area-inset-bottom,0px)+150px)]">
       <BackHeader title="Everything, in one place" sub={`${CATEGORIES.length} categories · ${OCCASIONS.length} occasions · ${TRADES.length} services`} />
       <nav className="cx-noscroll sticky top-[calc(env(safe-area-inset-top,0px)+64px)] z-[110] flex gap-2 overflow-x-auto bg-white/95 px-4 pb-3 pt-1 backdrop-blur-xl" aria-label="Sections">
         {PARTS.map(([id, label]) => (

@@ -181,3 +181,11 @@
 .cx-range { -webkit-appearance: none; appearance: none; height: 8px; border-radius: 9999px; background: linear-gradient(90deg, #8650F2 0 var(--fill), #EEE5FF var(--fill) 100%); outline: none; }
 .cx-range::-webkit-slider-thumb { -webkit-appearance: none; width: 26px; height: 26px; border-radius: 9999px; background: #fff; border: 3px solid #6A2BD9; box-shadow: 0 6px 14px -6px rgba(58, 18, 144, .9); }
 .cx-range::-moz-range-thumb { width: 22px; height: 22px; border-radius: 9999px; background: #fff; border: 3px solid #6A2BD9; }
+
+/* The reference card: white strip, warm lift. */
+.cx-card2 { background: #fff; box-shadow: 0 0 0 1px rgba(150, 90, 60, .07), 0 12px 24px -16px rgba(150, 80, 50, .45); }
+.cx-card2 img { transition: transform .5s cubic-bezier(.2, .8, .2, 1); }
+.cx-card2:active img { transform: scale(1.05); }
+/* Card pages sit on a warm cream, like the reference. */
+.cx-cream { background: #FFF8F2; }
+.cx-cream header.cx-safe-top { background: #FFF8F2; }

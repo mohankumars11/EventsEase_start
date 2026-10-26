@@ -15,7 +15,7 @@ export default function Category() {
   if (!c) return <Navigate to="/" replace />
   const list = [...c.occasions.filter(o => o.featured), ...c.occasions.filter(o => !o.featured)]
   return (
-    <main className="cx-enter cx-bottom-pad-bar">
+    <main className="cx-enter cx-cream min-h-[100dvh] cx-bottom-pad-bar">
       <BackHeader title={c.short} sub={`${c.occasions.length} occasions`} />
       <section className="relative mx-3 mt-1 flex h-[118px] items-center overflow-hidden rounded-[22px]" style={{ background: c.tone }}>
         <div className="relative z-10 max-w-[58%] pl-4">

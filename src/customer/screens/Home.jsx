@@ -27,8 +27,8 @@ import { BENGALURU_AREAS } from '../../data/bengaluruAreas'
 import { CATEGORIES, OCCASION, OCCASIONS } from '../data/occasions'
 import { TRADES } from '../data/trades'
 import { FAMILIES } from '../data/families'
-import { artFor, categoryArt, serviceArt } from '../data/art'
-import { CategoryCard, FamilyCard, Rotator } from '../ui/art'
+import { artFor, categoryArt, occasionArt, serviceArt } from '../data/art'
+import { Card, CategoryCard, FamilyCard, Rotator } from '../ui/art'
 import { Sheet } from '../ui/kit'
 import { locate, saveWhere, savedWhere } from '../lib/where'
 import { listen, canListen } from '../lib/voice'
@@ -48,8 +48,9 @@ const PROMISES = [
   [CalendarClock, 'On-Time Service', 'For your event date', '#EA580C', '#FFF1E6'],
 ]
 
-/* The parties people book for a weekend — real occasions, in our names. */
-const WEEKEND = ['birthday-party', 'surprise-birthday-party', 'friends-get-together', 'rooftop-party', 'pool-party', 'private-dinner-party', 'bbq-party', 'karaoke-night', 'bachelorette-party', 'kids-birthday-party']
+/* Parties people throw ON a weekend — never date-bound ones (a birthday
+   falls on its own day, so it is not sold as "this Saturday"). */
+const WEEKEND = ['friends-get-together', 'rooftop-party', 'pool-party', 'bbq-party', 'brunch-gathering', 'karaoke-night', 'private-dinner-party', 'exclusive-house-party', 'bachelor-party', 'bachelorette-party']
 
 function nextSaturday() {
   const d = new Date(); d.setHours(0, 0, 0, 0)
@@ -149,18 +150,18 @@ export default function Home() {
         <section className="pt-5">
           <div className="flex items-end justify-between gap-3 px-4 pb-3">
             <div className="min-w-0">
-              <p className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#E11D48]"><span className="h-2 w-2 animate-pulse rounded-full bg-[#E11D48]" />This weekend · {satLabel}</p>
-              <h2 className="mt-1 text-[20px] font-black leading-tight tracking-[-0.035em]">Weekends go fast.<br />Book your party today.</h2>
+              <p className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#0C831F]"><span className="h-2 w-2 animate-pulse rounded-full bg-[#16A34A]" />This weekend · {satLabel}</p>
+              <h2 className="mt-1 text-[20px] font-black leading-tight tracking-[-0.035em]">Weekend plans?<br />What are you celebrating?</h2>
             </div>
-            <span className="shrink-0 rounded-full bg-[#FFF1F2] px-2.5 py-1 text-[11px] font-extrabold text-[#BE123C]">{days === 1 ? 'Tomorrow' : `${days} days to go`}</span>
+            <span className="shrink-0 rounded-full bg-[#E9F8EF] px-2.5 py-1 text-[11px] font-extrabold text-[#0B6B3D]">{days === 1 ? 'Tomorrow' : `In ${days} days`}</span>
           </div>
           <div className="cx-rail cx-noscroll !gap-2.5 !px-3">
             {WEEKEND.map(id => OCCASION[id]).filter(Boolean).map(o => (
-              <Link key={o.id} to={`/o/${o.id}`} className="cx-press cx-art-card block w-[31%] max-w-[150px] overflow-hidden rounded-[18px]" data-weekend={o.id}>
-                <img src={artFor(`occ-${o.id}`) ?? categoryArt(CATEGORIES.find(c => c.id === o.category)).src} alt="" className="block aspect-[1.15/1] w-full object-cover object-[50%_20%] mix-blend-multiply" loading="lazy" />
-                <p className="truncate px-2 pt-1.5 text-[12px] font-extrabold text-[var(--am-ink)]">{o.name}</p>
-                <p className="flex items-center gap-1 px-2 pb-2 text-[10px] font-bold text-[#BE123C]"><Zap size={10} className="fill-current" />Book for {sat.toLocaleDateString('en-IN', { weekday: 'long' })}</p>
-              </Link>
+              <div key={o.id} className="w-[31%] max-w-[150px]" data-weekend={o.id}>
+                <Card to={`/o/${o.id}`} art={occasionArt(o)} tone={o.tone} title={o.name}>
+                  <span className="flex items-center gap-1 text-[#0B7A45]"><Zap size={10} className="shrink-0 fill-current" />Plan it for this weekend</span>
+                </Card>
+              </div>
             ))}
           </div>
         </section>

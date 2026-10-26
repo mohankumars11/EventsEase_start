@@ -61,7 +61,7 @@ export default function Search() {
   const hint = useHint()
 
   return (
-    <main className="cx-enter min-h-[100dvh] pb-[calc(env(safe-area-inset-bottom,0px)+40px)]">
+    <main className="cx-enter cx-cream min-h-[100dvh] pb-[calc(env(safe-area-inset-bottom,0px)+40px)]">
       <header className="cx-safe-top sticky top-0 z-[120] bg-white/95 px-3 pb-3 backdrop-blur-xl">
         <div className="flex items-center gap-2">
           <button type="button" onClick={() => navigate(-1)} aria-label="Back" className="cx-press cx-btn grid h-11 w-11 shrink-0 place-items-center rounded-full"><ArrowLeft size={20} /></button>

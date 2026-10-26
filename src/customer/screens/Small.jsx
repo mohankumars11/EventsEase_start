@@ -66,7 +66,7 @@ export function Notifications() {
 
 export function Services() {
   return (
-    <main className="cx-enter cx-bottom-pad-bar">
+    <main className="cx-enter cx-cream min-h-[100dvh] cx-bottom-pad-bar">
       <header className="cx-safe-top px-3 pb-1">
         <h1 className="pt-2 text-[24px] font-extrabold tracking-[-0.035em]">Book a master</h1>
         <p className="mt-0.5 text-[12.5px] font-semibold text-[var(--ink-3)]">34 services, every master verified · confirm and pay in a minute</p>
