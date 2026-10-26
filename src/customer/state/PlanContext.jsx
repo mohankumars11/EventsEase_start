@@ -23,7 +23,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 const KEY = 'sbm.cx.plan.v1'
 /* `place`: where the event is ({ area, lat, lng, address }) — the engine checks travel and
    distance against it. `bookings`: what checkout sent, so Plans can show it at once. */
-const EMPTY = { event: { occasionId: null, date: null, time: null, hours: null, guests: null, venue: 'need', venueKind: null }, place: null, picks: {}, basket: [], saved: [], bookings: [] }
+const EMPTY = { event: { occasionId: null, date: null, time: null, hours: null, guests: null, venue: 'need', venueKind: null }, place: null, picks: {}, needs: {}, basket: [], saved: [], bookings: [] }
 
 function load() {
   try {
@@ -59,6 +59,8 @@ export function PlanProvider({ children }) {
   const remove = useCallback(key => setState(s => ({ ...s, basket: s.basket.filter(l => l.key !== key) })), [])
   const setQty = useCallback((key, qty) => setState(s => ({ ...s, basket: s.basket.map(l => (l.key === key ? { ...l, qty } : l)) })), [])
   const setPlace = useCallback(place => setState(s => ({ ...s, place })), [])
+  /* What the customer needs from one service's master, keyed occasion:trade. */
+  const setNeeds = useCallback((key, picks) => setState(s => ({ ...s, needs: { ...(s.needs ?? {}), [key]: picks } })), [])
   /* Lines that checkout booked or sent leave the basket and are remembered here. */
   const recordBookings = useCallback(results => setState(s => ({
     ...s,
@@ -77,11 +79,12 @@ export function PlanProvider({ children }) {
 
   const value = useMemo(() => ({
     ...state,
-    setEvent, setPick, add, remove, setQty, setPlace, recordBookings, clearOccasion, toggleSaved,
+    setEvent, setPick, add, remove, setQty, setPlace, setNeeds, recordBookings, clearOccasion, toggleSaved,
+    needsOf: (occasionId, tradeId) => state.needs?.[`${occasionId ?? 'solo'}:${tradeId}`] ?? {},
     inBasket: (serviceId) => state.basket.some(l => l.serviceId === serviceId),
     lineFor: (occasionId, tradeId) => state.basket.find(l => l.key === `${occasionId ?? 'solo'}:${tradeId}`) ?? null,
     isSaved: serviceId => state.saved.some(x => x.serviceId === serviceId),
-  }), [state, setEvent, setPick, add, remove, setQty, setPlace, recordBookings, clearOccasion, toggleSaved])
+  }), [state, setEvent, setPick, add, remove, setQty, setPlace, setNeeds, recordBookings, clearOccasion, toggleSaved])
 
   return <PlanContext.Provider value={value}>{children}</PlanContext.Provider>
 }

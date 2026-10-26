@@ -16,6 +16,9 @@ import { OCCASION } from '../data/occasions'
 import { TRADE } from '../data/trades'
 import { usePlan, needsFor } from '../state/PlanContext'
 import { partnersFor, rank } from '../lib/market'
+import { filterByNeeds, loadCuisines } from '../lib/needs'
+import { supabase } from '../../lib/supabase'
+import { needsSummary } from '../ui/needs'
 import { dayLabel, plural } from '../lib/format'
 import { BackHeader, PlanBar, Journey } from '../ui/kit'
 import { PartnerCard, PartnerCardSkeleton } from '../ui/cards'
@@ -47,7 +50,7 @@ export default function Match() {
   return (
     <main className="cx-enter pb-[calc(env(safe-area-inset-bottom,0px)+110px)]">
       <BackHeader title={`Masters for ${o.name}`} sub={facts || 'Add a date and guest count for exact prices'} />
-      <Journey at={2} />
+      <Journey at={3} />
       <div className="px-4 pt-1">
         <div className="flex items-center gap-3 rounded-[20px] bg-[var(--brand-tint)] px-4 py-3">
           <div className="relative h-11 w-11 shrink-0">
@@ -82,38 +85,44 @@ function Rail({ tradeId, occasion, onCompare }) {
   const [err, setErr] = useState(null)
   useEffect(() => {
     let live = true
-    partnersFor(tradeId).then(l => live && setList(rank(l))).catch(e => live && setErr(e.message))
+    loadCuisines(supabase).catch(() => {}).then(() => partnersFor(tradeId)).then(l => live && setList(l)).catch(e => live && setErr(e.message))
     return () => { live = false }
   }, [tradeId])
   const line = plan.lineFor(occasion.id, tradeId)
-  const instant = list?.filter(p => p.instant).length ?? 0
+  const wants = plan.needsOf(occasion.id, tradeId)
+  const guests = plan.event.occasionId === occasion.id ? plan.event.guests : null
+  const fit = filterByNeeds(list, tradeId, wants, guests)
+  const shown = fit.list ? rank(fit.list) : null
+  const said = needsSummary(tradeId, wants)
+  const instant = shown?.filter(p => p.instant).length ?? 0
   return (
     <section className="mt-6" data-rail={tradeId}>
       <div className="flex items-end justify-between gap-3 px-4 pb-3">
         <div className="min-w-0">
           <h2 className="flex items-center gap-2 text-[19px] font-extrabold tracking-[-0.03em]"><t.icon size={19} className="text-[var(--brand)]" />{t.label}</h2>
           <p className="truncate text-[12.5px] font-semibold text-[var(--ink-3)]">
-            {line ? <span className="font-extrabold text-[var(--ok)]">✓ {line.name}</span> : list ? `${plural(list.length, 'master')} live · ${instant} instant` : 'Finding masters…'}
+            {line ? <span className="font-extrabold text-[var(--ok)]">✓ {line.name}</span> : shown ? (fit.asked ? (fit.exact ? `${plural(shown.length, 'master')} match${shown.length === 1 ? 'es' : ''} you · ${instant} instant` : 'Closest to what you asked') : `${plural(shown.length, 'master')} live · ${instant} instant`) : 'Finding masters…'}
           </p>
+          {said && <Link to={`/o/${occasion.id}/needs`} className="block truncate text-[11.5px] font-bold text-[#0B7A45]">✓ {said}</Link>}
         </div>
-        {list?.length > 1 && (
-          <button type="button" onClick={() => onCompare(list.slice(0, 3))} className="cx-press cx-btn flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-[12.5px] font-extrabold">
+        {shown?.length > 1 && (
+          <button type="button" onClick={() => onCompare(shown.slice(0, 3))} className="cx-press cx-btn flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-[12.5px] font-extrabold">
             <Scale size={15} />Compare
           </button>
         )}
       </div>
       <div className="cx-rail cx-noscroll">
         {!list && !err && [0, 1, 2].map(i => <PartnerCardSkeleton key={i} className="w-[46%] max-w-[210px]" />)}
-        {list?.map(p => (
+        {shown?.map(p => (
           <PartnerCard key={p.serviceId} partner={p} className="w-[46%] max-w-[210px]" added={line?.serviceId === p.serviceId}
             href={`/p/${p.serviceId}?t=${tradeId}&o=${occasion.id}`}
             onAdd={x => (line?.serviceId === x.serviceId ? plan.remove(line.key) : plan.add(x, occasion.id))}
             saved={plan.isSaved(p.serviceId)} onSave={x => plan.toggleSaved(x)} />
         ))}
-        {list?.length > 0 && (
+        {shown?.length > 0 && (
           <Link to={`/s/${tradeId}?o=${occasion.id}`} className="cx-press cx-btn flex aspect-square w-[30%] max-w-[140px] flex-col items-center justify-center gap-2 self-start rounded-[22px] text-center">
             <span className="grid h-11 w-11 place-items-center rounded-full bg-white shadow-sm"><ChevronRight size={20} /></span>
-            <span className="text-[12.5px] font-extrabold">See all {list.length}</span>
+            <span className="text-[12.5px] font-extrabold">See all {shown.length}</span>
           </Link>
         )}
         {(list?.length === 0 || err) && (

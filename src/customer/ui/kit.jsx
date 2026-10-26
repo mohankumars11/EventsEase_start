@@ -251,8 +251,8 @@ export function ActionBar({ children, note = null }) {
  * the rest wait in grey. A celebration is five steps; one service skips
  * the plan. `at` is the 0-based current step; `at` past the end = all done. */
 const JOURNEYS = {
-  celebration: ['Details', 'Your plan', 'Masters', 'Pay', 'Done'],
-  service: ['Masters', 'Details', 'Pay', 'Done'],
+  celebration: ['Details', 'Plan', 'Needs', 'Masters', 'Pay', 'Done'],
+  service: ['Needs', 'Masters', 'Details', 'Pay', 'Done'],
 }
 export function Journey({ flow = 'celebration', at = 0, className = '' }) {
   const steps = JOURNEYS[flow]

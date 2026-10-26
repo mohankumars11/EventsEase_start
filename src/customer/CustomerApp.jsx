@@ -27,6 +27,7 @@ const Category = lazy(() => import('./screens/Category'))
 const Occasion = lazy(() => import('./screens/Occasion'))
 const Match = lazy(() => import('./screens/Match'))
 const Recommend = lazy(() => import('./screens/Recommend'))
+const Needs = lazy(() => import('./screens/Needs'))
 const Trade = lazy(() => import('./screens/Trade'))
 const Partner = lazy(() => import('./screens/Partner'))
 const PlanReview = lazy(() => import('./screens/PlanReview'))
@@ -91,6 +92,7 @@ export default function CustomerApp() {
             <Route path="/c/:categoryId" element={<Category />} />
             <Route path="/o/:occasionId" element={<Occasion />} />
             <Route path="/o/:occasionId/plan" element={<Recommend />} />
+            <Route path="/o/:occasionId/needs" element={<Needs />} />
             <Route path="/o/:occasionId/match" element={<Match />} />
             <Route path="/s" element={<Services />} />
             <Route path="/s/:tradeId" element={<Trade />} />

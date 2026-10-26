@@ -35,10 +35,14 @@ import { ActionBar, BackHeader, Photo, Sheet, Journey } from '../ui/kit'
 import SignInSheet from './SignInSheet'
 import WhenSheet from './WhenSheet'
 import PlaceSheet from './PlaceSheet'
+import { needsSummary } from '../ui/needs'
+import { loadCuisines } from '../lib/needs'
+import { supabase as sb } from '../../lib/supabase'
 
 export default function Checkout() {
   const { user, profile } = useAuth()
   const plan = usePlan()
+  useEffect(() => { loadCuisines(sb).catch(() => {}) }, []) // cuisine names for the requirements note
   const navigate = useNavigate()
   const ev = plan.event
   const [phone, setPhone] = useState(profile?.phone?.replace(/^\+91/, '') ?? '')
@@ -109,7 +113,11 @@ export default function Checkout() {
     const results = []
     for (const r of [...instant, ...quoteLines]) {
       try {
-        const b = await bookLine(r.line, eventFor(r.line), place, { note: note.trim() || undefined, venue })
+        /* The customer's requirements travel with the booking, so the master
+           reads "Candid, Drone · Kannada" before they accept. */
+        const wants = needsSummary(r.line.tradeId, plan.needsOf(r.line.occasionId, r.line.tradeId))
+        const said = [wants && `Needs: ${wants}`, note.trim()].filter(Boolean).join(' | ')
+        const b = await bookLine(r.line, eventFor(r.line), place, { note: said || undefined, venue })
         results.push({ key: r.line.key, tradeId: r.line.tradeId, serviceId: r.line.serviceId, name: r.line.name, cover: r.line.cover, occasionId: r.line.occasionId,
           path: b.path, lineId: b.lineId ?? null, quoteRequestId: b.quoteRequestId ?? null, bookingRequestId: b.bookingRequestId ?? null,
           amountPaise: b.customer_paise ?? null, reasons: b.reasons_text ?? [], at: Date.now() })
@@ -134,7 +142,7 @@ export default function Checkout() {
   return (
     <main className="cx-enter pb-[calc(env(safe-area-inset-bottom,0px)+170px)]">
       <BackHeader title="Checkout" sub={`${plural(lines.length, 'master')}${occ ? ` · ${occ.name}` : ''}`} />
-      <Journey flow={occ ? 'celebration' : 'service'} at={occ ? 3 : 2} />
+      <Journey flow={occ ? 'celebration' : 'service'} at={occ ? 4 : 3} />
 
       <Block title="When & where">
         <Row icon={CalendarDays} onClick={() => setSheet('when')} value={ev.date ? whenLabel(ev.date, ev.time) + (ev.hours ? ` · ${ev.hours} h` : '') : null} placeholder="Pick the day and start time" />

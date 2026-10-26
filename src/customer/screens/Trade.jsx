@@ -12,6 +12,9 @@ import { ArrowUpDown, Check, ChevronDown, IndianRupee, Scale, SlidersHorizontal,
 import { FAMILIES } from '../data/families'
 import { serviceArt } from '../data/art'
 import { ArtFill } from '../ui/art'
+import { NeedsPicker, needsSummary } from '../ui/needs'
+import { filterByNeeds, loadCuisines, needsFor } from '../lib/needs'
+import { supabase } from '../../lib/supabase'
 import { TRADE } from '../data/trades'
 import { OCCASION } from '../data/occasions'
 import { usePlan } from '../state/PlanContext'
@@ -28,6 +31,8 @@ export default function Trade() {
   const t = TRADE[tradeId]
   const plan = usePlan()
   const [all, setAll] = useState(null)
+  const occKey = OCCASION[q.get('o')]?.id ?? null
+  const wants = plan.needsOf(occKey, tradeId)
   const [sort, setSort] = useState('best')
   const [filters, setFilters] = useState({ instant: false, rated: false, near: false, price: null })
   const [sheet, setSheet] = useState(null) // sort | filters | price
@@ -39,16 +44,17 @@ export default function Trade() {
     if (!t) return
     let live = true
     setAll(null)
-    partnersFor(tradeId).then(l => live && setAll(l)).catch(() => live && setAll([]))
+    loadCuisines(supabase).catch(() => {}).then(() => partnersFor(tradeId)).then(l => live && setAll(l)).catch(() => live && setAll([]))
     return () => { live = false }
   }, [tradeId, t])
 
   const list = useMemo(() => {
     if (!all) return null
     const band = PRICE.find(b => b.id === filters.price)
-    const f = all.filter(p => (!filters.instant || p.instant) && (!filters.rated || (p.rating ?? 0) >= 4.5) && (!filters.near || (p.distanceKm ?? 99) <= 8) && (!band || (p.fromPaise && band.test(p.fromPaise / 100))))
+    const fitted = filterByNeeds(all, tradeId, wants, occasion && plan.event.occasionId === occasion.id ? plan.event.guests : null).list
+    const f = fitted.filter(p => (!filters.instant || p.instant) && (!filters.rated || (p.rating ?? 0) >= 4.5) && (!filters.near || (p.distanceKm ?? 99) <= 8) && (!band || (p.fromPaise && band.test(p.fromPaise / 100))))
     return SORTS[sort].fn(f)
-  }, [all, filters, sort])
+  }, [all, filters, sort, wants]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!t) return <Navigate to="/" replace />
   const family = FAMILIES.find(x => x.trades.includes(tradeId))
@@ -66,7 +72,7 @@ export default function Trade() {
           {comparing ? <X size={16} /> : <Scale size={16} />}{comparing ? 'Done' : 'Compare'}
         </button>} />
 
-      <Journey flow={occasion ? 'celebration' : 'service'} at={occasion ? 2 : 0} />
+      <Journey flow={occasion ? 'celebration' : 'service'} at={occasion ? 3 : 1} />
       {comparing && (
         <p className="mx-4 mb-2 rounded-[16px] bg-[var(--brand-tint)] px-3.5 py-2.5 text-[12.5px] font-bold text-[var(--brand-deep)]">Tap <b>Compare</b> on up to three masters to see them side by side.</p>
       )}
@@ -88,6 +94,14 @@ export default function Trade() {
           </nav>
         )}
         <div className="min-w-0 flex-1">
+          {needsFor(tradeId).length > 0 && (
+            <button type="button" onClick={() => setSheet('needs')} className="cx-press mx-3 mb-2.5 mt-1 flex w-[calc(100%-24px)] items-center gap-2.5 rounded-[16px] bg-[#F1FBF5] px-3 py-2.5 text-left ring-1 ring-[#CDEFDC]" data-needs-bar>
+              <SlidersHorizontal size={16} className="shrink-0 text-[#0C831F]" />
+              <span className="min-w-0 flex-1"><span className="block text-[13px] font-extrabold text-[#0B6B3D]">{needsSummary(tradeId, wants) ? 'Showing masters for' : 'Tell us what you need'}</span>
+                <span className="block truncate text-[11.5px] font-bold text-[#3C7A5A]">{needsSummary(tradeId, wants) || 'Only masters who do exactly that'}</span></span>
+              <ChevronDown size={16} className="shrink-0 -rotate-90 text-[#0C831F]" />
+            </button>
+          )}
           <div className="cx-noscroll flex gap-2 overflow-x-auto px-3 pb-3 pt-1">
             <FChip on={nFilters > 0} onClick={() => setSheet('filters')} icon={SlidersHorizontal}>Filters{nFilters ? ` · ${nFilters}` : ''}</FChip>
             <FChip on={sort !== 'best'} onClick={() => setSheet('sort')} icon={ArrowUpDown}>Sort</FChip>
@@ -119,6 +133,10 @@ export default function Trade() {
         </div>
       ) : <PlanBar />}
 
+      <Sheet open={sheet === 'needs'} onClose={() => setSheet(null)} title={`What you need from your ${t.label.toLowerCase()}`}
+        footer={<button type="button" onClick={() => setSheet(null)} className="cx-press flex h-[52px] w-full items-center justify-center rounded-[16px] bg-[#0C831F] text-[15px] font-extrabold text-white" data-needs-done>Show {plural(list?.length ?? 0, 'master')}</button>}>
+        <div className="pb-2"><NeedsPicker tradeId={tradeId} value={wants} onChange={v => plan.setNeeds(`${occKey ?? 'solo'}:${tradeId}`, v)} /></div>
+      </Sheet>
       <Sheet open={sheet === 'sort'} onClose={() => setSheet(null)} title="Sort masters">
         <div className="pb-2">
           {Object.entries(SORTS).map(([k, x]) => <Row key={k} on={sort === k} onClick={() => { setSort(k); setSheet(null) }}>{x.label}</Row>)}

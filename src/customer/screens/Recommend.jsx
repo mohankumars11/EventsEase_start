@@ -13,6 +13,7 @@
  * Still no price (memory: no price before the reveal). The bar counts
  * services; the first rupee is a real master's own.
  */
+import { useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { CalendarDays, Check, ChevronRight, MapPin, Pencil, Sparkles, Users } from 'lucide-react'
 import { OCCASION } from '../data/occasions'
@@ -22,6 +23,7 @@ import { usePlan, needsFor } from '../state/PlanContext'
 import { dayLabel, plural, timeLabel } from '../lib/format'
 import { ActionBar, BackHeader, Journey } from '../ui/kit'
 import { AddOnCard, ArtFill } from '../ui/art'
+import { SettingUp } from '../ui/needs'
 import { VENUE_KINDS } from './Occasion'
 
 const PHASES = [
@@ -40,6 +42,7 @@ export default function Recommend() {
   const o = OCCASION[occasionId]
   const navigate = useNavigate()
   const plan = usePlan()
+  const [ready, setReady] = useState(false)
   if (!o) return <Navigate to="/" replace />
   const ev = plan.event
   if (ev.occasionId !== o.id || !ev.date) return <Navigate to={`/o/${o.id}`} replace />
@@ -53,6 +56,9 @@ export default function Recommend() {
     plan.setPick(o.id, r.tradeId, r.state === 'need' ? (r.tier === 'must' ? 'have' : 'skip') : 'need')
   }
   const venueText = o.whereLabel ?? (ev.venue === 'have' ? 'Your own venue' : ev.venueKind ? VENUE_KINDS[ev.venueKind].label : 'Venue to find')
+
+  if (!ready) return <SettingUp id={`plan-${o.id}`} title={`Setting up your ${o.name}…`} onDone={() => setReady(true)}
+    lines={[`${dayLabel(ev.date)} locked in`, ev.guests ? `Planning for ${ev.guests.toLocaleString('en-IN')} ${o.people.toLowerCase()}` : 'Sizing it to your guests', `Picking what a ${o.name.toLowerCase()} needs`, 'Lining up masters near you']} />
 
   return (
     <main className="cx-enter pb-[calc(env(safe-area-inset-bottom,0px)+150px)]">
@@ -101,8 +107,8 @@ export default function Recommend() {
       )}
 
       <ActionBar note="Free to plan. Nothing is charged until you confirm.">
-        <button type="button" disabled={!needed.length} onClick={() => navigate(`/o/${o.id}/match`)} className="cx-press cx-cta flex h-14 w-full items-center justify-center gap-2 rounded-[18px] text-[15.5px] font-extrabold" data-find>
-          Find masters · {plural(needed.length, 'service')}<ChevronRight size={19} />
+        <button type="button" disabled={!needed.length} onClick={() => navigate(`/o/${o.id}/needs`)} className="cx-press cx-cta flex h-14 w-full items-center justify-center gap-2 rounded-[18px] text-[15.5px] font-extrabold" data-find>
+          Continue · {plural(needed.length, 'service')}<ChevronRight size={19} />
         </button>
       </ActionBar>
     </main>

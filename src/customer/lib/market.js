@@ -17,6 +17,7 @@
  */
 import { supabase } from '../../lib/supabase'
 import { TRADE } from '../data/trades'
+import { pickFacets } from './needs'
 
 const BLR = { lat: 12.9716, lng: 77.5946 }
 const lists = new Map()
@@ -83,7 +84,7 @@ export function partnersFor(tradeId, { lat = BLR.lat, lng = BLR.lng, limit = 40 
     const rows = data ?? []
     if (!rows.length) return []
     const { data: versions } = await supabase.from('sambramo_listing_versions')
-      .select('id, vendor_service_id, profile, booking_rules').eq('status', 'LIVE')
+      .select('id, vendor_service_id, profile, booking_rules, answers').eq('status', 'LIVE')
       .in('vendor_service_id', rows.map(r => r.vendor_service_id))
     const byId = Object.fromEntries((versions ?? []).map(v => [v.vendor_service_id, v]))
     /* What "from" is a price OF. public_listings returns the minimum across
@@ -96,7 +97,7 @@ export function partnersFor(tradeId, { lat = BLR.lat, lng = BLR.lng, limit = 40 
     const vids = (versions ?? []).map(v => v.id)
     const [pk, mn, ct, rr] = vids.length ? await Promise.all([
       supabase.from('sambramo_trade_packages').select('listing_version_id, name, trade_inputs, commercial_inputs').eq('status', 'LIVE').in('listing_version_id', vids),
-      tradeId === 'catering_food' ? supabase.from('sambramo_catering_menus').select('listing_version_id, menu_key, name, customer_paise, min_guests').eq('status', 'active').in('listing_version_id', vids) : { data: [] },
+      tradeId === 'catering_food' ? supabase.from('sambramo_catering_menus').select('listing_version_id, menu_key, name, customer_paise, min_guests, diet, cuisine_ids').eq('status', 'active').in('listing_version_id', vids) : { data: [] },
       supabase.from('sambramo_catalogue_items').select('listing_version_id, item_key, name, unit, customer_paise, min_qty').eq('active', true).in('listing_version_id', vids),
       supabase.from('sambramo_rate_rules').select('listing_version_id, rule_kind, customer_paise').in('listing_version_id', vids),
     ]) : [{}, {}, {}, {}]
@@ -122,6 +123,12 @@ export function partnersFor(tradeId, { lat = BLR.lat, lng = BLR.lng, limit = 40 
       if (b) Object.assign(p, { fromPaise: b.paise, fromKind: b.kind, fromUnit: b.unit, fromLabel: b.label, fromRef: b.ref })
       else Object.assign(p, { fromKind: 'unit', fromUnit: 'onwards', fromLabel: null, fromRef: null })
       if (TRADE[tradeId]?.archetype === 'TRIP_VEHICLE' && v && firstItem[v.id]) p.fromRef = { ...(p.fromRef ?? { type: 'rule', key: null }), vehicle: firstItem[v.id] }
+      /* What the master told us in onboarding, for matching a customer's
+         requirements (lib/needs.js). Only the keys a requirement reads are
+         kept — never licence numbers or declarations. */
+      const menus = (mn.data ?? []).filter(m => m.listing_version_id === v?.id)
+      p.facets = { ...pickFacets(tradeId, v?.answers), diets: [...new Set(menus.map(m => m.diet).filter(Boolean))],
+        cuisines: [...new Set([...(v?.answers?.cuisines ?? []), ...menus.flatMap(m => m.cuisine_ids ?? [])])] }
       return p
     })
   })()
