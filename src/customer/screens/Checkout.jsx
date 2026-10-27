@@ -144,7 +144,7 @@ export default function Checkout() {
   return (
     <main className="cx-enter pb-[calc(env(safe-area-inset-bottom,0px)+170px)]">
       <BackHeader title="Checkout" sub={`${plural(lines.length, 'master')}${occ ? ` · ${occ.name}` : ''}`} />
-      <Journey flow={occ ? 'celebration' : 'service'} at={occ ? 4 : 3} />
+      <Journey flow={occ ? 'celebration' : 'service'} at={occ ? 4 : 3} occasionId={occ?.id ?? null} tradeId={lines[0]?.tradeId ?? null} />
 
       <Block title="When & where">
         <Row icon={CalendarDays} onClick={() => setSheet('when')} value={ev.date ? whenLabel(ev.date, ev.time) + (ev.hours ? ` · ${ev.hours} h` : '') : null} placeholder="Pick the day and start time" />

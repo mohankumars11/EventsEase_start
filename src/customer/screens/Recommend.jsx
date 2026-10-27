@@ -76,7 +76,7 @@ export default function Recommend() {
   return (
     <main className="cx-enter pb-[calc(env(safe-area-inset-bottom,0px)+150px)]">
       <BackHeader title={o.name} sub={o.categoryShort} />
-      <Journey at={1} />
+      <Journey at={1} occasionId={o.id} />
 
       <section className="px-4 pt-1">
         <h2 className="text-[24px] font-extrabold leading-[1.08] tracking-[-0.035em]">Your {o.name}, end to end</h2>

@@ -266,21 +266,32 @@ const JOURNEYS = {
   celebration: ['Details', 'Plan', 'Needs', 'Masters', 'Pay', 'Done'],
   service: ['Needs', 'Masters', 'Details', 'Pay', 'Done'],
 }
-export function Journey({ flow = 'celebration', at = 0, className = '' }) {
+/* Where each finished step goes back to. Only steps before the current one
+   link — the rail never jumps forward past an unfinished step. */
+const STEP_ROUTES = {
+  celebration: (o) => o ? [`/o/${o}?step=when`, `/o/${o}/plan`, `/o/${o}/needs`, `/o/${o}/match`, '/checkout', null] : [],
+  service: (o, t) => t ? [`/brief/${t}`, `/s/${t}`, '/plan', '/checkout', null] : [],
+}
+export function Journey({ flow = 'celebration', at = 0, className = '', occasionId = null, tradeId = null }) {
   const steps = JOURNEYS[flow]
+  const routes = STEP_ROUTES[flow](occasionId, tradeId)
   return (
     <ol className={'flex items-center px-4 py-2 ' + className} aria-label={`Step ${Math.min(at + 1, steps.length)} of ${steps.length}`} data-journey={at}>
       {steps.map((s, i) => {
         const done = i < at, now = i === at
+        const to = done ? routes[i] : null
+        const dot = (
+          <span className="flex flex-col items-center gap-1">
+            <span className={'grid h-6 w-6 place-items-center rounded-full text-[11px] font-black transition-all duration-500 ' +
+              (done ? 'bg-[#0C831F] text-white' : now ? 'bg-[var(--brand)] text-white ring-4 ring-[#EDE4FF]' : 'bg-[#F1EEF6] text-[#A49DB8]')}>
+              {done ? <svg viewBox="0 0 12 12" className="h-3 w-3"><path d="M2.5 6.2 5 8.6 9.5 3.6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg> : i + 1}
+            </span>
+            <span className={'whitespace-nowrap text-[9.5px] font-extrabold ' + (done ? 'text-[#0C831F]' : now ? 'text-[var(--brand)]' : 'text-[#A49DB8]')}>{s}</span>
+          </span>
+        )
         return (
           <li key={s} className="flex min-w-0 flex-1 items-center last:flex-none">
-            <span className="flex flex-col items-center gap-1">
-              <span className={'grid h-6 w-6 place-items-center rounded-full text-[11px] font-black transition-all duration-500 ' +
-                (done ? 'bg-[#0C831F] text-white' : now ? 'bg-[var(--brand)] text-white ring-4 ring-[#EDE4FF]' : 'bg-[#F1EEF6] text-[#A49DB8]')}>
-                {done ? <svg viewBox="0 0 12 12" className="h-3 w-3"><path d="M2.5 6.2 5 8.6 9.5 3.6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg> : i + 1}
-              </span>
-              <span className={'whitespace-nowrap text-[9.5px] font-extrabold ' + (done ? 'text-[#0C831F]' : now ? 'text-[var(--brand)]' : 'text-[#A49DB8]')}>{s}</span>
-            </span>
+            {to ? <Link to={to} className="cx-press -m-1 rounded-[12px] p-1" aria-label={`Back to ${s}`} data-journey-back={i}>{dot}</Link> : <span aria-current={now ? 'step' : undefined}>{dot}</span>}
             {i < steps.length - 1 && <span className={'mx-1 mb-4 h-[2px] flex-1 rounded-full transition-colors duration-500 ' + (done ? 'bg-[#0C831F]' : 'bg-[#ECE8F2]')} />}
           </li>
         )

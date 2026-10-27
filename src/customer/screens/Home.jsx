@@ -105,7 +105,7 @@ export default function Home() {
           </div>
         </header>
 
-        <Hero door={door} />
+        <Hero key={door} door={door} />
 
       </section>
 
@@ -336,7 +336,9 @@ function Hero({ door }) {
   const scenes = SCENES[door] ?? SCENES.occasions
   const [i, setI] = useState(0)
   useEffect(() => { setI(0); const t = setInterval(() => setI(n => (n + 1) % scenes.length), 3000); return () => clearInterval(t) }, [scenes])
-  const s = scenes[i]
+  /* The two doors have different numbers of scenes: index modulo the
+     current list, or switching door on a late scene reads past the end. */
+  const s = scenes[i % scenes.length]
   const C = s.card
   return (
     <div className="relative mt-1 min-h-[184px]" data-hero={i}>

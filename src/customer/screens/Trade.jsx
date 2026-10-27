@@ -29,7 +29,7 @@ export default function Trade() {
   return (
     <main className="cx-enter cx-bottom-pad-bar">
       <BackHeader title={t.label} sub={occasion ? `For your ${occasion.name}` : t.why} />
-      <Journey flow={occasion ? 'celebration' : 'service'} at={occasion ? 3 : 1} />
+      <Journey flow={occasion ? 'celebration' : 'service'} at={occasion ? 3 : 1} occasionId={occId} tradeId={tradeId} />
       <OfferStrip className="mx-3 mb-2.5" />
       <div className="flex">
         {family && family.trades.length > 1 && (

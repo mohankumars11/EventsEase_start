@@ -174,7 +174,8 @@ export function matchNeeds(partner, tradeId, picks = {}, guests = null) {
  */
 export function filterByNeeds(list, tradeId, picks = {}, guests = null) {
   if (!list) return { list: null, exact: true, asked: false, total: 0 }
-  const asked = answered(picks) > 0 || (!!guests && !!CAPACITY[tradeId])
+  /* "Any is fine" ($any) is an answer, not a filter. */
+  const asked = answered(picks) - (picks?.$any ? 1 : 0) > 0 || (!!guests && !!CAPACITY[tradeId])
   if (!asked) return { list, exact: true, asked, total: list.length }
   const scored = list.map(p => ({ p, m: matchNeeds(p, tradeId, picks, guests) }))
   const exact = scored.filter(x => x.m.ok)

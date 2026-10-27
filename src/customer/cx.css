@@ -71,10 +71,10 @@
 
 /* The primary action: light amethyst, lifted, with deep-amethyst words. */
 .cx-cta {
-  background: linear-gradient(180deg, #EFE6FF 0%, #E0CEFF 100%); color: var(--am-ink);
-  box-shadow: 0 0 0 1px #D6C2FF, 0 14px 28px -16px rgba(106, 43, 217, .7), inset 0 1px 0 rgba(255, 255, 255, .9);
+  background: linear-gradient(180deg, #5B21B6 0%, #3F0F8F 100%); color: #fff;
+  box-shadow: 0 14px 28px -14px rgba(63, 15, 143, .85), inset 0 1px 0 rgba(255, 255, 255, .14);
 }
-.cx-cta:active { background: linear-gradient(180deg, #E6D9FF 0%, #D6C1FF 100%); }
+.cx-cta:active { background: linear-gradient(180deg, #4C1D95 0%, #33097A 100%); }
 .cx-cta:disabled { background: #F3F1F8; color: #B7B1C8; box-shadow: 0 0 0 1px #ECE9F3; }
 /* Every other button. */
 .cx-btn { background: var(--am-100); color: var(--am-ink); }
@@ -134,7 +134,7 @@
 .cx-cta { position: relative; overflow: hidden; isolation: isolate; }
 .cx-cta::after {
   content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
-  background: linear-gradient(105deg, transparent 30%, rgba(255, 255, 255, .75) 48%, transparent 62%);
+  background: linear-gradient(105deg, transparent 30%, rgba(255, 255, 255, .16) 48%, transparent 62%);
   transform: translateX(-120%); animation: cx-sheen 3.8s ease-in-out infinite;
 }
 .cx-cta:disabled::after { animation: none; opacity: 0; }

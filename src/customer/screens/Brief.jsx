@@ -58,7 +58,7 @@ export default function Brief() {
   const choose = qs.filter(q => q.group === 'choose')
   const must = qs.filter(q => q.group === 'must')
   const n = answered(picks)
-  const set = (k, v) => setPicks(p => ({ ...p, [k]: v }))
+  const set = (k, v) => setPicks(p => { const { $any, ...rest } = p; return { ...rest, [k]: v } })
   const done = () => { plan.setNeeds(key, picks); navigate(-1) }
 
   return (
@@ -80,7 +80,12 @@ export default function Brief() {
 
       <section className="px-4 pb-2 pt-3">
         <h1 className="text-[24px] font-black leading-[1.1] tracking-[-0.04em]">What do you need from your {NOUN[tradeId] ?? t.label.toLowerCase()}?</h1>
-        <p className="mt-1 text-[13px] font-semibold text-[var(--ink-3)]">Tap what matters. We show only the masters who do exactly that{fit.total ? ` — out of ${fit.total}` : ''}.</p>
+        <p className="mt-1 text-[13px] font-semibold text-[var(--ink-3)]">Whatever you tap, we match to what each master listed — you’ll see only the ones who do exactly that{fit.total ? `, out of ${fit.total}` : ''}.</p>
+        <button type="button" onClick={() => setPicks(p => (p.$any ? {} : { $any: true }))} aria-pressed={!!picks.$any}
+          className={'cx-press mt-3 flex w-full items-center gap-2.5 rounded-[16px] px-3.5 py-3 text-left transition ' + (picks.$any ? 'bg-[#EEFAF2] shadow-[inset_0_0_0_2px_#16A34A]' : 'bg-white shadow-[inset_0_0_0_1px_#EDE5DA]')} data-any>
+          <span className={'grid h-6 w-6 shrink-0 place-items-center rounded-full ' + (picks.$any ? 'bg-[#0C831F] text-white' : 'ring-[1.5px] ring-[#D9D0C4]')}>{picks.$any && <Check size={14} strokeWidth={3} />}</span>
+          <span className="min-w-0 flex-1"><span className="block text-[14px] font-extrabold">No preference — any {NOUN[tradeId] ?? 'master'} is fine</span><span className="block text-[11.5px] font-semibold text-[var(--ink-3)]">We’ll show every verified master for this</span></span>
+        </button>
       </section>
 
       <div className="space-y-3 px-3 pt-2">
@@ -108,8 +113,8 @@ export default function Brief() {
       <div className="fixed inset-x-0 bottom-0 z-[130] border-t border-[#F1E9DF] bg-white/95 px-3 pt-3 backdrop-blur-xl" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}>
         <div className="mx-auto flex max-w-[540px] gap-2">
           <button type="button" onClick={() => setPicks({})} disabled={!n} className="cx-press flex h-14 shrink-0 items-center gap-1.5 rounded-[18px] bg-[#F6F1EA] px-4 text-[13.5px] font-extrabold text-[var(--ink-2)] disabled:opacity-40" data-clear><RotateCcw size={16} />Clear</button>
-          <button type="button" onClick={done} className="cx-press flex h-14 flex-1 items-center justify-center gap-2 rounded-[18px] bg-[#0C831F] text-[15.5px] font-extrabold text-white shadow-[0_12px_24px_-12px_rgba(12,131,31,.9)]" data-show-masters>
-            {!fit.list ? 'Finding masters…' : fit.exact ? `Show ${plural(fit.list.length, 'master')}` : `Show the ${fit.list.length} closest`}
+          <button type="button" onClick={done} disabled={!!occ && !n} className="cx-press flex h-14 flex-1 items-center justify-center gap-2 rounded-[18px] bg-[#0C831F] text-[15.5px] font-extrabold text-white shadow-[0_12px_24px_-12px_rgba(12,131,31,.9)] disabled:bg-[#CFE9D7] disabled:shadow-none" data-show-masters>
+            {occ && !n ? 'Pick something — or “No preference”' : !fit.list ? 'Finding masters…' : picks.$any ? `Done · all ${fit.list.length} masters` : fit.exact ? `Done · ${plural(fit.list.length, 'master')} match` : `Done · ${fit.list.length} closest`}
           </button>
         </div>
         {fit.list && !fit.exact && <p className="mt-1.5 text-center text-[11.5px] font-bold text-[#8A5A00]">No one does all of it yet — these come closest.</p>}
