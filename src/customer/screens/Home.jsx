@@ -136,11 +136,11 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Icon row: filters the grid below. Tiles at rest, pills while scrolling. */}
-        <div className={'cx-noscroll flex overflow-x-auto px-3 ' + (compact ? 'gap-1.5 pb-2 pt-2' : 'gap-1 pt-2.5')} key={door + compact}>
-          <IconChip on={filter === 'all'} onClick={() => setFilter('all')} label="All" all compact={compact} />
+        {/* Icon row: filters the grid below. Pinned, it keeps exactly the shape it has at rest. */}
+        <div className="cx-noscroll flex gap-1 overflow-x-auto px-3 pb-1 pt-2.5" key={door}>
+          <IconChip on={filter === 'all'} onClick={() => setFilter('all')} label="All" all />
           {(celebrate ? CATEGORIES.map(c => ({ id: c.id, label: c.short, src: categoryArt(c).src })) : FAMILIES.map(f => ({ id: f.id, label: f.label, src: serviceArt(f.trades[0]).src })))
-            .map(x => <IconChip key={x.id} on={filter === x.id} onClick={() => { setFilter(x.id); toGrid() }} label={x.label} src={x.src} compact={compact} />)}
+            .map(x => <IconChip key={x.id} on={filter === x.id} onClick={() => { setFilter(x.id); toGrid() }} label={x.label} src={x.src} />)}
         </div>
       </div>
 
@@ -468,17 +468,7 @@ function useCompact() {
   return c
 }
 
-function IconChip({ on, onClick, label, src, all = false, compact = false }) {
-  if (compact) return (
-    <button type="button" onClick={onClick} aria-pressed={on} data-chip={label}
-      className={'cx-press cx-pop flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full pl-1 pr-3 text-[12px] font-extrabold transition ' + (on ? 'bg-gradient-to-br from-[#8B5CF6] to-[#6D28D9] text-white shadow-[0_6px_14px_-8px_rgba(109,40,217,.9)]' : 'bg-[#F7F3EE] text-[var(--ink-2)]')}>
-      <span className={'grid h-7 w-7 shrink-0 place-items-center overflow-hidden rounded-full ' + (on ? 'bg-white/20' : 'bg-white')}>
-        {all ? <span className="grid grid-cols-2 gap-[2px]">{[0, 1, 2, 3].map(i => <span key={i} className={'h-[5px] w-[5px] rounded-[1.5px] ' + (on ? 'bg-white' : 'bg-[var(--brand)]')} />)}</span>
-          : <img src={src} alt="" className="h-full w-full object-cover object-[50%_20%]" loading="lazy" />}
-      </span>
-      {label}
-    </button>
-  )
+function IconChip({ on, onClick, label, src, all = false }) {
   return (
     <button type="button" onClick={onClick} aria-pressed={on} className="cx-press flex w-[66px] shrink-0 flex-col items-center gap-1 pb-1" data-chip={label}>
       <span className={'relative grid h-[54px] w-[54px] place-items-center overflow-hidden rounded-[16px] transition ' + (on ? 'bg-gradient-to-br from-[#8B5CF6] to-[#6D28D9] shadow-[0_8px_18px_-8px_rgba(109,40,217,.9)]' : 'bg-white shadow-[0_0_0_1px_#EFE7DD]')}>

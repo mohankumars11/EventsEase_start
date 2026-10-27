@@ -69,8 +69,8 @@ export default function InviteHost() {
     const a = Object.assign(document.createElement('a'), { href: url, download: `${inv.title.replace(/[^\w]+/g, '-')}-guests.csv` })
     document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000)
   }
-  const sent = guests.filter(g => g.sent_at).length
-  const unsent = guests.filter(g => !g.sent_at && g.phone)
+  const sent = guests.filter(g => g.sent_at || g.opened_at || g.responded_at).length
+  const unsent = guests.filter(g => !g.sent_at && !g.opened_at && !g.responded_at && g.phone)
   const nextUp = unsent[0] ?? null
   const remindUp = guests.find(g => g.status === 'pending' && g.sent_at && g.phone && !g.reminded_at) ?? null
   const recent = guests.filter(g => g.responded_at).sort((a, b) => b.responded_at.localeCompare(a.responded_at)).slice(0, 5)
@@ -87,7 +87,7 @@ export default function InviteHost() {
           ['Invites sent', sent, `of ${t.invited} on your list`, '#5B21B6', 'linear-gradient(150deg,#F5F0FF 0%,#EDE4FF 100%)', 'all'],
           ['Seen', t.opened, `${t.invited ? Math.round((t.opened / t.invited) * 100) : 0}% opened it`, '#1D4ED8', 'linear-gradient(150deg,#F0F6FF 0%,#E1ECFF 100%)', 'unseen'],
           ['Accepted', t.attending, `${t.heads} ${t.heads === 1 ? 'person' : 'people'} coming`, '#0B7A3B', 'linear-gradient(150deg,#EEFBF3 0%,#DDF5E6 100%)', 'attending'],
-          ['Waiting', t.pending + t.maybe, `${t.maybe} maybe · ${t.declined} can’t`, '#B45309', 'linear-gradient(150deg,#FFF8EB 0%,#FFEFD3 100%)', 'pending'],
+          ['Waiting', t.pending, `${t.maybe} maybe · ${t.declined} can’t come`, '#B45309', 'linear-gradient(150deg,#FFF8EB 0%,#FFEFD3 100%)', 'pending'],
         ].map(([l, n, s, c, bg, f]) => (
           <button key={l} type="button" onClick={() => setFilter(f)} className="cx-press rounded-[22px] p-4 text-left shadow-[0_0_0_1px_rgba(0,0,0,.03)]" style={{ background: bg }} data-stat={l}>
             <span className="block text-[12.5px] font-extrabold uppercase tracking-[0.08em]" style={{ color: c }}>{l}</span>
