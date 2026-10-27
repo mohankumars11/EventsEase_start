@@ -31,6 +31,7 @@ import { artFor, categoryArt, occasionArt, serviceArt } from '../data/art'
 import { Card, CategoryCard, FamilyCard, Rotator, ServiceCard } from '../ui/art'
 import { Sheet } from '../ui/kit'
 import { OfferDeck } from '../ui/offers'
+import Spotlight from '../ui/Spotlight'
 import { locate, saveWhere, savedWhere } from '../lib/where'
 import { listen, canListen } from '../lib/voice'
 
@@ -44,6 +45,29 @@ const PROMISES = [
   [MapPin, 'GPS Navigation', 'Straight to your venue', '#2563EB', '#EAF1FF'],
   [ShieldCheck, 'Secure Payment', 'Held safe till delivered', '#0F9D58', '#E7F8EF'],
   [CalendarClock, 'On-Time Service', 'For your event date', '#EA580C', '#FFF1E6'],
+]
+
+/* In the spotlight: [id, badge, hook]. Only ones with their own picture are shown. */
+const SPOT_OCC = [
+  ['birthday-party', '🔥 Trending', 'Cake, décor and a photographer — planned in minutes'],
+  ['wedding-reception', 'Wedding season', 'Every master for the big night, in one plan'],
+  ['haldi-ceremony', 'Most booked', 'Marigolds, music and the yellow glow'],
+  ['baby-shower', 'Loved by moms', 'Décor, games and a cake for the little one'],
+  ['housewarming-ceremony', 'Auspicious', 'Pooja, lunch and a full house'],
+  ['engagement-ceremony', 'Popular', 'Rings, flowers and the first dance'],
+  ['wedding-anniversary', 'Romantic', 'Make the years feel brand new'],
+  ['cocktail-party', 'This weekend', 'DJ, bar and lights — sorted'],
+  ['naming-ceremony', 'Family favourite', 'Priest, cradle décor and lunch'],
+  ['corporate-annual-day', 'For teams', 'Stage, sound, anchor and dinner'],
+]
+const SPOT_SVC = [
+  ['photography', 'Most booked', 'Every ritual, every relative — priced by the hour'],
+  ['catering_food', 'Instant price', 'Your menu, priced per plate for your guests'],
+  ['decoration_floral', '🔥 Trending', 'Stage, entrance and flowers, set up and removed'],
+  ['cake_desserts', 'Order now', 'The cake, and a dessert table if you want one'],
+  ['bridal_makeup_hair', 'Wedding season', 'Bridal and family looks, draping included'],
+  ['dj_music', 'This weekend', 'A dance floor that stays full'],
+  ['mehendi_artist', 'Popular', 'Bridal and guest mehendi'],
 ]
 
 /* Parties people throw ON a weekend — never date-bound ones (a birthday
@@ -148,6 +172,11 @@ export default function Home() {
         {/* The hero comes after the controls, and nothing is laid over its picture. */}
         <Hero key={door} door={door} />
       </section>
+
+      {/* ── In the spotlight: one big card, the next ones peeking in ─── */}
+      <Spotlight key={door} items={celebrate
+        ? SPOT_OCC.map(([id, badge, hook]) => OCCASION[id] && occasionArt(OCCASION[id]).kind === 'art' && { id, to: `/o/${id}`, title: OCCASION[id].name, badge, hook, art: occasionArt(OCCASION[id]).src, tone: OCCASION[id].tone }).filter(Boolean)
+        : SPOT_SVC.map(([id, badge, hook]) => TRADES.some(t => t.id === id) && serviceArt(id).kind === 'art' && { id, to: `/s/${id}`, title: TRADES.find(t => t.id === id).label, badge, hook, art: serviceArt(id).src, tone: '#E9DDFB' }).filter(Boolean)} />
 
       {/* ── Weekend: the next Saturday, and what people book for it ──── */}
       {celebrate && (
