@@ -113,8 +113,8 @@ export default function Brief() {
       <div className="fixed inset-x-0 bottom-0 z-[130] border-t border-[#F1E9DF] bg-white/95 px-3 pt-3 backdrop-blur-xl" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}>
         <div className="mx-auto flex max-w-[540px] gap-2">
           <button type="button" onClick={() => setPicks({})} disabled={!n} className="cx-press flex h-14 shrink-0 items-center gap-1.5 rounded-[18px] bg-[#F6F1EA] px-4 text-[13.5px] font-extrabold text-[var(--ink-2)] disabled:opacity-40" data-clear><RotateCcw size={16} />Clear</button>
-          <button type="button" onClick={done} disabled={!!occ && !n} className="cx-press flex h-14 flex-1 items-center justify-center gap-2 rounded-[18px] bg-[#0C831F] text-[15.5px] font-extrabold text-white shadow-[0_12px_24px_-12px_rgba(12,131,31,.9)] disabled:bg-[#CFE9D7] disabled:shadow-none" data-show-masters>
-            {occ && !n ? 'Pick something — or “No preference”' : !fit.list ? 'Finding masters…' : picks.$any ? `Done · all ${fit.list.length} masters` : fit.exact ? `Done · ${plural(fit.list.length, 'master')} match` : `Done · ${fit.list.length} closest`}
+          <button type="button" onClick={done} className="cx-press flex h-14 flex-1 items-center justify-center gap-2 rounded-[18px] bg-[#0C831F] text-[15.5px] font-extrabold text-white shadow-[0_12px_24px_-12px_rgba(12,131,31,.9)] disabled:bg-[#CFE9D7] disabled:shadow-none" data-show-masters>
+            {!n ? `Show all ${fit.list?.length ?? ''} masters`.replace('  ', ' ') : !fit.list ? 'Finding masters…' : picks.$any ? `Done · all ${fit.list.length} masters` : fit.exact ? `Done · ${plural(fit.list.length, 'master')} match` : `Done · ${fit.list.length} closest`}
           </button>
         </div>
         {fit.list && !fit.exact && <p className="mt-1.5 text-center text-[11.5px] font-bold text-[#8A5A00]">No one does all of it yet — these come closest.</p>}

@@ -3,10 +3,12 @@
  * (screens/Brief.jsx): the partner's own questions, in the customer's
  * words, so the next screen shows only masters who do exactly that.
  *
- * Every service must be answered — or removed — before the masters
- * screen opens (Mohan, 2026-10-27). "Any is fine" is an answer: it is
- * recorded, it just filters nothing. Services that ask nothing count as
- * done. Removing a service takes it out of the plan.
+ * Optional, but encouraged (Mohan, 2026-10-27): forcing every answer
+ * stresses people, so the customer can go on at any time and come back —
+ * the screen says plainly why answering is worth it (only the masters who
+ * fit, not everyone), walks through the rest one tap at a time, and
+ * "No preference" is a one-tap answer. Removing a service takes it out of
+ * the plan.
  */
 import { useEffect, useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
@@ -90,11 +92,16 @@ export default function Needs() {
         {!asking.length && <p className="rounded-[18px] bg-white p-4 text-[13px] font-semibold text-[var(--ink-2)]">These services need nothing more from you — the masters are ready.</p>}
       </div>
 
-      <ActionBar note={left ? `${plural(left, 'service')} left — tap ${next ? TRADE[next].label : 'each one'} to continue` : 'All set — we’ll match you perfectly'}>
+      <ActionBar note={left ? `Tip: tell us about ${plural(left, 'more service')} for exact matches — or go on and come back any time` : 'All set — we’ll show only the masters who fit'}>
         {left ? (
-          <button type="button" onClick={() => navigate(`/brief/${next}?o=${o.id}`)} className="cx-press cx-cta flex h-14 w-full items-center justify-center gap-2 rounded-[18px] text-[15px] font-extrabold" data-next-need>
-            Next: {TRADE[next].label}<ChevronRight size={18} />
-          </button>
+          <div className="flex gap-2">
+            <button type="button" onClick={() => navigate(`/brief/${next}?o=${o.id}`)} className="cx-press cx-btn flex h-14 min-w-0 flex-1 items-center justify-center gap-1 rounded-[18px] px-3 text-[13.5px] font-extrabold" data-next-need>
+              <span className="truncate">Next: {TRADE[next].label}</span>
+            </button>
+            <button type="button" onClick={() => navigate(`/o/${o.id}/match`)} className="cx-press cx-cta flex h-14 flex-1 items-center justify-center gap-1.5 rounded-[18px] text-[14.5px] font-extrabold" data-find>
+              Find my masters<ChevronRight size={18} />
+            </button>
+          </div>
         ) : (
           <button type="button" onClick={() => navigate(`/o/${o.id}/match`)} className="cx-press flex h-14 w-full items-center justify-center gap-2 rounded-[18px] bg-[#0C831F] text-[15px] font-extrabold text-white shadow-[0_12px_24px_-12px_rgba(12,131,31,.9)]" data-find>
             Find my perfect masters<ChevronRight size={18} />

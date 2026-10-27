@@ -10,8 +10,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { CalendarPlus, Check, Loader2, MapPin, Minus, Navigation, PartyPopper, Plus, Shirt } from 'lucide-react'
 import { OCCASION } from '../data/occasions'
-import { occasionArt } from '../data/art'
-import { ArtFill } from '../ui/art'
+import InviteCard from '../ui/InviteCard'
 import { MEALS, submitRsvp, viewRsvp } from '../lib/rsvp'
 
 const DAY = new Intl.DateTimeFormat('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
@@ -58,29 +57,24 @@ export default function Rsvp() {
 
   return (
     <Shell>
-      {/* The card */}
-      <section className="overflow-hidden rounded-[28px] bg-white shadow-[0_0_0_1px_#EEE6FA,0_24px_48px_-30px_rgba(58,18,144,.7)]" data-rsvp-card>
-        <div className="relative h-[200px]">
-          {occ && <ArtFill art={occasionArt(occ)} tone={occ.tone} className="absolute inset-0 h-full w-full" inset="6%" />}
-          <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-white to-transparent" />
+      {/* The card — the design the host picked. */}
+      <div className="cx-pop" data-rsvp-card>
+        <InviteCard inv={inv} occasion={occ} theme={inv.theme} />
+      </div>
+      <section className="mt-3 rounded-[22px] bg-white p-4 shadow-[0_0_0_1px_#EEE6FA]">
+        {g && <p className="text-center text-[11px] font-extrabold uppercase tracking-[0.24em] text-[var(--brand)]">Dear {g.name.split(' ')[0]}</p>}
+        {inv.message && <p className="mx-auto mt-1.5 max-w-[34ch] whitespace-pre-line text-center text-[13.5px] font-medium leading-relaxed text-[var(--ink-2)]">{inv.message}</p>}
+        <div className="mt-3 grid gap-1.5 text-left">
+          {(inv.date || inv.time) && <Fact icon={CalendarPlus}>{[fmtDate(inv.date), fmtTime(inv.time)].filter(Boolean).join(' · ')}</Fact>}
+          {(inv.venue || inv.address) && <Fact icon={MapPin}>{[inv.venue, inv.address].filter(Boolean).join(', ')}</Fact>}
+          {inv.dress && <Fact icon={Shirt}>Dress code: {inv.dress}</Fact>}
         </div>
-        <div className="px-5 pb-5 text-center">
-          <p className="text-[11px] font-extrabold uppercase tracking-[0.28em] text-[var(--brand)]">{g ? `Dear ${g.name.split(' ')[0]}, you’re invited` : 'You’re invited'}</p>
-          <h1 className="mt-1.5 text-[27px] font-black leading-[1.08] tracking-[-0.035em]">{inv.title}</h1>
-          {inv.hosts && <p className="mt-1 text-[14px] font-bold text-[var(--ink-2)]">{inv.hosts}</p>}
-          {inv.message && <p className="mx-auto mt-3 max-w-[34ch] whitespace-pre-line text-[13.5px] font-medium leading-relaxed text-[var(--ink-2)]">{inv.message}</p>}
-          <div className="mt-4 grid gap-1.5 text-left">
-            {(inv.date || inv.time) && <Fact icon={CalendarPlus}>{[fmtDate(inv.date), fmtTime(inv.time)].filter(Boolean).join(' · ')}</Fact>}
-            {(inv.venue || inv.address) && <Fact icon={MapPin}>{[inv.venue, inv.address].filter(Boolean).join(', ')}</Fact>}
-            {inv.dress && <Fact icon={Shirt}>Dress code: {inv.dress}</Fact>}
-          </div>
-          <div className="mt-3 flex justify-center gap-2">
-            {(inv.map || inv.address) && (
-              <a href={inv.map || `https://maps.google.com/?q=${encodeURIComponent([inv.venue, inv.address].filter(Boolean).join(', '))}`} target="_blank" rel="noreferrer"
-                className="cx-press flex h-10 items-center gap-1.5 rounded-full bg-[var(--am-100)] px-4 text-[13px] font-extrabold text-[var(--am-ink)]"><Navigation size={15} />Directions</a>
-            )}
-            {inv.date && <button type="button" onClick={() => downloadIcs(inv)} className="cx-press flex h-10 items-center gap-1.5 rounded-full bg-[var(--am-100)] px-4 text-[13px] font-extrabold text-[var(--am-ink)]"><CalendarPlus size={15} />Save the date</button>}
-          </div>
+        <div className="mt-3 flex justify-center gap-2">
+          {(inv.map || inv.address) && (
+            <a href={inv.map || `https://maps.google.com/?q=${encodeURIComponent([inv.venue, inv.address].filter(Boolean).join(', '))}`} target="_blank" rel="noreferrer"
+              className="cx-press flex h-10 items-center gap-1.5 rounded-full bg-[var(--am-100)] px-4 text-[13px] font-extrabold text-[var(--am-ink)]"><Navigation size={15} />Directions</a>
+          )}
+          {inv.date && <button type="button" onClick={() => downloadIcs(inv)} className="cx-press flex h-10 items-center gap-1.5 rounded-full bg-[var(--am-100)] px-4 text-[13px] font-extrabold text-[var(--am-ink)]"><CalendarPlus size={15} />Save the date</button>}
         </div>
       </section>
 

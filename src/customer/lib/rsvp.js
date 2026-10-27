@@ -40,7 +40,7 @@ const fail = e => { throw Object.assign(new Error(unmigrated(e) ? 'Invitations a
 /* ── Host ─────────────────────────────────────────────────────────────── */
 export async function myInvitations() {
   const { data, error } = await supabase.from('invitations')
-    .select('id, title, occasion_id, event_date, start_time, venue_name, status, cover_key, updated_at, invitation_guests(status, adults, kids, opened_at)')
+    .select('id, title, hosts_line, occasion_id, event_date, start_time, venue_name, status, cover_key, theme, updated_at, invitation_guests(status, adults, kids, opened_at)')
     .order('updated_at', { ascending: false }).limit(50)
   if (error) fail(error)
   return data

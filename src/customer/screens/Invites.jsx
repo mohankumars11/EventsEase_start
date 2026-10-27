@@ -10,7 +10,7 @@
  */
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { CalendarDays, ChevronRight, Loader2, MapPin, Plus, Send, Trash2, X } from 'lucide-react'
+import { CalendarDays, Check, ChevronRight, Loader2, MapPin, Plus, Send, Trash2, X } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { OCCASION } from '../data/occasions'
 import { occasionArt } from '../data/art'
@@ -18,6 +18,8 @@ import { usePlan } from '../state/PlanContext'
 import { deleteInvitation, functionsFor, getInvitation, myInvitations, saveInvitation, tally } from '../lib/rsvp'
 import { BackHeader, Empty } from '../ui/kit'
 import { ArtFill } from '../ui/art'
+import InviteCard from '../ui/InviteCard'
+import { TEMPLATES, parseTheme, templatesFor, themeString } from '../data/inviteTemplates'
 import SignInSheet from './SignInSheet'
 
 const fmt = d => (d ? new Date(`${d}T00:00:00`).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' }) : 'Date to be set')
@@ -64,7 +66,7 @@ export function InvitesList() {
             const o = OCCASION[inv.occasion_id]
             return (
               <Link key={inv.id} to={`/invites/${inv.id}`} className="cx-press flex gap-3 rounded-[20px] bg-white p-2.5 shadow-[0_0_0_1px_#EEE6FA]" data-invite={inv.id}>
-                {o ? <ArtFill art={occasionArt(o)} tone={o.tone} className="h-[78px] w-[78px] shrink-0 rounded-[14px]" inset="8%" /> : <span className="h-[78px] w-[78px] shrink-0 rounded-[14px] bg-[#F3ECFF]" />}
+                <span className="w-[66px] shrink-0"><InviteCard inv={inv} occasion={o} theme={inv.theme} size="mini" /></span>
                 <span className="min-w-0 flex-1 py-0.5">
                   <span className="flex items-center gap-1.5"><span className="truncate text-[15px] font-extrabold tracking-[-0.02em]">{inv.title}</span>
                     {inv.status === 'draft' && <span className="shrink-0 rounded-full bg-[#F4F1F8] px-1.5 py-0.5 text-[9.5px] font-extrabold uppercase text-[var(--ink-3)]">Draft</span>}</span>
@@ -106,13 +108,15 @@ export function InviteEdit() {
     const ev = occ && plan.event.occasionId === occ.id ? plan.event : {}
     setInv({ occasion_id: occ?.id ?? null, title: occ ? `${user?.user_metadata?.full_name?.split(' ')[0] ? `${user.user_metadata.full_name.split(' ')[0]}’s ` : 'Our '}${occ.name}` : '', hosts_line: '',
       message: MESSAGES[occ?.category] ?? MESSAGES.default, event_date: ev.date ?? '', start_time: ev.time ?? '', venue_name: '', venue_address: '', map_url: '',
-      dress_code: '', rsvp_by: '', ask_meal: true, allow_kids: true, open_enabled: false, cover_key: occ?.id ?? null })
+      dress_code: '', rsvp_by: '', ask_meal: true, allow_kids: true, open_enabled: false, cover_key: occ?.id ?? null,
+      theme: themeString(templatesFor(occ)[0].id, { art: true, live: true }) })
     setFns(functionsFor(occ).map(name => ({ name, event_date: ev.date ?? '', start_time: '', venue_name: '' })))
   }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const occ = useMemo(() => (inv ? OCCASION[inv.occasion_id] : null), [inv])
   if (!inv) return <main className="grid min-h-[60dvh] place-items-center">{err ? <p className="px-6 text-center text-[13.5px] font-bold text-[#9B1A2A]">{err}</p> : <Loader2 className="animate-spin text-[var(--brand)]" />}</main>
   const set = p => setInv(x => ({ ...x, ...p }))
+  const themeOpts = parseTheme(inv.theme, occ)
 
   async function save() {
     if (!user) { setSignIn(true); return }
@@ -125,13 +129,33 @@ export function InviteEdit() {
       <BackHeader title={id ? 'Edit invitation' : 'New invitation'} sub={occ?.name ?? 'Your celebration'} />
 
       {/* Live preview — exactly what the guest sees. */}
-      <section className="mx-3 overflow-hidden rounded-[24px] bg-white shadow-[0_0_0_1px_#EEE6FA,0_18px_36px_-26px_rgba(58,18,144,.7)]" data-invite-preview>
-        <div className="relative h-[140px]">{occ && <ArtFill art={occasionArt(occ)} tone={occ.tone} className="absolute inset-0 h-full w-full" inset="6%" />}<div className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-white to-transparent" /></div>
-        <div className="px-4 pb-4 text-center">
-          <p className="text-[10px] font-extrabold uppercase tracking-[0.28em] text-[var(--brand)]">You’re invited</p>
-          <p className="mt-1 text-[21px] font-black leading-tight tracking-[-0.03em]">{inv.title || 'Your celebration'}</p>
-          {inv.hosts_line && <p className="text-[13px] font-bold text-[var(--ink-2)]">{inv.hosts_line}</p>}
-          <p className="mt-1.5 flex items-center justify-center gap-1 text-[12px] font-bold text-[var(--ink-3)]"><CalendarDays size={13} />{fmt(inv.event_date)}{inv.venue_name ? <><MapPin size={13} className="ml-1" />{inv.venue_name}</> : null}</p>
+      <div className="mx-auto w-[78%] max-w-[330px]" data-invite-preview>
+        <InviteCard inv={inv} occasion={occ} theme={inv.theme} />
+      </div>
+
+      {/* Pick a design */}
+      <section className="mt-4" data-design-picker>
+        <div className="flex items-end justify-between px-4 pb-2">
+          <p className="text-[15px] font-extrabold tracking-[-0.02em]">Choose a design</p>
+          <span className="text-[11.5px] font-bold text-[var(--ink-3)]">{TEMPLATES.length} styles</span>
+        </div>
+        <div className="cx-noscroll flex snap-x gap-2.5 overflow-x-auto px-3 pb-1">
+          {templatesFor(occ).map((t, k) => {
+            const on = parseTheme(inv.theme, occ).t.id === t.id
+            return (
+              <button key={t.id} type="button" onClick={() => set({ theme: themeString(t.id, { art: themeOpts.art, live: themeOpts.live }) })} aria-pressed={on} className="w-[30%] max-w-[120px] shrink-0 snap-start text-left" data-template={t.id}>
+                <span className={'block rounded-[16px] p-1 transition ' + (on ? 'bg-[var(--brand)]' : 'bg-transparent')}>
+                  <InviteCard inv={inv} occasion={occ} theme={themeString(t.id, { art: themeOpts.art })} size="mini" />
+                </span>
+                <span className="mt-1 block truncate text-[11.5px] font-extrabold">{t.name}</span>
+                <span className={'block truncate text-[10px] font-bold ' + (k < 3 && t.for.includes(occ?.category) ? 'text-[#0C831F]' : 'text-[var(--ink-3)]')}>{k < 3 && t.for.includes(occ?.category) ? 'Recommended' : t.vibe}</span>
+              </button>
+            )
+          })}
+        </div>
+        <div className="mx-3 mt-2 grid grid-cols-2 gap-2">
+          <ChipToggle on={themeOpts.art} onClick={() => set({ theme: themeString(parseTheme(inv.theme, occ).t.id, { ...themeOpts, art: !themeOpts.art }) })}>Show illustration</ChipToggle>
+          <ChipToggle on={themeOpts.live} onClick={() => set({ theme: themeString(parseTheme(inv.theme, occ).t.id, { ...themeOpts, live: !themeOpts.live }) })}>✨ Live sparkle</ChipToggle>
         </div>
       </section>
 
@@ -197,6 +221,14 @@ function Toggle({ on, onClick, sub, children }) {
     <button type="button" onClick={onClick} aria-pressed={on} className="flex w-full items-center gap-3 py-1 text-left">
       <span className="min-w-0 flex-1"><span className="block text-[14px] font-bold">{children}</span>{sub && <span className="block text-[11.5px] font-semibold text-[var(--ink-3)]">{sub}</span>}</span>
       <span className={'relative h-[26px] w-[44px] shrink-0 rounded-full transition-colors ' + (on ? 'bg-[#0C831F]' : 'bg-[#E5E0EA]')}><span className={'absolute top-[3px] h-5 w-5 rounded-full bg-white shadow transition-all ' + (on ? 'left-[21px]' : 'left-[3px]')} /></span>
+    </button>
+  )
+}
+
+function ChipToggle({ on, onClick, children }) {
+  return (
+    <button type="button" onClick={onClick} aria-pressed={on} className={'cx-press flex h-11 items-center justify-center gap-1.5 rounded-[14px] text-[13px] font-extrabold transition ' + (on ? 'bg-[#EEFAF2] text-[#0B5F33] shadow-[inset_0_0_0_1.5px_#16A34A]' : 'bg-white text-[var(--ink-2)] shadow-[inset_0_0_0_1px_#E7E1F0]')}>
+      {on && <Check size={14} strokeWidth={3} />}{children}
     </button>
   )
 }

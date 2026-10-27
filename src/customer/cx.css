@@ -189,3 +189,8 @@
 /* Card pages sit on a warm cream, like the reference. */
 .cx-cream { background: #FFF8F2; }
 .cx-cream header.cx-safe-top { background: #FFF8F2; }
+
+/* "Live" invitation cards: a slow twinkle, still when motion is reduced. */
+@keyframes cx-twinkle { 0%, 100% { opacity: 0; transform: rotate(45deg) scale(.4); } 50% { opacity: .95; transform: rotate(45deg) scale(1); } }
+.cx-sparkle { opacity: 0; animation: cx-twinkle 3.2s ease-in-out infinite; box-shadow: 0 0 10px currentColor; }
+@media (prefers-reduced-motion: reduce) { .cx-sparkle { animation: none; opacity: .6; } }

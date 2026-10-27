@@ -17,7 +17,7 @@ import { TRADE } from '../data/trades'
 import { serviceArt } from '../data/art'
 import { usePlan, needsFor } from '../state/PlanContext'
 import { partnersFor, rank } from '../lib/market'
-import { answered, filterByNeeds, loadCuisines, needsFor as needsFor360 } from '../lib/needs'
+import { filterByNeeds, loadCuisines } from '../lib/needs'
 import { dayLabel, plural } from '../lib/format'
 import { BackHeader, Journey, PlanBar } from '../ui/kit'
 import { ArtFill } from '../ui/art'
@@ -38,9 +38,6 @@ export default function Match() {
   const choose = t => setParams({ t }, { replace: true })
   useEffect(() => { window.scrollTo({ top: 0 }) }, [sel])
   if (!o) return <Navigate to="/" replace />
-  /* The brief is required: a service still unanswered sends the customer back to it. */
-  const unanswered = needed.filter(t => needsFor360(t).length && answered(plan.needsOf(o.id, t)) === 0)
-  if (unanswered.length) return <Navigate to={`/o/${o.id}/needs`} replace />
 
   const chosen = needed.filter(t => plan.lineFor(o.id, t)).length
   const facts = [plan.event.date && dayLabel(plan.event.date), ev.guests && `${ev.guests.toLocaleString('en-IN')} ${o.people.toLowerCase()}`].filter(Boolean).join(' · ')
@@ -124,7 +121,7 @@ export default function Match() {
                 </button>
               </div>
               <MastersPanel key={sel} tradeId={sel} occasionId={o.id} guests={ev.guests ?? null}
-                onCompanion={t => { if (!needed.includes(t)) plan.setPick(o.id, t, 'need'); if (needsFor360(t).length && !answered(plan.needsOf(o.id, t))) navigate(`/brief/${t}?o=${o.id}`); else choose(t) }} />
+                onCompanion={t => { if (!needed.includes(t)) plan.setPick(o.id, t, 'need'); choose(t) }} />
             </>
           ) : (
             <p className="p-6 text-center text-[13.5px] font-semibold text-[var(--ink-2)]">No services in this plan. <Link to={`/o/${o.id}/plan`} className="font-extrabold text-[var(--brand)]">Add some</Link></p>

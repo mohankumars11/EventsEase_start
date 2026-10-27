@@ -15,6 +15,8 @@ import { OCCASION } from '../data/occasions'
 import { usePlan } from '../state/PlanContext'
 import { MEALS, STATUS, addGuests, getInvitation, guestsCsv, inviteText, markSent, parseGuestList, removeGuest, rsvpLink, saveInvitation, shareText, tally, updateGuest, whatsappUrl } from '../lib/rsvp'
 import { BackHeader, Sheet } from '../ui/kit'
+import InviteCard from '../ui/InviteCard'
+import { parseTheme } from '../data/inviteTemplates'
 
 const FILTERS = [['all', 'All'], ['attending', 'Coming'], ['maybe', 'Maybe'], ['declined', 'Can’t come'], ['pending', 'Not replied'], ['unseen', 'Not seen']]
 const SIDES = ['Family', 'Friends', 'Bride’s side', 'Groom’s side', 'Work', 'Neighbours']
@@ -66,6 +68,7 @@ export default function InviteHost() {
     const a = Object.assign(document.createElement('a'), { href: url, download: `${inv.title.replace(/[^\w]+/g, '-')}-guests.csv` })
     document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000)
   }
+  const recent = guests.filter(g => g.responded_at).sort((a, b) => b.responded_at.localeCompare(a.responded_at)).slice(0, 5)
   const planned = inv.occasion_id && plan.event.occasionId === inv.occasion_id
   const today = inv.event_date && inv.event_date === new Date().toISOString().slice(0, 10)
 
@@ -73,31 +76,49 @@ export default function InviteHost() {
     <main className="cx-enter cx-cream min-h-[100dvh] pb-[calc(env(safe-area-inset-bottom,0px)+110px)]">
       <BackHeader title={inv.title} sub={occ?.name ?? 'Invitation'} right={<Link to={`/invites/${inv.id}/edit`} aria-label="Edit invitation" className="cx-press grid h-11 w-11 place-items-center rounded-full bg-white text-[var(--am-ink)] shadow-[0_0_0_1px_#EEE6FA]"><Pencil size={18} /></Link>} />
 
-      {/* Headcount */}
-      <section className="mx-3 rounded-[24px] bg-white p-4 shadow-[0_0_0_1px_#EEE6FA]" data-headcount>
-        <div className="flex items-end justify-between">
-          <div>
-            <p className="text-[12px] font-extrabold uppercase tracking-[0.12em] text-[#0B6B3D]">Coming</p>
-            <p className="cx-num text-[40px] font-black leading-none tracking-[-0.04em]">{t.heads}<span className="ml-1.5 text-[15px] font-extrabold tracking-normal text-[var(--ink-3)]">people</span></p>
-            <p className="mt-1 text-[12px] font-bold text-[var(--ink-2)]">{t.adults} adults{inv.allow_kids ? ` · ${t.kids} children` : ''}{today ? ` · ${t.arrived} arrived` : ''}</p>
-          </div>
-          <div className="text-right text-[12px] font-extrabold">
-            <p className="text-[#8A5300]">{t.maybe} maybe</p><p className="text-[var(--ink-3)]">{t.declined} can’t come</p><p className="text-[var(--brand)]">{t.pending} not replied</p>
-            <p className="flex items-center justify-end gap-1 text-[var(--ink-3)]"><Eye size={12} />{t.opened}/{t.invited} seen</p>
+      {/* The card they received */}
+      <Link to={`/invites/${inv.id}/edit`} className="mx-3 flex items-center gap-3 rounded-[18px] bg-white p-2.5 shadow-[0_0_0_1px_#EEE6FA]" data-host-card>
+        <span className="w-[58px] shrink-0"><InviteCard inv={inv} occasion={occ} theme={inv.theme} size="mini" /></span>
+        <span className="min-w-0 flex-1"><span className="block truncate text-[14px] font-extrabold">{parseTheme(inv.theme, occ).t.name}</span><span className="block text-[11.5px] font-semibold text-[var(--ink-3)]">{inv.status === 'draft' ? 'Draft — not sent yet' : inv.status === 'closed' ? 'RSVPs closed' : 'Live · guests can reply'}</span></span>
+        <span className="shrink-0 rounded-full bg-[var(--am-100)] px-3 py-1.5 text-[12px] font-extrabold text-[var(--am-ink)]">Edit design</span>
+      </Link>
+
+      {/* The dashboard */}
+      <section className="mx-3 mt-3 rounded-[24px] bg-white p-4 shadow-[0_0_0_1px_#EEE6FA]" data-headcount>
+        <div className="flex items-center gap-4">
+          <Donut t={t} />
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#0B6B3D]">Coming</p>
+            <p className="cx-num text-[38px] font-black leading-none tracking-[-0.04em]">{t.heads}<span className="ml-1 text-[14px] font-extrabold tracking-normal text-[var(--ink-3)]">people</span></p>
+            <p className="mt-1 text-[12px] font-bold text-[var(--ink-2)]">{t.adults} adults{inv.allow_kids ? ` · ${t.kids} children` : ''}</p>
+            {today && <p className="mt-0.5 text-[12px] font-extrabold text-[#0C831F]">{t.arrived} arrived so far</p>}
           </div>
         </div>
-        <div className="mt-3 flex h-2 overflow-hidden rounded-full bg-[#F3ECFF]">
-          {[['attending', '#16A34A'], ['maybe', '#F59E0B'], ['declined', '#CBD5E1']].map(([k, c]) => <span key={k} style={{ width: `${t.invited ? (t[k] / t.invited) * 100 : 0}%`, background: c }} />)}
+        <div className="mt-4 grid grid-cols-4 gap-1.5 text-center">
+          {TILES.map(([k, l, c, bg]) => (
+            <button key={k} type="button" onClick={() => setFilter(k)} className="cx-press rounded-[14px] py-2.5" style={{ background: bg }} data-tile={k}>
+              <span className="cx-num block text-[21px] font-black leading-none" style={{ color: c }}>{t[k]}</span>
+              <span className="mt-1 block text-[10.5px] font-extrabold text-[var(--ink-2)]">{l}</span>
+            </button>
+          ))}
+        </div>
+        <div className="mt-3 grid grid-cols-2 gap-1.5 text-[12px] font-bold">
+          <span className="flex items-center justify-between rounded-[12px] bg-[#FAF8FD] px-3 py-2"><span className="flex items-center gap-1 text-[var(--ink-2)]"><Eye size={13} />Seen</span><b className="cx-num">{t.opened}/{t.invited}</b></span>
+          <span className="flex items-center justify-between rounded-[12px] bg-[#FAF8FD] px-3 py-2"><span className="text-[var(--ink-2)]">Replied</span><b className="cx-num">{t.invited ? Math.round(((t.invited - t.pending) / t.invited) * 100) : 0}%</b></span>
         </div>
         {inv.ask_meal && Object.keys(t.meals).length > 0 && (
-          <p className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[12px] font-bold text-[var(--ink-2)]">{MEALS.filter(([k]) => t.meals[k]).map(([k, l]) => <span key={k}>{l}: <b>{t.meals[k]}</b></span>)}</p>
+          <div className="mt-3"><p className="text-[11px] font-extrabold uppercase tracking-[0.1em] text-[var(--ink-3)]">Food</p>
+            <div className="mt-1.5 flex flex-wrap gap-1.5">{MEALS.filter(([k]) => t.meals[k]).map(([k, l]) => <span key={k} className="rounded-full bg-[#FFF4DA] px-2.5 py-1 text-[12px] font-extrabold text-[#8A5300]">{l} · {t.meals[k]}</span>)}</div>
+          </div>
         )}
         {inv.invitation_functions.length > 0 && (
-          <div className="mt-3 grid grid-cols-2 gap-1.5">
-            {inv.invitation_functions.map(f => {
-              const n = guests.filter(g => g.status === 'attending' && g.invitation_guest_functions?.find(x => x.function_id === f.id)?.attending).reduce((s, g) => s + g.adults + g.kids, 0)
-              return <span key={f.id} className="flex items-center justify-between rounded-[12px] bg-[#FAF8FD] px-3 py-2 text-[12px] font-bold"><span className="truncate">{f.name}</span><b className="cx-num shrink-0 pl-2">{n}</b></span>
-            })}
+          <div className="mt-3"><p className="text-[11px] font-extrabold uppercase tracking-[0.1em] text-[var(--ink-3)]">By function</p>
+            <div className="mt-1.5 grid grid-cols-2 gap-1.5">
+              {inv.invitation_functions.map(f => {
+                const n = guests.filter(g => g.status === 'attending' && g.invitation_guest_functions?.find(x => x.function_id === f.id)?.attending).reduce((sum, g) => sum + g.adults + g.kids, 0)
+                return <span key={f.id} className="flex items-center justify-between rounded-[12px] bg-[#FAF8FD] px-3 py-2 text-[12px] font-bold"><span className="truncate">{f.name}</span><b className="cx-num shrink-0 pl-2">{n}</b></span>
+              })}
+            </div>
           </div>
         )}
         {planned && t.heads > 0 && plan.event.guests !== t.heads && (
@@ -106,6 +127,22 @@ export default function InviteHost() {
           </button>
         )}
       </section>
+
+      {/* Latest replies */}
+      {recent.length > 0 && (
+        <section className="mx-3 mt-3 rounded-[20px] bg-white p-3.5 shadow-[0_0_0_1px_#EEE6FA]" data-recent>
+          <p className="text-[13px] font-extrabold">Latest replies</p>
+          <ul className="mt-2 space-y-1.5">
+            {recent.map(g => (
+              <li key={g.id} className="flex items-center gap-2 text-[12.5px] font-bold">
+                <span className={'grid h-7 w-7 shrink-0 place-items-center rounded-full text-[11px] font-black ' + STATUS[g.status].tone}>{g.name[0]?.toUpperCase()}</span>
+                <span className="min-w-0 flex-1 truncate"><b>{g.name}</b> — {STATUS[g.status].label.toLowerCase()}{g.status === 'attending' ? ` (${g.adults + g.kids})` : ''}</span>
+                <span className="shrink-0 text-[11px] font-semibold text-[var(--ink-3)]">{ago(g.responded_at)}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {/* Actions */}
       <div className="mx-3 mt-3 grid grid-cols-3 gap-2">
@@ -219,5 +256,33 @@ function GuestSheet({ g, inv, onClose, onChanged }) {
         <button type="button" onClick={async () => { if (confirm(`Remove ${g.name} from the list?`)) { await removeGuest(g.id); onChanged() } }} className="flex items-center gap-1.5 pt-2 text-[13px] font-extrabold text-[#9B1A2A]"><Trash2 size={15} />Remove guest</button>
       </div>
     </Sheet>
+  )
+}
+
+const TILES = [['attending', 'Coming', '#0C831F', '#E9F8EF'], ['maybe', 'Maybe', '#B45309', '#FFF4DA'], ['declined', 'Can’t', '#64748B', '#F1F5F9'], ['pending', 'Waiting', '#6D28D9', '#F3ECFF']]
+
+function ago(iso) {
+  const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000)
+  return m < 1 ? 'just now' : m < 60 ? `${m}m ago` : m < 1440 ? `${Math.round(m / 60)}h ago` : `${Math.round(m / 1440)}d ago`
+}
+
+/* Everyone invited, as one ring: coming, maybe, can't, waiting. */
+function Donut({ t }) {
+  const parts = [[t.attending, '#16A34A'], [t.maybe, '#F59E0B'], [t.declined, '#CBD5E1'], [t.pending, '#DDD0FB']]
+  const C = 2 * Math.PI * 40
+  let off = 0
+  return (
+    <span className="relative block h-[104px] w-[104px] shrink-0" aria-label={`${t.attending} coming, ${t.maybe} maybe, ${t.declined} can’t, ${t.pending} waiting`}>
+      <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
+        <circle cx="50" cy="50" r="40" fill="none" stroke="#F3EEF9" strokeWidth="13" />
+        {t.invited > 0 && parts.map(([n, c], k) => {
+          const len = (n / t.invited) * C
+          const el = n ? <circle key={k} cx="50" cy="50" r="40" fill="none" stroke={c} strokeWidth="13" strokeDasharray={`${len} ${C - len}`} strokeDashoffset={-off} /> : null
+          off += len
+          return el
+        })}
+      </svg>
+      <span className="absolute inset-0 grid place-items-center text-center"><span><span className="cx-num block text-[20px] font-black leading-none">{t.invited}</span><span className="text-[9.5px] font-extrabold uppercase tracking-[0.08em] text-[var(--ink-3)]">invited</span></span></span>
+    </span>
   )
 }
