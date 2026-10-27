@@ -56,3 +56,38 @@ export async function myPlans(userId) {
     .eq('customer_id', userId).order('updated_at', { ascending: false }).limit(20)
   return error ? [] : data
 }
+
+/**
+ * After checkout: tie each booked line to its plan's service row, so the
+ * saved plan knows which services are booked and with whom.
+ * `results` are Checkout's per-line outcomes ({ occasionId, tradeId, serviceId, lineId }).
+ */
+export async function linkBookings(userId, results = []) {
+  if (!userId) return { ok: false, reason: 'signed-out' }
+  const booked = results.filter(r => r.lineId && r.tradeId && r.occasionId)
+  for (const occ of [...new Set(booked.map(r => r.occasionId))]) {
+    const { data: plan } = await supabase.from('event_plans').select('id').eq('customer_id', userId).eq('client_key', `occ:${occ}`).maybeSingle()
+    if (!plan) continue
+    const rows = booked.filter(r => r.occasionId === occ).map(r => ({ plan_id: plan.id, trade_id: r.tradeId, decision: 'selected', vendor_service_id: r.serviceId ?? null, booking_line_id: r.lineId }))
+    const { error } = await supabase.from('event_plan_services').upsert(rows, { onConflict: 'plan_id,trade_id' })
+    if (error) return { ok: false, reason: error.message }
+    await supabase.from('event_plans').update({ status: 'booked' }).eq('id', plan.id)
+  }
+  return { ok: true }
+}
+
+const PICK = { selected: 'need', removed: 'skip', arranged: 'have', later: 'later' }
+const ABOUT = ['venueProvides', 'setting', 'formats', 'food', 'drinks', 'media', 'travel', 'public', 'children', 'accessibility', 'privacy', 'budget']
+
+/** A saved plan back into the phone's plan state: { event, picks }. */
+export function planFromSaved(row) {
+  const c = row.context ?? {}
+  const event = {
+    occasionId: row.occasion_id, date: c.date ?? null, time: c.time ?? null, hours: c.hours ?? null, guests: c.guests ?? null,
+    venue: c.venueBooked ? 'have' : 'need', venueKind: null,
+    context: Object.fromEntries(Object.entries(c).filter(([k]) => ABOUT.includes(k))),
+  }
+  const picks = {}
+  for (const s of row.event_plan_services ?? []) if (PICK[s.decision]) picks[s.trade_id] = PICK[s.decision]
+  return { event, picks }
+}

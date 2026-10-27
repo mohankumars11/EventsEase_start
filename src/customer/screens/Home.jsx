@@ -69,6 +69,7 @@ export default function Home() {
   const photo = profile?.avatar_url ?? user?.user_metadata?.avatar_url ?? user?.user_metadata?.picture ?? null
   const initial = (name || user?.email || 'S').trim()[0].toUpperCase()
   const celebrate = door === 'occasions'
+  const [invitesSeen] = useState(() => { try { return localStorage.getItem('sbm.cx.invites.seen') === '1' } catch { return false } })
   const hints = useMemo(() => shuffle([...OCCASIONS.filter(o => o.featured).map(o => o.name), ...TRADES.map(t => t.label), ...CATEGORIES.map(c => c.short)]).slice(0, 50), [])
   const sat = useMemo(nextSaturday, [])
   const days = Math.round((sat - new Date().setHours(0, 0, 0, 0)) / 864e5)
@@ -92,6 +93,11 @@ export default function Home() {
           </button>
           <div className="flex shrink-0 items-center gap-1.5">
             <Link to="/help" aria-label="Help" className="cx-press grid h-10 w-10 place-items-center rounded-full bg-white text-[var(--am-ink)] shadow-[0_4px_12px_-6px_rgba(58,18,144,.35)]" data-help><Headset size={18} /></Link>
+            <Link to="/invites" aria-label="Invitations and RSVP" onClick={() => { try { localStorage.setItem('sbm.cx.invites.seen', '1') } catch { /* off */ } }}
+              className="cx-press relative grid h-10 w-10 place-items-center rounded-full bg-white text-[#DB2777] shadow-[0_4px_12px_-6px_rgba(58,18,144,.35)]" data-head-invites>
+              <MailOpen size={19} />
+              {!invitesSeen && <span className="absolute -right-1 -top-1 rounded-full bg-[#DB2777] px-1.5 py-[1px] text-[8.5px] font-black tracking-[0.04em] text-white ring-2 ring-[#FFF7EE]">NEW</span>}
+            </Link>
             <Link to="/notifications" aria-label="Notifications" className="cx-press grid h-10 w-10 place-items-center rounded-full bg-white text-[var(--am-ink)] shadow-[0_4px_12px_-6px_rgba(58,18,144,.35)]"><Bell size={18} /></Link>
             <Link to="/me" aria-label="Your profile" className="cx-press relative grid h-10 w-10 place-items-center overflow-hidden rounded-full bg-gradient-to-br from-[#A57BFF] to-[#6D35E0] text-[15px] font-extrabold text-white ring-2 ring-white" data-avatar>
               {photo ? <img src={photo} alt="" className="absolute inset-0 h-full w-full object-cover" referrerPolicy="no-referrer" /> : initial}
@@ -117,14 +123,12 @@ export default function Home() {
       </div>
 
       <section style={{ background: CREAM }} className="pb-2">
-        {/* The two doors, shaped like the search box. */}
-        <div className="mx-4 mt-1 grid grid-cols-2 gap-2" role="tablist">
-          {[['occasions', 'Celebrations', 'Book by occasion'], ['services', 'Book a Service', 'Masters are ready']].map(([id, t, sub]) => (
+        {/* One bar, two sides — the same shape as the search box, a little shorter. */}
+        <div className="relative mx-4 mt-1 grid h-[44px] grid-cols-2 rounded-[14px] bg-white p-1 shadow-[0_0_0_1px_#EDE6DC,0_8px_20px_-14px_rgba(20,15,31,.3)]" role="tablist" data-door-bar>
+          <span aria-hidden className={'absolute bottom-1 left-1 top-1 w-[calc(50%-4px)] rounded-[11px] bg-gradient-to-r from-[#0C831F] to-[#16A34A] shadow-[0_6px_14px_-8px_rgba(12,131,31,.9)] transition-transform duration-300 ease-out ' + (celebrate ? 'translate-x-0' : 'translate-x-full')} />
+          {[['occasions', 'Celebrations'], ['services', 'Book a Service']].map(([id, t]) => (
             <button key={id} type="button" role="tab" aria-selected={door === id} onClick={() => choose(id)} data-door={t}
-              className={'cx-press relative flex h-[46px] flex-col items-center justify-center overflow-hidden rounded-[14px] transition-all duration-300 ' + (door === id ? 'cx-door-on bg-gradient-to-r from-[#0C831F] to-[#16A34A] text-white shadow-[0_8px_18px_-10px_rgba(12,131,31,.85)]' : 'bg-white text-[#14532D] shadow-[0_0_0_1px_#EDE6DC,0_8px_20px_-14px_rgba(20,15,31,.3)]')}>
-              <span className="text-[14px] font-black leading-tight tracking-[-0.03em]">{t}</span>
-              <span className={'text-[10px] font-semibold leading-tight ' + (door === id ? 'text-white/80' : 'text-[var(--ink-3)]')}>{sub}</span>
-            </button>
+              className={'relative z-10 rounded-[11px] text-[14px] font-black tracking-[-0.02em] transition-colors duration-300 ' + (door === id ? 'text-white' : 'text-[#14532D]')}>{t}</button>
           ))}
         </div>
 
@@ -217,18 +221,28 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Refunds & cancellation, said up front ───────────────────── */}
-      <Link to="/help#cancellation" className="cx-press mx-3 mt-4 flex items-center gap-3 rounded-[20px] bg-[#F1FBF5] p-3.5 ring-1 ring-[#CDEFDC]" data-refunds>
-        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[14px] bg-white text-[#0C831F]"><RotateCcw size={21} /></span>
-        <span className="min-w-0 flex-1">
-          <span className="block text-[14.5px] font-extrabold text-[#0B4F2A]">Refunds & cancellation, made clear</span>
-          <span className="block text-[12px] font-semibold leading-snug text-[#3C7A5A]">100% back before a master accepts · 90% up to 2 days before · see the full policy</span>
-        </span>
-        <ChevronRight size={18} className="shrink-0 text-[#0C831F]" />
-      </Link>
+      {/* ── Invites and refunds: two light cards, one column ───────── */}
+      <div className="mx-3 mt-3 space-y-2">
+        <Link to="/invites" className="cx-press flex items-center gap-3 rounded-[18px] bg-white p-3 shadow-[0_0_0_1px_#EEE6FA]" data-home-invites>
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[12px] bg-[#FDECF4] text-[#DB2777]"><MailOpen size={20} /></span>
+          <span className="min-w-0 flex-1">
+            <span className="flex items-center gap-1.5 text-[14px] font-extrabold text-[var(--ink)]">Send invites. Count every guest.<span className="rounded-full bg-[#E9F8EF] px-1.5 py-[1px] text-[9.5px] font-extrabold uppercase text-[#0B6B3D]">Free</span></span>
+            <span className="block truncate text-[11.5px] font-semibold text-[var(--ink-3)]">WhatsApp invitations with one-tap RSVP</span>
+          </span>
+          <ChevronRight size={17} className="shrink-0 text-[var(--brand)]" />
+        </Link>
+        <Link to="/help#cancellation" className="cx-press flex items-center gap-3 rounded-[18px] bg-white p-3 shadow-[0_0_0_1px_#EEE6FA]" data-refunds>
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[12px] bg-[#E9F8EF] text-[#0C831F]"><RotateCcw size={19} /></span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[14px] font-extrabold text-[var(--ink)]">Refunds & cancellation, made clear</span>
+            <span className="block truncate text-[11.5px] font-semibold text-[var(--ink-3)]">100% back before a master accepts · 90% up to 2 days before</span>
+          </span>
+          <ChevronRight size={17} className="shrink-0 text-[var(--brand)]" />
+        </Link>
+      </div>
 
       {/* ── Four promises ────────────────────────────────────────────── */}
-      <section className="mx-3 mt-5 grid grid-cols-4 overflow-hidden rounded-[22px] bg-white shadow-[0_0_0_1px_#EEE6FA]">
+      <section className="mx-3 mt-2 grid grid-cols-4 overflow-hidden rounded-[18px] bg-white shadow-[0_0_0_1px_#EEE6FA]">
         {PROMISES.map(([I, t, d, c, bg], k) => (
           <div key={t} className={'flex flex-col items-center px-1 py-3 text-center ' + (k ? 'border-l border-[#F1ECF8]' : '')}>
             <span className="grid h-10 w-10 place-items-center rounded-[14px]" style={{ background: bg, color: c }}><I size={20} strokeWidth={2.3} /></span>
@@ -239,23 +253,13 @@ export default function Home() {
       </section>
 
       {/* ── The offer, edge to edge ──────────────────────────────────── */}
-      <section className="relative mt-5 overflow-hidden bg-gradient-to-r from-[#FFF4D6] via-[#FFEBD2] to-[#FFE0EC] px-4 py-5" data-offer>
+      <section className="relative mt-4 overflow-hidden bg-gradient-to-r from-[#FFF4D6] via-[#FFEBD2] to-[#FFE0EC] px-4 py-5" data-offer>
         <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#B45309]">Welcome offer</p>
         <p className="mt-1 text-[30px] font-black leading-none tracking-[-0.04em] text-[#1C1033]">10% OFF</p>
         <p className="mt-1 max-w-[62%] text-[12.5px] font-semibold leading-snug text-[#5B4A3A]">On your first celebration booking, plus a welcome hamper.</p>
         <button type="button" onClick={() => { choose('occasions'); toGrid() }} className="cx-press mt-3 inline-flex h-10 items-center gap-1.5 rounded-full bg-[#1C1033] px-4 text-[13px] font-extrabold text-white">Book a celebration<ArrowRight size={15} /></button>
         <Gift size={92} strokeWidth={1.2} className="absolute -right-2 bottom-2 text-[#F59E0B]/40" />
       </section>
-
-      {/* ── Invitations & RSVP ─────────────────────────────────────── */}
-      <Link to="/invites" className="cx-press relative mx-3 mt-4 flex items-center gap-3 overflow-hidden rounded-[22px] bg-gradient-to-r from-[#6D28D9] to-[#9333EA] p-4 text-white" data-home-invites>
-        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-[15px] bg-white/15"><MailOpen size={24} /></span>
-        <span className="min-w-0 flex-1">
-          <span className="block text-[16px] font-black tracking-[-0.02em]">Send invites. Count every guest.</span>
-          <span className="block text-[12px] font-semibold text-white/80">WhatsApp invitations with one-tap RSVP — free</span>
-        </span>
-        <ChevronRight size={19} className="shrink-0" />
-      </Link>
 
       {/* ── Book a service, edge to edge ─────────────────────────────── */}
       <section className="relative overflow-hidden bg-gradient-to-r from-[#E8F8EE] to-[#E6F2FF] px-4 py-5" data-service-band>
@@ -297,6 +301,8 @@ const SCENES = {
   occasions: [
     { lines: ['Book Your', 'Celebration', 'in Minutes'], ask: ['Booked your party yet?', '10% off your first booking'],
       card: { icon: CalendarCheck2, tone: '#7C3AED', title: 'Birthday Party', sub: '6 masters lined up', meter: 1 } },
+    { lines: ['Invite', 'Everyone in', 'One Tap'], ask: ['Who’s coming? Know it live', 'Free WhatsApp RSVP'],
+      card: { icon: MailOpen, tone: '#DB2777', title: 'WhatsApp invites', sub: 'Live RSVP headcount', to: '/invites' } },
     { lines: ['No Waiting', 'for Quotes.', 'Prices Upfront'], ask: ['Seen the price before you book?', 'No “we’ll call you back”'],
       card: { icon: IndianRupee, tone: '#B45309', title: '₹815 / plate', sub: 'Catering · price shown upfront' } },
     { lines: ['No Chasing', 'for Replies.', 'Masters Ready'], ask: ['Tried instant booking?', 'Ready on your date'],
@@ -313,6 +319,8 @@ const SCENES = {
   services: [
     { lines: ['Book the', 'Right Service', 'in Minutes'], ask: ['Need a photographer today?', '10% off your first booking'],
       card: { icon: CalendarCheck2, tone: '#7C3AED', title: '11 photographers', sub: 'Near you · instant' } },
+    { lines: ['Invite', 'Everyone in', 'One Tap'], ask: ['Who’s coming? Know it live', 'Free WhatsApp RSVP'],
+      card: { icon: MailOpen, tone: '#DB2777', title: 'WhatsApp invites', sub: 'Live RSVP headcount', to: '/invites' } },
     { lines: ['No Enquiries.', 'No Waiting.', 'Just Book'], ask: ['Seen the price before you book?', 'Pick, pay, done'],
       card: { icon: IndianRupee, tone: '#B45309', title: '₹4,348', sub: 'Photography · price upfront' } },
     { lines: ['Masters Are', 'Ready for', 'Your Date'], ask: ['Tried instant booking?', 'Verified before they go live'],

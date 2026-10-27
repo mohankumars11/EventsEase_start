@@ -5,9 +5,12 @@
  * adding to the next event. Celebrations still being planned on this
  * phone sit at the top, so nothing in progress is hidden.
  */
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../../context/AuthContext'
+import { myPlans, planFromSaved } from '../lib/eventPlans'
 import { Link } from 'react-router-dom'
-import { ArrowRight, Bell, CalendarDays, Search, Sparkles } from 'lucide-react'
+import { ArrowRight, Bell, CalendarDays, CloudDownload, MailOpen, Search, Sparkles } from 'lucide-react'
 import { usePlan, needsFor } from '../state/PlanContext'
 import { OCCASION } from '../data/occasions'
 import { TRADE } from '../data/trades'
@@ -57,7 +60,8 @@ export default function Plans() {
               const next = needed.find(t => !plan.lineFor(id, t))
               const pct = needed.length ? Math.round((picked.length / needed.length) * 100) : 0
               return (
-                <Link key={id} to={next ? `/o/${id}/match` : '/plan'} className="cx-press flex gap-3 rounded-[20px] bg-white p-2.5 shadow-[0_0_0_1px_#EEE6FA]" data-plan-card={id}>
+                <div key={id} className="overflow-hidden rounded-[20px] bg-white shadow-[0_0_0_1px_#EEE6FA]" data-plan-card={id}>
+                <Link to={next ? `/o/${id}/match` : '/plan'} className="cx-press flex gap-3 p-2.5">
                   <ArtFill art={occasionArt(o)} tone={o.tone} className="h-[78px] w-[78px] shrink-0 rounded-[14px]" inset="10%" />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[15px] font-extrabold tracking-[-0.02em]">{o.name}</p>
@@ -66,6 +70,10 @@ export default function Plans() {
                     <p className="mt-1.5 flex items-center justify-between text-[12px] font-extrabold text-[var(--brand)]">{next ? `Next: ${TRADE[next].label}` : 'Ready to pay'}<ArrowRight size={14} /></p>
                   </div>
                 </Link>
+                <Link to={`/invites/new?o=${id}`} className="flex items-center gap-2 border-t border-[#F3EEF9] bg-[#FFF8FB] px-3 py-2.5 text-[12.5px] font-extrabold text-[#BE185D]" data-plan-invite={id}>
+                  <MailOpen size={15} />Invite guests · see who’s coming<ArrowRight size={14} className="ml-auto" />
+                </Link>
+                </div>
               )
             })}
             {solo.length > 0 && (
@@ -76,6 +84,8 @@ export default function Plans() {
           </div>
         </section>
       )}
+
+      {(tab === 'all' || tab === 'upcoming') && <SavedPlans skip={ids} onResume={row => { const { event, picks } = planFromSaved(row); plan.setEvent(event); Object.entries(picks).forEach(([t, v]) => plan.setPick(row.occasion_id, t, v)) }} />}
 
       <Booked tab={tab} />
 
@@ -92,5 +102,36 @@ export default function Plans() {
         </div>
       </section>
     </main>
+  )
+}
+
+/* Plans saved to the account from another phone (or before a reinstall):
+   one tap puts the plan — date, guests, event details, choices — back. */
+function SavedPlans({ skip, onResume }) {
+  const { user } = useAuth()
+  const navigate = useNavigate()
+  const [rows, setRows] = useState([])
+  useEffect(() => { if (user) myPlans(user.id).then(setRows).catch(() => {}) }, [user])
+  const list = rows.filter(r => OCCASION[r.occasion_id] && !skip.includes(r.occasion_id) && r.status !== 'archived')
+  if (!list.length) return null
+  return (
+    <section className="px-4 pb-4" data-saved-plans>
+      <h2 className="pb-2 text-[12px] font-extrabold uppercase tracking-[0.12em] text-[var(--ink-3)]">Saved on your account</h2>
+      <div className="space-y-2">
+        {list.map(r => {
+          const o = OCCASION[r.occasion_id]
+          return (
+            <button key={r.id} type="button" onClick={() => { onResume(r); navigate(`/o/${o.id}/plan`) }} className="cx-press flex w-full items-center gap-3 rounded-[18px] bg-white p-2.5 text-left shadow-[0_0_0_1px_#EEE6FA]" data-resume={o.id}>
+              <ArtFill art={occasionArt(o)} tone={o.tone} className="h-14 w-14 shrink-0 rounded-[12px]" inset="10%" />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[14.5px] font-extrabold">{o.name}</span>
+                <span className="block text-[11.5px] font-bold text-[var(--ink-3)]">{r.context?.date ? dayLabel(r.context.date) : 'Date not set'} · {r.status === 'booked' ? 'Booked' : 'Planning'}</span>
+              </span>
+              <span className="flex shrink-0 items-center gap-1 rounded-full bg-[var(--am-100)] px-3 py-1.5 text-[12px] font-extrabold text-[var(--am-ink)]"><CloudDownload size={14} />Resume</span>
+            </button>
+          )
+        })}
+      </div>
+    </section>
   )
 }

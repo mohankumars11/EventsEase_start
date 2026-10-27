@@ -19,7 +19,7 @@
  */
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { AlertTriangle, CalendarDays, CheckCircle2, Clock3, Loader2, Lock, MapPin, Phone, ShieldCheck, Zap } from 'lucide-react'
+import { AlertTriangle, CalendarDays, CheckCircle2, Clock3, Loader2, Lock, MailOpen, MapPin, Phone, ShieldCheck, Zap } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { payLines } from '../../lib/payLines'
@@ -36,6 +36,7 @@ import SignInSheet from './SignInSheet'
 import WhenSheet from './WhenSheet'
 import PlaceSheet from './PlaceSheet'
 import { needsSummary } from '../ui/needs'
+import { linkBookings } from '../lib/eventPlans'
 import { loadCuisines } from '../lib/needs'
 import { supabase as sb } from '../../lib/supabase'
 
@@ -126,6 +127,7 @@ export default function Checkout() {
       }
     }
     plan.recordBookings(results)
+    linkBookings(user?.id, results).catch(() => {}) // the saved 360° plan learns what was booked
     const lineIds = results.filter(r => r.lineId).map(r => r.lineId)
     const sent = results.filter(r => r.quoteRequestId).length
     const failed = results.filter(r => !r.lineId && !r.quoteRequestId)
@@ -225,7 +227,13 @@ export default function Checkout() {
             {phase === 'error' && (outcome?.error ?? outcome?.failed?.[0]?.reasons?.[0] ?? 'Nothing was booked. Please try again.')}
           </p>
           {outcome?.failed?.length > 0 && phase !== 'error' && <p className="mt-2 text-[12.5px] font-bold text-[#9B1A2A]">Not booked: {outcome.failed.map(f => f.name).join(', ')}.</p>}
-          <button type="button" onClick={() => navigate('/plans')} className="cx-press cx-cta mt-5 h-12 w-full rounded-[16px] text-[14px] font-extrabold" data-see-plans>See my plans</button>
+          {phase === 'done' && occ && (
+            <button type="button" onClick={() => navigate(`/invites/new?o=${occ.id}`)} className="cx-press mt-5 flex w-full items-center gap-3 rounded-[16px] bg-[#FDF0F6] p-3 text-left ring-1 ring-[#F5D0E4]" data-done-invite>
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[12px] bg-white text-[#DB2777]"><MailOpen size={19} /></span>
+              <span className="min-w-0 flex-1"><span className="block text-[14px] font-extrabold text-[var(--ink)]">Next: invite your guests</span><span className="block text-[11.5px] font-semibold text-[var(--ink-3)]">WhatsApp invites with RSVP — see who’s coming</span></span>
+            </button>
+          )}
+          <button type="button" onClick={() => navigate('/plans')} className={'cx-press cx-cta h-12 w-full rounded-[16px] text-[14px] font-extrabold ' + (phase === 'done' && occ ? 'mt-2' : 'mt-5')} data-see-plans>See my plans</button>
         </div>
       </Sheet>
     </main>

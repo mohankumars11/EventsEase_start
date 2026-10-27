@@ -34,15 +34,16 @@ export function InvitesList() {
   const [err, setErr] = useState('')
   const [signIn, setSignIn] = useState(false)
   useEffect(() => { if (user) myInvitations().then(setList).catch(e => { setErr(e.message); setList([]) }) }, [user])
+  useEffect(() => { try { localStorage.setItem('sbm.cx.invites.seen', '1') } catch { /* storage off */ } }, [])
 
   return (
     <main className="cx-enter cx-cream min-h-[100dvh] cx-bottom-pad-bar">
       <BackHeader title="Invitations & RSVP" sub="Invite, track who’s coming, count heads" />
-      <section className="mx-3 mt-1 overflow-hidden rounded-[24px] bg-gradient-to-br from-[#6D28D9] to-[#9333EA] p-4 text-white">
-        <p className="text-[21px] font-black leading-tight tracking-[-0.03em]">Send invites on WhatsApp.<br />Know exactly who’s coming.</p>
-        <p className="mt-1 text-[12.5px] font-semibold text-white/80">Guests reply in one tap — no app needed. Headcount, food choices and functions, live.</p>
-        <Link to="/invites/new" className="cx-press mt-3 inline-flex h-11 items-center gap-1.5 rounded-full bg-white pl-4 pr-2 text-[14px] font-extrabold text-[#5B21B6]" data-new-invite>
-          <Plus size={17} />Create an invitation<span className="grid h-7 w-7 place-items-center rounded-full bg-[#F3ECFF]"><ChevronRight size={15} /></span>
+      <section className="mx-3 mt-1 overflow-hidden rounded-[22px] bg-gradient-to-br from-[#FBF7FF] to-[#FDF0F6] p-4 shadow-[0_0_0_1px_#EEE6FA]">
+        <p className="text-[20px] font-black leading-tight tracking-[-0.03em] text-[var(--ink)]">Send invites on WhatsApp.<br /><span className="text-[#DB2777]">Know exactly who’s coming.</span></p>
+        <p className="mt-1 text-[12.5px] font-semibold text-[var(--ink-3)]">Guests reply in one tap — no app needed. Headcount, food choices and functions, live.</p>
+        <Link to="/invites/new" className="cx-press cx-cta mt-3 inline-flex h-11 items-center gap-1.5 rounded-full px-4 text-[14px] font-extrabold" data-new-invite>
+          <Plus size={17} />Create an invitation<ChevronRight size={16} />
         </Link>
       </section>
 

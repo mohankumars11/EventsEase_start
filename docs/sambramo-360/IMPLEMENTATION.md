@@ -73,13 +73,26 @@ back to the bundled rules if none is published or it is invalid.
 - Not available in this repo: a linter or type checker (no ESLint /
   TypeScript configured).
 
-## Blockers
+## Status (27 Oct 2026, after migrations 190 and 191 were applied)
 
-1. **Migration 190 is not applied** (migrations are pasted by hand; no psql
-   here). Until it is, plans save on the phone only, the app uses the bundled
-   rules, and `--apply` / `publish` will fail with "table not found". RLS has
-   therefore not been exercised live — after applying, test anon / customer /
-   admin access before relying on it.
-2. The bundle matrix is category-level (17 distinct core sets across 438
-   occasions). Occasion-specific nuance comes from the rules; the bundle
-   itself says it needs product review.
+- Catalogue imported live: 18 categories, 438 occasions, 34 trades, 14,892
+  matrix rows (`import-catalogue-360.mjs --apply`, idempotent).
+- Rule set `R360-2026.10.27-1` published (`rules360.mjs publish`).
+- RLS proven live: anon reads the catalogue and writes nothing; customer A
+  creates and reads their own plan; customer B cannot read, update or add
+  to it, nor create a plan as A; customers cannot write rules or the matrix.
+- Plans save to the account when signed in, resume on another phone
+  (My Bookings → "Saved on your account"), and booked lines are linked back
+  to `event_plan_services.booking_line_id` after checkout.
+
+## Not done
+
+1. **Admin-side RLS not yet proven live** — needs a session for the admin
+   account; run with the owner's approval.
+2. **Analytics events (§10)** — the customer app has no analytics module;
+   none were added.
+3. **Admin UI for rules** — the documented CLI workflow is the safe
+   configuration path (§8 allows this).
+4. The bundle matrix is category-level (17 distinct core sets across 438
+   occasions); occasion-level nuance comes from the rules. The bundle says
+   it needs product review.
