@@ -6,6 +6,7 @@
  *
  *   <InviteCard inv={...} occasion={o} theme="royal|art|live" size="full|mini" />
  */
+import { useLayoutEffect, useRef, useState } from 'react'
 import { occasionArt } from '../data/art'
 import { parseTheme } from '../data/inviteTemplates'
 
@@ -20,6 +21,9 @@ const WEEKDAY = new Intl.DateTimeFormat('en-IN', { weekday: 'long' })
 const time = t => (t ? new Date(`2000-01-01T${t}`).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' }) : null)
 
 export default function InviteCard({ inv, occasion = null, theme, size = 'full', className = '' }) {
+  /* A thumbnail is the full card drawn at 320 px and scaled to fit — a true
+     miniature, never a re-flowed small version. */
+  if (size === 'mini') return <Mini className={className}><InviteCard inv={inv} occasion={occasion} theme={theme} /></Mini>
   const { t, art, live } = parseTheme(theme ?? inv?.theme, occasion)
   const mini = size === 'mini'
   const d = inv?.event_date || inv?.date ? new Date(`${inv.event_date || inv.date}T00:00:00`) : null
@@ -83,8 +87,8 @@ function Ornament({ kind, t }) {
   )
   if (kind === 'florals') return (
     <svg className="absolute inset-0 h-full w-full" viewBox="0 0 400 500" preserveAspectRatio="xMidYMid slice" aria-hidden>
-      {[[0, 0, 1], [400, 0, -1], [0, 500, -1], [400, 500, 1]].map(([x, y, f], k) => (
-        <g key={k} transform={`translate(${x} ${y}) scale(${f} ${y ? -1 * f : 1})`}>
+      {[[0, 0, 1, 1], [400, 0, -1, 1], [0, 500, 1, -1], [400, 500, -1, -1]].map(([x, y, sx, sy], k) => (
+        <g key={k} transform={`translate(${x} ${y}) scale(${sx} ${sy})`}>
           {[[40, 40, 30], [95, 22, 20], [22, 100, 22], [80, 85, 14]].map(([cx, cy, r], j) => (
             <g key={j}>{[0, 72, 144, 216, 288].map(ang => <ellipse key={ang} cx={cx + r * 0.55 * Math.cos(ang * Math.PI / 180)} cy={cy + r * 0.55 * Math.sin(ang * Math.PI / 180)} rx={r * 0.55} ry={r * 0.38} fill={j % 2 ? '#F9A8C4' : '#F472A6'} fillOpacity=".75" transform={`rotate(${ang} ${cx} ${cy})`} />)}<circle cx={cx} cy={cy} r={r * 0.22} fill="#FDE68A" /></g>
           ))}
@@ -172,6 +176,25 @@ function Sparkles({ color }) {
       {[[12, 18], [82, 14], [70, 62], [18, 72], [50, 8], [88, 86], [8, 46]].map(([x, y], k) => (
         <span key={k} className="cx-sparkle absolute block h-2 w-2 rotate-45 rounded-[2px]" style={{ left: `${x}%`, top: `${y}%`, background: color, animationDelay: `${k * 0.45}s` }} />
       ))}
+    </div>
+  )
+}
+
+function Mini({ children, className = '' }) {
+  const box = useRef(null)
+  const [k, setK] = useState(0.3)
+  useLayoutEffect(() => {
+    const el = box.current
+    if (!el) return
+    const fit = () => setK(el.clientWidth / 320)
+    fit()
+    const ro = new ResizeObserver(fit)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+  return (
+    <div ref={box} className={'relative aspect-[4/5] overflow-hidden rounded-[12px] ' + className} data-invite-mini>
+      <div className="absolute left-0 top-0 w-[320px] origin-top-left" style={{ transform: `scale(${k})` }}>{children}</div>
     </div>
   )
 }

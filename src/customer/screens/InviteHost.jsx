@@ -90,7 +90,7 @@ export default function InviteHost() {
           <div className="min-w-0 flex-1">
             <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#0B6B3D]">Coming</p>
             <p className="cx-num text-[38px] font-black leading-none tracking-[-0.04em]">{t.heads}<span className="ml-1 text-[14px] font-extrabold tracking-normal text-[var(--ink-3)]">people</span></p>
-            <p className="mt-1 text-[12px] font-bold text-[var(--ink-2)]">{t.adults} adults{inv.allow_kids ? ` · ${t.kids} children` : ''}</p>
+            <p className="mt-1 text-[12px] font-bold text-[var(--ink-2)]">{t.adults} {t.adults === 1 ? 'adult' : 'adults'}{inv.allow_kids ? ` · ${t.kids} ${t.kids === 1 ? 'child' : 'children'}` : ''}</p>
             {today && <p className="mt-0.5 text-[12px] font-extrabold text-[#0C831F]">{t.arrived} arrived so far</p>}
           </div>
         </div>
