@@ -15,7 +15,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, CalendarDays, Headset, Wallet, LayoutGrid, Mic, PartyPopper, RotateCcw, Search as SearchIcon, ShieldCheck, Sparkles, Users, X } from 'lucide-react'
+import { ArrowLeft, CalendarDays, Headset, LayoutGrid, MailOpen, Mic, PartyPopper, RotateCcw, Search as SearchIcon, ShieldCheck, Sparkles, Users, Wallet, X } from 'lucide-react'
 import { usePlan } from '../state/PlanContext'
 import { listen, canListen } from '../lib/voice'
 import { CATEGORIES, CATEGORY, FEATURED, OCCASIONS } from '../data/occasions'
@@ -91,6 +91,7 @@ export default function Search() {
             [Headset, 'Help', '/help', '#DB2777', '#FDEBF3'],
             [ShieldCheck, 'Cancellation', '/help#cancellation', '#0F766E', '#E6F6F4'],
             [Users, 'Refer & earn', '/refer', '#7C3AED', '#F3ECFF'],
+            [MailOpen, 'Invites & RSVP', '/invites', '#DB2777', '#FDECF4'],
             [Wallet, 'Wallet', '/wallet', '#0C831F', '#E9F8EF'],
           ].map(([I, t, to, c, bg]) => (
             <Link key={t} to={to} className="cx-press flex flex-col items-center gap-1.5 rounded-[18px] bg-white px-1 py-2.5 text-center shadow-[0_0_0_1px_#F0EBF7]">

@@ -46,6 +46,10 @@ const Explore = lazy(() => import('./screens/Explore'))
 const Family = lazy(() => import('./screens/Family'))
 const Help = lazy(() => import('./screens/Help'))
 const Wallet = lazy(() => import('./screens/Wallet'))
+const Rsvp = lazy(() => import('./screens/Rsvp'))
+const InviteHost = lazy(() => import('./screens/InviteHost'))
+const InvitesList = lazy(() => import('./screens/Invites').then(m => ({ default: m.InvitesList })))
+const InviteEdit = lazy(() => import('./screens/Invites').then(m => ({ default: m.InviteEdit })))
 const Refer = lazy(() => import('./screens/Refer'))
 
 /** Paths that stay on the shared routes on every surface. */
@@ -85,6 +89,10 @@ export default function CustomerApp() {
   useEffect(() => { loadRules().then(setActiveRules).catch(() => {}) }, [])
   const { pathname } = useLocation()
   const { step, next } = useOnboarding()
+  /* A guest opening their RSVP link needs no sign-in, location or alerts. */
+  if (pathname.startsWith('/rsvp/')) {
+    return <div className="cx" data-customer-app><Suspense fallback={<Loading />}><Routes><Route path="/rsvp/:token" element={<Rsvp />} /></Routes></Suspense></div>
+  }
   if (step === 'loading') return <div className="cx" data-customer-app><Loading /></div>
   if (step) return <PlanProvider><div className="cx" data-customer-app><Onboarding step={step} onDone={next} /></div></PlanProvider>
   return (
@@ -114,6 +122,10 @@ export default function CustomerApp() {
             <Route path="/f/:familyId" element={<Family />} />
             <Route path="/help" element={<Help />} />
             <Route path="/wallet" element={<Wallet />} />
+            <Route path="/invites" element={<InvitesList />} />
+            <Route path="/invites/new" element={<InviteEdit />} />
+            <Route path="/invites/:id" element={<InviteHost />} />
+            <Route path="/invites/:id/edit" element={<InviteEdit />} />
             <Route path="/refer" element={<Refer />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

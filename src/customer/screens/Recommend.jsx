@@ -15,8 +15,8 @@
  * master confirms on the next screens. No prices on this screen.
  */
 import { useEffect, useMemo, useState } from 'react'
-import { Navigate, useNavigate, useParams } from 'react-router-dom'
-import { BookmarkPlus, CalendarDays, Check, ChevronRight, CircleHelp, MapPin, MoreHorizontal, Pencil, Plus, Search, Sparkles, Undo2, Users, X } from 'lucide-react'
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
+import { BookmarkPlus, CalendarDays, Check, ChevronRight, CircleHelp, MailOpen, MapPin, MoreHorizontal, Pencil, Plus, Search, Sparkles, Undo2, Users, X } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { OCCASION } from '../data/occasions'
 import { TRADE } from '../data/trades'
@@ -146,7 +146,13 @@ export default function Recommend() {
         </section>
       )}
 
-      <button type="button" onClick={() => setFindOpen(true)} className="cx-press mx-3 mt-6 flex w-[calc(100%-24px)] items-center gap-2.5 rounded-[16px] bg-[#FAF8FD] px-3.5 py-3 text-left shadow-[inset_0_0_0_1px_#E7E1F0]" data-find-any>
+      <Link to={`/invites/new?o=${o.id}`} className="cx-press mx-3 mt-6 flex items-center gap-3 rounded-[18px] bg-gradient-to-r from-[#FDECF4] to-[#F3ECFF] p-3.5 ring-1 ring-[#F5D0E4]" data-plan-invite>
+        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[14px] bg-white text-[#DB2777]"><MailOpen size={20} /></span>
+        <span className="min-w-0 flex-1"><span className="block text-[14.5px] font-extrabold">Invite your guests</span><span className="block text-[12px] font-semibold text-[var(--ink-2)]">WhatsApp invites with RSVP — know your headcount before you book</span></span>
+        <ChevronRight size={17} className="shrink-0 text-[#DB2777]" />
+      </Link>
+
+      <button type="button" onClick={() => setFindOpen(true)} className="cx-press mx-3 mt-3 flex w-[calc(100%-24px)] items-center gap-2.5 rounded-[16px] bg-[#FAF8FD] px-3.5 py-3 text-left shadow-[inset_0_0_0_1px_#E7E1F0]" data-find-any>
         <Search size={17} className="text-[var(--brand)]" /><span className="flex-1 text-[13.5px] font-extrabold text-[var(--ink-2)]">Need something else? Search all 34 services</span><ChevronRight size={16} className="text-[var(--ink-3)]" />
       </button>
       <p className="mt-4 px-4 text-center text-[11px] font-semibold text-[var(--ink-3)]">

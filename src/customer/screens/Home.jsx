@@ -21,7 +21,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowRight, BadgeCheck, Bell, CalendarCheck2, CalendarClock, ChevronDown, ChevronRight, Gift, Headset, IndianRupee, Loader2, LocateFixed, MapPin, Mic, Music2, PartyPopper, RotateCcw, Search, ShieldCheck, Users, UtensilsCrossed, Zap } from 'lucide-react'
+import { ArrowRight, BadgeCheck, Bell, CalendarCheck2, CalendarClock, ChevronDown, ChevronRight, Gift, Headset, IndianRupee, Loader2, LocateFixed, MailOpen, MapPin, Mic, Music2, PartyPopper, RotateCcw, Search, ShieldCheck, Users, UtensilsCrossed, Zap } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { BENGALURU_AREAS } from '../../data/bengaluruAreas'
 import { CATEGORIES, OCCASION, OCCASIONS } from '../data/occasions'
@@ -246,6 +246,16 @@ export default function Home() {
         <button type="button" onClick={() => { choose('occasions'); toGrid() }} className="cx-press mt-3 inline-flex h-10 items-center gap-1.5 rounded-full bg-[#1C1033] px-4 text-[13px] font-extrabold text-white">Book a celebration<ArrowRight size={15} /></button>
         <Gift size={92} strokeWidth={1.2} className="absolute -right-2 bottom-2 text-[#F59E0B]/40" />
       </section>
+
+      {/* ── Invitations & RSVP ─────────────────────────────────────── */}
+      <Link to="/invites" className="cx-press relative mx-3 mt-4 flex items-center gap-3 overflow-hidden rounded-[22px] bg-gradient-to-r from-[#6D28D9] to-[#9333EA] p-4 text-white" data-home-invites>
+        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-[15px] bg-white/15"><MailOpen size={24} /></span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[16px] font-black tracking-[-0.02em]">Send invites. Count every guest.</span>
+          <span className="block text-[12px] font-semibold text-white/80">WhatsApp invitations with one-tap RSVP — free</span>
+        </span>
+        <ChevronRight size={19} className="shrink-0" />
+      </Link>
 
       {/* ── Book a service, edge to edge ─────────────────────────────── */}
       <section className="relative overflow-hidden bg-gradient-to-r from-[#E8F8EE] to-[#E6F2FF] px-4 py-5" data-service-band>
