@@ -62,7 +62,8 @@ export default function InviteNew() {
   const first = fullName.split(/\s+/)[0] || ''
   const pre = OCCASION[q.get('o') ?? ''] ?? null
   const [inv, setInv] = useState(() => blank(pre, first, pre && plan.event.occasionId === pre.id ? plan.event : {}))
-  const [fns, setFns] = useState(() => (pre ? functionsFor(pre).map(name => ({ name, event_date: '', start_time: '', venue_name: '' })) : []))
+  /* Functions start empty: the functions step asks, rather than ticking five for a one-day party. */
+  const [fns, setFns] = useState([])
   const [at, setAt] = useState(pre ? 'design' : 'event')
   const [invId, setInvId] = useState(null)
   const [busy, setBusy] = useState(false)
@@ -85,7 +86,7 @@ export default function InviteNew() {
 
   function pickOccasion(o) {
     setInv(x => ({ ...x, occasion_id: o.id, cover_key: o.id, title: titleFor(o, first), message: notesFor(o)[0], theme: themeString(templatesFor(o)[0].id, { art: true, live: true }) }))
-    setFns(functionsFor(o).map(name => ({ name, event_date: '', start_time: '', venue_name: '' })))
+    setFns([])
     setTimeout(() => go('design'), 160)
   }
 
@@ -247,7 +248,7 @@ function StepDesign({ inv, occ, set, onUse }) {
     <>
       <Q title="Pick a design you love" sub={`${ranked.length} designs · ${rec.size} made for ${occ.name}. Tap one to see it live.`} />
       <div className="cx-noscroll -mx-4 mt-3 flex gap-1.5 overflow-x-auto px-4">
-        {STYLES.filter(([id]) => id === 'all' || id === 'trending' || ranked.some(t => t.style === id)).map(([id, l]) => (
+        {STYLES.filter(([id]) => id === 'all' || (id === 'trending' ? ranked.some(t => t.trending) : ranked.some(t => t.style === id))).map(([id, l]) => (
           <button key={id} type="button" onClick={() => setStyle(id)} className={'shrink-0 rounded-full px-3.5 py-2 text-[12.5px] font-extrabold transition ' + (style === id ? 'bg-[#1C1033] text-white' : 'bg-[#F6F3FA] text-[var(--ink-2)]')}>{id === 'all' ? `For ${occ.name.length > 16 ? 'you' : occ.name}` : l}</button>
         ))}
       </div>
