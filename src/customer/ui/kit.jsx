@@ -63,10 +63,10 @@ export function useScrolling() {
 export function TabBar() {
   const { pathname } = useLocation()
   const navigate = useNavigate()
-  const hidden = useScrolling()
   return (
-    <nav className={'pointer-events-none fixed inset-x-0 bottom-0 z-[150] px-3 transition-transform duration-200 ease-out will-change-transform ' + (hidden ? 'translate-y-[130%]' : 'translate-y-0')}
-      style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 10px)' }} aria-label="Main" data-tabbar={hidden ? 'hidden' : 'shown'}>
+    /* Always there (Mohan, 2026-10-27): the bar never slides away while scrolling. */
+    <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-[150] px-3"
+      style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 10px)' }} aria-label="Main" data-tabbar="shown">
       <div className="pointer-events-auto relative mx-auto grid h-[66px] max-w-[540px] grid-cols-5 items-center rounded-[26px] bg-white px-1 shadow-[0_0_0_1px_#EEE6FA,0_18px_40px_-18px_rgba(58,18,144,.55)]">
         {TABS.map((t, i) => t ? (
           <Link key={t.to} to={t.to} className="cx-press relative flex flex-col items-center gap-0.5" aria-current={t.match(pathname) ? 'page' : undefined} data-tab={t.label}>
@@ -84,19 +84,17 @@ export function TabBar() {
 }
 
 /* ── The search orb ─────────────────────────────────────────────────
- * Just search (Mohan, 2026-10-27): the magnifier alone, breathing in and
- * out, a soft halo pulsing from it. Marigold for someone who has not
- * booked yet (with the 10% first-booking tag), peacock teal once they
- * have. Everything here animates transform and opacity only. */
+ * Just search, and constant (Mohan, 2026-10-27): the magnifier alone,
+ * still, always in full view. Marigold for someone who has not booked
+ * yet (with the 10% first-booking tag), peacock teal once they have. */
 function SearchOrb({ onClick }) {
   const { bookings } = usePlan()
   const back = (bookings?.length ?? 0) > 0
   return (
     <>
-      <span aria-hidden className={'cx-orb-halo pointer-events-none absolute -top-[42px] h-[60px] w-[60px] rounded-full ' + (back ? 'bg-[#14B8A6]' : 'bg-[#FF8A1F]')} />
       <button type="button" onClick={onClick} aria-label="Search" data-orb={back ? 'back' : 'new'}
         className={'cx-press absolute -top-[42px] grid h-[60px] w-[60px] place-items-center rounded-full text-white ring-[5px] ring-white ' + (back ? 'cx-orb-back' : 'cx-orb-new')}>
-        <span className="cx-orb-breathe grid place-items-center"><Search size={25} strokeWidth={2.6} /></span>
+        <Search size={25} strokeWidth={2.6} />
         {!back && <span className="absolute -right-1.5 -top-1 rounded-full bg-white px-1.5 py-[1px] text-[9.5px] font-black text-[#E8430F] shadow-[0_2px_6px_rgba(0,0,0,.18)]">10%</span>}
       </button>
     </>
@@ -106,13 +104,12 @@ function SearchOrb({ onClick }) {
 /* ── The plan bar: what is chosen, what it comes to, one tap to review ── */
 export function PlanBar({ withTabs = true }) {
   const { basket, event } = usePlan()
-  const moving = useScrolling()
   const navigate = useNavigate()
   if (!basket.length) return null
   const { paise: total } = planFloor(basket, event)
   const instant = basket.filter(l => l.instant).length
   return (
-    <div className="pointer-events-none fixed inset-x-0 z-[140] px-3 transition-[bottom] duration-200 ease-out" style={{ bottom: withTabs && !moving ? 'calc(env(safe-area-inset-bottom, 0px) + 88px)' : 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}>
+    <div className="pointer-events-none fixed inset-x-0 z-[140] px-3 transition-[bottom] duration-200 ease-out" style={{ bottom: withTabs ? 'calc(env(safe-area-inset-bottom, 0px) + 88px)' : 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}>
       <button type="button" onClick={() => navigate('/plan')} data-plan-bar
         className="cx-press cx-pop pointer-events-auto mx-auto flex w-full max-w-[540px] items-center gap-3 rounded-[22px] bg-gradient-to-b from-[#F1E9FF] to-[#E2D2FF] p-2 pr-2.5 text-left text-[var(--am-ink)] shadow-[0_0_0_1px_#D6C2FF,0_18px_36px_-16px_rgba(58,18,144,.75)]">
         <span className="flex shrink-0 -space-x-3 pl-1">
