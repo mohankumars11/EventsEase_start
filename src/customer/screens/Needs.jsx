@@ -12,7 +12,7 @@
  */
 import { useEffect, useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
-import { Check, ChevronRight, ListChecks, Sparkles, Target, X } from 'lucide-react'
+import { Check, ChevronRight, ListChecks, Target, X, Zap } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { OCCASION } from '../data/occasions'
 import { TRADE } from '../data/trades'
@@ -23,6 +23,7 @@ import { plural } from '../lib/format'
 import { ActionBar, BackHeader, Journey, Sheet } from '../ui/kit'
 import { ArtFill } from '../ui/art'
 import { needsSummary } from '../ui/needs'
+import Buddy from '../ui/Buddy'
 
 export default function Needs() {
   const { occasionId } = useParams()
@@ -41,6 +42,13 @@ export default function Needs() {
   const left = asking.length - done
   const next = asking.find(t => !isDone(t))
   const pct = asking.length ? Math.round((done / asking.length) * 100) : 100
+  /* Sambu's lines: always about the next tap, and why it is worth it. */
+  const lines = left ? [
+    done ? `Nice — ${done} done! You’re on ${TRADE[next].label} next. How many hours, what style? 20 seconds, I promise.` : `Hi, I’m Sambu! 👋 Tell me what you need from each service and I’ll work out your exact price — so you can pay instantly.`,
+    `Still there? Just ${plural(left, 'more service')} to go — then your masters and prices are ready ⚡`,
+    'No calls, no haggling, no waiting for quotes. Your answers ARE your price.',
+    left === 1 ? 'Almost there! 🎉 One more and you’re done.' : `Feeling stuck? Tap “No preference” inside — that’s a fine answer too.`,
+  ] : ['All done! 🎉 Your masters and their prices are ready — tap “Find my perfect masters”.']
 
   return (
     <main className="cx-enter cx-cream min-h-[100dvh] pb-[calc(env(safe-area-inset-bottom,0px)+150px)]">
@@ -49,11 +57,11 @@ export default function Needs() {
 
       {/* Why this matters — said once, plainly. */}
       <section className="mx-3 mt-1 overflow-hidden rounded-[22px] bg-white p-4 shadow-[0_0_0_1px_#EFE7DD]" data-needs-intro>
-        <p className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#0C831F]"><Target size={13} />Your perfect match starts here</p>
-        <h2 className="mt-1 text-[21px] font-black leading-[1.12] tracking-[-0.035em]">Tell us what you want from each service.</h2>
-        <p className="mt-1 text-[12.5px] font-semibold leading-snug text-[var(--ink-3)]">Whatever you tap, we match to what every master listed — so you see only the ones who do exactly that, not hundreds.</p>
+        <p className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#B45309]"><Zap size={13} className="fill-current" />Your answers are your price</p>
+        <h2 className="mt-1 text-[21px] font-black leading-[1.12] tracking-[-0.035em]">Tell us what you need — we price it for you.</h2>
+        <p className="mt-1 text-[12.5px] font-semibold leading-snug text-[var(--ink-3)]">How many hours, how many guests, what style: we turn it into each master’s exact price and show only the ones who can do it. Add one and pay instantly — no calls, no waiting for quotes.</p>
         <div className="mt-3 grid grid-cols-3 gap-1.5 text-center">
-          {[[ListChecks, 'Tap a service'], [Sparkles, 'Pick what you love'], [Target, 'Only matching masters']].map(([I, t], k) => (
+          {[[ListChecks, 'Tap a service'], [Target, 'Hours & style'], [Zap, 'Your exact price']].map(([I, t], k) => (
             <span key={t} className="flex flex-col items-center gap-1 rounded-[14px] bg-[#FBF8F4] px-1 py-2">
               <span className="grid h-7 w-7 place-items-center rounded-full bg-[#F3ECFF] text-[var(--brand)]"><I size={14} /></span>
               <span className="text-[10.5px] font-extrabold leading-tight text-[var(--ink-2)]">{k + 1}. {t}</span>
@@ -108,6 +116,8 @@ export default function Needs() {
           </button>
         )}
       </ActionBar>
+
+      <Buddy id={`needs-${o.id}`} lines={lines} action={next ? { label: `Tell us about ${TRADE[next].label}`, onClick: () => navigate(`/brief/${next}?o=${o.id}`) } : null} bottom={124} />
 
       <Sheet open={!!removing} onClose={() => setRemoving(null)} title={removing ? `Remove ${TRADE[removing].label}?` : ''}>
         {removing && (

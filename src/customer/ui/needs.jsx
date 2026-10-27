@@ -17,7 +17,8 @@ export function needsSummary(tradeId, value = {}) {
   const picked = qs.filter(q => q.kind !== 'toggle').map(q => (Array.isArray(value[q.key]) ? value[q.key] : []).map(id => q.options.find(o => o.id === id)?.label).filter(Boolean).join(', ')).filter(Boolean)
   const musts = qs.filter(q => q.kind === 'toggle' && value[q.key] === true).length
   const typed = Object.entries(value).filter(([k, v]) => k.endsWith('__typed') && Array.isArray(v)).flatMap(([, v]) => v)
-  const said = [...picked, ...typed.map(x => `“${x}”`), musts ? `${musts} must-have${musts > 1 ? 's' : ''}` : null].filter(Boolean).join(' · ')
+  const qty = [value.$hours ? `${value.$hours} hours` : null, value.$guests ? `${Number(value.$guests).toLocaleString('en-IN')} guests` : null]
+  const said = [...qty, ...picked, ...typed.map(x => `“${x}”`), musts ? `${musts} must-have${musts > 1 ? 's' : ''}` : null].filter(Boolean).join(' · ')
   return said || (value.$any ? 'Any master is fine' : '')
 }
 

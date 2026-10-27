@@ -12,7 +12,7 @@
  */
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, Check, ChevronDown, RotateCcw, Search, Sparkles, X } from 'lucide-react'
+import { ArrowLeft, Check, ChevronDown, Minus, Plus, RotateCcw, Search, Sparkles, X, Zap } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { OCCASION } from '../data/occasions'
 import { TRADE } from '../data/trades'
@@ -20,7 +20,9 @@ import { serviceArt } from '../data/art'
 import { usePlan } from '../state/PlanContext'
 import { partnersFor } from '../lib/market'
 import { answered, courseLabel, filterByNeeds, loadCuisines, loadDishes, needsFor } from '../lib/needs'
-import { plural } from '../lib/format'
+import { plural, rupees } from '../lib/format'
+import { askOf, asksFor, priceRange, withQuotes } from '../lib/quote'
+import Buddy from '../ui/Buddy'
 import { ArtFill } from '../ui/art'
 
 export const NOUN = {
@@ -54,12 +56,31 @@ export default function Brief() {
   const qs = needsFor(tradeId)
   const guests = occ && plan.event.occasionId === occ.id ? plan.event.guests : null
   const fit = useMemo(() => filterByNeeds(all, tradeId, picks, guests), [all, tradeId, picks, guests])
+  /* The answers that make the price: hours and guests, priced per master. */
+  const can = useMemo(() => asksFor(tradeId, all), [tradeId, all])
+  const shown = useMemo(() => withQuotes(fit.list, askOf(picks, { guests })), [fit.list, picks, guests])
+  const range = priceRange(shown)
+  const [cheer, setCheer] = useState(null)
   if (!t) return null
   const choose = qs.filter(q => q.group === 'choose')
   const must = qs.filter(q => q.group === 'must')
   const n = answered(picks)
   const set = (k, v) => setPicks(p => { const { $any, ...rest } = p; return { ...rest, [k]: v } })
-  const done = () => { plan.setNeeds(key, picks); navigate(-1) }
+  const setQty = (k, v) => { setPicks(p => ({ ...p, [k]: v })); setCheer(k === '$hours' ? `${v} hours — great choice! Prices updated ⚡` : `${v.toLocaleString('en-IN')} guests — got it! Food bill worked out.`) }
+  const keepQty = p => Object.fromEntries(Object.entries({ $hours: p.$hours, $guests: p.$guests }).filter(([, v]) => v))
+  const done = () => {
+    plan.setNeeds(key, picks)
+    if (occ && picks.$guests && plan.event.occasionId === occ.id) plan.setEvent({ guests: picks.$guests })
+    navigate(-1)
+  }
+  const noun = NOUN[tradeId] ?? t.label.toLowerCase()
+  const lines = [
+    can.hours && !picks.$hours ? `You’re on ${t.label} — how many hours do you need? One tap and I’ll show your exact price.` : null,
+    can.guests && !picks.$guests && !guests ? 'How many guests are coming? I’ll work out the food bill for you.' : null,
+    range ? `${plural(range.n, 'master')} can do it — from ${rupees(range.lo)}. Tap Done to see them and add one.` : null,
+    'Not sure what to pick? “No preference” is a perfectly good answer 🙂',
+    'Still there? A couple more taps and you can pay instantly — no calls, no waiting ⚡',
+  ].filter(Boolean)
 
   return (
     <main className="cx-enter cx-cream min-h-[100dvh] pb-[calc(env(safe-area-inset-bottom,0px)+120px)]">
@@ -72,7 +93,7 @@ export default function Brief() {
             <p className="truncate text-[11.5px] font-bold text-[var(--ink-3)]">{occ ? `For your ${occ.name}` : t.label}</p>
           </div>
           <span className={'shrink-0 rounded-full px-2.5 py-1.5 text-[12px] font-extrabold transition ' + (fit.list && fit.exact ? 'bg-[#E9F8EF] text-[#0B6B3D]' : 'bg-[#FFF4DA] text-[#7A4B00]')} data-live-count>
-            {fit.list ? `${fit.list.length} ${fit.exact ? 'match' : 'closest'}` : '…'}
+            {shown ? `${shown.length} ${fit.exact ? 'match' : 'closest'}` : '…'}
           </span>
         </div>
         <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-[#F1E9DF]"><div className="h-full rounded-full bg-gradient-to-r from-[#16A34A] to-[#0C831F] transition-all duration-500" style={{ width: `${Math.min(100, (n / Math.max(4, Math.min(qs.length, 8))) * 100)}%` }} /></div>
@@ -81,7 +102,18 @@ export default function Brief() {
       <section className="px-4 pb-2 pt-3">
         <h1 className="text-[24px] font-black leading-[1.1] tracking-[-0.04em]">What do you need from your {NOUN[tradeId] ?? t.label.toLowerCase()}?</h1>
         <p className="mt-1 text-[13px] font-semibold text-[var(--ink-3)]">Whatever you tap, we match to what each master listed — you’ll see only the ones who do exactly that{fit.total ? `, out of ${fit.total}` : ''}.</p>
-        <button type="button" onClick={() => setPicks(p => (p.$any ? {} : { $any: true }))} aria-pressed={!!picks.$any}
+        {(can.hours || can.guests) && (
+          <section className="cx-pop mt-3 rounded-[22px] bg-gradient-to-br from-[#FFF8EA] to-[#FFEFD6] p-3.5 shadow-[0_0_0_1.5px_#FFD9A0]" data-instant-price>
+            <p className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#B45309]"><Zap size={13} className="fill-current" />Your instant price</p>
+            {can.hours && <Qty label={`How many hours do you need your ${noun}?`} unit="hours" options={[2, 3, 4, 5, 6, 8, 10, 12]} value={picks.$hours ?? null} step={1} min={1} max={24} onChange={v => setQty('$hours', v)} />}
+            {can.guests && <Qty label="How many guests?" unit="guests" options={[25, 50, 100, 150, 200, 300, 500]} value={picks.$guests ?? guests ?? null} step={10} min={10} max={5000} onChange={v => setQty('$guests', v)} />}
+            <p className="mt-3 text-[13.5px] font-extrabold text-[#7A3E00]" data-price-range>
+              {range ? <>{plural(range.n, 'master')} · <span className="text-[#0C831F]">{range.text}</span>{picks.$hours ? ` for ${picks.$hours} h` : ''}</> : 'Tap a number — every master’s price updates instantly.'}
+            </p>
+            <p className="mt-0.5 text-[11.5px] font-semibold leading-snug text-[#8A5A1A]">Masters who can’t do it drop out. Add one and pay — no calls, no waiting for quotes.</p>
+          </section>
+        )}
+        <button type="button" onClick={() => setPicks(p => (p.$any ? keepQty(p) : { ...keepQty(p), $any: true }))} aria-pressed={!!picks.$any}
           className={'cx-press mt-3 flex w-full items-center gap-2.5 rounded-[16px] px-3.5 py-3 text-left transition ' + (picks.$any ? 'bg-[#EEFAF2] shadow-[inset_0_0_0_2px_#16A34A]' : 'bg-white shadow-[inset_0_0_0_1px_#EDE5DA]')} data-any>
           <span className={'grid h-6 w-6 shrink-0 place-items-center rounded-full ' + (picks.$any ? 'bg-[#0C831F] text-white' : 'ring-[1.5px] ring-[#D9D0C4]')}>{picks.$any && <Check size={14} strokeWidth={3} />}</span>
           <span className="min-w-0 flex-1"><span className="block text-[14px] font-extrabold">No preference — any {NOUN[tradeId] ?? 'master'} is fine</span><span className="block text-[11.5px] font-semibold text-[var(--ink-3)]">We’ll show every verified master for this</span></span>
@@ -114,12 +146,38 @@ export default function Brief() {
         <div className="mx-auto flex max-w-[540px] gap-2">
           <button type="button" onClick={() => setPicks({})} disabled={!n} className="cx-press flex h-14 shrink-0 items-center gap-1.5 rounded-[18px] bg-[#F6F1EA] px-4 text-[13.5px] font-extrabold text-[var(--ink-2)] disabled:opacity-40" data-clear><RotateCcw size={16} />Clear</button>
           <button type="button" onClick={done} className="cx-press flex h-14 flex-1 items-center justify-center gap-2 rounded-[18px] bg-[#0C831F] text-[15.5px] font-extrabold text-white shadow-[0_12px_24px_-12px_rgba(12,131,31,.9)] disabled:bg-[#CFE9D7] disabled:shadow-none" data-show-masters>
-            {!n ? `Show all ${fit.list?.length ?? ''} masters`.replace('  ', ' ') : !fit.list ? 'Finding masters…' : picks.$any ? `Done · all ${fit.list.length} masters` : fit.exact ? `Done · ${plural(fit.list.length, 'master')} match` : `Done · ${fit.list.length} closest`}
+            {!n ? `Show all ${shown?.length ?? ''} masters`.replace('  ', ' ') : !shown ? 'Finding masters…' : range ? `Done · ${plural(range.n, 'master')} from ${rupees(range.lo)}` : picks.$any ? `Done · all ${shown.length} masters` : fit.exact ? `Done · ${plural(shown.length, 'master')} match` : `Done · ${shown.length} closest`}
           </button>
         </div>
         {fit.list && !fit.exact && <p className="mt-1.5 text-center text-[11.5px] font-bold text-[#8A5A00]">No one does all of it yet — these come closest.</p>}
       </div>
+      <Buddy id={`brief-${tradeId}`} lines={lines} cheer={cheer} bottom={104} />
     </main>
+  )
+}
+
+/* A number the price is made of: quick picks, and − / + for anything else. */
+function Qty({ label, unit, options, value, step, min, max, onChange }) {
+  const v = value ?? null
+  return (
+    <div className="mt-2.5" data-qty={unit}>
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-[15px] font-extrabold tracking-[-0.02em] text-[#1C1033]">{label}</p>
+        <span className="flex shrink-0 items-center gap-1 rounded-full bg-white p-1 shadow-[0_0_0_1px_#F4D9AE]">
+          <button type="button" onClick={() => onChange(Math.max(min, (v ?? options[2]) - step))} aria-label={`Fewer ${unit}`} className="cx-press grid h-7 w-7 place-items-center rounded-full bg-[#FFF4E2] text-[#B45309]"><Minus size={14} strokeWidth={3} /></button>
+          <span className="cx-num min-w-[34px] text-center text-[15px] font-black text-[#1C1033]">{v ?? '–'}</span>
+          <button type="button" onClick={() => onChange(Math.min(max, (v ?? options[2] - step) + step))} aria-label={`More ${unit}`} className="cx-press grid h-7 w-7 place-items-center rounded-full bg-[#FFF4E2] text-[#B45309]"><Plus size={14} strokeWidth={3} /></button>
+        </span>
+      </div>
+      <div className="cx-noscroll -mx-1 mt-2 flex gap-1.5 overflow-x-auto px-1 pb-0.5">
+        {options.map(o => (
+          <button key={o} type="button" onClick={() => onChange(o)} aria-pressed={v === o}
+            className={'cx-press shrink-0 rounded-[13px] px-3.5 py-2 text-[13.5px] font-extrabold transition ' + (v === o ? 'bg-[#1C1033] text-white shadow-[0_8px_16px_-10px_rgba(28,16,51,.9)]' : 'bg-white text-[#5A3B12] shadow-[inset_0_0_0_1px_#F4D9AE]')}>
+            {o.toLocaleString('en-IN')}{unit === 'hours' ? ' h' : ''}
+          </button>
+        ))}
+      </div>
+    </div>
   )
 }
 

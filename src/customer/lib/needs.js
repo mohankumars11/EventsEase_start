@@ -137,7 +137,7 @@ export function pickFacets(tradeId, answers) {
 export const TYPED = '__typed'
 
 const asList = v => (Array.isArray(v) ? v : v == null || v === '' ? [] : [v]).map(x => String(x).toLowerCase())
-export const answered = picks => Object.entries(picks ?? {}).filter(([, v]) => (Array.isArray(v) ? v.length : v === true)).length
+export const answered = picks => Object.entries(picks ?? {}).filter(([, v]) => (Array.isArray(v) ? v.length : v === true || (typeof v === 'number' && v > 0))).length
 
 /** Does one master meet the customer's picks? Unanswered questions count as unmet. */
 export function matchNeeds(partner, tradeId, picks = {}, guests = null) {

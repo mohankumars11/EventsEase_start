@@ -45,8 +45,9 @@ export const qtyOf = (line, event) => line.qty ?? defaultQty(line, event)
 export function requestFor(line, event = {}, place = {}) {
   const a = TRADE[line.tradeId]?.archetype
   const ref = line.fromRef ?? {}
-  const guests = Math.max(1, Number(event.guests) || 50)
-  const hours = Math.max(1, Number(event.hours) || Number(ref.hours) || 4)
+  /* A quoted line was priced for its own hours and guests — ask the engine for exactly that. */
+  const guests = Math.max(1, Number(line.guests) || Number(event.guests) || 50)
+  const hours = Math.max(1, Number(line.hours) || Number(event.hours) || Number(ref.hours) || 4)
   const base = { event_date: event.date, start_time: event.time ?? '10:00', lat: place.lat, lng: place.lng, guests }
   const qty = qtyOf(line, event)
 

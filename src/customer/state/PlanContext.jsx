@@ -52,7 +52,7 @@ export function PlanProvider({ children }) {
     const line = {
       key, occasionId, tradeId: partner.tradeId, serviceId: partner.serviceId, name: partner.name, area: partner.area,
       cover: partner.cover, fromPaise: partner.fromPaise, fromKind: partner.fromKind, fromUnit: partner.fromUnit, fromLabel: partner.fromLabel,
-      fromRef: partner.fromRef ?? null, qty: null, instant: partner.instant, advancePct: partner.advancePct,
+      fromRef: partner.fromRef ?? null, qty: null, hours: partner.askHours ?? null, guests: partner.askGuests ?? null, instant: partner.instant, advancePct: partner.advancePct,
       rating: partner.rating, quoteHours: partner.quoteHours, addedAt: Date.now(),
     }
     return { ...s, basket: [...s.basket.filter(l => l.key !== key), line] }

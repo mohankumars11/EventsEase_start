@@ -242,3 +242,17 @@
 @keyframes cx-marquee-y { from { transform: translateY(0); } to { transform: translateY(-50%); } }
 .cx-marquee-y { animation: cx-marquee-y 46s linear infinite; }
 @media (prefers-reduced-motion: reduce) { .cx-marquee-y { animation: none; } }
+
+/* Sambu, the helper: pops up, bobs, blinks, waves, talks. */
+.cx-buddy { animation: cx-buddy-in .6s cubic-bezier(.2, .9, .3, 1.4) both, cx-buddy-bob 2.8s ease-in-out .6s infinite; }
+@keyframes cx-buddy-in { from { transform: translateY(46px) scale(.4); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes cx-buddy-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+.cx-buddy-wave { transform-box: fill-box; transform-origin: 0% 100%; animation: cx-buddy-wave 1.6s ease-in-out infinite; }
+@keyframes cx-buddy-wave { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-24deg); } 75% { transform: rotate(12deg); } }
+.cx-blink { transform-box: fill-box; transform-origin: center; animation: cx-blink 4s infinite; }
+@keyframes cx-blink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(.1); } }
+.cx-talk { transform-box: fill-box; transform-origin: center; animation: cx-talk .3s ease-in-out infinite alternate; }
+@keyframes cx-talk { from { transform: scaleY(.35); } to { transform: scaleY(1); } }
+.cx-buddy-say { animation: cx-buddy-say .45s cubic-bezier(.2, .9, .3, 1.3) both; transform-origin: 0% 100%; }
+@keyframes cx-buddy-say { from { transform: scale(.4) translateY(10px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .cx-buddy, .cx-buddy-wave, .cx-blink, .cx-talk, .cx-buddy-say { animation: none; } }

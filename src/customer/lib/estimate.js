@@ -18,10 +18,13 @@ export function lineFloor(line, event = {}) {
   if (!p) return { paise: null, note: 'Price on request' }
   const q = qtyOf(line, event)
   switch (line.fromKind) {
-    case 'plate':
-      return event.guests ? { paise: p * event.guests, note: `${event.guests.toLocaleString('en-IN')} plates` } : { paise: null, note: 'Per plate · add guests' }
+    case 'plate': {
+      /* A quoted line carries the guests it was priced for (and the menu's minimum). */
+      const g = Number(line.guests) || Number(event.guests) || null
+      return g ? { paise: p * g, note: `${g.toLocaleString('en-IN')} plates` } : { paise: null, note: 'Per plate · add guests' }
+    }
     case 'hour': {
-      const h = Number(event.hours) || null
+      const h = Number(line.hours) || Number(event.hours) || null
       if (STAFF.test(line.fromUnit ?? '')) return h ? { paise: p * h * q, note: `${q} staff × ${h} h` } : { paise: null, note: 'Per staff hour · add a duration' }
       return h ? { paise: p * h, note: `${h} hours` } : { paise: p, note: 'Per hour · add a duration' }
     }

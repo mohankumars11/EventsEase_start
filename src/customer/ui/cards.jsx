@@ -109,7 +109,15 @@ export function PartnerCard({ partner, added = false, onAdd, saved = false, onSa
             <span className="text-[var(--ink-3)]">·</span>
             <span className="truncate">{p.distanceKm != null ? `${p.distanceKm} km` : p.area}</span>
           </p>
-          {p.fromPaise ? (
+          {p.quote ? (
+            <>
+              <p className="mt-1 flex items-baseline gap-1 overflow-hidden whitespace-nowrap" data-quote>
+                <span className="cx-num text-[15.5px] font-extrabold tracking-[-0.02em]">{rupees(p.quote.paise)}</span>
+                <span className="truncate text-[11px] font-extrabold text-[#0B7A45]">your price</span>
+              </p>
+              <p className="truncate text-[10.5px] font-bold text-[var(--ink-3)]">{p.quote.note}</p>
+            </>
+          ) : p.fromPaise ? (
             <p className="mt-1 flex items-baseline gap-1 overflow-hidden whitespace-nowrap">
               <span className="cx-num text-[15.5px] font-extrabold tracking-[-0.02em]">{rupees(p.fromPaise)}</span>
               <span className="truncate text-[11px] font-bold text-[var(--ink-3)]">{unit}</span>

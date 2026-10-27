@@ -14,13 +14,14 @@ import { companions } from '../data/crossSell'
 import { NOUN } from '../screens/Brief'
 import { serviceArt } from '../data/art'
 import { ArtFill } from './art'
-import { ArrowUpDown, Check, ChevronDown, ChevronRight, IndianRupee, MapPin, Scale, SlidersHorizontal, X, Zap } from 'lucide-react'
+import { ArrowUpDown, Check, ChevronDown, ChevronRight, Clock, IndianRupee, MapPin, Scale, SlidersHorizontal, Users, X, Zap } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { TRADE } from '../data/trades'
 import { usePlan } from '../state/PlanContext'
 import { partnersFor, SORTS } from '../lib/market'
 import { filterByNeeds, loadCuisines, loadDishes, needsFor } from '../lib/needs'
 import { plural, rupees } from '../lib/format'
+import { askOf, asksFor, asLine, withQuotes } from '../lib/quote'
 import { Empty, Sheet } from './kit'
 import { PartnerCard, PartnerCardSkeleton } from './cards'
 import { needsSummary } from './needs'
@@ -49,13 +50,19 @@ export function MastersPanel({ tradeId, occasionId = null, guests = null, onCoun
     return () => { live = false }
   }, [tradeId])
 
-  const fit = useMemo(() => filterByNeeds(all, tradeId, wants, guests), [all, tradeId, wants, guests])
-  const prices = useMemo(() => (fit.list ?? []).map(p => p.fromPaise).filter(Boolean).map(p => Math.ceil(p / 100)), [fit.list])
+  const fit0 = useMemo(() => filterByNeeds(all, tradeId, wants, guests), [all, tradeId, wants, guests])
+  /* Hours and guests turn every master's rate into YOUR price; masters who
+     cannot do what was asked (too many hours for them) drop out. */
+  const can = useMemo(() => asksFor(tradeId, all), [tradeId, all])
+  const fit = useMemo(() => ({ ...fit0, list: withQuotes(fit0.list, askOf(wants, { guests })) }), [fit0, wants, guests])
+  const priceOf = p => p.quote?.paise ?? p.fromPaise
+  const setAsk = (k, v) => plan.setNeeds(`${occasionId ?? 'solo'}:${tradeId}`, { ...wants, [k]: v })
+  const prices = useMemo(() => (fit.list ?? []).map(p => p.quote?.paise ?? p.fromPaise).filter(Boolean).map(p => Math.ceil(p / 100)), [fit.list])
   const lo = prices.length ? Math.min(...prices) : 0, hi = prices.length ? Math.max(...prices) : 0
   const list = useMemo(() => {
     if (!fit.list) return null
     const out = fit.list.filter(p => (!f.instant || p.instant) && (f.km == null || (p.distanceKm ?? 999) <= f.km)
-      && (f.rating == null || (p.rating ?? 0) >= f.rating) && (f.maxRupees == null || (p.fromPaise && p.fromPaise / 100 <= f.maxRupees)))
+      && (f.rating == null || (p.rating ?? 0) >= f.rating) && (f.maxRupees == null || (priceOf(p) && priceOf(p) / 100 <= f.maxRupees)))
     return SORTS[sort].fn(out)
   }, [fit.list, f, sort])
   useEffect(() => { onCount?.(list?.length ?? null) }, [list?.length]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -78,6 +85,26 @@ export function MastersPanel({ tradeId, occasionId = null, guests = null, onCoun
           </span>
           <ChevronRight size={17} className="shrink-0 text-[#0C831F]" />
         </Link>
+      )}
+
+      {(can.hours || can.guests) && (
+        <div className="mx-3 mb-2.5 rounded-[16px] bg-gradient-to-r from-[#FFF8EA] to-[#FFF1DC] px-3 py-2.5 ring-1 ring-[#FFD9A0]" data-ask-bar>
+          <p className="flex items-center gap-1.5 text-[12.5px] font-extrabold text-[#7A3E00]">
+            {can.hours ? <Clock size={14} /> : <Users size={14} />}
+            {can.hours ? (wants.$hours ? `Prices below are for ${wants.$hours} hours` : 'How many hours? See your exact price') : (askOf(wants, { guests }).guests ? `Prices below are for ${askOf(wants, { guests }).guests.toLocaleString('en-IN')} guests` : 'How many guests? See your exact price')}
+          </p>
+          <div className="cx-noscroll -mx-1 mt-1.5 flex gap-1.5 overflow-x-auto px-1">
+            {(can.hours ? [2, 3, 4, 5, 6, 8, 10, 12] : [50, 100, 150, 200, 300, 500]).map(n => {
+              const on = can.hours ? wants.$hours === n : askOf(wants, { guests }).guests === n
+              return (
+                <button key={n} type="button" onClick={() => setAsk(can.hours ? '$hours' : '$guests', n)} aria-pressed={on} data-ask={n}
+                  className={'cx-press shrink-0 rounded-full px-3 py-1.5 text-[12.5px] font-extrabold transition ' + (on ? 'bg-[#1C1033] text-white' : 'bg-white text-[#5A3B12] shadow-[inset_0_0_0_1px_#F4D9AE]')}>
+                  {n}{can.hours ? ' h' : ''}
+                </button>
+              )
+            })}
+          </div>
+        </div>
       )}
 
       <div className="cx-noscroll flex gap-2 overflow-x-auto px-3 pb-3">
@@ -120,7 +147,7 @@ export function MastersPanel({ tradeId, occasionId = null, guests = null, onCoun
           <PartnerCard key={x.serviceId} partner={sort === 'best' ? x : { ...x, reason: null }}
             href={`/p/${x.serviceId}?t=${tradeId}${occasionId ? `&o=${occasionId}` : ''}`}
             added={line?.serviceId === x.serviceId}
-            onAdd={y => (line?.serviceId === y.serviceId ? plan.remove(line.key) : plan.add(y, occasionId))}
+            onAdd={y => (line?.serviceId === y.serviceId ? plan.remove(line.key) : plan.add(asLine(y), occasionId))}
             saved={plan.isSaved(x.serviceId)} onSave={y => plan.toggleSaved(y)}
             selectable={comparing} selected={picked.some(y => y.serviceId === x.serviceId)} onSelect={pick} />
         ))}

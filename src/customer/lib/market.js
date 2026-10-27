@@ -99,7 +99,7 @@ export function partnersFor(tradeId, { lat = BLR.lat, lng = BLR.lng, limit = 40 
       supabase.from('sambramo_trade_packages').select('listing_version_id, name, trade_inputs, commercial_inputs').eq('status', 'LIVE').in('listing_version_id', vids),
       tradeId === 'catering_food' ? supabase.from('sambramo_catering_menus').select('listing_version_id, menu_key, name, customer_paise, min_guests, diet, cuisine_ids').eq('status', 'active').in('listing_version_id', vids) : { data: [] },
       supabase.from('sambramo_catalogue_items').select('listing_version_id, item_key, name, unit, customer_paise, min_qty').eq('active', true).in('listing_version_id', vids),
-      supabase.from('sambramo_rate_rules').select('listing_version_id, rule_kind, customer_paise').in('listing_version_id', vids),
+      supabase.from('sambramo_rate_rules').select('listing_version_id, rule_kind, customer_paise, included_hours, min_hours, max_hours, min_qty').in('listing_version_id', vids),
     ]) : [{}, {}, {}, {}]
     const best = {}
     const offer = (vid, rank, paise, kind, unit, label = null, ref = null) => {
@@ -116,12 +116,26 @@ export function partnersFor(tradeId, { lat = BLR.lat, lng = BLR.lng, limit = 40 
     for (const x of ct.data ?? []) if (!firstItem[x.listing_version_id]) firstItem[x.listing_version_id] = x.item_key
     for (const x of ct.data ?? []) offer(x.listing_version_id, 2, x.customer_paise, unitKind(x.unit, tradeId), unitLabel(x.unit, tradeId), x.name, { type: 'item', key: x.item_key, minQty: Number(x.min_qty) || 1 })
     for (const x of rr.data ?? []) offer(x.listing_version_id, 3, x.customer_paise, RULE_KIND[x.rule_kind]?.[0] ?? 'unit', RULE_KIND[x.rule_kind]?.[1] ?? 'onwards', null, { type: 'rule', key: x.rule_kind })
+    /* Every priced option a master has, for the instant quote (lib/quote.js):
+       hours and guests turn these into a bill the way the engine does. */
+    const offers = {}
+    const put = (vid, o) => { if (Number(o.paise) > 0) (offers[vid] ??= []).push({ ...o, paise: Number(o.paise) }) }
+    for (const x of pk.data ?? []) {
+      const hrs = Number(x.trade_inputs?.duration_hours) || null
+      put(x.listing_version_id, { type: 'package', paise: x.trade_inputs?.customer_paise, hours: hrs, label: x.name, ref: { type: 'package', key: x.commercial_inputs?.tier ?? null, hours: hrs } })
+    }
+    for (const x of mn.data ?? []) put(x.listing_version_id, { type: 'plate', paise: x.customer_paise, minQty: Number(x.min_guests) || 1, diet: x.diet ?? null, label: x.name, ref: { type: 'menu', key: x.menu_key, minQty: x.min_guests } })
+    for (const x of rr.data ?? []) {
+      if (x.rule_kind === 'per_guest' && tradeId === 'catering_food') continue
+      put(x.listing_version_id, { type: 'rule', key: x.rule_kind, paise: x.customer_paise, includedHours: num(x.included_hours), minHours: num(x.min_hours), maxHours: num(x.max_hours), minQty: num(x.min_qty), label: null, ref: { type: 'rule', key: x.rule_kind } })
+    }
     return rows.map(r => {
       const v = byId[r.vendor_service_id]
       const p = shape(r, v, tradeId)
       const b = v && best[v.id]
       if (b) Object.assign(p, { fromPaise: b.paise, fromKind: b.kind, fromUnit: b.unit, fromLabel: b.label, fromRef: b.ref })
       else Object.assign(p, { fromKind: 'unit', fromUnit: 'onwards', fromLabel: null, fromRef: null })
+      p.offers = v ? offers[v.id] ?? [] : []
       if (TRADE[tradeId]?.archetype === 'TRIP_VEHICLE' && v && firstItem[v.id]) p.fromRef = { ...(p.fromRef ?? { type: 'rule', key: null }), vehicle: firstItem[v.id] }
       /* What the master told us in onboarding, for matching a customer's
          requirements (lib/needs.js). Only the keys a requirement reads are
@@ -145,15 +159,16 @@ export function partnersFor(tradeId, { lat = BLR.lat, lng = BLR.lng, limit = 40 
  */
 export function rank(partners, { budgetPaise = null } = {}) {
   if (!partners?.length) return []
+  const price = p => p.quote?.paise ?? p.fromPaise
   const score = p => (p.rating ?? 4.2) * 22 + Math.min(p.reviews ?? 0, 400) / 40 + (p.instant ? 8 : 0)
-    - (p.distanceKm ?? 8) * 1.2 - (budgetPaise && p.fromPaise > budgetPaise ? 25 : 0)
+    - (p.distanceKm ?? 8) * 1.2 - (budgetPaise && price(p) > budgetPaise ? 25 : 0)
   const sorted = [...partners].sort((a, b) => score(b) - score(a))
   const tag = (pick, label) => { const p = pick(); if (p && !p.reason) p.reason = label }
   const out = sorted.map(p => ({ ...p, reason: null }))
   out[0].reason = 'Best match'
   tag(() => [...out].filter(p => p.distanceKm != null).sort((a, b) => a.distanceKm - b.distanceKm)[0], 'Closest')
   tag(() => [...out].filter(p => p.rating).sort((a, b) => b.rating - a.rating || (b.reviews ?? 0) - (a.reviews ?? 0))[0], 'Top rated')
-  tag(() => [...out].filter(p => p.fromPaise).sort((a, b) => a.fromPaise - b.fromPaise)[0], 'Best price')
+  tag(() => [...out].filter(price).sort((a, b) => price(a) - price(b))[0], 'Best price')
   return out
 }
 
@@ -161,7 +176,7 @@ export const SORTS = {
   best: { label: 'Best match', fn: list => rank(list) },
   near: { label: 'Nearest', fn: list => [...list].sort((a, b) => (a.distanceKm ?? 99) - (b.distanceKm ?? 99)) },
   rated: { label: 'Top rated', fn: list => [...list].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0)) },
-  price: { label: 'Price: low to high', fn: list => [...list].sort((a, b) => (a.fromPaise ?? 9e15) - (b.fromPaise ?? 9e15)) },
+  price: { label: 'Price: low to high', fn: list => [...list].sort((a, b) => (a.quote?.paise ?? a.fromPaise ?? 9e15) - (b.quote?.paise ?? b.fromPaise ?? 9e15)) },
 }
 
 /**
