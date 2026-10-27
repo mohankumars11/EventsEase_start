@@ -120,7 +120,8 @@ export default function Match() {
                   <Trash2 size={14} />Remove
                 </button>
               </div>
-              <MastersPanel key={sel} tradeId={sel} occasionId={o.id} guests={ev.guests ?? null} />
+              <MastersPanel key={sel} tradeId={sel} occasionId={o.id} guests={ev.guests ?? null}
+                onCompanion={t => { if (!needed.includes(t)) plan.setPick(o.id, t, 'need'); choose(t) }} />
             </>
           ) : (
             <p className="p-6 text-center text-[13.5px] font-semibold text-[var(--ink-2)]">No services in this plan. <Link to={`/o/${o.id}/plan`} className="font-extrabold text-[var(--brand)]">Add some</Link></p>

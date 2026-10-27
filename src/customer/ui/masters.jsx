@@ -9,7 +9,10 @@
  * hard-coded band.
  */
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { companions } from '../data/crossSell'
+import { serviceArt } from '../data/art'
+import { ArtFill } from './art'
 import { ArrowUpDown, Check, ChevronDown, ChevronRight, IndianRupee, MapPin, Scale, SlidersHorizontal, X, Zap } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { TRADE } from '../data/trades'
@@ -24,8 +27,9 @@ import CompareSheet from '../screens/CompareSheet'
 
 const NONE = { instant: false, km: null, rating: null, maxRupees: null }
 
-export function MastersPanel({ tradeId, occasionId = null, guests = null, onCount }) {
+export function MastersPanel({ tradeId, occasionId = null, guests = null, onCount, onCompanion }) {
   const plan = usePlan()
+  const navigate = useNavigate()
   const t = TRADE[tradeId]
   const [all, setAll] = useState(null)
   const [sort, setSort] = useState('best')
@@ -83,7 +87,31 @@ export function MastersPanel({ tradeId, occasionId = null, guests = null, onCoun
         <FChip on={f.instant} onClick={() => setF(x => ({ ...x, instant: !x.instant }))} icon={Zap} plain>Instant</FChip>
         <FChip on={comparing} onClick={() => { setComparing(c => !c); setPicked([]) }} icon={comparing ? X : Scale} plain>{comparing ? 'Done' : 'Compare'}</FChip>
       </div>
+      <div className="cx-noscroll mx-3 mb-2.5 flex gap-3 overflow-x-auto text-[11.5px] font-extrabold text-[#0B6B3D]" data-hooks>
+        {['Ready to book', 'Instant payment', '10% off first booking', 'Free cancellation before acceptance'].map(h => <span key={h} className="flex shrink-0 items-center gap-1"><Check size={12} strokeWidth={3.2} />{h}</span>)}
+      </div>
       {comparing && <p className="mx-3 mb-2.5 rounded-[14px] bg-[var(--brand-tint)] px-3 py-2 text-[12px] font-bold text-[var(--brand-deep)]">Tap <b>Compare</b> on up to three masters.</p>}
+
+      {/* Once one is in the cart: what people add next, in a tap. */}
+      {line && (() => {
+        const have = plan.basket.filter(l => l.occasionId === occasionId).map(l => l.tradeId)
+        const next = companions(tradeId, have)
+        if (!next.length) return null
+        return (
+          <div className="cx-pop mx-3 mb-3 rounded-[18px] bg-gradient-to-r from-[#EEFAF2] to-[#F3ECFF] p-3 ring-1 ring-[#CDEFDC]" data-complete-set>
+            <p className="text-[13px] font-extrabold text-[#0B4F2A]">✓ {line.name} is in. Complete the set:</p>
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              {next.map(([t, hook]) => (
+                <button key={t} type="button" onClick={() => (onCompanion ? onCompanion(t) : navigate(`/s/${t}${occasionId ? `?o=${occasionId}` : ''}`))}
+                  className="cx-press flex items-center gap-2 rounded-[14px] bg-white p-2 text-left shadow-[0_0_0_1px_#E7F3EA]" data-companion={t}>
+                  <ArtFill art={serviceArt(t)} tone="#F6F1FF" className="h-10 w-10 shrink-0 rounded-[11px]" inset="8%" />
+                  <span className="min-w-0"><span className="block truncate text-[12.5px] font-extrabold">{TRADE[t].label}</span><span className="block truncate text-[10.5px] font-bold text-[#0B7A45]">{hook}</span></span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )
+      })()}
 
       <div className="grid grid-cols-2 gap-2.5 px-3">
         {!list && Array.from({ length: 4 }, (_, i) => <PartnerCardSkeleton key={i} />)}

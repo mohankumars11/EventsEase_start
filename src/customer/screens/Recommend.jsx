@@ -27,6 +27,7 @@ import { dayLabel, plural, timeLabel } from '../lib/format'
 import { ActionBar, BackHeader, Journey, Sheet } from '../ui/kit'
 import { AddOnCard, ArtFill } from '../ui/art'
 import { SettingUp } from '../ui/needs'
+import { PAIRS } from '../data/crossSell'
 import { VENUE_KINDS } from './Occasion'
 
 const BADGE = { CORE: ['Essential', 'bg-[#FFF1D6] text-[#8A5300]'], CONDITIONAL: ['For your event', 'bg-[var(--am-100)] text-[var(--am-ink)]'], OPTIONAL: ['Add-on', 'bg-[#E9F7F0] text-[#0B7A45]'], NOT_DEFAULT: ['Added', 'bg-[#EEF2F6] text-[#475569]'] }
@@ -63,7 +64,8 @@ export default function Recommend() {
   const row = t => rows.find(r => r.tradeId === t)
   const covered = rows.filter(r => r.coveredByVenue || r.alreadyArranged)
   const later = rows.filter(r => r.savedForLater)
-  const addOns = rows.filter(r => r.status === 'OPTIONAL' && r.state === 'off')
+  const pairedWith = t => needed.find(n => (PAIRS[n] ?? []).some(([x]) => x === t))
+  const addOns = rows.filter(r => r.status === 'OPTIONAL' && r.state === 'off').sort((a, b) => (pairedWith(b.tradeId) ? 1 : 0) - (pairedWith(a.tradeId) ? 1 : 0))
   const removed = rows.filter(r => r.customerExcluded)
   const pick = (t, v) => { plan.setPick(o.id, t, v); setMenu(null) }
   const venueText = o.whereLabel ?? (ev.venue === 'have' ? 'Your own venue' : ev.venueKind ? VENUE_KINDS[ev.venueKind].label : 'Venue to find')
@@ -132,7 +134,7 @@ export default function Recommend() {
             <p className="text-[12px] font-semibold text-[var(--ink-3)]">Optional add-ons — only if you want them</p>
           </div>
           <div className="grid grid-cols-3 gap-2 px-3">
-            {addOns.slice(0, 9).map(r => <AddOnCard key={r.tradeId} tradeId={r.tradeId} why={o.why[r.tradeId] ?? TRADE[r.tradeId].why} on={false} onToggle={() => pick(r.tradeId, 'need')} />)}
+            {addOns.slice(0, 9).map(r => <AddOnCard key={r.tradeId} tradeId={r.tradeId} why={pairedWith(r.tradeId) ? `Often booked with ${TRADE[pairedWith(r.tradeId)].label}` : (o.why[r.tradeId] ?? TRADE[r.tradeId].why)} on={false} onToggle={() => pick(r.tradeId, 'need')} />)}
           </div>
         </section>
       )}

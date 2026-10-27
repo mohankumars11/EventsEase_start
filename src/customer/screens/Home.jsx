@@ -30,7 +30,7 @@ import { FAMILIES } from '../data/families'
 import { artFor, categoryArt, occasionArt, serviceArt } from '../data/art'
 import { Card, CategoryCard, FamilyCard, Rotator, ServiceCard } from '../ui/art'
 import { Sheet } from '../ui/kit'
-import { OFFERS } from '../ui/offers'
+import { OfferDeck } from '../ui/offers'
 import { locate, saveWhere, savedWhere } from '../lib/where'
 import { listen, canListen } from '../lib/voice'
 
@@ -81,7 +81,7 @@ export default function Home() {
   return (
     <main className="cx-enter bg-white pb-[calc(env(safe-area-inset-bottom,0px)+130px)]">
       {/* ── The cream top, edge to edge ─────────────────────────────── */}
-      <section style={{ background: CREAM }} className="pb-4">
+      <section style={{ background: CREAM }}>
         <header className="cx-safe-top flex items-center justify-between gap-2 px-4">
           <button type="button" onClick={() => setWhereOpen(true)} className="flex min-w-0 items-center gap-2 py-1 text-left" data-where>
             <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#EFE6FF]"><MapPin size={18} className="fill-[var(--brand)] text-[#EFE6FF]" strokeWidth={1.6} /></span>
@@ -101,8 +101,12 @@ export default function Home() {
 
         <Hero door={door} />
 
+      </section>
+
+      {/* Search sticks under the status bar while the page scrolls (Blinkit / Zomato). */}
+      <div className="sticky z-[115] px-4 pb-2 pt-2" style={{ top: 'env(safe-area-inset-top, 0px)', background: CREAM }} data-sticky-search>
         {/* Search: real names cycle; the mic listens where the phone can. */}
-        <div className="mx-4 mt-3 flex h-[52px] items-center gap-3 rounded-[14px] bg-white pl-3.5 pr-1 shadow-[0_0_0_1px_#EDE6DC,0_8px_20px_-12px_rgba(20,15,31,.3)]">
+        <div className="flex h-[50px] items-center gap-3 rounded-[14px] bg-white pl-3.5 pr-1 shadow-[0_0_0_1px_#EDE6DC,0_8px_20px_-12px_rgba(20,15,31,.3)]">
           <button type="button" onClick={() => navigate('/search')} className="flex min-w-0 flex-1 items-center gap-3 text-left" data-search>
             <Search size={20} className="shrink-0 text-[var(--ink)]" />
             <span className="flex min-w-0 flex-1 items-center gap-1 text-[15px] font-medium text-[#8E889C]">Search<Rotator items={hints.map(h => <span>“{h}”</span>)} every={1900} /></span>
@@ -110,43 +114,32 @@ export default function Home() {
           {canListen() && <><span className="h-6 w-px shrink-0 bg-[#E7E2EE]" /><button type="button" onClick={voice} aria-label="Search by voice" className="cx-press grid h-10 w-10 shrink-0 place-items-center rounded-full text-[var(--ink)]" data-mic><Mic size={20} /></button></>}
         </div>
 
-        {/* The two doors, one pill, no icons. */}
-        <div className="mx-4 mt-3.5 grid grid-cols-2 rounded-full bg-white p-1 shadow-[0_0_0_1px_#D9EEDD]" role="tablist">
-          {[['occasions', 'Celebrations', 'Book by occasion'], ['services', 'Book a Service', 'Masters are ready']].map(([id, t, s]) => (
+      </div>
+
+      <section style={{ background: CREAM }} className="pb-2">
+        {/* The two doors, shaped like the search box. */}
+        <div className="mx-4 mt-1 grid grid-cols-2 gap-2" role="tablist">
+          {[['occasions', 'Celebrations', 'Book by occasion'], ['services', 'Book a Service', 'Masters are ready']].map(([id, t, sub]) => (
             <button key={id} type="button" role="tab" aria-selected={door === id} onClick={() => choose(id)} data-door={t}
-              className={'cx-press relative overflow-hidden rounded-full px-3 py-2.5 text-center transition-all duration-300 ' + (door === id ? 'cx-door-on bg-gradient-to-r from-[#0C831F] to-[#16A34A] text-white shadow-[0_10px_22px_-10px_rgba(12,131,31,.85)]' : 'text-[#14532D]')}>
-              <span className="block text-[15.5px] font-black leading-tight tracking-[-0.03em]">{t}</span>
-              <span className={'block text-[10.5px] font-semibold ' + (door === id ? 'text-white/80' : 'text-[var(--ink-3)]')}>{s}</span>
+              className={'cx-press relative flex h-[46px] flex-col items-center justify-center overflow-hidden rounded-[14px] transition-all duration-300 ' + (door === id ? 'cx-door-on bg-gradient-to-r from-[#0C831F] to-[#16A34A] text-white shadow-[0_8px_18px_-10px_rgba(12,131,31,.85)]' : 'bg-white text-[#14532D] shadow-[0_0_0_1px_#EDE6DC,0_8px_20px_-14px_rgba(20,15,31,.3)]')}>
+              <span className="text-[14px] font-black leading-tight tracking-[-0.03em]">{t}</span>
+              <span className={'text-[10px] font-semibold leading-tight ' + (door === id ? 'text-white/80' : 'text-[var(--ink-3)]')}>{sub}</span>
             </button>
           ))}
         </div>
 
         {/* Icon row: filters the grid below. */}
-        <div className="cx-noscroll mt-3.5 flex gap-1 overflow-x-auto px-3" key={door}>
+        <div className="cx-noscroll mt-2.5 flex gap-1 overflow-x-auto px-3" key={door}>
           <IconChip on={filter === 'all'} onClick={() => setFilter('all')} label="All" all />
           {(celebrate ? CATEGORIES.map(c => ({ id: c.id, label: c.short, src: categoryArt(c).src })) : FAMILIES.map(f => ({ id: f.id, label: f.label, src: serviceArt(f.trades[0]).src })))
             .map(x => <IconChip key={x.id} on={filter === x.id} onClick={() => { setFilter(x.id); toGrid() }} label={x.label} src={x.src} />)}
         </div>
       </section>
 
-      {/* ── Offers for you: quick-commerce tickets ───────────────────── */}
-      <section className="pt-5" data-offers>
-        <h2 className="px-4 pb-2.5 text-[18px] font-black tracking-[-0.03em]">Offers for you</h2>
-        <div className="cx-noscroll flex gap-2.5 overflow-x-auto px-3 pb-1">
-          {OFFERS.map(o => (
-            <Link key={o.text} to={o.to} className="cx-press relative flex w-[190px] shrink-0 items-center gap-2.5 overflow-hidden rounded-[16px] p-3" style={{ background: o.bg, color: o.fg }}>
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/80"><o.icon size={19} /></span>
-              <span className="text-[12.5px] font-extrabold leading-snug">{o.text}</span>
-              <span className="absolute -right-2 top-1/2 h-4 w-4 -translate-y-1/2 rounded-full bg-white" aria-hidden />
-            </Link>
-          ))}
-        </div>
-      </section>
-
       {/* ── Weekend: the next Saturday, and what people book for it ──── */}
       {celebrate && (
-        <section className="pt-5">
-          <div className="flex items-end justify-between gap-3 px-4 pb-3">
+        <section className="pt-4">
+          <div className="flex items-end justify-between gap-3 px-4 pb-2.5">
             <div className="min-w-0">
               <p className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#0C831F]"><span className="h-2 w-2 animate-pulse rounded-full bg-[#16A34A]" />This weekend · {satLabel}</p>
               <h2 className="mt-1 text-[20px] font-black leading-tight tracking-[-0.035em]">Weekend plans?<br />What are you celebrating?</h2>
@@ -166,7 +159,7 @@ export default function Home() {
       )}
 
       {/* ── The grid, on cream ───────────────────────────────────────── */}
-      <section ref={grid} style={{ background: CREAM }} className="mt-4 scroll-mt-2 py-5">
+      <section ref={grid} style={{ background: CREAM }} className="mt-3 scroll-mt-16 py-4">
         <div className="flex items-end justify-between gap-3 px-4 pb-3">
           <div className="min-w-0">
             <h2 className="text-[20px] font-black leading-tight tracking-[-0.035em]">{celebrate ? 'Book a Celebration' : 'Popular Services Near You'}</h2>
@@ -179,8 +172,25 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── Offers for you: a moving deck of real cards ─────────────── */}
+      <section className="pt-4" data-offers>
+        <h2 className="px-4 pb-2 text-[18px] font-black tracking-[-0.03em]">Offers for you</h2>
+        <OfferDeck />
+      </section>
+
+      {/* On the service side, the celebrations follow. */}
+      {!celebrate && (
+        <section className="pt-4" data-cats-after>
+          <div className="flex items-end justify-between gap-3 px-4 pb-2.5">
+            <h2 className="text-[18px] font-black tracking-[-0.03em]">Celebrating something?</h2>
+            <Link to="/explore#celebrations" className="flex shrink-0 items-center gap-0.5 text-[12.5px] font-extrabold text-[var(--brand)]">View all<ChevronRight size={15} /></Link>
+          </div>
+          <div className="grid grid-cols-3 gap-2 px-3">{CATEGORIES.slice(0, 6).map((c, i) => <CategoryCard key={c.id} category={c} index={i} />)}</div>
+        </section>
+      )}
+
       {/* ── Most popular: what people actually book ─────────────────── */}
-      <section className="pt-6" data-popular>
+      <section className="pt-4" data-popular>
         <div className="flex items-end justify-between gap-3 px-4 pb-3">
           <div className="min-w-0">
             <h2 className="text-[20px] font-black leading-tight tracking-[-0.035em]">Most popular celebrations</h2>
@@ -208,7 +218,7 @@ export default function Home() {
       </section>
 
       {/* ── Refunds & cancellation, said up front ───────────────────── */}
-      <Link to="/help#cancellation" className="cx-press mx-3 mt-5 flex items-center gap-3 rounded-[20px] bg-[#F1FBF5] p-3.5 ring-1 ring-[#CDEFDC]" data-refunds>
+      <Link to="/help#cancellation" className="cx-press mx-3 mt-4 flex items-center gap-3 rounded-[20px] bg-[#F1FBF5] p-3.5 ring-1 ring-[#CDEFDC]" data-refunds>
         <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[14px] bg-white text-[#0C831F]"><RotateCcw size={21} /></span>
         <span className="min-w-0 flex-1">
           <span className="block text-[14.5px] font-extrabold text-[#0B4F2A]">Refunds & cancellation, made clear</span>
@@ -311,13 +321,13 @@ function Hero({ door }) {
   const s = scenes[i]
   const C = s.card
   return (
-    <div className="relative mt-2 min-h-[200px]" data-hero={i}>
+    <div className="relative mt-1 min-h-[184px]" data-hero={i}>
       <div className="relative z-10 w-[56%] pl-4 pt-2">
         <h1 key={`${door}-${i}`} className="cx-rise min-h-[90px] text-[28px] font-black leading-[1.02] tracking-[-0.045em] text-[#16092E]" aria-live="polite">
           {s.lines[0]}<br />{s.lines[1]}<br />
           <span className="bg-gradient-to-r from-[#7C3AED] to-[#A855F7] bg-clip-text text-transparent">{s.lines[2]}</span>
         </h1>
-        <div className="mt-3 grid grid-cols-2 gap-x-2 gap-y-1.5">
+        <div className="mt-2.5 grid grid-cols-2 gap-x-2 gap-y-1.5">
           {FEATURES.map(([I, t, c]) => (
             <span key={t} className="flex items-center gap-1.5 text-[10.5px] font-extrabold leading-tight text-[#3B3350]">
               <span className="grid h-6 w-6 shrink-0 place-items-center rounded-[8px] bg-white shadow-[0_2px_8px_-4px_rgba(0,0,0,.25)]" style={{ color: c }}><I size={13} strokeWidth={2.6} /></span>{t}

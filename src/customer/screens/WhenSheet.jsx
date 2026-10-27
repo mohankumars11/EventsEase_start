@@ -21,7 +21,7 @@
  * hour, so all three answers are real inputs, not decoration.
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ChevronLeft, ChevronRight, Minus, Moon, Plus, Sun } from 'lucide-react'
+import { Check, ChevronLeft, ChevronRight, Minus, Moon, Plus, Sun } from 'lucide-react'
 import { Sheet } from '../ui/kit'
 import { iso, fromIso, timeLabel, countdown } from '../lib/format'
 
@@ -135,16 +135,40 @@ function MonthCalendar({ value, onPick, first, last }) {
 /** The month calendar, the sky dial and the duration — inline or in the sheet. */
 export function WhenBody({ w }) {
   const { d, setD, m, setM, span, setSpan, days, minAllowed, chosen } = w
+  /* One thing at a time: the calendar; tapping a day asks "go with this
+     date?"; yes folds the calendar into a summary and brings the clock.
+     A day already chosen (coming back to edit) opens straight on the clock. */
+  const [stage, setStage] = useState(d ? 'time' : 'date')
+  const [ask, setAsk] = useState(null)
+  if (stage === 'date') {
+    return (
+      <>
+        <p className="text-[22px] font-extrabold leading-tight tracking-[-0.03em]">Pick the day</p>
+        <p className="mt-0.5 text-[12.5px] font-semibold text-[var(--ink-3)]">Tap a date — we’ll ask the time next.</p>
+        <MonthCalendar value={ask ?? d} onPick={k => setAsk(k)} first={days[0]} last={days[days.length - 1]} />
+        {ask && (
+          <div className="fixed inset-0 z-[402] flex items-end bg-[#0E081C]/40 px-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)]" onClick={() => setAsk(null)} data-confirm-date>
+            <div className="cx-pop w-full rounded-[24px] bg-white p-5 text-center shadow-[0_-10px_40px_-10px_rgba(20,8,50,.4)]" onClick={e => e.stopPropagation()}>
+              <p className="text-[12px] font-extrabold uppercase tracking-[0.14em] text-[var(--brand)]">Your date</p>
+              <p className="mt-1 text-[24px] font-black tracking-[-0.03em]">{LONG.format(fromIso(ask))}</p>
+              <p className="mt-0.5 text-[13px] font-semibold text-[var(--ink-3)]">{countdown(ask) === 'today' ? 'That’s today' : countdown(ask) === 'tomorrow' ? 'That’s tomorrow' : `That’s ${countdown(ask)}`} · go ahead with this date?</p>
+              <div className="mt-4 grid grid-cols-[1fr_1.4fr] gap-2">
+                <button type="button" onClick={() => setAsk(null)} className="cx-press h-12 rounded-[16px] bg-[#F4F1F8] text-[14px] font-extrabold text-[var(--ink-2)]">Change</button>
+                <button type="button" onClick={() => { setD(ask); setAsk(null); setStage('time') }} className="cx-press h-12 rounded-[16px] bg-[#0C831F] text-[14px] font-extrabold text-white" data-confirm-yes>Yes, pick the time</button>
+              </div>
+            </div>
+          </div>
+        )}
+      </>
+    )
+  }
   return (
     <>
-      {/* The chosen day, read back large. */}
-      <div className="flex items-end justify-between gap-3">
-        <p className="text-[22px] font-extrabold leading-tight tracking-[-0.03em]">{chosen ? LONG.format(chosen) : 'Pick the day'}</p>
-        {chosen && <span className="mb-0.5 shrink-0 rounded-full bg-[var(--am-100)] px-2.5 py-1 text-[11.5px] font-extrabold text-[var(--am-ink)]">{countdown(d) === 'today' ? 'Today' : countdown(d) === 'tomorrow' ? 'Tomorrow' : countdown(d)}</span>}
-      </div>
-
-      <MonthCalendar value={d} onPick={setD} first={days[0]} last={days[days.length - 1]} />
-
+      <button type="button" onClick={() => setStage('date')} className="cx-press flex w-full items-center gap-3 rounded-[18px] bg-[#F1FBF5] px-3.5 py-3 text-left ring-1 ring-[#CDEFDC]" data-date-summary>
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#0C831F] text-white"><Check size={17} strokeWidth={3} /></span>
+        <span className="min-w-0 flex-1"><span className="block text-[15px] font-extrabold">{chosen ? LONG.format(chosen) : 'Pick the day'}</span><span className="block text-[11.5px] font-bold text-[#3C7A5A]">Date set · tap to change</span></span>
+      </button>
+      <p className="mt-5 text-center text-[13px] font-extrabold text-[var(--am-ink)]">Now, what time does it start?</p>
       <SkyDial minutes={m} span={span} min={minAllowed} onChange={setM} />
 
       <div className="mt-1 flex items-center justify-center gap-3">
