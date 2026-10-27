@@ -8,7 +8,7 @@
  * "Use this headcount" to size the celebration plan (catering, chairs…).
  * Refreshes every 15 s while open and when the app comes back.
  */
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Check, ChevronRight, Download, Eye, Link2, Loader2, MessageCircle, Pencil, Plus, Trash2, UserCheck, Users } from 'lucide-react'
 import { OCCASION } from '../data/occasions'
@@ -17,6 +17,7 @@ import { MEALS, STATUS, addGuests, getInvitation, guestsCsv, inviteText, markSen
 import { BackHeader, Sheet } from '../ui/kit'
 import InviteCard from '../ui/InviteCard'
 import { parseTheme } from '../data/inviteTemplates'
+import { guestsFromFile } from '../lib/guestImport'
 
 const FILTERS = [['all', 'All'], ['attending', 'Coming'], ['maybe', 'Maybe'], ['declined', 'Can’t come'], ['pending', 'Not replied'], ['unseen', 'Not seen']]
 const SIDES = ['Family', 'Friends', 'Bride’s side', 'Groom’s side', 'Work', 'Neighbours']
@@ -68,6 +69,10 @@ export default function InviteHost() {
     const a = Object.assign(document.createElement('a'), { href: url, download: `${inv.title.replace(/[^\w]+/g, '-')}-guests.csv` })
     document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000)
   }
+  const sent = guests.filter(g => g.sent_at).length
+  const unsent = guests.filter(g => !g.sent_at && g.phone)
+  const nextUp = unsent[0] ?? null
+  const remindUp = guests.find(g => g.status === 'pending' && g.sent_at && g.phone && !g.reminded_at) ?? null
   const recent = guests.filter(g => g.responded_at).sort((a, b) => b.responded_at.localeCompare(a.responded_at)).slice(0, 5)
   const planned = inv.occasion_id && plan.event.occasionId === inv.occasion_id
   const today = inv.event_date && inv.event_date === new Date().toISOString().slice(0, 10)
@@ -76,8 +81,46 @@ export default function InviteHost() {
     <main className="cx-enter cx-cream min-h-[100dvh] pb-[calc(env(safe-area-inset-bottom,0px)+110px)]">
       <BackHeader title={inv.title} sub={occ?.name ?? 'Invitation'} right={<Link to={`/invites/${inv.id}/edit`} aria-label="Edit invitation" className="cx-press grid h-11 w-11 place-items-center rounded-full bg-white text-[var(--am-ink)] shadow-[0_0_0_1px_#EEE6FA]"><Pencil size={18} /></Link>} />
 
+      {/* The numbers that matter, big: sent, seen, accepted, waiting. */}
+      <section className="mx-3 grid grid-cols-2 gap-2.5" data-host-stats>
+        {[
+          ['Invites sent', sent, `of ${t.invited} on your list`, '#5B21B6', 'linear-gradient(150deg,#F5F0FF 0%,#EDE4FF 100%)', 'all'],
+          ['Seen', t.opened, `${t.invited ? Math.round((t.opened / t.invited) * 100) : 0}% opened it`, '#1D4ED8', 'linear-gradient(150deg,#F0F6FF 0%,#E1ECFF 100%)', 'unseen'],
+          ['Accepted', t.attending, `${t.heads} ${t.heads === 1 ? 'person' : 'people'} coming`, '#0B7A3B', 'linear-gradient(150deg,#EEFBF3 0%,#DDF5E6 100%)', 'attending'],
+          ['Waiting', t.pending + t.maybe, `${t.maybe} maybe · ${t.declined} can’t`, '#B45309', 'linear-gradient(150deg,#FFF8EB 0%,#FFEFD3 100%)', 'pending'],
+        ].map(([l, n, s, c, bg, f]) => (
+          <button key={l} type="button" onClick={() => setFilter(f)} className="cx-press rounded-[22px] p-4 text-left shadow-[0_0_0_1px_rgba(0,0,0,.03)]" style={{ background: bg }} data-stat={l}>
+            <span className="block text-[12.5px] font-extrabold uppercase tracking-[0.08em]" style={{ color: c }}>{l}</span>
+            <span className="cx-num mt-1 block text-[40px] font-black leading-none tracking-[-0.05em] text-[#1C1033]">{n}</span>
+            <span className="mt-1.5 block truncate text-[12px] font-bold text-[var(--ink-2)]">{s}</span>
+          </button>
+        ))}
+      </section>
+
+      {/* The two big actions */}
+      <div className="mx-3 mt-3 space-y-2">
+        {nextUp ? (
+          <button type="button" onClick={() => sendTo(nextUp)} className="cx-press flex h-[60px] w-full items-center gap-3 rounded-[20px] bg-[#25D366] px-4 text-left text-white shadow-[0_14px_26px_-14px_rgba(37,211,102,.95)]" data-send-next>
+            <MessageCircle size={22} className="shrink-0" />
+            <span className="min-w-0 flex-1"><span className="block text-[16px] font-black tracking-[-0.02em]">Send to {nextUp.name}</span><span className="block text-[12px] font-bold text-white/85">{unsent.length} still to send · WhatsApp opens ready</span></span>
+            <ChevronRight size={20} className="shrink-0" />
+          </button>
+        ) : guests.length > 0 && t.pending > 0 && remindUp ? (
+          <button type="button" onClick={() => sendTo(remindUp)} className="cx-press flex h-[60px] w-full items-center gap-3 rounded-[20px] bg-[#1C1033] px-4 text-left text-white" data-remind-next>
+            <MessageCircle size={22} className="shrink-0" />
+            <span className="min-w-0 flex-1"><span className="block text-[16px] font-black tracking-[-0.02em]">Remind {remindUp.name}</span><span className="block text-[12px] font-bold text-white/75">{t.pending} haven’t replied yet</span></span>
+            <ChevronRight size={20} className="shrink-0" />
+          </button>
+        ) : null}
+        <div className="grid grid-cols-2 gap-2">
+          <button type="button" onClick={() => setAdding(true)} className="cx-press cx-cta flex h-[54px] items-center justify-center gap-2 rounded-[18px] text-[15px] font-extrabold" data-action="add"><Plus size={18} />Add guests</button>
+          <button type="button" onClick={shareOpen} className="cx-press flex h-[54px] items-center justify-center gap-2 rounded-[18px] bg-white text-[15px] font-extrabold text-[#1C1033] shadow-[inset_0_0_0_1.5px_#E2D9EE]" data-action="group"><Link2 size={18} />Group link</button>
+        </div>
+      </div>
+      {note && <p className="mx-3 mt-2 rounded-[12px] bg-[var(--am-100)] px-3 py-2 text-[12.5px] font-bold text-[var(--am-ink)]">{note}</p>}
+
       {/* The card they received */}
-      <Link to={`/invites/${inv.id}/edit`} className="mx-3 flex items-center gap-3 rounded-[18px] bg-white p-2.5 shadow-[0_0_0_1px_#EEE6FA]" data-host-card>
+      <Link to={`/invites/${inv.id}/edit`} className="mx-3 mt-3 flex items-center gap-3 rounded-[18px] bg-white p-2.5 shadow-[0_0_0_1px_#EEE6FA]" data-host-card>
         <span className="w-[58px] shrink-0"><InviteCard inv={inv} occasion={occ} theme={inv.theme} size="mini" /></span>
         <span className="min-w-0 flex-1"><span className="block truncate text-[14px] font-extrabold">{parseTheme(inv.theme, occ).t.name}</span><span className="block text-[11.5px] font-semibold text-[var(--ink-3)]">{inv.status === 'draft' ? 'Draft — not sent yet' : inv.status === 'closed' ? 'RSVPs closed' : 'Live · guests can reply'}</span></span>
         <span className="shrink-0 rounded-full bg-[var(--am-100)] px-3 py-1.5 text-[12px] font-extrabold text-[var(--am-ink)]">Edit design</span>
@@ -144,13 +187,9 @@ export default function InviteHost() {
         </section>
       )}
 
-      {/* Actions */}
-      <div className="mx-3 mt-3 grid grid-cols-3 gap-2">
-        <Action icon={Plus} onClick={() => setAdding(true)} data="add">Add guests</Action>
-        <Action icon={Link2} onClick={shareOpen} data="group">Group link</Action>
-        <Action icon={Download} onClick={exportCsv} data="csv">Export</Action>
+      <div className="mx-3 mt-3 flex justify-end">
+        <button type="button" onClick={exportCsv} className="flex items-center gap-1.5 rounded-full bg-white px-3.5 py-2 text-[12.5px] font-extrabold text-[var(--am-ink)] shadow-[0_0_0_1px_#EEE6FA]" data-action="csv"><Download size={15} />Export guest list</button>
       </div>
-      {note && <p className="mx-3 mt-2 rounded-[12px] bg-[var(--am-100)] px-3 py-2 text-[12.5px] font-bold text-[var(--am-ink)]">{note}</p>}
 
       {/* Guest list */}
       <div className="cx-noscroll mt-4 flex gap-1.5 overflow-x-auto px-3">
@@ -193,32 +232,47 @@ export default function InviteHost() {
   )
 }
 
-function Action({ icon: Icon, onClick, data, children }) {
-  return <button type="button" onClick={onClick} className="cx-press flex h-[62px] flex-col items-center justify-center gap-1 rounded-[16px] bg-white text-[12px] font-extrabold text-[var(--am-ink)] shadow-[0_0_0_1px_#EEE6FA]" data-action={data}><Icon size={19} className="text-[var(--brand)]" />{children}</button>
-}
-
 function AddGuests({ open, onClose, inv, onAdded }) {
   const [mode, setMode] = useState('one')
   const [name, setName] = useState(''); const [phone, setPhone] = useState(''); const [text, setText] = useState('')
   const [side, setSide] = useState(''); const [limit, setLimit] = useState(2); const [fnIds, setFnIds] = useState([])
   const [busy, setBusy] = useState(false); const [err, setErr] = useState('')
-  const parsed = mode === 'list' ? parseGuestList(text, inv.invitation_guests) : null
+  const [fromFile, setFromFile] = useState(null)
+  const picker = useRef(null)
+  const have = new Set(inv.invitation_guests.map(g => String(g.phone ?? '').replace(/\D/g, '').slice(-10)).filter(Boolean))
+  const parsed = mode === 'list' ? parseGuestList(text, inv.invitation_guests)
+    : mode === 'file' && fromFile ? { guests: fromFile.filter(g => !g.phone || !have.has(String(g.phone).replace(/\D/g, '').slice(-10))), dupes: fromFile.filter(g => g.phone && have.has(String(g.phone).replace(/\D/g, '').slice(-10))) } : null
+  async function readFile(e) {
+    const f = e.target.files?.[0]; e.target.value = ''
+    if (!f) return
+    setErr('')
+    try { setFromFile(await guestsFromFile(f)) } catch (x) { setErr(x.message) }
+  }
   async function add() {
     setBusy(true); setErr('')
     try {
       const list = mode === 'one' ? [{ name: name.trim(), phone }] : parsed.guests
       await addGuests(inv.id, list.filter(g => g.name), { side, partyLimit: limit, functionIds: fnIds })
-      setName(''); setPhone(''); setText(''); onAdded(list.length)
+      setName(''); setPhone(''); setText(''); setFromFile(null); onAdded(list.length)
     } catch (e) { setErr(/duplicate|unique/i.test(e.message) ? 'That phone number is already on the list.' : e.message) } finally { setBusy(false) }
   }
   return (
     <Sheet open={open} onClose={onClose} title="Add guests" footer={<button type="button" disabled={busy || (mode === 'one' ? name.trim().length < 2 : !parsed?.guests.length)} onClick={add} className="cx-press cx-cta flex h-[52px] w-full items-center justify-center gap-2 rounded-[16px] text-[15px] font-extrabold" data-add-guests>{busy && <Loader2 size={16} className="animate-spin" />}{mode === 'one' ? 'Add guest' : `Add ${parsed?.guests.length ?? 0} guests`}</button>}>
       <div className="space-y-3 pb-2">
-        <div className="grid grid-cols-2 gap-1.5 rounded-full bg-[#F4F1F8] p-1">{[['one', 'One guest'], ['list', 'Paste a list']].map(([k, l]) => <button key={k} type="button" onClick={() => setMode(k)} className={'h-9 rounded-full text-[13px] font-extrabold ' + (mode === k ? 'bg-white text-[var(--am-ink)] shadow' : 'text-[var(--ink-3)]')}>{l}</button>)}</div>
+        <div className="grid grid-cols-3 gap-1.5 rounded-full bg-[#F4F1F8] p-1">{[['one', 'One guest'], ['list', 'Paste'], ['file', 'Upload file']].map(([k, l]) => <button key={k} type="button" onClick={() => setMode(k)} className={'h-9 rounded-full text-[13px] font-extrabold ' + (mode === k ? 'bg-white text-[var(--am-ink)] shadow' : 'text-[var(--ink-3)]')}>{l}</button>)}</div>
         {mode === 'one' ? (
           <>
             <input value={name} onChange={e => setName(e.target.value)} placeholder="Name" maxLength={100} className="h-12 w-full rounded-[13px] bg-[#FAF8FD] px-3.5 text-[15px] font-semibold outline-none ring-1 ring-[#E7E1F0]" data-guest-name />
             <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="WhatsApp number (optional)" inputMode="tel" maxLength={16} className="h-12 w-full rounded-[13px] bg-[#FAF8FD] px-3.5 text-[15px] font-semibold outline-none ring-1 ring-[#E7E1F0]" />
+          </>
+        ) : mode === 'file' ? (
+          <>
+            <button type="button" onClick={() => picker.current?.click()} className="cx-press flex w-full items-center gap-3 rounded-[16px] bg-[#ECFDF3] p-4 text-left" data-upload-guests>
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[12px] bg-white text-[#0C831F] shadow"><Download size={19} className="rotate-180" /></span>
+              <span className="min-w-0"><span className="block text-[15px] font-extrabold text-[#0B4F2A]">{fromFile ? `${fromFile.length} people found — pick another file` : 'Choose a file'}</span><span className="block text-[12px] font-semibold text-[#3C7A5A]">Excel (.xlsx), CSV, or contacts exported from your phone (.vcf)</span></span>
+            </button>
+            <input ref={picker} type="file" accept=".xlsx,.csv,.txt,.vcf,text/csv,text/plain,text/vcard,text/x-vcard,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" className="hidden" onChange={readFile} />
+            {parsed && <p className="text-[12px] font-bold text-[var(--ink-2)]">{parsed.guests.length} to add{parsed.dupes.length ? ` · ${parsed.dupes.length} already on the list` : ''}</p>}
           </>
         ) : (
           <>

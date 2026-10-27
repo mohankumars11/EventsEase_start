@@ -9,6 +9,7 @@
 import { useLayoutEffect, useRef, useState } from 'react'
 import { occasionArt } from '../data/art'
 import { parseTheme } from '../data/inviteTemplates'
+import { Live, MoreOrnaments } from './inviteOrnaments'
 
 const FONT = {
   script: "'Pinyon Script', 'Playfair Display', Georgia, serif",
@@ -16,6 +17,8 @@ const FONT = {
   display: "'Sambramo Display', 'Archivo Black', 'Manrope', sans-serif",
   sans: "'Manrope', system-ui, sans-serif",
 }
+/* Ornaments that own the top edge push the words down a little. */
+const PAD = { band: '6%', toran: '17%', bunting: '17%', stage: '14%' }
 const MONTH = new Intl.DateTimeFormat('en-IN', { month: 'long' })
 const WEEKDAY = new Intl.DateTimeFormat('en-IN', { weekday: 'long' })
 const time = t => (t ? new Date(`2000-01-01T${t}`).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' }) : null)
@@ -36,8 +39,8 @@ export default function InviteCard({ inv, occasion = null, theme, size = 'full',
     <div className={'relative isolate overflow-hidden ' + (mini ? 'aspect-[4/5] rounded-[14px]' : 'aspect-[4/5] rounded-[26px]') + ' ' + className}
       style={{ background: t.bg, color: t.ink, boxShadow: mini ? '0 0 0 1px rgba(0,0,0,.06)' : '0 24px 48px -28px rgba(30,10,60,.7), 0 0 0 1px rgba(0,0,0,.05)' }} data-invite-card={t.id}>
       <Ornament kind={t.ornament} t={t} />
-      {live && <Sparkles color={t.accent} />}
-      <div className="absolute inset-0 z-10 flex flex-col items-center px-[9%] text-center" style={{ paddingTop: t.ornament === 'band' ? '6%' : '11%', paddingBottom: '9%' }}>
+      {live && <Live t={t} />}
+      <div className="absolute inset-0 z-10 flex flex-col items-center px-[9%] text-center" style={{ paddingTop: PAD[t.ornament] ?? '11%', paddingBottom: '9%' }}>
         {t.ornament === 'band' && <p style={{ fontSize: 11 * s, letterSpacing: '0.3em', color: '#CBD5E1' }} className="font-extrabold uppercase">Invitation</p>}
         {art && occasion && occasionArt(occasion).src && (
           <span className={'relative block shrink-0 overflow-hidden rounded-full bg-white ' + (t.ornament === 'band' ? 'mt-[4%]' : '')}
@@ -90,7 +93,7 @@ function Ornament({ kind, t }) {
       {[[0, 0, 1, 1], [400, 0, -1, 1], [0, 500, 1, -1], [400, 500, -1, -1]].map(([x, y, sx, sy], k) => (
         <g key={k} transform={`translate(${x} ${y}) scale(${sx} ${sy})`}>
           {[[40, 40, 30], [95, 22, 20], [22, 100, 22], [80, 85, 14]].map(([cx, cy, r], j) => (
-            <g key={j}>{[0, 72, 144, 216, 288].map(ang => <ellipse key={ang} cx={cx + r * 0.55 * Math.cos(ang * Math.PI / 180)} cy={cy + r * 0.55 * Math.sin(ang * Math.PI / 180)} rx={r * 0.55} ry={r * 0.38} fill={j % 2 ? '#F9A8C4' : '#F472A6'} fillOpacity=".75" transform={`rotate(${ang} ${cx} ${cy})`} />)}<circle cx={cx} cy={cy} r={r * 0.22} fill="#FDE68A" /></g>
+            <g key={j}>{[0, 72, 144, 216, 288].map(ang => <ellipse key={ang} cx={cx + r * 0.55 * Math.cos(ang * Math.PI / 180)} cy={cy + r * 0.55 * Math.sin(ang * Math.PI / 180)} rx={r * 0.55} ry={r * 0.38} fill={j % 2 ? (t.bloom?.[1] ?? '#F9A8C4') : (t.bloom?.[0] ?? '#F472A6')} fillOpacity=".75" transform={`rotate(${ang} ${cx} ${cy})`} />)}<circle cx={cx} cy={cy} r={r * 0.22} fill="#FDE68A" /></g>
           ))}
           <path d="M 10 150 Q 60 90 140 60" stroke="#84CC16" strokeOpacity=".6" strokeWidth="3" fill="none" />
         </g>
@@ -156,27 +159,19 @@ function Ornament({ kind, t }) {
     <svg className="absolute inset-0 h-full w-full" viewBox="0 0 400 500" preserveAspectRatio="xMidYMid slice" aria-hidden>
       {[[0, 0, 0], [400, 500, 180]].map(([x, y, r]) => (
         <g key={r} transform={`translate(${x} ${y}) rotate(${r})`}>
-          {[[30, 40, -30], [70, 20, -10], [20, 90, -60], [110, 30, 10], [60, 70, -40]].map(([lx, ly, la], k) => <ellipse key={k} cx={lx} cy={ly} rx="26" ry="10" fill={k % 2 ? '#86EFAC' : '#C4B5FD'} fillOpacity=".8" transform={`rotate(${la} ${lx} ${ly})`} />)}
+          {[[30, 40, -30], [70, 20, -10], [20, 90, -60], [110, 30, 10], [60, 70, -40]].map(([lx, ly, la], k) => <ellipse key={k} cx={lx} cy={ly} rx="26" ry="10" fill={k % 2 ? (t.leaf?.[0] ?? '#86EFAC') : (t.leaf?.[1] ?? '#C4B5FD')} fillOpacity=".8" transform={`rotate(${la} ${lx} ${ly})`} />)}
         </g>
       ))}
     </svg>
   )
+  const more = MoreOrnaments({ kind, t })
+  if (more) return more
   /* arch — the default */
   return (
     <svg className="absolute inset-0 h-full w-full" viewBox="0 0 400 500" preserveAspectRatio="none" aria-hidden>
       <path d="M 40 490 L 40 170 A 160 150 0 0 1 360 170 L 360 490" fill="#FFFFFF" fillOpacity=".55" stroke={a} strokeOpacity=".4" strokeWidth="1.5" />
       <circle cx="200" cy="40" r="5" fill={a} fillOpacity=".6" />
     </svg>
-  )
-}
-
-function Sparkles({ color }) {
-  return (
-    <div className="pointer-events-none absolute inset-0 z-[5]" aria-hidden>
-      {[[12, 18], [82, 14], [70, 62], [18, 72], [50, 8], [88, 86], [8, 46]].map(([x, y], k) => (
-        <span key={k} className="cx-sparkle absolute block h-2 w-2 rotate-45 rounded-[2px]" style={{ left: `${x}%`, top: `${y}%`, background: color, animationDelay: `${k * 0.45}s` }} />
-      ))}
-    </div>
   )
 }
 

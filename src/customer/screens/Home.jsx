@@ -64,6 +64,7 @@ export default function Home() {
   const [whereOpen, setWhereOpen] = useState(false)
   const [where, setWhere] = useState(savedWhere)
   const grid = useRef(null)
+  const compact = useCompact()
   const choose = d => { setDoor(d); setFilter('all'); try { sessionStorage.setItem('sbm.cx.door', d) } catch { /* storage off */ } }
   const name = profile?.full_name?.trim()
   const photo = profile?.avatar_url ?? user?.user_metadata?.avatar_url ?? user?.user_metadata?.picture ?? null
@@ -85,16 +86,18 @@ export default function Home() {
       <section style={{ background: CREAM }}>
         <header className="cx-safe-top flex items-center justify-between gap-2 px-4">
           <button type="button" onClick={() => setWhereOpen(true)} className="flex min-w-0 items-center gap-2 py-1 text-left" data-where>
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#EFE6FF]"><MapPin size={18} className="fill-[var(--brand)] text-[#EFE6FF]" strokeWidth={1.6} /></span>
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#EFE6FF]"><MapPin size={16} className="fill-[var(--brand)] text-[#EFE6FF]" strokeWidth={1.6} /></span>
             <span className="min-w-0">
-              <span className="flex items-center gap-0.5 text-[17px] font-extrabold leading-tight tracking-[-0.025em]"><span className="truncate">{where?.area ?? 'Bengaluru'}</span><ChevronDown size={16} className="shrink-0" /></span>
-              <span className="block truncate text-[11.5px] font-semibold text-[var(--ink-3)]">{[where?.city ?? 'Bengaluru', where?.pincode].filter(Boolean).join(', ')}{where?.test ? ' · testing' : ''}</span>
+              <span className="flex items-center gap-0.5 text-[13.5px] font-extrabold leading-tight tracking-[-0.015em]"><span className="truncate">{where?.area ?? 'Bengaluru'}</span><ChevronDown size={14} className="shrink-0" /></span>
+              <span className="block truncate text-[10.5px] font-semibold leading-tight text-[var(--ink-3)]">{[where?.city ?? 'Bengaluru', where?.pincode].filter(Boolean).join(', ')}{where?.test ? ' · testing' : ''}</span>
             </span>
           </button>
           <div className="flex shrink-0 items-center gap-1.5">
             <Link to="/help" aria-label="Help" className="cx-press grid h-10 w-10 place-items-center rounded-full bg-white text-[var(--am-ink)] shadow-[0_4px_12px_-6px_rgba(58,18,144,.35)]" data-help><Headset size={18} /></Link>
             <Link to="/invites" aria-label="Invitations and RSVP" onClick={() => { try { localStorage.setItem('sbm.cx.invites.seen', '1') } catch { /* off */ } }}
               className="cx-press relative grid h-10 w-10 place-items-center rounded-full bg-white text-[#DB2777] shadow-[0_4px_12px_-6px_rgba(58,18,144,.35)]" data-head-invites>
+              {/* The outer line keeps flashing in the envelope's own pink, so a first-time customer asks "what is this?" */}
+              <span aria-hidden className="cx-flash-ring pointer-events-none absolute -inset-[3px] rounded-full" />
               <MailOpen size={19} />
               {!invitesSeen && <span className="absolute -right-1 -top-1 rounded-full bg-[#DB2777] px-1.5 py-[1px] text-[8.5px] font-black tracking-[0.04em] text-white ring-2 ring-[#FFF7EE]">NEW</span>}
             </Link>
@@ -104,40 +107,46 @@ export default function Home() {
             </Link>
           </div>
         </header>
-
-        <Hero key={door} door={door} />
-
       </section>
 
-      {/* Search sticks under the status bar while the page scrolls (Blinkit / Zomato). */}
-      <div className="sticky z-[115] px-4 pb-2 pt-2" style={{ top: 'env(safe-area-inset-top, 0px)', background: CREAM }} data-sticky-search>
-        {/* Search: real names cycle; the mic listens where the phone can. */}
-        <div className="flex h-[50px] items-center gap-3 rounded-[14px] bg-white pl-3.5 pr-1 shadow-[0_0_0_1px_#EDE6DC,0_8px_20px_-12px_rgba(20,15,31,.3)]">
-          <button type="button" onClick={() => navigate('/search')} className="flex min-w-0 flex-1 items-center gap-3 text-left" data-search>
-            <Search size={20} className="shrink-0 text-[var(--ink)]" />
-            <span className="flex min-w-0 flex-1 items-center gap-1 text-[15px] font-medium text-[#8E889C]">Search<Rotator items={hints.map(h => <span>“{h}”</span>)} every={1900} /></span>
-          </button>
-          {canListen() && <><span className="h-6 w-px shrink-0 bg-[#E7E2EE]" /><button type="button" onClick={voice} aria-label="Search by voice" className="cx-press grid h-10 w-10 shrink-0 place-items-center rounded-full text-[var(--ink)]" data-mic><Mic size={20} /></button></>}
+      {/* ── Pinned while scrolling: search, the two doors, the icon row ──
+          Everything else (the hero too) scrolls away. Once the page moves,
+          the block tightens: the search slims, the doors flatten, and the
+          picture tiles morph into one-line pills — Zepto / Swiggy style —
+          so the pinned part never eats the screen. */}
+      <div className={'sticky z-[115] transition-[background-color,box-shadow] duration-300 ' + (compact ? 'bg-white shadow-[0_12px_26px_-20px_rgba(20,15,31,.55)]' : 'bg-[#FFF7EE]')}
+        style={{ top: 'env(safe-area-inset-top, 0px)' }} data-sticky-head={compact ? 'compact' : 'full'}>
+        <div className={'px-4 transition-[padding] duration-300 ' + (compact ? 'pb-1.5 pt-1.5' : 'pb-2 pt-2')}>
+          {/* Search: real names cycle; the mic listens where the phone can. */}
+          <div className={'flex items-center gap-3 rounded-[14px] bg-white pl-3.5 pr-1 shadow-[0_0_0_1px_#EDE6DC,0_8px_20px_-12px_rgba(20,15,31,.3)] transition-[height] duration-300 ' + (compact ? 'h-[44px]' : 'h-[50px]')} data-sticky-search>
+            <button type="button" onClick={() => navigate('/search')} className="flex min-w-0 flex-1 items-center gap-3 text-left" data-search>
+              <Search size={20} className="shrink-0 text-[var(--ink)]" />
+              <span className="flex min-w-0 flex-1 items-center gap-1 text-[15px] font-medium text-[#8E889C]">Search<Rotator items={hints.map(h => <span>“{h}”</span>)} every={1900} /></span>
+            </button>
+            {canListen() && <><span className="h-6 w-px shrink-0 bg-[#E7E2EE]" /><button type="button" onClick={voice} aria-label="Search by voice" className="cx-press grid h-10 w-10 shrink-0 place-items-center rounded-full text-[var(--ink)]" data-mic><Mic size={20} /></button></>}
+          </div>
         </div>
 
-      </div>
-
-      <section style={{ background: CREAM }} className="pb-2">
         {/* One bar, two sides — the same shape as the search box, a little shorter. */}
-        <div className="relative mx-4 mt-1 grid h-[44px] grid-cols-2 rounded-[14px] bg-white p-1 shadow-[0_0_0_1px_#EDE6DC,0_8px_20px_-14px_rgba(20,15,31,.3)]" role="tablist" data-door-bar>
+        <div className={'relative mx-4 grid grid-cols-2 rounded-[14px] bg-white p-1 shadow-[0_0_0_1px_#EDE6DC,0_8px_20px_-14px_rgba(20,15,31,.3)] transition-[height] duration-300 ' + (compact ? 'h-[38px]' : 'h-[44px]')} role="tablist" data-door-bar>
           <span aria-hidden className={'absolute bottom-1 left-1 top-1 w-[calc(50%-4px)] rounded-[11px] bg-gradient-to-r from-[#0C831F] to-[#16A34A] shadow-[0_6px_14px_-8px_rgba(12,131,31,.9)] transition-transform duration-300 ease-out ' + (celebrate ? 'translate-x-0' : 'translate-x-full')} />
           {[['occasions', 'Celebrations'], ['services', 'Book a Service']].map(([id, t]) => (
             <button key={id} type="button" role="tab" aria-selected={door === id} onClick={() => choose(id)} data-door={t}
-              className={'relative z-10 rounded-[11px] text-[14px] font-black tracking-[-0.02em] transition-colors duration-300 ' + (door === id ? 'text-white' : 'text-[#14532D]')}>{t}</button>
+              className={'relative z-10 rounded-[11px] font-black tracking-[-0.02em] transition-[color,font-size] duration-300 ' + (compact ? 'text-[13px] ' : 'text-[14px] ') + (door === id ? 'text-white' : 'text-[#14532D]')}>{t}</button>
           ))}
         </div>
 
-        {/* Icon row: filters the grid below. */}
-        <div className="cx-noscroll mt-2.5 flex gap-1 overflow-x-auto px-3" key={door}>
-          <IconChip on={filter === 'all'} onClick={() => setFilter('all')} label="All" all />
+        {/* Icon row: filters the grid below. Tiles at rest, pills while scrolling. */}
+        <div className={'cx-noscroll flex overflow-x-auto px-3 ' + (compact ? 'gap-1.5 pb-2 pt-2' : 'gap-1 pt-2.5')} key={door + compact}>
+          <IconChip on={filter === 'all'} onClick={() => setFilter('all')} label="All" all compact={compact} />
           {(celebrate ? CATEGORIES.map(c => ({ id: c.id, label: c.short, src: categoryArt(c).src })) : FAMILIES.map(f => ({ id: f.id, label: f.label, src: serviceArt(f.trades[0]).src })))
-            .map(x => <IconChip key={x.id} on={filter === x.id} onClick={() => { setFilter(x.id); toGrid() }} label={x.label} src={x.src} />)}
+            .map(x => <IconChip key={x.id} on={filter === x.id} onClick={() => { setFilter(x.id); toGrid() }} label={x.label} src={x.src} compact={compact} />)}
         </div>
+      </div>
+
+      <section style={{ background: CREAM }} className="pb-2">
+        {/* The hero comes after the controls, and nothing is laid over its picture. */}
+        <Hero key={door} door={door} />
       </section>
 
       {/* ── Weekend: the next Saturday, and what people book for it ──── */}
@@ -329,10 +338,51 @@ const SCENES = {
       card: { icon: ShieldCheck, tone: '#0C831F', title: 'Payment secured', sub: 'Master confirmed', razorpay: true } },
   ],
 }
-const FEATURES = [[Zap, 'Instant booking', '#7C3AED'], [BadgeCheck, 'Verified masters', '#0C831F'], [ShieldCheck, 'Safe payment', '#2563EB'], [RotateCcw, 'Easy refunds', '#EA580C']]
+/* The four promises as marks a customer has seen on real apps: a bolt for
+   instant, the blue verified rosette, the payment partner's own glyph, a
+   rupee coming back. Drawn, so they stay sharp at any size. */
+const ROSETTE = (() => {
+  const n = 12, inner = 10.4, outer = 12.9, at = (r, a) => `${(12 + r * Math.cos(a)).toFixed(2)} ${(12 + r * Math.sin(a)).toFixed(2)}`
+  let d = `M${at(inner, -Math.PI / 2)}`
+  for (let k = 0; k < n; k++) {
+    const a0 = -Math.PI / 2 + (2 * Math.PI * k) / n, a1 = a0 + (2 * Math.PI) / n
+    d += `Q${at(outer + 1.2, (a0 + a1) / 2)} ${at(inner, a1)}`
+  }
+  return d + 'Z'
+})()
+function Mark({ kind }) {
+  if (kind === 'instant') return (
+    <svg viewBox="0 0 24 24" className="h-full w-full" aria-hidden>
+      <defs><linearGradient id="mk-bolt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#FFE16B" /><stop offset="1" stopColor="#FF9F0A" /></linearGradient></defs>
+      <rect width="24" height="24" rx="7" fill="#4C1D95" />
+      <path d="M13.6 3.6 6.4 13.3h4.9l-1.2 7.1 7.5-10.1h-5z" fill="url(#mk-bolt)" stroke="#FFF3C4" strokeWidth=".5" strokeLinejoin="round" />
+    </svg>
+  )
+  if (kind === 'verified') return (
+    <svg viewBox="-1 -1 26 26" className="h-full w-full" aria-hidden>
+      <path d={ROSETTE} fill="#1D9BF0" />
+      <path d="m7.6 12.3 3 3 5.8-6.2" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+  if (kind === 'safe') return (
+    <svg viewBox="0 0 24 24" className="h-full w-full" aria-hidden>
+      <rect width="24" height="24" rx="7" fill="#fff" stroke="#DCE7F7" />
+      <path d="M10.6 4.5h7.6L12.9 19.5H8.1l3.4-8.9-2.7 2.4z" fill="#3395FF" />
+      <path d="M8.1 19.5 10 14.4l1.6-1.2-2.3 6.3z" fill="#072654" />
+    </svg>
+  )
+  return (
+    <svg viewBox="0 0 24 24" className="h-full w-full" aria-hidden>
+      <rect width="24" height="24" rx="12" fill="#0C831F" />
+      <path d="M18.3 12a6.3 6.3 0 1 1-1.9-4.5" fill="none" stroke="#fff" strokeWidth="1.9" strokeLinecap="round" />
+      <path d="M17.6 4.4v3.5h-3.5" fill="none" stroke="#fff" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M9.6 9h4.8M9.6 11.1h4.8M11.4 9c1.9 0 1.9 4.2 0 4.2H9.8l3.4 3.2" fill="none" stroke="#fff" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+const FEATURES = [['instant', 'Instant booking'], ['verified', 'Verified masters'], ['safe', 'Safe payment'], ['refunds', 'Easy refunds']]
 
 function Hero({ door }) {
-  const navigate = useNavigate()
   const scenes = SCENES[door] ?? SCENES.occasions
   const [i, setI] = useState(0)
   useEffect(() => { setI(0); const t = setInterval(() => setI(n => (n + 1) % scenes.length), 3000); return () => clearInterval(t) }, [scenes])
@@ -340,36 +390,46 @@ function Hero({ door }) {
      current list, or switching door on a late scene reads past the end. */
   const s = scenes[i % scenes.length]
   const C = s.card
+  const Live = C.to ? Link : 'div'
   return (
-    <div className="relative mt-1 min-h-[184px]" data-hero={i}>
-      <div className="relative z-10 w-[56%] pl-4 pt-2">
-        <h1 key={`${door}-${i}`} className="cx-rise min-h-[90px] text-[28px] font-black leading-[1.02] tracking-[-0.045em] text-[#16092E]" aria-live="polite">
-          {s.lines[0]}<br />{s.lines[1]}<br />
-          <span className="bg-gradient-to-r from-[#7C3AED] to-[#A855F7] bg-clip-text text-transparent">{s.lines[2]}</span>
-        </h1>
-        <div className="mt-2.5 grid grid-cols-2 gap-x-2 gap-y-1.5">
-          {FEATURES.map(([I, t, c]) => (
-            <span key={t} className="flex items-center gap-1.5 text-[10.5px] font-extrabold leading-tight text-[#3B3350]">
-              <span className="grid h-6 w-6 shrink-0 place-items-center rounded-[8px] bg-white shadow-[0_2px_8px_-4px_rgba(0,0,0,.25)]" style={{ color: c }}><I size={13} strokeWidth={2.6} /></span>{t}
-            </span>
-          ))}
+    <div className="relative mt-3" data-hero={i}>
+      {/* What we ask sits ABOVE the picture — the hero itself stays clear. */}
+      <p key={`a${door}${i}`} className="cx-rise flex items-center gap-1.5 px-4 text-[11.5px] font-extrabold text-[#5B21B6]" data-hero-ask>
+        <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-[#7C3AED]" /><span className="truncate">{s.ask[0]}</span>
+      </p>
+      <div className="relative mt-1 min-h-[176px]">
+        <div className="relative z-10 w-[56%] pl-4 pt-1">
+          <h1 key={`${door}-${i}`} className="cx-rise min-h-[90px] text-[28px] font-black leading-[1.02] tracking-[-0.045em] text-[#16092E]" aria-live="polite">
+            {s.lines[0]}<br />{s.lines[1]}<br />
+            <span className="bg-gradient-to-r from-[#7C3AED] to-[#A855F7] bg-clip-text text-transparent">{s.lines[2]}</span>
+          </h1>
+          <div className="mt-2.5 grid grid-cols-2 gap-x-2 gap-y-2">
+            {FEATURES.map(([k, t]) => (
+              <span key={k} className="flex items-center gap-1.5 text-[10.5px] font-extrabold leading-tight text-[#2A2140]" data-mark={k}>
+                <span className="h-[22px] w-[22px] shrink-0 drop-shadow-[0_2px_4px_rgba(20,15,31,.18)]"><Mark kind={k} /></span>{t}
+              </span>
+            ))}
+          </div>
+        </div>
+        <div className="pointer-events-none absolute bottom-0 right-0 top-0 w-[50%]">
+          <img src={artFor('hero-booking') ?? artFor('hero-family')} alt="" className="absolute inset-0 h-full w-full object-cover object-[60%_30%] mix-blend-multiply [mask-image:linear-gradient(90deg,transparent_0%,#000_20%)]" />
         </div>
       </div>
-      <div className="absolute bottom-0 right-0 top-0 w-[50%]" onClick={() => C.to && navigate(C.to)} role={C.to ? 'link' : undefined}>
-        <img src={artFor('hero-booking') ?? artFor('hero-family')} alt="" className="absolute inset-0 h-full w-full object-cover object-[60%_30%] mix-blend-multiply [mask-image:linear-gradient(90deg,transparent_0%,#000_20%)]" />
-        <span key={`a${door}${i}`} className="cx-pop absolute right-2 top-1 max-w-[92%] truncate rounded-[12px] bg-white/95 px-2.5 py-1.5 text-[10.5px] font-extrabold text-[#1C1033] shadow-[0_8px_20px_-10px_rgba(58,18,144,.6)]">{s.ask[0]}</span>
-        <div key={`c${door}${i}`} className="cx-pop absolute bottom-9 right-2 w-[86%] rounded-[16px] bg-white p-2 shadow-[0_14px_28px_-14px_rgba(58,18,144,.75)]" style={{ animationDelay: '.15s' }}>
-          <div className="flex items-center gap-2">
+      {/* The live card and the offer sit BELOW the picture, never on it. */}
+      <div className="mt-2 flex items-stretch gap-2 px-4" data-hero-below>
+        <Live {...(C.to ? { to: C.to } : {})} key={`c${door}${i}`} className="cx-pop flex min-w-0 flex-1 flex-col justify-center rounded-[16px] bg-white px-2.5 py-2 shadow-[0_0_0_1px_#EFE6DA,0_10px_22px_-16px_rgba(58,18,144,.6)]">
+          <span className="flex items-center gap-2">
             <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[10px] text-white" style={{ background: C.tone }}><C.icon size={16} strokeWidth={2.6} /></span>
-            <span className="min-w-0">
+            <span className="min-w-0 flex-1">
               <span className="block truncate text-[12.5px] font-black tracking-[-0.02em] text-[#1C1033]">{C.title}</span>
               <span className="block truncate text-[10px] font-bold text-[#6B6480]">{C.sub}</span>
             </span>
-          </div>
+            {C.to && <ChevronRight size={16} className="shrink-0 text-[var(--ink-3)]" />}
+          </span>
           {C.meter && <span className="mt-1.5 block h-1 overflow-hidden rounded-full bg-[#EDE6FB]"><span className="block h-full w-[78%] animate-pulse rounded-full bg-[#7C3AED]" /></span>}
           {C.razorpay && <span className="mt-1 flex items-center gap-1 text-[9.5px] font-bold text-[#5F5675]"><ShieldCheck size={10} className="text-[#0F9D58]" />Secured by <RazorpayMark /></span>}
-        </div>
-        <span key={`b${door}${i}`} className="cx-pop absolute bottom-1 right-2 max-w-[92%] truncate rounded-[12px] bg-[#0C831F] px-2.5 py-1 text-[10.5px] font-extrabold text-white shadow-[0_8px_18px_-10px_rgba(12,131,31,.9)]" style={{ animationDelay: '.3s' }}>{s.ask[1]}</span>
+        </Live>
+        <span key={`b${door}${i}`} className="cx-pop flex w-[36%] shrink-0 items-center justify-center rounded-[16px] bg-[#0C831F] px-2 py-2 text-center text-[11.5px] font-extrabold leading-tight text-white shadow-[0_8px_18px_-10px_rgba(12,131,31,.9)]" style={{ animationDelay: '.15s' }}>{s.ask[1]}</span>
       </div>
     </div>
   )
@@ -387,7 +447,38 @@ function RazorpayMark() {
   )
 }
 
-function IconChip({ on, onClick, label, src, all = false }) {
+/* Pinned header: tight once the location row has scrolled off, full again
+   only back near the top (two thresholds, so it never flickers between). */
+function useCompact() {
+  const [c, setC] = useState(false)
+  useEffect(() => {
+    let raf = 0, cur = false
+    const on = () => {
+      if (raf) return
+      raf = requestAnimationFrame(() => {
+        raf = 0
+        const y = window.scrollY
+        const next = cur ? y > 24 : y > 150
+        if (next !== cur) { cur = next; setC(next) }
+      })
+    }
+    window.addEventListener('scroll', on, { passive: true })
+    return () => { window.removeEventListener('scroll', on); cancelAnimationFrame(raf) }
+  }, [])
+  return c
+}
+
+function IconChip({ on, onClick, label, src, all = false, compact = false }) {
+  if (compact) return (
+    <button type="button" onClick={onClick} aria-pressed={on} data-chip={label}
+      className={'cx-press cx-pop flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full pl-1 pr-3 text-[12px] font-extrabold transition ' + (on ? 'bg-gradient-to-br from-[#8B5CF6] to-[#6D28D9] text-white shadow-[0_6px_14px_-8px_rgba(109,40,217,.9)]' : 'bg-[#F7F3EE] text-[var(--ink-2)]')}>
+      <span className={'grid h-7 w-7 shrink-0 place-items-center overflow-hidden rounded-full ' + (on ? 'bg-white/20' : 'bg-white')}>
+        {all ? <span className="grid grid-cols-2 gap-[2px]">{[0, 1, 2, 3].map(i => <span key={i} className={'h-[5px] w-[5px] rounded-[1.5px] ' + (on ? 'bg-white' : 'bg-[var(--brand)]')} />)}</span>
+          : <img src={src} alt="" className="h-full w-full object-cover object-[50%_20%]" loading="lazy" />}
+      </span>
+      {label}
+    </button>
+  )
   return (
     <button type="button" onClick={onClick} aria-pressed={on} className="cx-press flex w-[66px] shrink-0 flex-col items-center gap-1 pb-1" data-chip={label}>
       <span className={'relative grid h-[54px] w-[54px] place-items-center overflow-hidden rounded-[16px] transition ' + (on ? 'bg-gradient-to-br from-[#8B5CF6] to-[#6D28D9] shadow-[0_8px_18px_-8px_rgba(109,40,217,.9)]' : 'bg-white shadow-[0_0_0_1px_#EFE7DD]')}>

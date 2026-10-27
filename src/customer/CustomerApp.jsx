@@ -50,6 +50,7 @@ const Rsvp = lazy(() => import('./screens/Rsvp'))
 const InviteHost = lazy(() => import('./screens/InviteHost'))
 const InvitesList = lazy(() => import('./screens/Invites').then(m => ({ default: m.InvitesList })))
 const InviteEdit = lazy(() => import('./screens/Invites').then(m => ({ default: m.InviteEdit })))
+const InviteNew = lazy(() => import('./screens/InviteNew'))
 const Refer = lazy(() => import('./screens/Refer'))
 
 /** Paths that stay on the shared routes on every surface. */
@@ -123,7 +124,7 @@ export default function CustomerApp() {
             <Route path="/help" element={<Help />} />
             <Route path="/wallet" element={<Wallet />} />
             <Route path="/invites" element={<InvitesList />} />
-            <Route path="/invites/new" element={<InviteEdit />} />
+            <Route path="/invites/new" element={<InviteNew />} />
             <Route path="/invites/:id" element={<InviteHost />} />
             <Route path="/invites/:id/edit" element={<InviteEdit />} />
             <Route path="/refer" element={<Refer />} />
