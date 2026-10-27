@@ -11,12 +11,17 @@ import { occasionArt } from '../data/art'
 import { parseTheme } from '../data/inviteTemplates'
 import { Live, MoreOrnaments } from './inviteOrnaments'
 
-const FONT = {
+export const FONT = {
   script: "'Pinyon Script', 'Playfair Display', Georgia, serif",
+  vibes: "'Great Vibes', 'Pinyon Script', Georgia, serif",
+  dance: "'Dancing Script', 'Playfair Display', cursive",
   serif: "'Playfair Display', Georgia, serif",
+  regal: "'Cinzel', 'Playfair Display', Georgia, serif",
   display: "'Sambramo Display', 'Archivo Black', 'Manrope', sans-serif",
   sans: "'Manrope', system-ui, sans-serif",
 }
+/* The title's size per font: scripts run small on the eye, Cinzel runs wide. */
+const SIZE = { script: 42, vibes: 44, dance: 38, serif: 34, regal: 27, display: 30, sans: 34 }
 /* Ornaments that own the top edge push the words down a little. */
 const PAD = { band: '6%', toran: '17%', bunting: '17%', stage: '14%' }
 const MONTH = new Intl.DateTimeFormat('en-IN', { month: 'long' })
@@ -51,7 +56,7 @@ export default function InviteCard({ inv, occasion = null, theme, size = 'full',
         <p style={{ fontSize: 10.5 * s, letterSpacing: '0.32em', color: t.ornament === 'band' && !art ? '#E2E8F0' : t.soft, marginTop: art ? `${6 * s}px` : t.ornament === 'band' ? `${10 * s}px` : 0 }} className="font-extrabold uppercase">
           {hosts ? `${hosts} invite you` : 'You’re invited'}
         </p>
-        <h3 style={{ fontFamily: FONT[t.font], fontSize: (t.font === 'script' ? 42 : t.font === 'display' ? 30 : 34) * s, lineHeight: 1.05, color: t.ornament === 'band' ? (art ? t.ink : '#FFFFFF') : t.ink,
+        <h3 style={{ fontFamily: FONT[t.font], fontSize: (SIZE[t.font] ?? 34) * s, lineHeight: 1.05, color: t.ornament === 'band' ? (art ? t.ink : '#FFFFFF') : t.ink,
           textShadow: t.ornament === 'neon' ? `0 0 ${12 * s}px ${t.soft}, 0 0 ${28 * s}px ${t.accent}` : 'none', marginTop: `${6 * s}px` }} className="max-w-full break-words font-bold">
           {title}
         </h3>

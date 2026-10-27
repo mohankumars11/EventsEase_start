@@ -11,7 +11,7 @@
     "app:customer": "node scripts/build-native.mjs customer",
     "app:partner": "node scripts/build-native.mjs partner",
     "check:native": "node scripts/check-native-build.mjs",
-    "test": "node --test tests/recommend360.test.mjs tests/rsvp.test.mjs tests/quote.test.mjs",
+    "test": "node --test tests/recommend360.test.mjs tests/rsvp.test.mjs tests/quote.test.mjs tests/inviteTheme.test.mjs",
     "check:360": "node scripts/import-catalogue-360.mjs --check && node scripts/rules360.mjs validate"
   },
   "dependencies": {

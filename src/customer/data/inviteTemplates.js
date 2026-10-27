@@ -187,9 +187,51 @@ export function templatesFor(occasion) {
 /** The ones genuinely made for this occasion (labelled "Made for this"). */
 export const recommendedFor = occasion => new Set(TEMPLATES.filter(t => fitScore(t, occasion) >= 6).map(t => t.id))
 
+/* ── Make it yours: a colour palette and a font over any design ──────
+   Kept in the same theme text: "royal|art|live|p:emerald|f:regal".
+   An older app reading it simply shows the design's own colours. */
+const P = (id, name, bg, ink, soft, accent, band, swatch) => ({ id, name, bg, ink, soft, accent, band, swatch })
+export const PALETTES = [
+  P('maroon', 'Maroon & gold', 'radial-gradient(120% 80% at 50% 0%, #8B1E3F 0%, #5B0E1E 70%, #3D0814 100%)', '#FCEFD8', '#E8C77A', '#E8C77A', '#7F1D1D', ['#8B1E3F', '#E8C77A']),
+  P('emerald', 'Emerald & gold', 'radial-gradient(120% 80% at 50% 0%, #0F5A45 0%, #083B2D 70%, #052A20 100%)', '#FBF3DC', '#E3C77B', '#E3C77B', '#14532D', ['#0F5A45', '#E3C77B']),
+  P('navy', 'Navy & gold', 'radial-gradient(120% 80% at 50% 0%, #1E3A8A 0%, #102257 70%, #0A1638 100%)', '#FDF6E3', '#E8C77A', '#E8C77A', '#1E3A8A', ['#1E3A8A', '#E8C77A']),
+  P('plum', 'Royal purple', 'radial-gradient(120% 80% at 50% 0%, #5B21B6 0%, #3B0F80 70%, #2E1065 100%)', '#FFFFFF', '#E9D5FF', '#FCD34D', '#4C1D95', ['#5B21B6', '#FCD34D']),
+  P('noir', 'Black & gold', 'radial-gradient(120% 90% at 50% 0%, #27272A 0%, #09090B 70%)', '#FFFFFF', '#FDE68A', '#D4AF37', '#18181B', ['#18181B', '#D4AF37']),
+  P('rani', 'Rani pink', 'linear-gradient(170deg, #BE185D 0%, #831843 100%)', '#FFF1F7', '#FBCFE8', '#FCD34D', '#9D174D', ['#BE185D', '#FCD34D']),
+  P('teal', 'Peacock teal', 'linear-gradient(170deg, #0F766E 0%, #134E4A 100%)', '#F0FDFA', '#99F6E4', '#FCD34D', '#115E59', ['#0F766E', '#FCD34D']),
+  P('blush', 'Blush pink', 'linear-gradient(170deg, #FFF5F7 0%, #FFE4EC 60%, #FFD3E0 100%)', '#6B1438', '#A8456F', '#E85D8A', '#9D174D', ['#FFD3E0', '#E85D8A']),
+  P('lavender', 'Lavender', 'linear-gradient(170deg, #FAF5FF 0%, #EDE9FE 100%)', '#4C1D95', '#7C3AED', '#A78BFA', '#5B21B6', ['#EDE9FE', '#7C3AED']),
+  P('mint', 'Mint', 'linear-gradient(170deg, #F0FDF4 0%, #DCFCE7 100%)', '#14532D', '#15803D', '#22C55E', '#166534', ['#DCFCE7', '#16A34A']),
+  P('sky', 'Sky blue', 'linear-gradient(180deg, #F0F9FF 0%, #DBEAFE 100%)', '#1E3A8A', '#3B5BA9', '#3B82F6', '#1E3A8A', ['#DBEAFE', '#3B82F6']),
+  P('haldi', 'Haldi yellow', 'linear-gradient(170deg, #FFFBEB 0%, #FEF08A 100%)', '#713F12', '#A16207', '#EA580C', '#92400E', ['#FEF08A', '#EA580C']),
+  P('peach', 'Peach', 'linear-gradient(170deg, #FFF7ED 0%, #FFE4D6 100%)', '#7C2D12', '#C2410C', '#FB923C', '#9A3412', ['#FFE4D6', '#FB923C']),
+  P('ivory', 'Ivory & gold', 'linear-gradient(180deg, #FFFFFF 0%, #FAF7EF 100%)', '#3F2D12', '#7A5C2E', '#B08A3E', '#3F2D12', ['#FAF7EF', '#B08A3E']),
+]
+export const PALETTE = Object.fromEntries(PALETTES.map(p => [p.id, p]))
+export const FONTS = [['script', 'Script'], ['vibes', 'Calligraphy'], ['dance', 'Handwritten'], ['serif', 'Classic'], ['regal', 'Regal'], ['display', 'Bold'], ['sans', 'Modern']]
+const FONT_IDS = new Set(FONTS.map(f => f[0]))
+
+/* A design dressed in the customer's palette and font. */
+function dress(t, pal, font) {
+  const p = PALETTE[pal]
+  let x = t
+  if (p) {
+    const band = t.ornament === 'band'
+    x = { ...x, bg: band ? `linear-gradient(180deg, ${p.band} 0%, ${p.band} 30%, #FFFFFF 30%, #FFFFFF 100%)` : p.bg,
+      ink: band ? p.band : p.ink, soft: band ? p.band : p.soft, accent: p.accent,
+      petal: p.accent, bloom: [p.accent, p.soft], leaf: [p.soft, p.accent], palette: t.palette ? [p.accent, p.soft, ...t.palette.slice(2)] : t.palette }
+  }
+  if (font && FONT_IDS.has(font)) x = { ...x, font }
+  return x
+}
+
 export function parseTheme(theme, occasion) {
   const [id, ...flags] = String(theme ?? '').split('|')
-  const t = TEMPLATE[id] ?? templatesFor(occasion)[0] ?? TEMPLATE.amethyst
-  return { t, art: flags.includes('art'), live: flags.includes('live') }
+  const base = TEMPLATE[id] ?? templatesFor(occasion)[0] ?? TEMPLATE.amethyst
+  const flag = k => flags.find(f => f.startsWith(k))?.slice(k.length) ?? null
+  const pal = PALETTE[flag('p:')] ? flag('p:') : null
+  const font = FONT_IDS.has(flag('f:')) ? flag('f:') : null
+  return { t: dress(base, pal, font), base, art: flags.includes('art'), live: flags.includes('live'), pal, font }
 }
-export const themeString = (id, { art = false, live = false } = {}) => [id, art && 'art', live && 'live'].filter(Boolean).join('|')
+export const themeString = (id, { art = false, live = false, pal = null, font = null } = {}) =>
+  [id, art && 'art', live && 'live', pal && `p:${pal}`, font && `f:${font}`].filter(Boolean).join('|')

@@ -19,10 +19,11 @@ import { useAuth } from '../../context/AuthContext'
 import { CATEGORIES, FEATURED, OCCASION, OCCASIONS } from '../data/occasions'
 import { occasionArt } from '../data/art'
 import { usePlan } from '../state/PlanContext'
-import { STYLES, TEMPLATE, TEMPLATES, isSolemn, parseTheme, recommendedFor, templatesFor, themeString } from '../data/inviteTemplates'
+import { PALETTE, STYLES, TEMPLATE, TEMPLATES, isSolemn, parseTheme, recommendedFor, templatesFor, themeString } from '../data/inviteTemplates'
 import { addGuests, functionsFor, getInvitation, inviteText, parseGuestList, saveInvitation, shareText } from '../lib/rsvp'
 import { canPickContacts, guestsFromFile, pickContacts } from '../lib/guestImport'
 import InviteCard from '../ui/InviteCard'
+import LookPicker from '../ui/inviteLook'
 import { Sheet } from '../ui/kit'
 import SignInSheet from './SignInSheet'
 
@@ -236,14 +237,18 @@ function StepEvent({ occ, onPick }) {
 /* ── 2. The design: every one, best for this occasion first ───────── */
 function StepDesign({ inv, occ, set, onUse }) {
   const [style, setStyle] = useState('all')
-  const [peek, setPeek] = useState(null)
+  const [peek, setPeekRaw] = useState(null)
+  const [look, setLook] = useState({ art: true, live: true, pal: null, font: null })
   const ranked = useMemo(() => templatesFor(occ), [occ])
   const rec = useMemo(() => recommendedFor(occ), [occ])
   const list = style === 'all' ? ranked : ranked.filter(t => (style === 'trending' ? t.trending : t.style === style))
   const cur = parseTheme(inv.theme, occ)
   const sample = { ...inv, title: inv.title || occ.name }
   const k = peek ? list.findIndex(t => t.id === peek) : -1
-  const use = id => { set({ theme: themeString(id, { art: cur.art, live: cur.live }) }); setPeek(null); onUse() }
+  /* Opening a design starts from its own colours and font — or, for the one
+     already chosen, from what the customer made of it. */
+  const setPeek = id => { setPeekRaw(id); if (id) setLook(id === cur.t.id ? { art: cur.art, live: cur.live, pal: cur.pal, font: cur.font } : l => ({ ...l, pal: null, font: null })) }
+  const use = id => { set({ theme: themeString(id, look) }); setPeekRaw(null); onUse() }
   return (
     <>
       <Q title="Pick a design you love" sub={`${ranked.length} designs · ${rec.size} made for ${occ.name}. Tap one to see it live.`} />
@@ -272,15 +277,17 @@ function StepDesign({ inv, occ, set, onUse }) {
         footer={peek && <button type="button" onClick={() => use(peek)} className="cx-press cx-cta flex h-14 w-full items-center justify-center gap-2 rounded-[18px] text-[16px] font-extrabold" data-use-design><Check size={18} strokeWidth={3} />Use this design</button>}>
         {peek && (
           <div className="pb-2">
-            <div className="relative mx-auto w-[78%] max-w-[300px]">
-              <InviteCard inv={sample} occasion={occ} theme={themeString(peek, { art: cur.art, live: cur.live })} />
+            <div className="relative mx-auto w-[64%] max-w-[260px]">
+              <InviteCard inv={sample} occasion={occ} theme={themeString(peek, look)} />
               {k > 0 && <button type="button" onClick={() => setPeek(list[k - 1].id)} aria-label="Previous design" className="cx-press absolute -left-11 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-white shadow-[0_4px_14px_rgba(0,0,0,.18)]"><ChevronLeft size={20} /></button>}
               {k >= 0 && k < list.length - 1 && <button type="button" onClick={() => setPeek(list[k + 1].id)} aria-label="Next design" className="cx-press absolute -right-11 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-white shadow-[0_4px_14px_rgba(0,0,0,.18)]"><ChevronRight size={20} /></button>}
             </div>
             <p className="mt-2 text-center text-[12.5px] font-bold text-[var(--ink-3)]">{TEMPLATE[peek].vibe}{k >= 0 ? ` · ${k + 1} of ${list.length}` : ''}</p>
+            <p className="mt-4 flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#DB2777]"><Sparkles size={13} />Make it yours</p>
+            <div className="mt-2"><LookPicker base={TEMPLATE[peek]} look={look} onChange={setLook} /></div>
             <div className="mt-3 grid grid-cols-2 gap-2">
-              <Chip on={cur.art} onClick={() => set({ theme: themeString(cur.t.id, { art: !cur.art, live: cur.live }) })}>Illustration</Chip>
-              <Chip on={cur.live} onClick={() => set({ theme: themeString(cur.t.id, { art: cur.art, live: !cur.live }) })}>✨ Live animation</Chip>
+              <Chip on={look.art} onClick={() => setLook(l => ({ ...l, art: !l.art }))}>Illustration</Chip>
+              <Chip on={look.live} onClick={() => setLook(l => ({ ...l, live: !l.live }))}>✨ Live animation</Chip>
             </div>
           </div>
         )}
@@ -439,9 +446,9 @@ function StepRsvp({ inv, set }) {
 
 /* ── Review ───────────────────────────────────────────────────────── */
 function StepReview({ inv, occ, fns, go, err }) {
-  const { t } = parseTheme(inv.theme, occ)
+  const { t, pal } = parseTheme(inv.theme, occ)
   const rows = [
-    ['design', 'Design', t.name], ['when', 'When', [nice(inv.event_date), inv.start_time && `${inv.start_time.slice(0, 5)}`].filter(Boolean).join(' · ') || 'Not set yet'],
+    ['design', 'Design', pal ? `${t.name} · ${PALETTE[pal].name}` : t.name], ['when', 'When', [nice(inv.event_date), inv.start_time && `${inv.start_time.slice(0, 5)}`].filter(Boolean).join(' · ') || 'Not set yet'],
     ['where', 'Where', inv.venue_name || 'Not set yet'], ...(fns.length ? [['functions', 'Functions', fns.map(f => f.name).join(', ')]] : []),
     ['rsvp', 'Guests tell you', ['how many', inv.allow_kids && 'kids', inv.ask_meal && 'food'].filter(Boolean).join(' · ')],
   ]
