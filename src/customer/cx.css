@@ -200,7 +200,7 @@
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: .2; transform: scale(1.1); }
 }
-.cx-flash-ring { border: 2px solid #DB2777; animation: cx-flash-ring 1.3s ease-in-out infinite; will-change: transform, opacity; }
+.cx-flash-ring { border: 2px solid #DB2777; animation: cx-flash-ring 1.3s ease-in-out infinite; }
 
 /* Live invitations: petals and confetti fall, hearts and balloons rise, lamps flicker. */
 @keyframes cx-fx-fall { from { transform: translateY(-8%); } to { transform: translateY(104%); } }
@@ -218,7 +218,9 @@
    Its contents pop in and out; a soft halo breathes out from it — no spinning ring. */
 .cx-orb-new { background: radial-gradient(circle at 30% 25%, #FFD08A 0%, #FF8A1F 45%, #E8430F 100%); box-shadow: 0 14px 28px -10px rgba(232, 67, 15, .75), inset 0 1px 0 rgba(255, 255, 255, .55); }
 .cx-orb-back { background: radial-gradient(circle at 30% 25%, #8CF2DE 0%, #14B8A6 45%, #0B5E55 100%); box-shadow: 0 14px 28px -10px rgba(11, 94, 85, .75), inset 0 1px 0 rgba(255, 255, 255, .55); }
-.cx-orb-halo { animation: cx-orb-halo 2.6s ease-out infinite; will-change: transform, opacity; }
+.cx-orb-halo { animation: cx-orb-halo 2.6s ease-out infinite; }
+.cx-orb-breathe { animation: cx-orb-breathe 2.6s ease-in-out infinite; }
+@keyframes cx-orb-breathe { 0%, 100% { transform: scale(1); } 45% { transform: scale(1.16); } 60% { transform: scale(.96); } }
 @keyframes cx-orb-halo { 0% { transform: scale(1); opacity: .5; } 70%, 100% { transform: scale(1.55); opacity: 0; } }
 .cx-orb-pop { animation: cx-orb-pop 2.6s cubic-bezier(.2, .9, .3, 1.3) both; }
 @keyframes cx-orb-pop {
@@ -234,7 +236,7 @@
   26%, 74% { transform: translateY(0) scale(1); opacity: 1; }
   88%, 100% { transform: translateY(-6px) scale(.9); opacity: 0; }
 }
-@media (prefers-reduced-motion: reduce) { .cx-orb-halo, .cx-orb-pop, .cx-orb-bubble { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .cx-orb-halo, .cx-orb-pop, .cx-orb-bubble, .cx-orb-breathe { animation: none; } }
 
 /* The column of designs beside the occasion list: always drifting up. */
 @keyframes cx-marquee-y { from { transform: translateY(0); } to { transform: translateY(-50%); } }

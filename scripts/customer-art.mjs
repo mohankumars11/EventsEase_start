@@ -5,12 +5,18 @@
  *   node scripts/customer-art.mjs import            # generated-images/*.png → src/customer/art/*.webp
  *   node scripts/customer-art.mjs import --force    # re-encode even if the webp exists
  *   node scripts/customer-art.mjs crop <src.png> <spec.json>
+ *   node scripts/customer-art.mjs hd occ-birthday-party svc-photography …
  *
  * `import` takes the 1024×1024 PNGs scripts/generate_images.py writes and
  * makes a 512×512 WebP of each, named by the same id (cat-wedding,
  * occ-haldi-ceremony, svc-photography). 490 PNGs at ~1.5 MB would be a
  * 700 MB apk; 490 WebPs at 512 are ~20 MB. The app finds them by file name
  * (src/customer/data/art.js), so dropping a file in is the whole wiring.
+ *
+ * `hd` writes full-resolution (1024) copies into src/customer/art/hd for the
+ * few places a picture is shown large — the home spotlight — so a 512
+ * thumbnail is never stretched there. Kept to a short list: every HD file
+ * is ~150 KB in the apk.
  *
  * `crop` cuts named regions out of one image — spec is
  * [{ "id": "cat-wedding", "x": 0, "y": 0, "w": 100, "h": 100 }, …] in
@@ -29,7 +35,7 @@ const ROOT = new URL('..', import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1'
 const ART = join(ROOT, 'src/customer/art')
 const [mode, ...rest] = process.argv.slice(2)
 const EDGE = ['C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe', 'C:/Program Files/Microsoft/Edge/Application/msedge.exe'].find(existsSync)
-if (!['import', 'crop'].includes(mode)) { console.error('usage: customer-art.mjs import [--force] | crop <src> <spec.json>'); process.exit(2) }
+if (!['import', 'crop', 'hd'].includes(mode)) { console.error('usage: customer-art.mjs import [--force] | crop <src> <spec.json> | hd <id…>'); process.exit(2) }
 
 const sleep = ms => new Promise(r => setTimeout(r, ms))
 const PORT = 9471 + Math.floor(Math.random() * 40)
@@ -74,6 +80,16 @@ if (mode === 'import') {
     const [webp] = await draw(join(from, f), [f.startsWith('hero-') ? [0, 0, 0, 0, 960, 640] : [0, 0, 0, 0, 512, 512]])
     writeFileSync(join(ART, f.replace(/\.png$/, '.webp')), webp)
     console.log(`  ${f} → ${(webp.length / 1024).toFixed(0)} KB`)
+  }
+} else if (mode === 'hd') {
+  const HD = join(ART, 'hd')
+  mkdirSync(HD, { recursive: true })
+  for (const id of rest) {
+    const src = join(ROOT, 'generated-images', `${id}.png`)
+    if (!existsSync(src)) { console.log(`  ${id}: no generated-images/${id}.png — skipped`); continue }
+    const [webp] = await draw(src, [[0, 0, 0, 0, 1024, 1024]])
+    writeFileSync(join(HD, `${id}.webp`), webp)
+    console.log(`  ${id} → hd ${(webp.length / 1024).toFixed(0)} KB`)
   }
 } else {
   const [src, spec] = rest

@@ -54,18 +54,19 @@ export default function DesignViewer({ list, start, inv, occ, look, setLook, rec
   }
   const t = list[at]
   /* The glow follows what the customer made of the card, not its original colours. */
-  const glow = t ? parseTheme(themeString(t.id, look), occ).t.bg : null
+  const accent = t ? parseTheme(themeString(t.id, look), occ).t.accent : '#A78BFA'
+  const glow = /^#[0-9a-f]{6}$/i.test(accent) ? accent : '#A78BFA'
   const sample = { ...inv, title: inv.title || occ?.name }
 
   return createPortal(
     <div className="cx">
       <div className="fixed inset-0 z-[400] flex flex-col overflow-hidden bg-[#0D0717] text-white" role="dialog" aria-modal="true" aria-label="Preview designs" data-design-viewer>
         {/* The glow behind: the card's own colours, blurred big. */}
-        <div aria-hidden className="pointer-events-none absolute left-[-20%] top-[6%] h-[70%] w-[140%] opacity-40 blur-[70px] transition-[background] duration-500" style={{ background: glow }} />
+        <div aria-hidden className="pointer-events-none absolute inset-0" style={{ background: `radial-gradient(70% 45% at 50% 40%, ${glow}55 0%, transparent 70%), radial-gradient(90% 60% at 0% 0%, rgba(124,58,237,.35) 0%, transparent 60%)` }} />
         <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/50" />
 
         <header className="cx-safe-top relative z-10 flex items-center gap-3 px-4 pb-2">
-          <button type="button" onClick={onClose} aria-label="Close preview" className="cx-press grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white/10 backdrop-blur-md ring-1 ring-white/15"><X size={20} /></button>
+          <button type="button" onClick={onClose} aria-label="Close preview" className="cx-press grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white/10 ring-1 ring-white/15"><X size={20} /></button>
           <div className="min-w-0 flex-1 text-center">
             <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-white/60">In the spotlight</p>
             <p className="cx-num text-[13px] font-extrabold text-white/90">{at + 1} of {list.length} designs</p>
@@ -89,8 +90,8 @@ export default function DesignViewer({ list, start, inv, occ, look, setLook, rec
               )
             })}
           </div>
-          {at > 0 && <button type="button" onClick={() => center(at - 1, true)} aria-label="Previous design" className="cx-press absolute left-2 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-white/15 backdrop-blur-md ring-1 ring-white/20"><ChevronLeft size={20} /></button>}
-          {at < list.length - 1 && <button type="button" onClick={() => center(at + 1, true)} aria-label="Next design" className="cx-press absolute right-2 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-white/15 backdrop-blur-md ring-1 ring-white/20"><ChevronRight size={20} /></button>}
+          {at > 0 && <button type="button" onClick={() => center(at - 1, true)} aria-label="Previous design" className="cx-press absolute left-2 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-white/15 ring-1 ring-white/20"><ChevronLeft size={20} /></button>}
+          {at < list.length - 1 && <button type="button" onClick={() => center(at + 1, true)} aria-label="Next design" className="cx-press absolute right-2 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-white/15 ring-1 ring-white/20"><ChevronRight size={20} /></button>}
         </div>
 
         <div className="relative z-10 px-5 pb-3 text-center">

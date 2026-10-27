@@ -27,7 +27,7 @@ import { BENGALURU_AREAS } from '../../data/bengaluruAreas'
 import { CATEGORIES, OCCASION, OCCASIONS } from '../data/occasions'
 import { TRADES } from '../data/trades'
 import { FAMILIES } from '../data/families'
-import { artFor, categoryArt, occasionArt, serviceArt } from '../data/art'
+import { artFor, categoryArt, hdArtFor, occasionArt, serviceArt } from '../data/art'
 import { Card, CategoryCard, FamilyCard, Rotator, ServiceCard } from '../ui/art'
 import { Sheet } from '../ui/kit'
 import { OfferDeck } from '../ui/offers'
@@ -175,8 +175,8 @@ export default function Home() {
 
       {/* ── In the spotlight: one big card, the next ones peeking in ─── */}
       <Spotlight key={door} items={celebrate
-        ? SPOT_OCC.map(([id, badge, hook]) => OCCASION[id] && occasionArt(OCCASION[id]).kind === 'art' && { id, to: `/o/${id}`, title: OCCASION[id].name, badge, hook, art: occasionArt(OCCASION[id]).src, tone: OCCASION[id].tone }).filter(Boolean)
-        : SPOT_SVC.map(([id, badge, hook]) => TRADES.some(t => t.id === id) && serviceArt(id).kind === 'art' && { id, to: `/s/${id}`, title: TRADES.find(t => t.id === id).label, badge, hook, art: serviceArt(id).src, tone: '#E9DDFB' }).filter(Boolean)} />
+        ? SPOT_OCC.map(([id, badge, hook]) => OCCASION[id] && occasionArt(OCCASION[id]).kind === 'art' && { id, to: `/o/${id}`, title: OCCASION[id].name, badge, hook, art: hdArtFor(`occ-${id}`), tone: OCCASION[id].tone }).filter(Boolean)
+        : SPOT_SVC.map(([id, badge, hook]) => TRADES.some(t => t.id === id) && serviceArt(id).kind === 'art' && { id, to: `/s/${id}`, title: TRADES.find(t => t.id === id).label, badge, hook, art: hdArtFor(`svc-${id}`), tone: '#E9DDFB' }).filter(Boolean)} />
 
       {/* ── Weekend: the next Saturday, and what people book for it ──── */}
       {celebrate && (

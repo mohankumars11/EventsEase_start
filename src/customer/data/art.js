@@ -20,6 +20,12 @@ const ART = Object.fromEntries(Object.entries(FILES).map(([p, url]) => [p.slice(
 
 export const artFor = id => ART[id] ?? null
 
+/* 1024 px originals for the few places a picture is shown large (the home
+   spotlight), written by `node scripts/customer-art.mjs hd <id…>`. */
+const HD_FILES = import.meta.glob('../art/hd/*.webp', { eager: true, query: '?url', import: 'default' })
+const HD = Object.fromEntries(Object.entries(HD_FILES).map(([p, url]) => [p.slice(p.lastIndexOf('/') + 1, -5), url]))
+export const hdArtFor = id => HD[id] ?? ART[id] ?? null
+
 const picto = {}
 export function pictogram(tradeId) {
   if (!TRADE[tradeId]) return null

@@ -5,7 +5,7 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { ArrowLeft, ArrowRight, Cake, CalendarDays, Camera, Disc3, Flower2, Gift, Heart, House, LayoutGrid, MailOpen, Percent, RotateCcw, Search, Star, UserRound, Utensils, X, Zap } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CalendarDays, House, LayoutGrid, Search, Star, UserRound, X, Zap } from 'lucide-react'
 import { usePlan } from '../state/PlanContext'
 import { rupees, plural } from '../lib/format'
 import { planFloor } from '../lib/estimate'
@@ -84,35 +84,21 @@ export function TabBar() {
 }
 
 /* ── The search orb ─────────────────────────────────────────────────
- * Marigold for someone who has not booked yet, peacock teal once they
- * have — the colour itself tells a returning customer "welcome back".
- * No spinning ring: what is inside search pops in and out of the orb, one
- * thing at a time (a cake, a camera, a DJ…), with its name in a bubble
- * above, so the button shows what it holds. First-timers are told about
- * the 10% off; returning customers are shown "Book again". */
-const ORB_NEW = [[Search, 'Search anything'], [Cake, 'Cakes'], [Camera, 'Photographers'], [Disc3, 'DJs & music'], [Flower2, 'Décor & flowers'], [Utensils, 'Caterers'], [Percent, '10% off your 1st booking']]
-const ORB_BACK = [[Search, 'Search anything'], [RotateCcw, 'Book again in 1 tap'], [Heart, 'Your saved masters'], [MailOpen, 'Invite your guests'], [Gift, 'Refer & earn']]
-
+ * Just search (Mohan, 2026-10-27): the magnifier alone, breathing in and
+ * out, a soft halo pulsing from it. Marigold for someone who has not
+ * booked yet (with the 10% first-booking tag), peacock teal once they
+ * have. Everything here animates transform and opacity only. */
 function SearchOrb({ onClick }) {
-  const { bookings, basket } = usePlan()
+  const { bookings } = usePlan()
   const back = (bookings?.length ?? 0) > 0
-  /* The plan bar floats where the bubble would: with a basket, the orb only pops. */
-  const quiet = (basket?.length ?? 0) > 0
-  const items = back ? ORB_BACK : ORB_NEW
-  const [i, setI] = useState(0)
-  useEffect(() => { setI(0); const t = setInterval(() => setI(n => (n + 1) % items.length), 2600); return () => clearInterval(t) }, [items.length])
-  const [Icon, label] = items[i % items.length]
   return (
     <>
-    <span aria-hidden className={'cx-orb-halo pointer-events-none absolute -top-[42px] h-[60px] w-[60px] rounded-full ' + (back ? 'bg-[#14B8A6]' : 'bg-[#FF8A1F]')} />
-    <button type="button" onClick={onClick} aria-label={`Search — ${label}`} data-orb={back ? 'back' : 'new'}
-      className={'cx-press absolute -top-[42px] grid h-[60px] w-[60px] place-items-center rounded-full text-white ring-[5px] ring-white ' + (back ? 'cx-orb-back' : 'cx-orb-new')}>
-      <span key={`i${i}`} className="cx-orb-pop grid place-items-center"><Icon size={24} strokeWidth={2.5} /></span>
-      {!quiet && <span className="pointer-events-none absolute bottom-[calc(100%+10px)] left-1/2 -translate-x-1/2">
-        <span key={`b${i}`} className={'cx-orb-bubble block whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-extrabold text-white shadow-[0_8px_18px_-8px_rgba(20,15,31,.6)] ' + (back ? 'bg-[#0B5E55]' : 'bg-[#C2410C]')}>{label}</span>
-      </span>}
-      {!back && <span className="absolute -right-1.5 -top-1 rounded-full bg-white px-1.5 py-[1px] text-[9.5px] font-black text-[#E8430F] shadow-[0_2px_6px_rgba(0,0,0,.18)]">10%</span>}
-    </button>
+      <span aria-hidden className={'cx-orb-halo pointer-events-none absolute -top-[42px] h-[60px] w-[60px] rounded-full ' + (back ? 'bg-[#14B8A6]' : 'bg-[#FF8A1F]')} />
+      <button type="button" onClick={onClick} aria-label="Search" data-orb={back ? 'back' : 'new'}
+        className={'cx-press absolute -top-[42px] grid h-[60px] w-[60px] place-items-center rounded-full text-white ring-[5px] ring-white ' + (back ? 'cx-orb-back' : 'cx-orb-new')}>
+        <span className="cx-orb-breathe grid place-items-center"><Search size={25} strokeWidth={2.6} /></span>
+        {!back && <span className="absolute -right-1.5 -top-1 rounded-full bg-white px-1.5 py-[1px] text-[9.5px] font-black text-[#E8430F] shadow-[0_2px_6px_rgba(0,0,0,.18)]">10%</span>}
+      </button>
     </>
   )
 }
