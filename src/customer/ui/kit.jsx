@@ -63,10 +63,10 @@ export function useScrolling() {
 export function TabBar() {
   const { pathname } = useLocation()
   const navigate = useNavigate()
+  const hidden = useScrolling()
   return (
-    /* Always there (Mohan, 2026-10-27): the bar never slides away while scrolling. */
-    <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-[150] px-3"
-      style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 10px)' }} aria-label="Main" data-tabbar="shown">
+    <nav className={'pointer-events-none fixed inset-x-0 bottom-0 z-[150] px-3 transition-transform duration-200 ease-out will-change-transform ' + (hidden ? 'translate-y-[130%]' : 'translate-y-0')}
+      style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 10px)' }} aria-label="Main" data-tabbar={hidden ? 'hidden' : 'shown'}>
       <div className="pointer-events-auto relative mx-auto grid h-[66px] max-w-[540px] grid-cols-5 items-center rounded-[26px] bg-white px-1 shadow-[0_0_0_1px_#EEE6FA,0_18px_40px_-18px_rgba(58,18,144,.55)]">
         {TABS.map((t, i) => t ? (
           <Link key={t.to} to={t.to} className="cx-press relative flex flex-col items-center gap-0.5" aria-current={t.match(pathname) ? 'page' : undefined} data-tab={t.label}>
@@ -104,12 +104,13 @@ function SearchOrb({ onClick }) {
 /* ── The plan bar: what is chosen, what it comes to, one tap to review ── */
 export function PlanBar({ withTabs = true }) {
   const { basket, event } = usePlan()
+  const moving = useScrolling()
   const navigate = useNavigate()
   if (!basket.length) return null
   const { paise: total } = planFloor(basket, event)
   const instant = basket.filter(l => l.instant).length
   return (
-    <div className="pointer-events-none fixed inset-x-0 z-[140] px-3 transition-[bottom] duration-200 ease-out" style={{ bottom: withTabs ? 'calc(env(safe-area-inset-bottom, 0px) + 88px)' : 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}>
+    <div className="pointer-events-none fixed inset-x-0 z-[140] px-3 transition-[bottom] duration-200 ease-out" style={{ bottom: withTabs && !moving ? 'calc(env(safe-area-inset-bottom, 0px) + 88px)' : 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}>
       <button type="button" onClick={() => navigate('/plan')} data-plan-bar
         className="cx-press cx-pop pointer-events-auto mx-auto flex w-full max-w-[540px] items-center gap-3 rounded-[22px] bg-gradient-to-b from-[#F1E9FF] to-[#E2D2FF] p-2 pr-2.5 text-left text-[var(--am-ink)] shadow-[0_0_0_1px_#D6C2FF,0_18px_36px_-16px_rgba(58,18,144,.75)]">
         <span className="flex shrink-0 -space-x-3 pl-1">
