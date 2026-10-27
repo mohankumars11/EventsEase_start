@@ -12,19 +12,18 @@
  * The designs are shown from the very first screen (a moving column of
  * real cards beside the occasion list) because the design is the hook.
  */
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, Check, ChevronLeft, ChevronRight, Clock, Contact, FileSpreadsheet, Link2, Loader2, MapPin, MessageCircle, PartyPopper, Plus, Search, Sparkles, UserPlus, Users, X } from 'lucide-react'
+import { ArrowLeft, Check, ChevronRight, Clock, Contact, FileSpreadsheet, Link2, Loader2, MapPin, MessageCircle, PartyPopper, Plus, Search, Sparkles, UserPlus, Users, X } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { CATEGORIES, FEATURED, OCCASION, OCCASIONS } from '../data/occasions'
 import { occasionArt } from '../data/art'
 import { usePlan } from '../state/PlanContext'
-import { PALETTE, STYLES, TEMPLATE, TEMPLATES, isSolemn, parseTheme, recommendedFor, templatesFor, themeString } from '../data/inviteTemplates'
+import { PALETTE, STYLES, TEMPLATES, isSolemn, parseTheme, recommendedFor, templatesFor, themeString } from '../data/inviteTemplates'
 import { addGuests, functionsFor, getInvitation, inviteText, parseGuestList, saveInvitation, shareText } from '../lib/rsvp'
 import { canPickContacts, guestsFromFile, pickContacts } from '../lib/guestImport'
 import InviteCard from '../ui/InviteCard'
-import LookPicker from '../ui/inviteLook'
-import { Sheet } from '../ui/kit'
+import DesignViewer from '../ui/DesignViewer'
 import SignInSheet from './SignInSheet'
 
 const NOTES = {
@@ -237,33 +236,41 @@ function StepEvent({ occ, onPick }) {
 /* ── 2. The design: every one, best for this occasion first ───────── */
 function StepDesign({ inv, occ, set, onUse }) {
   const [style, setStyle] = useState('all')
-  const [peek, setPeekRaw] = useState(null)
+  const [vi, setVi] = useState(null)
+  const [n, setN] = useState(30)
   const [look, setLook] = useState({ art: true, live: true, pal: null, font: null })
+  const more = useRef(null)
   const ranked = useMemo(() => templatesFor(occ), [occ])
   const rec = useMemo(() => recommendedFor(occ), [occ])
   const list = style === 'all' ? ranked : ranked.filter(t => (style === 'trending' ? t.trending : t.style === style))
   const cur = parseTheme(inv.theme, occ)
   const sample = { ...inv, title: inv.title || occ.name }
-  const k = peek ? list.findIndex(t => t.id === peek) : -1
-  /* Opening a design starts from its own colours and font — or, for the one
-     already chosen, from what the customer made of it. */
-  const setPeek = id => { setPeekRaw(id); if (id) setLook(id === cur.t.id ? { art: cur.art, live: cur.live, pal: cur.pal, font: cur.font } : l => ({ ...l, pal: null, font: null })) }
-  const use = id => { set({ theme: themeString(id, look) }); setPeekRaw(null); onUse() }
+  /* The gallery draws 30 at a time and grows as it is scrolled. */
+  useEffect(() => {
+    const el = more.current
+    if (!el) return
+    const io = new IntersectionObserver(e => { if (e[0].isIntersecting) setN(x => x + 30) }, { rootMargin: '700px' })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [n, list.length])
+  /* Each design opens in its own colours and font — the chosen one in what the customer made of it. */
+  const atDesign = k => { const id = list[k]?.id; setLook(l => (id === cur.t.id ? { art: cur.art, live: cur.live, pal: cur.pal, font: cur.font } : { ...l, pal: null, font: null })) }
+  const use = id => { set({ theme: themeString(id, look) }); setVi(null); onUse() }
   return (
     <>
-      <Q title="Pick a design you love" sub={`${ranked.length} designs · ${rec.size} made for ${occ.name}. Tap one to see it live.`} />
+      <Q title="Pick a design you love" sub={`${ranked.length} designs · ${rec.size} made for ${occ.name}. Tap one to see it big — then make it yours.`} />
       <div className="cx-noscroll -mx-4 mt-3 flex gap-1.5 overflow-x-auto px-4">
         {STYLES.filter(([id]) => id === 'all' || (id === 'trending' ? ranked.some(t => t.trending) : ranked.some(t => t.style === id))).map(([id, l]) => (
-          <button key={id} type="button" onClick={() => setStyle(id)} className={'shrink-0 rounded-full px-3.5 py-2 text-[12.5px] font-extrabold transition ' + (style === id ? 'bg-[#1C1033] text-white' : 'bg-[#F6F3FA] text-[var(--ink-2)]')}>{id === 'all' ? `For ${occ.name.length > 16 ? 'you' : occ.name}` : l}</button>
+          <button key={id} type="button" onClick={() => { setStyle(id); setN(30) }} className={'shrink-0 rounded-full px-3.5 py-2 text-[12.5px] font-extrabold transition ' + (style === id ? 'bg-[#1C1033] text-white' : 'bg-[#F6F3FA] text-[var(--ink-2)]')}>{id === 'all' ? `For ${occ.name.length > 16 ? 'you' : occ.name}` : l}</button>
         ))}
       </div>
       <div className="mt-3 grid grid-cols-3 gap-x-2.5 gap-y-3.5">
-        {list.map(t => {
+        {list.slice(0, n).map((t, k) => {
           const on = cur.t.id === t.id
           return (
-            <button key={t.id} type="button" onClick={() => setPeek(t.id)} className="cx-press text-left" data-template={t.id}>
+            <button key={t.id} type="button" onClick={() => setVi(k)} className="cx-press text-left" data-template={t.id}>
               <span className={'relative block rounded-[15px] p-[3px] transition ' + (on ? 'bg-gradient-to-br from-[#DB2777] to-[#7C3AED]' : 'bg-transparent')}>
-                <InviteCard inv={sample} occasion={occ} theme={themeString(t.id, { art: cur.art })} size="mini" />
+                <InviteCard inv={sample} occasion={occ} theme={on ? themeString(t.id, { art: cur.art, pal: cur.pal, font: cur.font }) : themeString(t.id, { art: cur.art })} size="mini" />
                 {on && <span className="absolute right-1.5 top-1.5 grid h-6 w-6 place-items-center rounded-full bg-white text-[#7C3AED] shadow"><Check size={14} strokeWidth={3.2} /></span>}
               </span>
               <span className="mt-1 block truncate text-[11.5px] font-extrabold text-[#1C1033]">{t.name}</span>
@@ -272,26 +279,10 @@ function StepDesign({ inv, occ, set, onUse }) {
           )
         })}
       </div>
+      {n < list.length && <div ref={more} className="grid h-16 place-items-center text-[12px] font-bold text-[var(--ink-3)]">More designs…</div>}
 
-      <Sheet open={!!peek} onClose={() => setPeek(null)} title={peek ? TEMPLATE[peek].name : ''}
-        footer={peek && <button type="button" onClick={() => use(peek)} className="cx-press cx-cta flex h-14 w-full items-center justify-center gap-2 rounded-[18px] text-[16px] font-extrabold" data-use-design><Check size={18} strokeWidth={3} />Use this design</button>}>
-        {peek && (
-          <div className="pb-2">
-            <div className="relative mx-auto w-[64%] max-w-[260px]">
-              <InviteCard inv={sample} occasion={occ} theme={themeString(peek, look)} />
-              {k > 0 && <button type="button" onClick={() => setPeek(list[k - 1].id)} aria-label="Previous design" className="cx-press absolute -left-11 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-white shadow-[0_4px_14px_rgba(0,0,0,.18)]"><ChevronLeft size={20} /></button>}
-              {k >= 0 && k < list.length - 1 && <button type="button" onClick={() => setPeek(list[k + 1].id)} aria-label="Next design" className="cx-press absolute -right-11 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-white shadow-[0_4px_14px_rgba(0,0,0,.18)]"><ChevronRight size={20} /></button>}
-            </div>
-            <p className="mt-2 text-center text-[12.5px] font-bold text-[var(--ink-3)]">{TEMPLATE[peek].vibe}{k >= 0 ? ` · ${k + 1} of ${list.length}` : ''}</p>
-            <p className="mt-4 flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#DB2777]"><Sparkles size={13} />Make it yours</p>
-            <div className="mt-2"><LookPicker base={TEMPLATE[peek]} look={look} onChange={setLook} /></div>
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <Chip on={look.art} onClick={() => setLook(l => ({ ...l, art: !l.art }))}>Illustration</Chip>
-              <Chip on={look.live} onClick={() => setLook(l => ({ ...l, live: !l.live }))}>✨ Live animation</Chip>
-            </div>
-          </div>
-        )}
-      </Sheet>
+      {vi != null && <DesignViewer list={list} start={vi} inv={inv} occ={occ} look={look} setLook={setLook} rec={rec} chosenId={cur.t.id}
+        onIndex={atDesign} onUse={use} onClose={() => setVi(null)} />}
     </>
   )
 }

@@ -1,7 +1,7 @@
 /* Invitation designs: every occasion gets a fitting list, and a design's colours and font round-trip through the saved theme. */
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { PALETTES, TEMPLATES, parseTheme, templatesFor, themeString } from '../src/customer/data/inviteTemplates.js'
+import { PALETTES, TEMPLATE, TEMPLATES, parseTheme, templatesFor, themeString } from '../src/customer/data/inviteTemplates.js'
 
 test('a design with its palette and font survives being saved and read back', () => {
   const s = themeString('royal', { art: true, live: true, pal: 'emerald', font: 'regal' })
@@ -24,10 +24,12 @@ test('unknown palette or font falls back to the design itself; old themes still 
 test('a memorial is only ever offered the quiet designs', () => {
   const ids = templatesFor({ id: 'memorial-gathering', name: 'Memorial Gathering', category: 'special' }).map(t => t.id)
   assert.ok(ids.length >= 2)
-  for (const id of ids) assert.ok(['candle', 'white-lily', 'lotus-ivory', 'minimal'].includes(id), id)
+  for (const id of ids) assert.ok(TEMPLATE[id].solemn || ['lotus-ivory', 'minimal'].includes(id), id)
   assert.ok(!templatesFor({ id: 'birthday-party', name: 'Birthday Party', category: 'life' }).some(t => t.solemn))
 })
 
-test('every design id is unique', () => {
+test('every design id is unique, and there are well over a hundred', () => {
   assert.equal(new Set(TEMPLATES.map(t => t.id)).size, TEMPLATES.length)
+  assert.ok(TEMPLATES.length >= 150)
+  assert.equal(parseTheme('royal~emerald|art').t.name, 'Royal Heritage · Emerald & gold')
 })

@@ -9,19 +9,22 @@ import { Check } from 'lucide-react'
 import { FONTS, PALETTES } from '../data/inviteTemplates'
 import { FONT } from './InviteCard'
 
-export default function LookPicker({ base, look, onChange }) {
+export default function LookPicker({ base, look, onChange, only = null }) {
   return (
     <div data-look-picker>
-      <p className="text-[13.5px] font-extrabold text-[#1C1033]">Colours</p>
-      <div className="cx-noscroll -mx-5 mt-2 flex gap-3 overflow-x-auto px-5 pb-1">
+      {only !== 'fonts' && <>
+      {!only && <p className="text-[13.5px] font-extrabold text-[#1C1033]">Colours</p>}
+      <div className={'cx-noscroll -mx-5 flex gap-3 overflow-x-auto px-5 pb-1 ' + (only ? '' : 'mt-2')}>
         <Swatch on={!look.pal} onClick={() => onChange({ ...look, pal: null })} label="Original" style={{ background: base.bg }} />
         {PALETTES.map(p => (
           <Swatch key={p.id} on={look.pal === p.id} onClick={() => onChange({ ...look, pal: p.id })} label={p.name}
             style={{ background: `linear-gradient(135deg, ${p.swatch[0]} 0 55%, ${p.swatch[1]} 55% 100%)` }} />
         ))}
       </div>
-      <p className="mt-3 text-[13.5px] font-extrabold text-[#1C1033]">Font style</p>
-      <div className="cx-noscroll -mx-5 mt-2 flex gap-2 overflow-x-auto px-5 pb-1">
+      </>}
+      {only !== 'colours' && <>
+      {!only && <p className="mt-3 text-[13.5px] font-extrabold text-[#1C1033]">Font style</p>}
+      <div className={'cx-noscroll -mx-5 flex gap-2 overflow-x-auto px-5 pb-1 ' + (only ? '' : 'mt-2')}>
         {[[null, 'Original'], ...FONTS].map(([id, l]) => {
           const on = (look.font ?? null) === id
           return (
@@ -33,6 +36,7 @@ export default function LookPicker({ base, look, onChange }) {
           )
         })}
       </div>
+      </>}
     </div>
   )
 }

@@ -1,5 +1,5 @@
 /**
- * Invitation designs — 62 of them. Each is drawn in code (gradients + SVG
+ * Invitation designs — 62, each in two more colourways (~180 in all). Each is drawn in code (gradients + SVG
  * ornaments + the app's own fonts), so it is crisp at any size, weighs
  * nothing, and the guest's browser renders exactly what the host picked.
  *
@@ -20,7 +20,7 @@ const FEST = ['festivals', 'life', 'special']
 const KIDS = ['life', 'school', 'themed']
 const WORK = ['corporate', 'industry', 'online', 'property', 'retail', 'community']
 
-export const TEMPLATES = [
+const BASE = [
   /* ── Traditional & wedding ─────────────────────────────────────────── */
   T('royal', 'Royal Heritage', 'Maroon, gold, mandalas', 'traditional', 'script', 'mandala', 'sparkle',
     'radial-gradient(120% 80% at 50% 0%, #8B1E3F 0%, #5B0E1E 70%, #3D0814 100%)', '#FCEFD8', '#E8C77A', '#E8C77A', ['wedding', 'festivals', 'special'], 'wedding|reception|muhurtham|sangeet|baraat', { trending: true }),
@@ -161,7 +161,6 @@ export const TEMPLATES = [
   T('white-lily', 'White Lily', 'White lilies, grey', 'solemn', 'serif', 'lotus', 'glow',
     'linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%)', '#334155', '#64748B', '#94A3B8', [], 'memorial|remembrance|celebration of life|tribute|prayer', { solemn: true }),
 ]
-export const TEMPLATE = Object.fromEntries(TEMPLATES.map(t => [t.id, t]))
 
 /* The filter row on the design picker. */
 export const STYLES = [['all', 'All'], ['trending', '🔥 Trending'], ['traditional', 'Traditional'], ['floral', 'Floral'], ['festive', 'Festive'], ['romantic', 'Romantic'],
@@ -224,6 +223,36 @@ function dress(t, pal, font) {
   if (font && FONT_IDS.has(font)) x = { ...x, font }
   return x
 }
+
+/* ── Colourways: every design again in two other palettes ────────────
+   One stays in the design's own world (a dark design in another dark
+   palette), one crosses over and changes its lettering too — so the
+   gallery holds ~180 genuinely different-looking cards, not 62 with
+   recolours hidden behind a button. A memorial's quiet designs get one
+   quiet colourway and nothing bright. */
+const DARK = ['maroon', 'emerald', 'navy', 'plum', 'noir', 'rani', 'teal']
+const LIGHT = ['blush', 'lavender', 'mint', 'sky', 'haldi', 'peach', 'ivory']
+const ALT_FONT = { script: 'regal', vibes: 'serif', dance: 'display', serif: 'vibes', regal: 'script', display: 'dance', sans: 'serif' }
+const lum = hex => { const n = parseInt(String(hex).slice(1, 7), 16); return (0.2126 * ((n >> 16) & 255) + 0.7152 * ((n >> 8) & 255) + 0.0722 * (n & 255)) / 255 }
+/* The first palette from `start` that does not repeat the design's own colours. */
+const pick = (list, start, t) => {
+  for (let k = 0; k < list.length; k++) {
+    const id = list[(start + k) % list.length]
+    if (!PALETTE[id].swatch.some(c => t.bg.toUpperCase().includes(c.toUpperCase()))) return id
+  }
+  return list[start % list.length]
+}
+function colourway(t, pal, font) {
+  const p = PALETTE[pal]
+  return { ...dress(t, pal, font), id: `${t.id}~${pal}`, name: `${t.name} · ${p.name}`, vibe: font ? `${p.name}, new lettering` : `${p.name} colourway`, variantOf: t.id, trending: false }
+}
+const COLOURWAYS = BASE.flatMap((t, i) => {
+  if (t.solemn) return [colourway(t, i % 2 ? 'sky' : 'ivory', null)]
+  const dark = lum(t.ink) > 0.6
+  return [colourway(t, pick(dark ? DARK : LIGHT, i * 3, t), null), colourway(t, pick(dark ? LIGHT : DARK, i * 5 + 2, t), ALT_FONT[t.font] ?? null)]
+})
+export const TEMPLATES = [...BASE, ...COLOURWAYS]
+export const TEMPLATE = Object.fromEntries(TEMPLATES.map(t => [t.id, t]))
 
 export function parseTheme(theme, occasion) {
   const [id, ...flags] = String(theme ?? '').split('|')
