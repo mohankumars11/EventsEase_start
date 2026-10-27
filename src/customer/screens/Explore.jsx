@@ -54,7 +54,7 @@ export default function Explore() {
   return (
     <main className="cx-enter cx-cream min-h-[100dvh] pb-[calc(env(safe-area-inset-bottom,0px)+150px)]">
       <BackHeader title="Everything, in one place" sub={`${CATEGORIES.length} categories · ${OCCASIONS.length} occasions · ${TRADES.length} services`} />
-      <nav className="cx-noscroll sticky top-[calc(env(safe-area-inset-top,0px)+64px)] z-[110] flex gap-2 overflow-x-auto bg-white/95 px-4 pb-3 pt-1 backdrop-blur-xl" aria-label="Sections">
+      <nav className="cx-noscroll sticky top-[calc(env(safe-area-inset-top,0px)+64px)] z-[110] flex gap-2 overflow-x-auto bg-white/95 px-4 pb-3 pt-1" aria-label="Sections">
         {PARTS.map(([id, label]) => (
           <button key={id} type="button" onClick={() => jump(id)} aria-pressed={on === id}
             className={'cx-press shrink-0 whitespace-nowrap rounded-full px-3.5 py-2 text-[12.5px] font-extrabold transition ' + (on === id ? 'bg-gradient-to-br from-[#F3ECFF] to-[#DCC8FF] text-[var(--am-ink)] shadow-[0_0_0_1.5px_#CDB4FF]' : 'bg-white text-[var(--ink-2)] shadow-[0_0_0_1px_#EEE6FA]')}>{label}</button>

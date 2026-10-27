@@ -200,7 +200,7 @@ export function InviteEdit() {
         {id && <button type="button" onClick={async () => { if (confirm('Delete this invitation and its guest list?')) { await deleteInvitation(id).catch(e => setErr(e.message)); navigate('/invites', { replace: true }) } }} className="flex items-center gap-1.5 px-1 text-[13px] font-extrabold text-[#9B1A2A]"><Trash2 size={15} />Delete invitation</button>}
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-[130] border-t border-[var(--line)] bg-white/95 px-3 pt-3 backdrop-blur-xl" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}>
+      <div className="fixed inset-x-0 bottom-0 z-[130] border-t border-[var(--line)] bg-white/95 px-3 pt-3" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}>
         <button type="button" disabled={busy || !inv.title.trim()} onClick={save} className="cx-press cx-cta mx-auto flex h-14 w-full max-w-[540px] items-center justify-center gap-2 rounded-[18px] text-[15.5px] font-extrabold" data-save-invite>
           {busy ? <Loader2 size={18} className="animate-spin" /> : <Send size={17} />}{id ? 'Save changes' : 'Save & add guests'}
         </button>

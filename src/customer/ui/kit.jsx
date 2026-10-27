@@ -153,7 +153,7 @@ export function Sheet({ open, onClose, title, children, footer = null }) {
     <div className="cx">
       <div className="cx-sheet-back" data-open={shown} onClick={onClose} />
       <section className="cx-sheet" data-open={shown} role="dialog" aria-modal="true" aria-label={title}>
-        <div className="sticky top-0 z-10 bg-white/95 px-5 pb-3 pt-3 backdrop-blur">
+        <div className="sticky top-0 z-10 bg-white/95 px-5 pb-3 pt-3">
           <div className="mx-auto mb-3 h-1.5 w-11 rounded-full bg-[#E3DEEE]" />
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-[19px] font-extrabold tracking-[-0.02em]">{title}</h2>
@@ -259,7 +259,7 @@ export function Empty({ title, body, action = null }) {
 /** The pinned primary action at the foot of a focused screen. */
 export function ActionBar({ children, note = null }) {
   return (
-    <div className="fixed inset-x-0 bottom-0 z-[130] border-t border-[var(--line)] bg-white/95 px-4 pt-3 backdrop-blur-xl" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}>
+    <div className="fixed inset-x-0 bottom-0 z-[130] border-t border-[var(--line)] bg-white/95 px-4 pt-3" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}>
       <div className="mx-auto max-w-[540px]">
         {children}
         {note && <p className="mt-2 text-center text-[11.5px] font-semibold text-[var(--ink-3)]">{note}</p>}

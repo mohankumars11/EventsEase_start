@@ -31,6 +31,8 @@
   font-family: Manrope, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
+  /* No double-tap-to-zoom wait: a tap is a tap, the moment the finger lifts. */
+  touch-action: manipulation;
   min-height: 100dvh;
 }
 .cx * { -webkit-tap-highlight-color: transparent; }
@@ -52,21 +54,22 @@
 .cx-scrim-strong::before { background: linear-gradient(180deg, rgba(12, 7, 24, .28) 0%, rgba(12, 7, 24, 0) 30%, rgba(12, 7, 24, .25) 52%, rgba(12, 7, 24, .9) 100%); }
 
 /* Glass chips that sit on a photograph and stay legible on any of them. */
+/* No backdrop-filter: on a list of forty photos it re-blurs every chip on
+   every scrolled frame, which is what made long lists stutter on budget
+   phones. A denser tint reads the same on any photo. */
 .cx-glass {
-  background: rgba(20, 12, 38, .38); color: #fff;
-  -webkit-backdrop-filter: blur(12px) saturate(1.5); backdrop-filter: blur(12px) saturate(1.5);
+  background: rgba(20, 12, 38, .58); color: #fff;
   border: 1px solid rgba(255, 255, 255, .22);
 }
 .cx-glass-light {
-  background: rgba(255, 255, 255, .82); color: var(--ink);
-  -webkit-backdrop-filter: blur(14px) saturate(1.6); backdrop-filter: blur(14px) saturate(1.6);
+  background: rgba(255, 255, 255, .93); color: var(--ink);
   border: 1px solid rgba(255, 255, 255, .9);
 }
 
 .cx-card { background: #fff; border-radius: 24px; box-shadow: 0 0 0 1px var(--line), 0 18px 36px -28px rgba(43, 14, 102, .5); }
 .cx-hair { box-shadow: 0 0 0 1px var(--line); }
 
-.cx-press { transition: transform .18s cubic-bezier(.2, .8, .2, 1), background-color .18s, box-shadow .18s; }
+.cx-press { transition: transform .12s cubic-bezier(.2, .8, .2, 1), background-color .12s, box-shadow .12s; }
 .cx-press:active { transform: scale(.965); }
 
 /* The primary action: light amethyst, lifted, with deep-amethyst words. */
@@ -95,7 +98,7 @@
 
 /* Opacity only: a transform on a page wrapper traps every position:fixed
    child inside it, which is how a sheet ends up rendered off-screen. */
-.cx-enter { animation: cx-fade .32s ease-out both; }
+.cx-enter { animation: cx-fade .16s ease-out both; }
 @keyframes cx-fade { from { opacity: 0; } to { opacity: 1; } }
 
 .cx-pop { animation: cx-pop .38s cubic-bezier(.2, 1.4, .4, 1) both; }

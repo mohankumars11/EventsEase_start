@@ -84,7 +84,7 @@ export default function Brief() {
 
   return (
     <main className="cx-enter cx-cream min-h-[100dvh] pb-[calc(env(safe-area-inset-bottom,0px)+120px)]">
-      <header className="cx-safe-top sticky top-0 z-[120] bg-[#FFF8F2]/95 px-3 pb-2.5 backdrop-blur-xl">
+      <header className="cx-safe-top sticky top-0 z-[120] bg-[#FFF8F2]/95 px-3 pb-2.5">
         <div className="flex items-center gap-2.5">
           <button type="button" onClick={() => navigate(-1)} aria-label="Back" className="cx-press grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white text-[var(--am-ink)] shadow-[0_0_0_1px_#EFE7DD]"><ArrowLeft size={20} /></button>
           <ArtFill art={serviceArt(tradeId)} tone="#FBEFE6" className="h-11 w-11 shrink-0 rounded-[14px]" inset="8%" />
@@ -142,7 +142,7 @@ export default function Brief() {
         {!qs.length && <p className="rounded-[20px] bg-white p-4 text-[13px] font-semibold text-[var(--ink-2)]">Nothing more to ask — every {t.label.toLowerCase()} master here can do it.</p>}
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-[130] border-t border-[#F1E9DF] bg-white/95 px-3 pt-3 backdrop-blur-xl" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}>
+      <div className="fixed inset-x-0 bottom-0 z-[130] border-t border-[#F1E9DF] bg-white/95 px-3 pt-3" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}>
         <div className="mx-auto flex max-w-[540px] gap-2">
           <button type="button" onClick={() => setPicks({})} disabled={!n} className="cx-press flex h-14 shrink-0 items-center gap-1.5 rounded-[18px] bg-[#F6F1EA] px-4 text-[13.5px] font-extrabold text-[var(--ink-2)] disabled:opacity-40" data-clear><RotateCcw size={16} />Clear</button>
           <button type="button" onClick={done} className="cx-press flex h-14 flex-1 items-center justify-center gap-2 rounded-[18px] bg-[#0C831F] text-[15.5px] font-extrabold text-white shadow-[0_12px_24px_-12px_rgba(12,131,31,.9)] disabled:bg-[#CFE9D7] disabled:shadow-none" data-show-masters>

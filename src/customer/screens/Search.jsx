@@ -62,7 +62,7 @@ export default function Search() {
 
   return (
     <main className="cx-enter cx-cream min-h-[100dvh] pb-[calc(env(safe-area-inset-bottom,0px)+40px)]">
-      <header className="cx-safe-top sticky top-0 z-[120] bg-white/95 px-3 pb-3 backdrop-blur-xl">
+      <header className="cx-safe-top sticky top-0 z-[120] bg-white/95 px-3 pb-3">
         <div className="flex items-center gap-2">
           <button type="button" onClick={() => navigate(-1)} aria-label="Back" className="cx-press cx-btn grid h-11 w-11 shrink-0 place-items-center rounded-full"><ArrowLeft size={20} /></button>
           <label className="flex h-[50px] flex-1 items-center gap-3 rounded-[14px] bg-white pl-3.5 pr-1 shadow-[0_0_0_1px_#E7E2EE,0_6px_16px_-10px_rgba(20,15,31,.35)]">

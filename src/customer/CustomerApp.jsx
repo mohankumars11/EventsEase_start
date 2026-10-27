@@ -25,33 +25,57 @@ import { loadRules } from './lib/eventPlans'
 import { setActiveRules } from './lib/recommend360'
 import './cx.css'
 
-const Category = lazy(() => import('./screens/Category'))
-const Occasion = lazy(() => import('./screens/Occasion'))
-const Match = lazy(() => import('./screens/Match'))
-const Recommend = lazy(() => import('./screens/Recommend'))
-const Needs = lazy(() => import('./screens/Needs'))
-const Brief = lazy(() => import('./screens/Brief'))
-const Trade = lazy(() => import('./screens/Trade'))
-const Partner = lazy(() => import('./screens/Partner'))
-const PlanReview = lazy(() => import('./screens/PlanReview'))
-const Checkout = lazy(() => import('./screens/Checkout'))
-const Negotiate = lazy(() => import('./screens/Negotiate'))
-const Plans = lazy(() => import('./screens/Plans'))
-const Account = lazy(() => import('./screens/Account'))
-const Search = lazy(() => import('./screens/Search'))
-const Saved = lazy(() => import('./screens/Small').then(m => ({ default: m.Saved })))
-const Notifications = lazy(() => import('./screens/Small').then(m => ({ default: m.Notifications })))
-const Services = lazy(() => import('./screens/Small').then(m => ({ default: m.Services })))
-const Explore = lazy(() => import('./screens/Explore'))
-const Family = lazy(() => import('./screens/Family'))
-const Help = lazy(() => import('./screens/Help'))
-const Wallet = lazy(() => import('./screens/Wallet'))
-const Rsvp = lazy(() => import('./screens/Rsvp'))
-const InviteHost = lazy(() => import('./screens/InviteHost'))
-const InvitesList = lazy(() => import('./screens/Invites').then(m => ({ default: m.InvitesList })))
-const InviteEdit = lazy(() => import('./screens/Invites').then(m => ({ default: m.InviteEdit })))
-const InviteNew = lazy(() => import('./screens/InviteNew'))
-const Refer = lazy(() => import('./screens/Refer'))
+/* Screens load on their own, but never on the tap: right after Home has
+   painted, each screen's code is fetched in the background, one after
+   another in idle time, most-visited first. Once a screen's module is in,
+   `screen()` renders it directly — no Suspense fallback, no spinner flash —
+   so every tap opens its page in the same frame. */
+const PRELOAD = []
+function screen(factory, pick = m => m.default) {
+  let Comp = null
+  const load = () => factory().then(m => { Comp = pick(m); return m })
+  const Lazy = lazy(() => load().then(() => ({ default: Comp })))
+  /* Decided once per mount: a page that opened through Lazy stays on it, so
+     the module arriving mid-visit never swaps the component and wipes the page. */
+  function Screen(props) { const [Direct] = useState(() => Comp); return Direct ? <Direct {...props} /> : <Lazy {...props} /> }
+  PRELOAD.push(load)
+  return Screen
+}
+const Search = screen(() => import('./screens/Search'))
+const Trade = screen(() => import('./screens/Trade'))
+const Occasion = screen(() => import('./screens/Occasion'))
+const Services = screen(() => import('./screens/Small'), m => m.Services)
+const Plans = screen(() => import('./screens/Plans'))
+const Account = screen(() => import('./screens/Account'))
+const Category = screen(() => import('./screens/Category'))
+const Recommend = screen(() => import('./screens/Recommend'))
+const Needs = screen(() => import('./screens/Needs'))
+const Brief = screen(() => import('./screens/Brief'))
+const Match = screen(() => import('./screens/Match'))
+const Partner = screen(() => import('./screens/Partner'))
+const PlanReview = screen(() => import('./screens/PlanReview'))
+const Checkout = screen(() => import('./screens/Checkout'))
+const InvitesList = screen(() => import('./screens/Invites'), m => m.InvitesList)
+const InviteNew = screen(() => import('./screens/InviteNew'))
+const InviteHost = screen(() => import('./screens/InviteHost'))
+const InviteEdit = screen(() => import('./screens/Invites'), m => m.InviteEdit)
+const Explore = screen(() => import('./screens/Explore'))
+const Family = screen(() => import('./screens/Family'))
+const Notifications = screen(() => import('./screens/Small'), m => m.Notifications)
+const Saved = screen(() => import('./screens/Small'), m => m.Saved)
+const Help = screen(() => import('./screens/Help'))
+const Wallet = screen(() => import('./screens/Wallet'))
+const Negotiate = screen(() => import('./screens/Negotiate'))
+const Refer = screen(() => import('./screens/Refer'))
+const Rsvp = screen(() => import('./screens/Rsvp'))
+
+/* One module per idle slot, so warming never competes with a scroll or a tap. */
+function warmScreens() {
+  const idle = window.requestIdleCallback ?? (f => setTimeout(() => f({ timeRemaining: () => 8 }), 120))
+  let i = 0
+  const step = () => { if (i >= PRELOAD.length) return; PRELOAD[i++]().catch(() => {}).finally(() => idle(step, { timeout: 1500 })) }
+  setTimeout(() => idle(step, { timeout: 1500 }), 600)
+}
 
 /** Paths that stay on the shared routes on every surface. */
 export const LEGACY_PATHS = ['/partner', '/dashboard/vendor', '/dashboard/admin', '/admin', '/login', '/signup', '/auth', '/pay']
@@ -88,6 +112,7 @@ function useOnboarding() {
 export default function CustomerApp() {
   /* The published 360° rule set, if one exists; the bundled rules until then. */
   useEffect(() => { loadRules().then(setActiveRules).catch(() => {}) }, [])
+  useEffect(() => { warmScreens() }, [])
   const { pathname } = useLocation()
   const { step, next } = useOnboarding()
   /* A guest opening their RSVP link needs no sign-in, location or alerts. */
@@ -131,7 +156,7 @@ export default function CustomerApp() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
-        <div className="pointer-events-none fixed inset-x-0 top-0 z-[160] bg-white/90 backdrop-blur-md" style={{ height: 'env(safe-area-inset-top, 0px)' }} aria-hidden />
+        <div className="pointer-events-none fixed inset-x-0 top-0 z-[160] bg-white" style={{ height: 'env(safe-area-inset-top, 0px)' }} aria-hidden />
         {BAR_ROUTES(pathname) && <PlanBar />}
         {TAB_ROUTES(pathname) && <TabBar />}
       </div>

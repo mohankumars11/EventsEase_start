@@ -117,7 +117,7 @@ export default function InviteNew() {
 
   return (
     <main className="min-h-[100dvh] bg-white" data-invite-wizard={at}>
-      <header className="cx-safe-top sticky top-0 z-[120] bg-white/95 px-3 pb-2.5 backdrop-blur-xl">
+      <header className="cx-safe-top sticky top-0 z-[120] bg-white/95 px-3 pb-2.5">
         <div className="flex items-center gap-2.5">
           <button type="button" onClick={back} aria-label="Back" className="cx-press grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#F6F3FA] text-[#1C1033]"><ArrowLeft size={20} /></button>
           <div className="min-w-0 flex-1">
