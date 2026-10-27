@@ -222,12 +222,12 @@ export default function Home() {
       </section>
 
       {/* ── Invites and refunds: two light cards, one column ───────── */}
-      <div className="mx-3 mt-3 space-y-2">
+      <div className="mx-3 mt-1 space-y-2">
         <Link to="/invites" className="cx-press flex items-center gap-3 rounded-[18px] bg-white p-3 shadow-[0_0_0_1px_#EEE6FA]" data-home-invites>
           <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[12px] bg-[#FDECF4] text-[#DB2777]"><MailOpen size={20} /></span>
           <span className="min-w-0 flex-1">
-            <span className="flex items-center gap-1.5 text-[14px] font-extrabold text-[var(--ink)]">Send invites. Count every guest.<span className="rounded-full bg-[#E9F8EF] px-1.5 py-[1px] text-[9.5px] font-extrabold uppercase text-[#0B6B3D]">Free</span></span>
-            <span className="block truncate text-[11.5px] font-semibold text-[var(--ink-3)]">WhatsApp invitations with one-tap RSVP</span>
+            <span className="flex items-center gap-1.5 text-[14px] font-extrabold text-[var(--ink)]">Invite guests on WhatsApp<span className="rounded-full bg-[#E9F8EF] px-1.5 py-[1px] text-[9.5px] font-extrabold uppercase text-[#0B6B3D]">Free</span></span>
+            <span className="block truncate text-[11.5px] font-semibold text-[var(--ink-3)]">One-tap RSVP · live headcount · food choices</span>
           </span>
           <ChevronRight size={17} className="shrink-0 text-[var(--brand)]" />
         </Link>
