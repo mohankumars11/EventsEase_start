@@ -67,7 +67,7 @@ export function TabBar() {
   return (
     <nav className={'pointer-events-none fixed inset-x-0 bottom-0 z-[150] px-3 transition-transform duration-200 ease-out will-change-transform ' + (hidden ? 'translate-y-[130%]' : 'translate-y-0')}
       style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 10px)' }} aria-label="Main" data-tabbar={hidden ? 'hidden' : 'shown'}>
-      <div className="pointer-events-auto relative mx-auto grid h-[66px] max-w-[540px] grid-cols-5 items-center rounded-[26px] bg-white/95 px-1 shadow-[0_0_0_1px_#EEE6FA,0_18px_40px_-18px_rgba(58,18,144,.55)] backdrop-blur-xl">
+      <div className="pointer-events-auto relative mx-auto grid h-[66px] max-w-[540px] grid-cols-5 items-center rounded-[26px] bg-white px-1 shadow-[0_0_0_1px_#EEE6FA,0_18px_40px_-18px_rgba(58,18,144,.55)]">
         {TABS.map((t, i) => t ? (
           <Link key={t.to} to={t.to} className="cx-press relative flex flex-col items-center gap-0.5" aria-current={t.match(pathname) ? 'page' : undefined} data-tab={t.label}>
             <span className={'grid h-8 w-12 place-items-center rounded-full transition-all duration-300 ' + (t.match(pathname) ? 'bg-[var(--am-100)] text-[var(--brand)]' : 'text-[#A49DB8]')}>
@@ -103,15 +103,17 @@ function SearchOrb({ onClick }) {
   useEffect(() => { setI(0); const t = setInterval(() => setI(n => (n + 1) % items.length), 2600); return () => clearInterval(t) }, [items.length])
   const [Icon, label] = items[i % items.length]
   return (
+    <>
+    <span aria-hidden className={'cx-orb-halo pointer-events-none absolute -top-[42px] h-[60px] w-[60px] rounded-full ' + (back ? 'bg-[#14B8A6]' : 'bg-[#FF8A1F]')} />
     <button type="button" onClick={onClick} aria-label={`Search — ${label}`} data-orb={back ? 'back' : 'new'}
       className={'cx-press absolute -top-[42px] grid h-[60px] w-[60px] place-items-center rounded-full text-white ring-[5px] ring-white ' + (back ? 'cx-orb-back' : 'cx-orb-new')}>
-      <span className="cx-orb-halo" aria-hidden />
       <span key={`i${i}`} className="cx-orb-pop grid place-items-center"><Icon size={24} strokeWidth={2.5} /></span>
       {!quiet && <span className="pointer-events-none absolute bottom-[calc(100%+10px)] left-1/2 -translate-x-1/2">
         <span key={`b${i}`} className={'cx-orb-bubble block whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-extrabold text-white shadow-[0_8px_18px_-8px_rgba(20,15,31,.6)] ' + (back ? 'bg-[#0B5E55]' : 'bg-[#C2410C]')}>{label}</span>
       </span>}
       {!back && <span className="absolute -right-1.5 -top-1 rounded-full bg-white px-1.5 py-[1px] text-[9.5px] font-black text-[#E8430F] shadow-[0_2px_6px_rgba(0,0,0,.18)]">10%</span>}
     </button>
+    </>
   )
 }
 

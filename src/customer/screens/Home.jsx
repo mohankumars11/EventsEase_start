@@ -108,7 +108,7 @@ export default function Home() {
     <main className="cx-enter bg-white pb-[calc(env(safe-area-inset-bottom,0px)+130px)]">
       {/* ── The cream top, edge to edge ─────────────────────────────── */}
       <section style={{ background: CREAM }}>
-        <header className="cx-safe-top flex items-center justify-between gap-2 px-4">
+        <header className="cx-safe-top flex items-center justify-between gap-2 px-4 pb-2.5">
           <button type="button" onClick={() => setWhereOpen(true)} className="flex min-w-0 items-center gap-2 py-1 text-left" data-where>
             <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#EFE6FF]"><MapPin size={16} className="fill-[var(--brand)] text-[#EFE6FF]" strokeWidth={1.6} /></span>
             <span className="min-w-0">
