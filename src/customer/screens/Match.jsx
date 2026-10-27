@@ -42,10 +42,9 @@ export default function Match() {
   const chosen = needed.filter(t => plan.lineFor(o.id, t)).length
   const facts = [plan.event.date && dayLabel(plan.event.date), ev.guests && `${ev.guests.toLocaleString('en-IN')} ${o.people.toLowerCase()}`].filter(Boolean).join(' · ')
   const removeService = t => {
-    const r = rows.find(x => x.tradeId === t)
     const line = plan.lineFor(o.id, t)
     if (line) plan.remove(line.key)
-    plan.setPick(o.id, t, r?.tier === 'must' ? 'have' : 'skip')
+    plan.setPick(o.id, t, 'skip')
     const rest = needed.filter(x => x !== t)
     if (rest.length) choose(rest[0])
   }

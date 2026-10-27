@@ -24,7 +24,8 @@ import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-
 import { Building, Building2, Check, ChevronRight, CircleHelp, Hotel, KeyRound, Landmark, Minus, Mountain, Plus, Search, TentTree, Trees, Utensils } from 'lucide-react'
 import { OCCASION } from '../data/occasions'
 import { occasionArt } from '../data/art'
-import { usePlan } from '../state/PlanContext'
+import { usePlan, contextFor } from '../state/PlanContext'
+import { AboutEvent } from '../ui/aboutEvent'
 import { ActionBar, BackHeader, Journey } from '../ui/kit'
 import { ArtFill } from '../ui/art'
 import { useWhen, WhenBody } from './WhenSheet'
@@ -61,9 +62,10 @@ export default function Occasion() {
   const [guests, setGuests] = useState(mine ? plan.event.guests : null)
   const [venue, setVenue] = useState(mine ? plan.event.venue : null)
   const [kind, setKind] = useState(mine ? plan.event.venueKind : null)
+  const [about, setAbout] = useState(mine ? (plan.event.context ?? {}) : {})
   if (!o) return <Navigate to="/" replace />
 
-  const steps = ['when', 'guests', ...(o.where === 'ask' ? ['venue'] : [])]
+  const steps = ['when', 'guests', ...(o.where === 'ask' ? ['venue'] : []), 'about']
   const step = steps.includes(params.get('step')) ? params.get('step') : 'when'
   const at = steps.indexOf(step)
   const save = patch => plan.setEvent({ occasionId: o.id, ...(mine ? {} : { guests: null, venue: 'need', venueKind: null }), ...patch })
@@ -146,6 +148,22 @@ export default function Occasion() {
           </ActionBar>
         </section>
       )}
+      {step === 'about' && (
+        <section className="cx-enter px-5 pt-6" key="about">
+          <Question title="Tell us a little more" sub="Optional — each answer makes your plan sharper. Skip anything." />
+          <div className="mt-5">
+            <AboutEvent occasion={o} ctx={contextFor(o, {}, { ...(mine ? plan.event : {}), context: about })} onChange={c => setAbout(onlyAbout(c))} />
+          </div>
+          <ActionBar>
+            <div className="flex gap-2">
+              <button type="button" onClick={() => next({ context: about })} className="cx-press cx-btn h-14 shrink-0 rounded-[18px] px-4 text-[13.5px] font-extrabold" data-skip>Skip for now</button>
+              <button type="button" onClick={() => next({ context: about })} className="cx-press cx-cta flex h-14 flex-1 items-center justify-center gap-2 rounded-[18px] text-[15px] font-extrabold" data-next>
+                Build my plan<ChevronRight size={18} />
+              </button>
+            </div>
+          </ActionBar>
+        </section>
+      )}
     </main>
   )
 }
@@ -196,3 +214,7 @@ function Guests({ occasion, value, onChange }) {
     </>
   )
 }
+
+/* Only the fields the "About your event" step owns are kept in event.context. */
+const ABOUT_KEYS = ['venueProvides', 'setting', 'formats', 'food', 'drinks', 'media', 'travel', 'public', 'children', 'accessibility', 'privacy', 'budget']
+const onlyAbout = c => Object.fromEntries(Object.entries(c).filter(([k, v]) => ABOUT_KEYS.includes(k) && v != null && !(Array.isArray(v) && !v.length)))

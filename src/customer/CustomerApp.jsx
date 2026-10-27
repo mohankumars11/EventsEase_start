@@ -13,7 +13,7 @@
  * whenever a partner has been picked; focused screens (an occasion, a
  * partner, checkout) hide the tabs and carry their own action bar.
  */
-import { lazy, Suspense, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { PlanProvider } from './state/PlanContext'
@@ -21,6 +21,8 @@ import { PlanBar, TabBar } from './ui/kit'
 import Home from './screens/Home'
 import Onboarding, { onboardFlags } from './screens/Onboarding'
 import { savedWhere } from './lib/where'
+import { loadRules } from './lib/eventPlans'
+import { setActiveRules } from './lib/recommend360'
 import './cx.css'
 
 const Category = lazy(() => import('./screens/Category'))
@@ -79,6 +81,8 @@ function useOnboarding() {
 }
 
 export default function CustomerApp() {
+  /* The published 360° rule set, if one exists; the bundled rules until then. */
+  useEffect(() => { loadRules().then(setActiveRules).catch(() => {}) }, [])
   const { pathname } = useLocation()
   const { step, next } = useOnboarding()
   if (step === 'loading') return <div className="cx" data-customer-app><Loading /></div>

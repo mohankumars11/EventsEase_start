@@ -19,6 +19,7 @@
  * once a customer is signed in.
  */
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { recommend } from '../lib/recommend360'
 
 const KEY = 'sbm.cx.plan.v1'
 /* `place`: where the event is ({ area, lat, lng, address }) — the engine checks travel and
@@ -95,18 +96,47 @@ export function usePlan() {
   return ctx
 }
 
+/* The venue kinds the occasion step offers, as the engine's venue types. */
+const VENUE_TYPE = { banquet: 'banquet', lawn: 'outdoor', rooftop: 'outdoor', hotel: 'hotel', resort: 'destination', farmhouse: 'outdoor',
+  dining: 'banquet', community: 'banquet', convention: 'banquet', ground: 'outdoor' }
+const WHERE_TYPE = { home: 'home', newhome: 'home', school: 'campus', campus: 'campus', premises: 'office', site: 'outdoor', online: 'virtual' }
+
 /**
- * What an occasion needs, after the customer's own answers. Essentials and
- * the recommended services are on unless they said they have it or took it
- * off; add-ons (and the end-of-day services) are off until added. A venue
- * they already have is never searched for.
+ * The engine's context for one occasion, from what the customer told us:
+ * the event step (date, time, guests, venue), the "About your event" step
+ * (event.context), and their choices on the plan (picks: need → added,
+ * have → arranged, skip → excluded, later → saved for later).
+ */
+export function contextFor(occasion, picks = {}, event = {}) {
+  const c = { ...(event.context ?? {}) }
+  if (event.guests) c.guests = event.guests
+  if (event.time) c.time = event.time
+  if (event.hours) c.hours = event.hours
+  if (event.date) c.date = event.date
+  if (event.venue === 'have') c.venueBooked = true
+  if (!c.venueType) c.venueType = WHERE_TYPE[occasion.where] ?? VENUE_TYPE[event.venueKind] ?? undefined
+  if (!c.venueType) delete c.venueType
+  const by = v => Object.keys(picks).filter(t => picks[t] === v)
+  const [added, arranged, excluded, later] = ['need', 'have', 'skip', 'later'].map(by)
+  if (added.length) c.added = added
+  if (arranged.length) c.arranged = arranged
+  if (excluded.length) c.excluded = excluded
+  if (later.length) c.later = later
+  return c
+}
+
+const TIER = { CORE: 'must', CONDITIONAL: 'often', OPTIONAL: 'extra', NOT_DEFAULT: 'hidden' }
+/**
+ * What an occasion needs — the 360° engine (lib/recommend360.js) over the
+ * bundle baseline and the customer's context. `needed` is the shortlist;
+ * `rows` carry every trade with its status, reason and the customer's state.
  */
 export function needsFor(occasion, picks = {}, event = {}) {
-  const state = t => picks[t] ?? (occasion.must.includes(t) || occasion.often.includes(t) ? 'need' : 'off')
-  const rows = [
-    ...occasion.must.map(t => ({ tradeId: t, tier: 'must' })),
-    ...occasion.often.map(t => ({ tradeId: t, tier: 'often' })),
-    ...occasion.extra.map(t => ({ tradeId: t, tier: 'extra' })),
-  ].map(r => ({ ...r, state: r.tradeId === 'venue' && event.venue === 'have' ? 'have' : state(r.tradeId) }))
-  return { rows, needed: rows.filter(r => r.state === 'need').map(r => r.tradeId) }
+  const r = recommend(occasion.id, contextFor(occasion, picks, event))
+  const shortlisted = new Set(r.shortlist)
+  const rows = r.services.map(x => ({
+    ...x, tier: TIER[x.status],
+    state: x.alreadyArranged || x.coveredByVenue ? 'have' : x.customerExcluded ? 'skip' : x.savedForLater ? 'later' : shortlisted.has(x.tradeId) ? 'need' : 'off',
+  }))
+  return { rows, needed: r.shortlist, result: r }
 }
