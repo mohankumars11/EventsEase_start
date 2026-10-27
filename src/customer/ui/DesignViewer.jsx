@@ -13,7 +13,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Check, ChevronLeft, ChevronRight, X } from 'lucide-react'
-import { themeString } from '../data/inviteTemplates'
+import { parseTheme, themeString } from '../data/inviteTemplates'
 import InviteCard from './InviteCard'
 import LookPicker from './inviteLook'
 
@@ -53,13 +53,15 @@ export default function DesignViewer({ list, start, inv, occ, look, setLook, rec
     })
   }
   const t = list[at]
+  /* The glow follows what the customer made of the card, not its original colours. */
+  const glow = t ? parseTheme(themeString(t.id, look), occ).t.bg : null
   const sample = { ...inv, title: inv.title || occ?.name }
 
   return createPortal(
     <div className="cx">
       <div className="fixed inset-0 z-[400] flex flex-col overflow-hidden bg-[#0D0717] text-white" role="dialog" aria-modal="true" aria-label="Preview designs" data-design-viewer>
         {/* The glow behind: the card's own colours, blurred big. */}
-        <div aria-hidden className="pointer-events-none absolute left-[-20%] top-[6%] h-[70%] w-[140%] opacity-60 blur-[70px] transition-[background] duration-500" style={{ background: t?.bg }} />
+        <div aria-hidden className="pointer-events-none absolute left-[-20%] top-[6%] h-[70%] w-[140%] opacity-40 blur-[70px] transition-[background] duration-500" style={{ background: glow }} />
         <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/50" />
 
         <header className="cx-safe-top relative z-10 flex items-center gap-3 px-4 pb-2">

@@ -62,10 +62,7 @@ export default function Spotlight({ title = 'In the spotlight', items }) {
                 <span className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/55 via-black/15 to-transparent" />
                 {x.badge && <span className="absolute left-3 top-3 rounded-full bg-black/45 px-3 py-1.5 text-[12px] font-extrabold text-white backdrop-blur-md">{x.badge}</span>}
                 <span className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-[11px] bg-black/40 text-white backdrop-blur-md"><ArrowUpRight size={17} /></span>
-                <span className="absolute inset-x-3 bottom-3 flex items-center justify-between gap-2">
-                  <span className="truncate text-left text-[19px] font-black leading-tight tracking-[-0.03em] text-white drop-shadow-[0_2px_8px_rgba(0,0,0,.6)]">{x.title}</span>
-                  <span className="shrink-0 rounded-full bg-white px-3 py-1.5 text-[12px] font-extrabold text-[#1C1033]">Plan it</span>
-                </span>
+                <span className="absolute bottom-3 right-3 rounded-full bg-white px-3.5 py-1.5 text-[12.5px] font-extrabold text-[#1C1033] shadow-[0_6px_14px_-6px_rgba(0,0,0,.6)]">Plan it →</span>
               </span>
             </Link>
           )
