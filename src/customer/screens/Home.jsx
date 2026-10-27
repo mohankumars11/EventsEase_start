@@ -48,7 +48,7 @@ const PROMISES = [
 
 /* Parties people throw ON a weekend — never date-bound ones (a birthday
    falls on its own day, so it is not sold as "this Saturday"). */
-const WEEKEND = ['friends-get-together', 'rooftop-party', 'pool-party', 'bbq-party', 'brunch-gathering', 'karaoke-night', 'private-dinner-party', 'exclusive-house-party', 'bachelor-party', 'bachelorette-party']
+const WEEKEND = ['friends-get-together', 'cocktail-party', 'private-dinner-party', 'family-reunion', 'bachelorette-party', 'bachelor-party', 'childrens-theme-party', 'gender-reveal-party', 'farewell-party']
 
 function nextSaturday() {
   const d = new Date(); d.setHours(0, 0, 0, 0)
@@ -147,7 +147,7 @@ export default function Home() {
             <span className="shrink-0 rounded-full bg-[#E9F8EF] px-2.5 py-1 text-[11px] font-extrabold text-[#0B6B3D]">{days === 1 ? 'Tomorrow' : `In ${days} days`}</span>
           </div>
           <div className="cx-rail cx-noscroll !gap-2.5 !px-3">
-            {WEEKEND.map(id => OCCASION[id]).filter(Boolean).map(o => (
+            {WEEKEND.map(id => OCCASION[id]).filter(o => o && occasionArt(o).kind === 'art').map(o => (
               <div key={o.id} className="w-[31%] max-w-[150px]" data-weekend={o.id}>
                 <Card to={`/o/${o.id}`} art={occasionArt(o)} tone={o.tone} title={o.name}>
                   <span className="flex items-center gap-1 text-[#0B7A45]"><Zap size={10} className="shrink-0 fill-current" />Plan it for this weekend</span>

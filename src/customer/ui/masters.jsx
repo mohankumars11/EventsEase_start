@@ -11,6 +11,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { companions } from '../data/crossSell'
+import { NOUN } from '../screens/Brief'
 import { serviceArt } from '../data/art'
 import { ArtFill } from './art'
 import { ArrowUpDown, Check, ChevronDown, ChevronRight, IndianRupee, MapPin, Scale, SlidersHorizontal, X, Zap } from 'lucide-react'
@@ -72,7 +73,7 @@ export function MastersPanel({ tradeId, occasionId = null, guests = null, onCoun
         <Link to={brief} className="cx-press mx-3 mb-2.5 mt-1 flex items-center gap-2.5 rounded-[16px] bg-[#F1FBF5] px-3 py-2.5 ring-1 ring-[#CDEFDC]" data-needs-bar>
           <SlidersHorizontal size={16} className="shrink-0 text-[#0C831F]" />
           <span className="min-w-0 flex-1">
-            <span className="block text-[13px] font-extrabold text-[#0B6B3D]">{said ? (fit.exact ? `${plural(fit.list?.length ?? 0, 'master')} do exactly this` : 'Closest to what you asked') : `What do you need from your ${t.label.toLowerCase()}?`}</span>
+            <span className="block text-[13px] font-extrabold text-[#0B6B3D]">{said ? (fit.exact ? `${plural(fit.list?.length ?? 0, 'master')} do exactly this` : 'Closest to what you asked') : `What do you need from your ${NOUN[tradeId] ?? t.label.toLowerCase()}?`}</span>
             <span className="block truncate text-[11.5px] font-bold text-[#3C7A5A]">{said || 'Tell us — we show only the masters who do it'}</span>
           </span>
           <ChevronRight size={17} className="shrink-0 text-[#0C831F]" />
@@ -104,8 +105,8 @@ export function MastersPanel({ tradeId, occasionId = null, guests = null, onCoun
               {next.map(([t, hook]) => (
                 <button key={t} type="button" onClick={() => (onCompanion ? onCompanion(t) : navigate(`/s/${t}${occasionId ? `?o=${occasionId}` : ''}`))}
                   className="cx-press flex items-center gap-2 rounded-[14px] bg-white p-2 text-left shadow-[0_0_0_1px_#E7F3EA]" data-companion={t}>
-                  <ArtFill art={serviceArt(t)} tone="#F6F1FF" className="h-10 w-10 shrink-0 rounded-[11px]" inset="8%" />
-                  <span className="min-w-0"><span className="block truncate text-[12.5px] font-extrabold">{TRADE[t].label}</span><span className="block truncate text-[10.5px] font-bold text-[#0B7A45]">{hook}</span></span>
+                  <ArtFill art={serviceArt(t)} tone="#F6F1FF" className="h-9 w-9 shrink-0 rounded-[10px]" inset="6%" />
+                  <span className="min-w-0"><span className="line-clamp-1 block text-[12px] font-extrabold leading-tight">{TRADE[t].label}</span><span className="mt-0.5 line-clamp-2 block text-[10.5px] font-bold leading-tight text-[#0B7A45]">{hook}</span></span>
                 </button>
               ))}
             </div>

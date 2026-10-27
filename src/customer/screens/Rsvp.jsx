@@ -39,7 +39,7 @@ export default function Rsvp() {
   }, [token])
 
   if (data === undefined) return <Shell><div className="grid min-h-[60dvh] place-items-center"><Loader2 className="animate-spin text-[var(--brand)]" /></div></Shell>
-  if (!data) return <Shell><Empty title="This invitation link isn’t active" body={err || 'Ask the host to send you the link again.'} /></Shell>
+  if (!data) return <Shell><Empty title="This invitation link isn’t active" body="Ask the host to send you the link again." /></Shell>
 
   const inv = data.invitation, g = data.guest
   const occ = OCCASION[inv.occasion] ?? null

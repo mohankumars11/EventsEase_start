@@ -23,7 +23,7 @@ import { answered, courseLabel, filterByNeeds, loadCuisines, loadDishes, needsFo
 import { plural } from '../lib/format'
 import { ArtFill } from '../ui/art'
 
-const NOUN = {
+export const NOUN = {
   photography: 'photographer', videography: 'videographer', catering_food: 'caterer', decoration_floral: 'decorator', venue: 'venue',
   bridal_makeup_hair: 'makeup artist', mehendi_artist: 'mehendi artist', dj_music: 'DJ', live_entertainment: 'performers', cake_desserts: 'cake',
   priest_rituals: 'priest', anchor_mc: 'anchor', sound_av: 'sound & AV', event_lighting: 'lighting', tent_furniture: 'tent & furniture',
