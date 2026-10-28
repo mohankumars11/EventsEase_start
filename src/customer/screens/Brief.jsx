@@ -17,12 +17,14 @@ import { supabase } from '../../lib/supabase'
 import { OCCASION } from '../data/occasions'
 import { TRADE } from '../data/trades'
 import { serviceArt } from '../data/art'
-import { usePlan } from '../state/PlanContext'
+import { usePlan, needsFor as planNeeds } from '../state/PlanContext'
 import { partnersFor } from '../lib/market'
 import { answered, courseLabel, filterByNeeds, loadCuisines, loadDishes, needsFor } from '../lib/needs'
 import { plural, rupees } from '../lib/format'
 import { askOf, asksFor, priceRange, withQuotes } from '../lib/quote'
 import Buddy, { sambu } from '../ui/Buddy'
+import { ESSENTIAL, NEVER, exampleSlug, explain } from '../data/essentials'
+import { artFor } from '../data/art'
 import { ArtFill } from '../ui/art'
 
 export const NOUN = {
@@ -62,15 +64,31 @@ export default function Brief() {
   const range = priceRange(shown)
   const [cheer, setCheer] = useState(null)
   if (!t) return null
-  const choose = qs.filter(q => q.group === 'choose')
-  const must = qs.filter(q => q.group === 'must')
+  /* Only what decides the match is asked up front (data/essentials.js);
+     the rest waits behind "More options". Partner-side questions — years,
+     night work, their equipment — are never asked. */
+  const askable = qs.filter(q => q.group === 'choose' && !NEVER.has(q.key))
+  const keys = ESSENTIAL[tradeId] ?? askable.slice(0, 2).map(q => q.key)
+  const choose = keys.map(k => askable.find(q => q.key === k)).filter(Boolean)
+  const more = askable.filter(q => !keys.includes(q.key))
+  const must = []
   const n = answered(picks)
   const set = (k, v) => setPicks(p => { const { $any, ...rest } = p; return { ...rest, [k]: v } })
   const setQty = (k, v) => { setPicks(p => ({ ...p, [k]: v })); setCheer(k === '$hours' ? `${v} hours — great choice! Prices updated ⚡` : `${v.toLocaleString('en-IN')} guests — got it! Food bill worked out.`) }
   const keepQty = p => Object.fromEntries(Object.entries({ $hours: p.$hours, $guests: p.$guests }).filter(([, v]) => v))
+  /* One service after another (Mohan: "one by one, quickly"): opened from the
+     Needs screen's Next, Done goes straight to the next unanswered service,
+     and after the last one to the masters. */
+  const flow = params.get('flow') === '1'
   const done = () => {
     plan.setNeeds(key, picks)
     if (occ && picks.$guests && plan.event.occasionId === occ.id) plan.setEvent({ guests: picks.$guests })
+    if (flow && occ) {
+      const ev2 = plan.event.occasionId === occ.id ? plan.event : { venue: 'need' }
+      const nxt = planNeeds(occ, plan.picks[occ.id] ?? {}, ev2).needed.find(x => x !== tradeId && needsFor(x).length && !answered(plan.needsOf(occ.id, x)))
+      navigate(nxt ? `/brief/${nxt}?o=${occ.id}&flow=1` : `/o/${occ.id}/match`, { replace: true })
+      return
+    }
     navigate(-1)
   }
   const noun = NOUN[tradeId] ?? t.label.toLowerCase()
@@ -81,7 +99,8 @@ export default function Brief() {
     const after = Math.max(0, left - (prev.length ? 0 : 1))
     if (added.length) {
       const o = q.options.find(x => x.id === added[0])
-      sambu(`${o?.label ?? 'Nice'} — lovely pick! ${after ? `${after} more question${after === 1 ? '' : 's'} and your` : 'Your'} exact matches are ready ⚡`)
+      const why = explain(o?.label)
+      sambu(`${o?.label ?? 'Nice'}${why ? ` — ${why.charAt(0).toLowerCase()}${why.slice(1)}` : ' — lovely pick'}. ${after ? `${after} more and your` : 'Your'} exact matches are ready ⚡`)
     } else sambu('Taken off — no problem, change it any time.')
   }
   const seeAll = () => { plan.setNeeds(key, picks); navigate(occ ? `/o/${occ.id}/match` : `/s/${tradeId}`) }
@@ -135,6 +154,18 @@ export default function Brief() {
       <div className="space-y-3 px-3 pt-2">
         {choose.map(q => <Question key={q.key} q={q} value={picks[q.key] ?? []} onChange={v => { react(q, picks[q.key] ?? [], v); set(q.key, v) }} occasion={occ}
           typed={picks[q.key + '__typed'] ?? []} onTyped={v => set(q.key + '__typed', v)} />)}
+        {more.length > 0 && (
+          <details className="group rounded-[22px] bg-white shadow-[0_0_0_1px_#EFE7DD]" data-more-options>
+            <summary className="flex cursor-pointer list-none items-center justify-between px-3.5 py-3.5 text-[14px] font-extrabold">
+              <span>More options <span className="font-semibold text-[var(--ink-3)]">· optional · {more.length}</span></span>
+              <ChevronDown size={18} className="text-[var(--ink-3)] transition-transform group-open:rotate-180" />
+            </summary>
+            <div className="space-y-3 px-1 pb-3">
+              {more.map(q => <Question key={q.key} q={q} value={picks[q.key] ?? []} onChange={v => { react(q, picks[q.key] ?? [], v); set(q.key, v) }} occasion={occ}
+                typed={picks[q.key + '__typed'] ?? []} onTyped={v => set(q.key + '__typed', v)} />)}
+            </div>
+          </details>
+        )}
         {must.length > 0 && (
           <section className="rounded-[22px] bg-white p-3.5 shadow-[0_0_0_1px_#EFE7DD]" data-q="must">
             <p className="flex items-center gap-1.5 text-[15px] font-extrabold tracking-[-0.02em]"><Sparkles size={16} className="text-[#0C831F]" />Must-haves</p>
@@ -214,7 +245,11 @@ function Question({ q, value, onChange, occasion, typed, onTyped }) {
             return (
               <button key={o.id} type="button" onClick={() => toggle(o.id)} aria-pressed={on}
                 className={'cx-press relative flex min-h-[54px] items-center rounded-[16px] px-3 py-2.5 pr-8 text-left text-[13px] font-bold leading-snug transition ' + (on ? 'bg-[#EEFAF2] text-[#0B5F33] shadow-[inset_0_0_0_2px_#16A34A]' : 'bg-[#FBF8F4] text-[var(--ink)] shadow-[inset_0_0_0_1px_#EDE5DA]')}>
-                {o.label}
+                <span className="min-w-0">
+                  {artFor(exampleSlug(o.label)) && <img src={artFor(exampleSlug(o.label))} alt="" className="mb-1.5 aspect-[4/3] w-full rounded-[10px] object-cover" loading="lazy" />}
+                  <span className="block">{o.label}</span>
+                  {explain(o.label) && <span className={'mt-0.5 block text-[11px] font-semibold leading-snug ' + (on ? 'text-[#2F7A52]' : 'text-[var(--ink-3)]')}>{explain(o.label)}</span>}
+                </span>
                 <span className={'absolute right-2.5 top-1/2 grid h-5 w-5 -translate-y-1/2 place-items-center rounded-full transition ' + (on ? 'cx-pop bg-[#0C831F] text-white' : 'ring-[1.5px] ring-[#D9D0C4]')}>{on && <Check size={12} strokeWidth={3.4} />}</span>
               </button>
             )

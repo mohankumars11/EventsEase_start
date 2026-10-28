@@ -22,7 +22,9 @@ import { usePlan } from '../state/PlanContext'
 import { PALETTE, STYLES, TEMPLATES, isSolemn, parseTheme, recommendedFor, templatesFor, themeString } from '../data/inviteTemplates'
 import { addGuests, functionsFor, getInvitation, inviteText, parseGuestList, saveInvitation, shareText } from '../lib/rsvp'
 import { canPickContacts, guestsFromFile, pickContacts } from '../lib/guestImport'
+import { myVouchers, redeem, usable } from '../lib/rewards'
 import InviteCard from '../ui/InviteCard'
+import { Sheet } from '../ui/kit'
 import DesignViewer from '../ui/DesignViewer'
 import SignInSheet from './SignInSheet'
 
@@ -41,6 +43,13 @@ const TIMES = [['10:00', 'Morning', '10 AM'], ['12:30', 'Lunch', '12:30 PM'], ['
 const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 function dayFrom(dow, weeks = 0) { const d = new Date(); d.setDate(d.getDate() + ((dow - d.getDay() + 7) % 7 || 7) + weeks * 7); return d }
 const nice = v => (v ? new Date(`${v}T00:00:00`).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : '')
+/* The invitation's price (Mohan, 2026-10-28: "provide the checkout for RSVP"):
+   a premium invitation lists at ₹299; a new customer's first one is free with
+   the welcome voucher, and during launch every other one is free too, so
+   nothing is ever charged here — there is no invitation payment flow yet. */
+export const RSVP_PRICE = 299
+const RSVP_INCLUDES = ['1,000+ designs, live animation', 'One-tap WhatsApp RSVP for every guest', 'Live headcount, food & function counts', 'Guest care — travel, pickups, rooms', 'Style circles with outfit chat']
+const RAIL = { event: 'Occasion', design: 'Design', title: 'Name', hosts: 'Hosts', when: 'When', where: 'Where', message: 'Note', functions: 'Functions', rsvp: 'RSVP', review: 'Review', guests: 'Guests', send: 'Send' }
 const PHASE = { event: 'Your occasion', design: 'The design', title: 'The card', hosts: 'The card', when: 'When', where: 'Where', message: 'A personal note', functions: 'Functions', rsvp: 'RSVP', review: 'Review', guests: 'Guests', send: 'Send' }
 
 /* The moving column beside the occasion list: the trending designs, each
@@ -72,6 +81,12 @@ export default function InviteNew() {
   const [added, setAdded] = useState(0)
   const occ = OCCASION[inv.occasion_id] ?? null
   const set = p => setInv(x => ({ ...x, ...p }))
+  /* The free-RSVP welcome voucher, used on this invitation when it is created. */
+  const [voucher, setVoucher] = useState(null)
+  const [paying, setPaying] = useState(false)
+  useEffect(() => { if (user) myVouchers(user.id).then(l => setVoucher(l.find(v => v.kind === 'free_rsvp' && usable(v)) ?? null)).catch(() => {}) }, [user])
+  const rail = useRef(null)
+  useEffect(() => { rail.current?.querySelector('[data-rail-on]')?.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' }) }, [at])
   const opts = parseTheme(inv.theme, occ)
 
   const steps = useMemo(() => ['event', 'design', 'title', 'hosts', 'when', 'where', 'message', ...(occ && functionsFor(occ).length ? ['functions'] : []), 'rsvp', 'review', 'guests', 'send'], [occ])
@@ -95,6 +110,7 @@ export default function InviteNew() {
     setBusy(true); setErr('')
     try {
       const id = await saveInvitation({ ...inv, title: inv.title.trim() || occ?.name || 'Our Celebration' }, fns.filter(f => f.name.trim()))
+      if (voucher) redeem(voucher, `invitation:${id}`).then(() => setVoucher(v => (v ? { ...v, used: true } : v))).catch(() => {})
       setInvId(id); go('guests')
     } catch (e) { setErr(e.message) } finally { setBusy(false) }
   }
@@ -110,7 +126,7 @@ export default function InviteNew() {
     message: { label: 'Next', onClick: next },
     functions: { label: fns.length ? `Next · ${fns.length} function${fns.length === 1 ? '' : 's'}` : 'Next · one event', onClick: next },
     rsvp: { label: 'Review my invitation', onClick: next },
-    review: { label: busy ? 'Creating…' : 'Create my invitation', onClick: create, disabled: busy, icon: busy ? Loader2 : Sparkles },
+    review: { label: busy ? 'Creating…' : 'Create my invitation', onClick: () => (user ? setPaying(true) : setSignIn(true)), disabled: busy, icon: busy ? Loader2 : Sparkles },
     guests: null,
     send: { label: 'Open my RSVP dashboard', onClick: () => navigate(`/invites/${invId}`, { replace: true }) },
   }[at]
@@ -126,9 +142,24 @@ export default function InviteNew() {
           </div>
           <span className="shrink-0 rounded-full bg-[#F6F3FA] px-2.5 py-1 text-[12px] font-extrabold text-[var(--ink-2)]">{i + 1} / {steps.length}</span>
         </div>
-        <div className="mt-2.5 flex gap-1" aria-hidden>
-          {steps.map((k, j) => <span key={k} className={'h-1.5 flex-1 rounded-full transition-colors duration-500 ' + (j <= i ? 'bg-gradient-to-r from-[#DB2777] to-[#7C3AED]' : 'bg-[#F1ECF6]')} />)}
-        </div>
+        {/* The steps as a rail: done ones are green ticks you can tap back to. */}
+        <ol ref={rail} className="cx-noscroll -mx-3 mt-2.5 flex items-start overflow-x-auto px-3 pb-0.5" data-invite-rail>
+          {steps.map((k, j) => {
+            const done = j < i, on = j === i
+            const locked = invId && j < steps.indexOf('guests')
+            return (
+              <li key={k} className="flex shrink-0 items-start">
+                {j > 0 && <span className={'mt-[13px] h-0.5 w-4 shrink-0 rounded-full ' + (j <= i ? 'bg-[#16A34A]' : 'bg-[#E9E2F2]')} />}
+                <button type="button" disabled={!done || locked} onClick={() => go(k)} className="flex w-[52px] flex-col items-center gap-1" data-rail={k} {...(on ? { 'data-rail-on': '' } : {})}>
+                  <span className={'grid h-7 w-7 place-items-center rounded-full text-[11.5px] font-black transition ' + (done ? 'bg-[#16A34A] text-white' : on ? 'bg-gradient-to-br from-[#DB2777] to-[#7C3AED] text-white shadow-[0_6px_14px_-6px_rgba(124,58,237,.9)]' : 'bg-[#F1ECF6] text-[#A39CB5]')}>
+                    {done ? <Check size={14} strokeWidth={3.4} /> : j + 1}
+                  </span>
+                  <span className={'truncate text-[10px] font-extrabold ' + (done ? 'text-[#0B6B3D]' : on ? 'text-[#5B21B6]' : 'text-[#A39CB5]')}>{RAIL[k]}</span>
+                </button>
+              </li>
+            )
+          })}
+        </ol>
       </header>
 
       <div key={at} className="cx-rise px-4 pt-3" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 120px)' }}>
@@ -143,7 +174,7 @@ export default function InviteNew() {
         {at === 'message' && <StepText inv={inv} occ={occ} title="Add a personal note" sub="Guests read this when they open their invite." value={inv.message ?? ''} onChange={v => set({ message: v })} max={1200} area chips={notesFor(occ)} long />}
         {at === 'functions' && <StepFunctions occ={occ} inv={inv} fns={fns} setFns={setFns} />}
         {at === 'rsvp' && <StepRsvp inv={inv} set={set} />}
-        {at === 'review' && <StepReview inv={inv} occ={occ} fns={fns} go={go} err={err} />}
+        {at === 'review' && <StepReview inv={inv} occ={occ} fns={fns} go={go} err={err} voucher={voucher} />}
         {at === 'guests' && <StepGuests invId={invId} added={added} onAdded={n => setAdded(a => a + n)} onDone={() => go('send')} />}
         {at === 'send' && <StepSend invId={invId} added={added} onAddMore={() => go('guests')} />}
       </div>
@@ -156,7 +187,29 @@ export default function InviteNew() {
           </button>
         </div>
       )}
-      <SignInSheet open={signIn} onClose={() => setSignIn(false)} onDone={() => { setSignIn(false); create() }} why="to create your invitation" />
+      <SignInSheet open={signIn} onClose={() => setSignIn(false)} onDone={() => { setSignIn(false); setPaying(true) }} why="to create your invitation" />
+
+      {/* The invitation's checkout: the price, what it includes, and — the hook — it is free. */}
+      <Sheet open={paying} onClose={() => setPaying(false)} title="Your invitation"
+        footer={<button type="button" disabled={busy} onClick={async () => { await create(); setPaying(false) }} className="cx-press cx-cta flex h-14 w-full items-center justify-center gap-2 rounded-[18px] text-[16px] font-extrabold" data-rsvp-pay>
+          {busy ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />}Create for free · ₹0</button>}>
+        <div className="pb-2" data-rsvp-checkout>
+          <div className="cx-pop flex items-center gap-3 rounded-[18px] bg-gradient-to-r from-[#FDF2F8] via-[#F5F0FF] to-[#ECFDF3] p-3.5 ring-1 ring-[#F5D0E6]">
+            <span className="text-[30px]">🎉</span>
+            <span className="min-w-0"><span className="block text-[15px] font-black text-[#5B21B6]">{voucher ? 'Your first RSVP is free!' : 'Free during our launch!'}</span>
+              <span className="block text-[12px] font-semibold text-[var(--ink-2)]">{voucher ? 'As a new Sambramo customer, this one is on us.' : 'Every invitation is free while we launch.'}</span></span>
+          </div>
+          <ul className="mt-3 space-y-1.5">
+            {RSVP_INCLUDES.map(x => <li key={x} className="flex items-center gap-2 text-[13px] font-semibold text-[var(--ink-2)]"><Check size={15} strokeWidth={3} className="shrink-0 text-[#16A34A]" />{x}</li>)}
+          </ul>
+          <div className="mt-4 space-y-2 rounded-[18px] bg-[#FBF9FD] p-3.5 text-[13.5px] font-bold shadow-[inset_0_0_0_1px_#F0EAF6]">
+            <p className="flex justify-between"><span>Premium invitation</span><span className="cx-num">₹{RSVP_PRICE}</span></p>
+            <p className="flex justify-between text-[#0B6B3D]"><span>{voucher ? `Free RSVP voucher · ${voucher.code}` : 'Launch offer'}</span><span className="cx-num">−₹{RSVP_PRICE}</span></p>
+            <p className="flex justify-between border-t border-dashed border-[#E2D9EE] pt-2 text-[16px] font-black"><span>To pay</span><span className="cx-num">₹0</span></p>
+          </div>
+          {err && <p className="mt-3 rounded-[14px] bg-[#FFF1F2] px-3 py-2.5 text-[13px] font-bold text-[#9B1A2A]">{err}</p>}
+        </div>
+      </Sheet>
     </main>
   )
 }
@@ -436,7 +489,7 @@ function StepRsvp({ inv, set }) {
 }
 
 /* ── Review ───────────────────────────────────────────────────────── */
-function StepReview({ inv, occ, fns, go, err }) {
+function StepReview({ inv, occ, fns, go, err, voucher }) {
   const { t, pal } = parseTheme(inv.theme, occ)
   const rows = [
     ['design', 'Design', pal ? `${t.name} · ${PALETTE[pal].name}` : t.name], ['when', 'When', [nice(inv.event_date), inv.start_time && `${inv.start_time.slice(0, 5)}`].filter(Boolean).join(' · ') || 'Not set yet'],
@@ -456,6 +509,13 @@ function StepReview({ inv, occ, fns, go, err }) {
           </button>
         ))}
       </div>
+      {voucher && (
+        <div className="cx-pop mt-3 flex items-center gap-3 rounded-[18px] bg-gradient-to-r from-[#FDF2F8] to-[#F5F0FF] p-3.5 ring-1 ring-[#F5D0E6]" data-voucher-applied>
+          <span className="text-[24px]">🎟️</span>
+          <span className="min-w-0 flex-1"><span className="block text-[14px] font-black text-[#9D174D]">Free RSVP voucher applied</span><span className="block text-[11.5px] font-semibold text-[#BE185D]">This invitation is on us · {voucher.code}</span></span>
+          <Check size={18} strokeWidth={3} className="text-[#16A34A]" />
+        </div>
+      )}
       {err && <p className="mt-3 rounded-[14px] bg-[#FFF1F2] px-3 py-2.5 text-[13px] font-bold text-[#9B1A2A]">{err}</p>}
     </>
   )

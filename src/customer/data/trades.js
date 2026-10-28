@@ -10,7 +10,7 @@
  * registry's, so a customer tile and a partner listing always agree.
  */
 import {
-  Mic, CupSoda, Brush, Cake, Utensils, Disc3, Flower2, ClipboardList, Armchair, Lightbulb, Boxes, Gift,
+  Mic, CupSoda, Brush, Cake, Utensils, Disc3, Sparkles, ClipboardList, Armchair, Lightbulb, Boxes, Gift,
   HandHeart, Mail, Music, HardHat, Container, Hand, Truck, Bus, Camera, PlugZap, Flame, LifeBuoy,
   ShieldCheck, Speaker, Tent, Route, PackageOpen, SquareParking, Building2, Video, Warehouse, HeartHandshake,
 } from 'lucide-react'
@@ -23,7 +23,7 @@ export const TRADES = [
   t('cake_desserts', 'Cakes & desserts', 'The cake, and a dessert table if you want one', Cake, 'food'),
   t('bar_beverages', 'Drinks & ice cream', 'Mocktail, coffee and ice-cream counters', CupSoda, 'food'),
   t('venue', 'Venue', 'Halls, lawns and terraces for your guest count', Building2, 'space'),
-  t('decoration_floral', 'Décor & flowers', 'Stage, entrance and flowers, set up and removed', Flower2, 'space'),
+  t('decoration_floral', 'Décor & flowers', 'Stage, entrance and flowers, set up and removed', Sparkles, 'space'),
   t('tent_furniture', 'Tents & furniture', 'Shamiana, hangar, chairs and sofas', Tent, 'space'),
   t('event_lighting', 'Lighting', 'Fairy lights to stage rigs, with operators', Lightbulb, 'space'),
   t('photography', 'Photography', 'Every ritual and every relative, captured', Camera, 'media'),

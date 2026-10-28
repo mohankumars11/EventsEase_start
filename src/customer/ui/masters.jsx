@@ -30,7 +30,7 @@ import CompareSheet from '../screens/CompareSheet'
 
 const NONE = { instant: false, km: null, rating: null, maxRupees: null }
 
-export function MastersPanel({ tradeId, occasionId = null, guests = null, onCount, onCompanion }) {
+export function MastersPanel({ tradeId, occasionId = null, guests = null, onCount, onCompanion, cols = 2 }) {
   const plan = usePlan()
   const navigate = useNavigate()
   const t = TRADE[tradeId]
@@ -142,10 +142,10 @@ export function MastersPanel({ tradeId, occasionId = null, guests = null, onCoun
         )
       })()}
 
-      <div className="grid grid-cols-2 gap-2.5 px-3">
+      <div className={'grid px-3 ' + (cols === 3 ? 'grid-cols-3 gap-x-2 gap-y-3' : 'grid-cols-2 gap-2.5')} data-masters-grid={cols}>
         {!list && Array.from({ length: 4 }, (_, i) => <PartnerCardSkeleton key={i} />)}
         {list?.map(x => (
-          <PartnerCard key={x.serviceId} partner={sort === 'best' ? x : { ...x, reason: null }}
+          <PartnerCard key={x.serviceId} compact={cols === 3} partner={sort === 'best' ? x : { ...x, reason: null }}
             href={`/p/${x.serviceId}?t=${tradeId}${occasionId ? `&o=${occasionId}` : ''}`}
             added={line?.serviceId === x.serviceId}
             onAdd={y => { if (line?.serviceId === y.serviceId) { plan.remove(line.key); sambu(`${y.name} taken out — pick another any time.`) } else { plan.add(asLine(y), occasionId); sambu(`${y.name} is in ✓ ${y.quote ? `Your price is ${rupees(y.quote.paise)} — ` : ''}pay instantly at checkout ⚡`) } }}

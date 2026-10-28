@@ -75,7 +75,7 @@ const initials = name => String(name).split(/\s+/).filter(Boolean).map(w => w[0]
  * A partner, as a quick-commerce card. Tap the card to see them; tap the
  * pill to put them in the plan without leaving the list.
  */
-export function PartnerCard({ partner, added = false, onAdd, saved = false, onSave, selectable = false, selected = false, onSelect, className = '', href }) {
+export function PartnerCard({ partner, added = false, onAdd, saved = false, onSave, selectable = false, selected = false, onSelect, className = '', href, compact = false }) {
   const p = partner
   const link = href ?? `/p/${p.serviceId}?t=${p.tradeId}`
   const unit = p.fromKind === 'package' ? (p.fromLabel ? `${p.fromLabel} package` : 'package') : (p.fromUnit ?? 'onwards')
@@ -99,8 +99,8 @@ export function PartnerCard({ partner, added = false, onAdd, saved = false, onSa
             )}
           </span>
         </div>
-        <div className="px-0.5 pt-4">
-          <p className="line-clamp-2 text-[14.5px] font-extrabold leading-[1.18] tracking-[-0.02em]">{p.name}</p>
+        <div className={compact ? 'px-0.5 pt-3.5' : 'px-0.5 pt-4'}>
+          <p className={'line-clamp-2 font-extrabold leading-[1.18] tracking-[-0.02em] ' + (compact ? 'text-[12.5px]' : 'text-[14.5px]')}>{p.name}</p>
           <p className="mt-1 flex items-center gap-1 truncate text-[12px] font-bold text-[var(--ink-2)]">
             {p.rating
               ? <span className="inline-flex items-center gap-0.5 rounded-md bg-[var(--ok)] px-1.5 py-[1px] text-[11px] font-extrabold text-white"><span className="cx-num">{p.rating.toFixed(1)}</span><Star size={9} className="fill-white text-white" /></span>
@@ -112,14 +112,14 @@ export function PartnerCard({ partner, added = false, onAdd, saved = false, onSa
           {p.quote ? (
             <>
               <p className="mt-1 flex items-baseline gap-1 overflow-hidden whitespace-nowrap" data-quote>
-                <span className="cx-num text-[15.5px] font-extrabold tracking-[-0.02em]">{rupees(p.quote.paise)}</span>
+                <span className={'cx-num font-extrabold tracking-[-0.02em] ' + (compact ? 'text-[13.5px]' : 'text-[15.5px]')}>{rupees(p.quote.paise)}</span>
                 <span className="truncate text-[11px] font-extrabold text-[#0B7A45]">your price</span>
               </p>
               <p className="truncate text-[10.5px] font-bold text-[var(--ink-3)]">{p.quote.note}</p>
             </>
           ) : p.fromPaise ? (
             <p className="mt-1 flex items-baseline gap-1 overflow-hidden whitespace-nowrap">
-              <span className="cx-num text-[15.5px] font-extrabold tracking-[-0.02em]">{rupees(p.fromPaise)}</span>
+              <span className={'cx-num font-extrabold tracking-[-0.02em] ' + (compact ? 'text-[13.5px]' : 'text-[15.5px]')}>{rupees(p.fromPaise)}</span>
               <span className="truncate text-[11px] font-bold text-[var(--ink-3)]">{unit}</span>
             </p>
           ) : <p className="mt-1 text-[12.5px] font-bold text-[var(--ink-3)]">Price on request</p>}
@@ -144,7 +144,7 @@ export function PartnerCard({ partner, added = false, onAdd, saved = false, onSa
             </button>
           ) : (
             <button type="button" onClick={() => onAdd(p)} aria-pressed={added} aria-label={added ? 'In your plan' : 'Add to plan'} data-add data-edge
-              className={'cx-press pointer-events-auto absolute bottom-0 right-2.5 flex h-9 translate-y-1/2 items-center gap-1 rounded-full px-3.5 text-[12.5px] font-extrabold shadow-[0_8px_18px_-10px_rgba(58,18,144,.7)] transition ' +
+              className={'cx-press pointer-events-auto absolute bottom-0 flex translate-y-1/2 items-center gap-1 rounded-full font-extrabold shadow-[0_8px_18px_-10px_rgba(58,18,144,.7)] transition ' + (compact ? 'right-1.5 h-8 px-2.5 text-[11.5px] ' : 'right-2.5 h-9 px-3.5 text-[12.5px] ') +
                 (added ? 'cx-pop bg-[var(--ok)] text-white' : 'cx-btn ring-1 ring-[var(--am-300)]')}>
               {added ? <><Check size={14} strokeWidth={3} />Added</> : <><Plus size={14} strokeWidth={3} />Add</>}
             </button>

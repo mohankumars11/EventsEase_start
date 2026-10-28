@@ -103,7 +103,7 @@ export default function Needs() {
       <ActionBar note={left ? `Tip: tell us about ${plural(left, 'more service')} for exact matches — or go on and come back any time` : 'All set — we’ll show only the masters who fit'}>
         {left ? (
           <div className="flex gap-2">
-            <button type="button" onClick={() => navigate(`/brief/${next}?o=${o.id}`)} className="cx-press cx-btn flex h-14 min-w-0 flex-1 items-center justify-center gap-1 rounded-[18px] px-3 text-[13.5px] font-extrabold" data-next-need>
+            <button type="button" onClick={() => navigate(`/brief/${next}?o=${o.id}&flow=1`)} className="cx-press cx-btn flex h-14 min-w-0 flex-1 items-center justify-center gap-1 rounded-[18px] px-3 text-[13.5px] font-extrabold" data-next-need>
               <span className="truncate">Next: {TRADE[next].label}</span>
             </button>
             <button type="button" onClick={() => navigate(`/o/${o.id}/match`)} className="cx-press cx-cta flex h-14 flex-1 items-center justify-center gap-1.5 rounded-[18px] text-[14.5px] font-extrabold" data-find>
@@ -117,7 +117,7 @@ export default function Needs() {
         )}
       </ActionBar>
 
-      <Buddy id={`needs-${o.id}`} lines={lines} action={next ? { label: `Tell us about ${TRADE[next].label}`, onClick: () => navigate(`/brief/${next}?o=${o.id}`) } : null} bottom={124}
+      <Buddy id={`needs-${o.id}`} lines={lines} action={next ? { label: `Tell us about ${TRADE[next].label}`, onClick: () => navigate(`/brief/${next}?o=${o.id}&flow=1`) } : null} bottom={124}
         skip={left ? { label: 'In a hurry? See all masters', onClick: () => navigate(`/o/${o.id}/match`) } : null} />
 
       <Sheet open={!!removing} onClose={() => setRemoving(null)} title={removing ? `Remove ${TRADE[removing].label}?` : ''}>

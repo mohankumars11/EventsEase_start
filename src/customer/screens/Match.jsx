@@ -33,6 +33,7 @@ export default function Match() {
   const o = OCCASION[occasionId]
   const plan = usePlan()
   const [busy, setBusy] = useState(false)
+  const [rail, setRail] = useState(false)
   const ev = o && plan.event.occasionId === o.id ? plan.event : { venue: 'need' }
   const { needed, rows } = o ? needsFor(o, plan.picks[o.id] ?? {}, ev) : { needed: [], rows: [] }
   const sel = needed.includes(params.get('t')) ? params.get('t') : needed[0]
@@ -79,16 +80,35 @@ export default function Match() {
         )}
         {needed.length > 0 && chosen === needed.length && <button type="button" onClick={() => navigate('/plan')} className="cx-press shrink-0 rounded-full bg-[#0C831F] px-3.5 py-2 text-[12px] font-extrabold text-white">Review</button>}
       </div>
-      <OfferStrip className="mx-3 mb-2.5" />
+      <div className="cx-noscroll mb-2.5 flex gap-1.5 overflow-x-auto px-3" data-service-strip>
+        {needed.map(t => {
+          const done = !!plan.lineFor(o.id, t)
+          return (
+            <button key={t} type="button" onClick={() => choose(t)} aria-current={t === sel ? 'true' : undefined}
+              className={'flex shrink-0 items-center gap-1.5 rounded-full py-1.5 pl-1.5 pr-3 text-[12px] font-extrabold transition ' + (t === sel ? 'bg-[#1C1033] text-white' : done ? 'bg-[#E9F8EF] text-[#0B6B3D]' : 'bg-[#F6F3FA] text-[var(--ink-2)]')}>
+              <span className={'grid h-5 w-5 place-items-center rounded-full ' + (done ? 'bg-[#16A34A] text-white' : t === sel ? 'bg-white/20' : 'bg-white')}>{done ? <Check size={11} strokeWidth={3.4} /> : null}</span>
+              {TRADE[t].label}
+            </button>
+          )
+        })}
+      </div>
 
-      <div className="flex">
-        <nav className="sticky top-[calc(env(safe-area-inset-top,0px)+60px)] max-h-[calc(100dvh-140px)] w-[84px] shrink-0 self-start overflow-y-auto border-r border-[#F1ECF8] pb-6 cx-noscroll" aria-label="Your services">
+      {/* Services: a tab on the left edge; tap it (or the header pill) and the
+          list slides in with what is done and what is pending. The masters get
+          the full width — three across. */}
+      <button type="button" onClick={() => setRail(true)} className="fixed left-0 top-1/2 z-[125] flex -translate-y-1/2 flex-col items-center gap-1 rounded-r-[14px] bg-[#1C1033]/90 px-1 py-3 text-white shadow-[0_10px_24px_-10px_rgba(28,16,51,.8)]" aria-label="Your services" data-rail-tab>
+        <span className="cx-num text-[13px] font-black">{chosen}/{needed.length}</span>
+        <span className="text-[9px] font-extrabold uppercase tracking-[0.1em] [writing-mode:vertical-rl]">Services</span>
+      </button>
+      {rail && <div className="fixed inset-0 z-[160] bg-black/30" onClick={() => setRail(false)} aria-hidden />}
+      <nav className={'fixed bottom-0 left-0 top-0 z-[170] w-[112px] overflow-y-auto bg-white pb-6 pt-[calc(env(safe-area-inset-top,0px)+12px)] shadow-[12px_0_32px_-16px_rgba(28,16,51,.5)] transition-transform duration-300 cx-noscroll ' + (rail ? 'translate-x-0' : '-translate-x-full')} aria-label="Your services" data-rail={rail ? 'open' : 'closed'}>
+        <p className="px-2 pb-2 text-center text-[11px] font-extrabold uppercase tracking-[0.12em] text-[var(--ink-3)]">{chosen} of {needed.length} done</p>
           {needed.map(t => {
             const on = t === sel
             const done = !!plan.lineFor(o.id, t)
             const told = !!needsSummary(t, plan.needsOf(o.id, t))
             return (
-              <button key={t} type="button" onClick={() => choose(t)} aria-current={on ? 'true' : undefined} className="relative flex w-full flex-col items-center gap-1 px-1 py-2.5 text-center" data-side={t} data-done={done}>
+              <button key={t} type="button" onClick={() => { choose(t); setRail(false) }} aria-current={on ? 'true' : undefined} className="relative flex w-full flex-col items-center gap-1 px-1 py-2.5 text-center" data-side={t} data-done={done}>
                 {on && <span className="absolute bottom-2 right-0 top-2 w-[3px] rounded-l-full bg-[#0C831F]" />}
                 <span className="relative">
                   <ArtFill art={serviceArt(t)} tone={done ? '#E9F8EF' : on ? '#F3ECFF' : '#F7F4FB'} className={'h-[52px] w-[52px] rounded-full ' + (done ? 'ring-2 ring-[#16A34A]' : '')} inset="14%" />
@@ -107,6 +127,7 @@ export default function Match() {
           </Link>
         </nav>
 
+      <div>
         <div className="min-w-0 flex-1">
           {sel ? (
             <>
@@ -121,7 +142,7 @@ export default function Match() {
                   <Trash2 size={14} />Remove
                 </button>
               </div>
-              <MastersPanel key={sel} tradeId={sel} occasionId={o.id} guests={ev.guests ?? null}
+              <MastersPanel key={sel} cols={3} tradeId={sel} occasionId={o.id} guests={ev.guests ?? null}
                 onCompanion={t => { if (!needed.includes(t)) plan.setPick(o.id, t, 'need'); choose(t) }} />
             </>
           ) : (
