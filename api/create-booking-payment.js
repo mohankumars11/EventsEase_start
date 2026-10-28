@@ -48,6 +48,8 @@ import { cors } from './_lib/cors.js'
 import { authenticatedUser } from './_lib/auth.js'
 import { createOrder, providerName, enabledMethods } from './_lib/payments.js'
 import { testChargePaise } from './_lib/testCharge.js'
+import { lineList, lineAdvance, applyOffer, payNow, BOOKING_KINDS } from './_lib/listPrice.js'
+import { discountsFor } from './_lib/discounts.js'
 
 const url = process.env.VITE_SUPABASE_URL
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -59,7 +61,7 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
   if (!url || !serviceKey) return res.status(500).json({ error: 'Supabase not configured' })
 
-  const { customerId: bodyCustomerId, lineIds, part: partRaw } = req.body ?? {}
+  const { customerId: bodyCustomerId, lineIds, part: partRaw, voucherId, full } = req.body ?? {}
   // 'advance' (default) pays what a line needs to be confirmed; 'balance'
   // pays what is still owed on a confirmed (paid) line.
   const part = partRaw === 'balance' ? 'balance' : 'advance'
@@ -123,16 +125,19 @@ export default async function handler(req, res) {
 
   const mine = (lines ?? []).filter(l => l.booking_requests?.customer_id === customerId)
 
-  /* What each line owes NOW.
-     advance: an accepted line owes its advance (pricing_snapshot.advance_paise,
-       written by api/anchor?op=book from the partner's advance %), or the full
-       quote for lines that carry no advance (every other trade, as before).
-     balance: a paid line owes its quote minus what escrow already holds. */
+  /* What each line owes NOW, in the CUSTOMER's terms: the Sambramo price
+     (pricing_snapshot.list_paise — api/_lib/listPrice.js). Lines booked
+     before list pricing owe their quote, exactly as before.
+     advance: an accepted line owes what payNow() says — in full under
+       ₹25,000, within 7 days of the event, when the partner takes no
+       advance, or when the customer chose to pay it all (`full`);
+       otherwise its advance, never under the trade's floor (advanceFloor:
+       50% for trades that buy goods before the day, 30% light, 20% labour).
+     balance: a paid line owes its price, less what a voucher took off it,
+       less what escrow already holds — so a saving is never charged back. */
   let payable = []
   if (part === 'advance') {
-    payable = mine.filter(l => l.status === 'accepted').map(l => ({
-      ...l, due: Math.min(l.quoted_amount_paise, Number(l.pricing_snapshot?.advance_paise) || l.quoted_amount_paise),
-    }))
+    payable = mine.filter(l => l.status === 'accepted').map(l => ({ ...l, due: payNow({ list: lineList(l), advance: lineAdvance(l), eventDate: l.booking_requests?.event_date, trade: l.pricing_snapshot?.trade_code ?? l.pricing_snapshot?.trade_id ?? null }, { full: full === true }) }))
   } else {
     const paidLines = mine.filter(l => l.status === 'paid')
     if (paidLines.length) {
@@ -140,7 +145,9 @@ export default async function handler(req, res) {
         .eq('kind', 'HOLD').in('line_id', paidLines.map(l => l.id))
       const held = {}
       for (const h of holds ?? []) held[h.line_id] = (held[h.line_id] ?? 0) + Number(h.amount_paise)
-      payable = paidLines.map(l => ({ ...l, due: l.quoted_amount_paise - (held[l.id] ?? 0) })).filter(l => l.due > 0)
+      let saved
+      try { saved = await discountsFor(db, paidLines.map(l => l.id)) } catch (e) { return res.status(500).json({ error: e.message }) }
+      payable = paidLines.map(l => ({ ...l, due: lineList(l) - (saved[l.id] ?? 0) - (held[l.id] ?? 0) })).filter(l => l.due > 0)
     }
   }
 
@@ -153,7 +160,42 @@ export default async function handler(req, res) {
     })
   }
 
-  const quotedPaise = payable.reduce((n, l) => n + l.due, 0)
+  /* ══════════════════════════════════════════════════════════════════
+     A VOUCHER IS CHECKED HERE, NEVER TRUSTED FROM THE PHONE
+     ══════════════════════════════════════════════════════════════════
+     The client names a voucher; this decides whether it is the caller's,
+     unused, unexpired, a booking offer, and (welcome) their first booking.
+     The saving comes only out of Sambramo's margin — applyOffer never
+     takes a line below the partner's price — so the partner is paid in
+     full and settlement's held ≥ quoted rule still holds. It is applied
+     at the first payment only: the whole line's saving is recorded at
+     capture and taken off its balance later, at the same rate. */
+  let voucher = null
+  let offer = payable.map(l => ({ discount: 0, charge: l.due }))
+  if (voucherId) {
+    const no = (error, status = 400) => res.status(status).json({ error, code: 'voucher' })
+    if (part !== 'advance') return no('Offers apply when you first pay for a booking.')
+    const { data: v, error: vErr } = await db.from('customer_vouchers')
+      .select('id, user_id, kind, code, status, expires_at, terms').eq('id', voucherId).maybeSingle()
+    if (vErr) return no('Offers are not switched on yet — pay without it, or try again soon.', 503)
+    if (!v || v.user_id !== customerId) return no('This offer is not on your account.')
+    if (!BOOKING_KINDS.includes(v.kind)) return no('This offer is not for bookings.')
+    if (v.status !== 'available' || (v.expires_at && new Date(v.expires_at) <= new Date())) return no('This offer has been used or has expired.')
+    if (v.kind === 'welcome_pct') {
+      const { count, error: cErr } = await db.from('booking_lines')
+        .select('id, booking_requests!inner(customer_id)', { count: 'exact', head: true })
+        .eq('booking_requests.customer_id', customerId).in('status', ['paid', 'in_progress', 'delivered', 'settled'])
+      if (cErr) return res.status(500).json({ error: cErr.message })
+      if (count > 0) return no('The welcome offer is for your first booking.')
+    }
+    offer = applyOffer(payable.map(l => ({ list: lineList(l), base: Number(l.quoted_amount_paise) || 0, due: l.due })), v)
+    if (!offer.some(o => o.discount > 0)) return no('This offer does not lower this booking.')
+    voucher = v
+  }
+
+  const listDuePaise = payable.reduce((n, l) => n + l.due, 0)
+  const quotedPaise = offer.reduce((n, o) => n + o.charge, 0)
+  const discountNowPaise = listDuePaise - quotedPaise
   const first = payable[0].booking_requests
 
   /* The ₹1 live-mode smoke test.
@@ -183,6 +225,13 @@ export default async function handler(req, res) {
       quotedPaise: String(quotedPaise),
       testCharge: testPaise ? 'true' : 'false',
       part,
+      // Read back at capture: which voucher, and each line's whole saving
+      // (aligned with lineIds) — bookingCapture records them, then marks
+      // the voucher used.
+      ...(voucher ? {
+        voucherId: voucher.id, voucherCode: voucher.code,
+        lineDiscounts: offer.map(o => o.discount).join(','), discountNowPaise: String(discountNowPaise),
+      } : {}),
     },
   })
 
@@ -203,8 +252,12 @@ export default async function handler(req, res) {
     // Stated rather than implied. A screen that shows ₹1 while the basket
     // says ₹31,200 and does not say why is a screen somebody deploys.
     testCharge: testPaise ? { chargedPaise: testPaise, quotedPaise } : null,
-    lines: payable.map(l => ({
-      id: l.id, name: l.service_name, paise: l.quoted_amount_paise,
+    // The bill as charged: before the offer, the saving now, and the offer.
+    listPaise: listDuePaise,
+    discountPaise: discountNowPaise,
+    voucher: voucher ? { id: voucher.id, code: voucher.code, kind: voucher.kind } : null,
+    lines: payable.map((l, i) => ({
+      id: l.id, name: l.service_name, paise: lineList(l), discountPaise: offer[i].discount,
     })),
     // The mock provider returns this so the dev UI can settle without a
     // real gateway. It is absent in production, and the client must treat

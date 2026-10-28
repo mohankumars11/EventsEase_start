@@ -33,6 +33,7 @@ import { createClient } from '@supabase/supabase-js'
 import { cors } from './cors.js'
 import { authenticatedUser } from './auth.js'
 import { PLATFORM_FEE_RATE } from './tradeNames.js'
+import { loadMarginOverrides, marginPct, toListAt } from './listPrice.js'
 import { notifyPartners } from './fcm.js'
 
 const url = process.env.VITE_SUPABASE_URL
@@ -154,15 +155,30 @@ export default async function handler(req, res) {
   const TRADE_CODE = resolution.trade_code ?? 'E16'
   const FEE = Number(resolution.platform_fee_rate) || PLATFORM_FEE_RATE
   const slug = TRADE.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-')
+
+  /* The customer's view is the Sambramo price — partner price + margin
+     (api/_lib/listPrice.js). `resolution` stays in the partner's terms and
+     is what the line's quote, share and fee are written from; `out` is what
+     the phone sees. The partner's take-home is not the customer's business. */
+  await loadMarginOverrides(db)
+  const CITY = clean(body.venue?.city, 120) ?? clean(r.city, 120)
+  const MARGIN = marginPct(TRADE_CODE, CITY)
+  const LIST = toListAt(resolution.customer_paise, MARGIN)
+  const LIST_ADV = Number(resolution.advance_paise) > 0 ? Math.min(LIST, toListAt(resolution.advance_paise, MARGIN)) : null
+  if (LIST) Object.assign(out, { customer_paise: LIST, base_paise: resolution.customer_paise, advance_paise: LIST_ADV ?? out.advance_paise, margin_pct: MARGIN })
+  delete out.take_home_paise
   if (body.preview) return res.status(200).json(out)
 
   /* A customer's offer. Bounded so a typo cannot read as an insult or a
      windfall: at least 1 rupee, at most ten times the engine's price. */
   const offer = body.negotiate && typeof body.negotiate === 'object' ? (() => {
-    const n = Math.round(Number(body.negotiate.offer_paise) || 0)
+    /* Typed against the Sambramo price; the partner reads it in their own
+       terms (down to the rupee), exactly as they read their listed price. */
+    const typed = Math.round(Number(body.negotiate.offer_paise) || 0)
+    const n = Math.floor(typed / (1 + MARGIN) / 100) * 100
     const cap = Math.max(100, Number(resolution.customer_paise) || 0) * 10
     if (!(n >= 100) || n > cap) return null
-    return { offer_paise: n, reasons: (Array.isArray(body.negotiate.reasons) ? body.negotiate.reasons : []).map(x => clean(x, 60)).filter(Boolean).slice(0, 8),
+    return { offer_paise: n, offer_list_paise: typed, reasons: (Array.isArray(body.negotiate.reasons) ? body.negotiate.reasons : []).map(x => clean(x, 60)).filter(Boolean).slice(0, 8),
       message: clean(body.negotiate.message, 400) }
   })() : null
   if (body.negotiate && !offer) return res.status(400).json({ error: 'Enter the amount you want to offer.' })
@@ -212,7 +228,9 @@ export default async function handler(req, res) {
         price_basis: { kind: 'partner_published', version: VERSION, listing_version_id: resolution.listing_version_id },
         pricing_state: 'INSTANT_BOOK', pricing_version: VERSION, policy_version: VERSION,
         // Immutable: the rule, package, lines, fee and terms this price came from.
-        pricing_snapshot: { ...resolution, request: r, captured_at: new Date().toISOString() },
+        pricing_snapshot: { ...resolution, request: r, captured_at: new Date().toISOString(),
+          // What the customer pays (api/_lib/listPrice.js); quoted/share/fee above stay the partner's terms.
+          list_paise: LIST, list_advance_paise: LIST_ADV, margin_pct: MARGIN, list_city: CITY },
         // What this booking holds (staff, vehicle, stock, space, capacity) — re-checked under the partner lock.
         reservations: resolution.reservations ?? [],
       },
@@ -242,7 +260,9 @@ export default async function handler(req, res) {
     canonical_demand: { ...r, tradeId: TRADE_CODE, tradeName: TRADE, note: clean(body.note, 1000),
       summary: offer ? offerSummary(offer, resolution, FEE) : (out.reasons_text ?? []).join(' '), reasons: resolution.reasons, engine: VERSION,
       advance_pct: resolution.advance_pct ?? null,
-      ...(offer ? { customer_offer_paise: offer.offer_paise, offer_reasons: offer.reasons, offer_message: offer.message, listed_paise: resolution.customer_paise ?? null } : {}) },
+      // The margin this request was made at — the partner's quote is shown and booked at it.
+      margin_pct: MARGIN,
+      ...(offer ? { customer_offer_list_paise: offer.offer_list_paise, customer_offer_paise: offer.offer_paise, offer_reasons: offer.reasons, offer_message: offer.message, listed_paise: resolution.customer_paise ?? null } : {}) },
     state: 'VENDOR_QUOTE', missing_inputs: resolution.reasons ?? [], required_actions: [],
     // The partner's own response window, set by the server clock.
     expires_at: new Date(Date.now() + hours * 3600 * 1000).toISOString(),

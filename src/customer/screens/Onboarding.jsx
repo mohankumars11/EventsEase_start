@@ -288,8 +288,8 @@ function useSplashGone() {
 
 /* ── 3. Welcome scratch cards ─────────────────────────────────────── */
 const REWARD_ART = {
-  free_rsvp: { emoji: '💌', tone: 'linear-gradient(160deg, #FFF1F7 0%, #FCE7F3 55%, #F5E8FF 100%)', ink: '#9D174D', kicker: 'Free RSVP', big: 'FREE', unit: 'first invitation', line: 'Premium designs, live RSVP, guest care & style circles — on us for your first invitation.', cta: 'Use it in Invitations' },
-  welcome_pct: { emoji: '🎉', tone: 'linear-gradient(160deg, #FFF8E7 0%, #FFEFD0 55%, #FFE4EC 100%)', ink: '#9A3412', kicker: 'Welcome offer', big: '25%', unit: 'OFF', line: welcomeFine, cta: 'Use on my first booking' },
+  free_rsvp: { emoji: '💌', tone: 'radial-gradient(110% 80% at 50% 0%, rgba(192,38,211,.55) 0%, transparent 60%), linear-gradient(160deg, #1B0B33 0%, #3B1670 55%, #6B1D6E 100%)', ink: '#FFFFFF', glow: '#F9A8D4', kicker: 'Free RSVP', big: 'FREE', unit: 'first invitation', line: 'Premium designs, live RSVP, guest care & style circles — on us for your first invitation.', cta: 'Use it in Invitations' },
+  welcome_pct: { emoji: '🎉', tone: 'radial-gradient(110% 80% at 50% 0%, rgba(245,158,11,.5) 0%, transparent 58%), linear-gradient(160deg, #140828 0%, #2E0F5C 55%, #5B21A8 100%)', ink: '#FFFFFF', glow: '#FFC24B', kicker: 'Welcome offer', big: '25%', unit: 'OFF', line: welcomeFine, cta: 'Use on my first booking' },
 }
 function Rewards({ onDone }) {
   const { user, profile } = useAuth()
@@ -317,9 +317,9 @@ function Rewards({ onDone }) {
             <div className="flex h-full flex-col items-center justify-center p-5 text-center" style={{ background: a.tone, color: a.ink }} data-reward={cur.kind}>
               <span className="text-[44px] leading-none">{a.emoji}</span>
               <p className="mt-2 text-[11px] font-extrabold uppercase tracking-[0.2em] opacity-80">{a.kicker}</p>
-              <p className="mt-1 text-[54px] font-black leading-none tracking-[-0.04em]">{a.big}<span className="ml-1 text-[18px] tracking-normal">{a.unit}</span></p>
+              <p className="mt-1 text-[54px] font-black leading-none tracking-[-0.04em]" style={{ color: a.glow, textShadow: `0 0 26px ${a.glow}88` }}>{a.big}<span className="ml-1 text-[18px] tracking-normal">{a.unit}</span></p>
               <p className="mt-2 text-[12.5px] font-bold leading-snug opacity-85">{a.line}</p>
-              <p className="mt-3 rounded-full border border-dashed border-current px-3 py-1 text-[12px] font-black tracking-[0.12em]">{cur.code}</p>
+              <p className="cx-num mt-3 rounded-full bg-white/10 px-3 py-1 text-[12px] font-black tracking-[0.12em] ring-1 ring-white/30" style={{ color: a.glow }}>{cur.code}</p>
             </div>
           </ScratchCard>
         )}

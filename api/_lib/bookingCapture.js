@@ -1,4 +1,6 @@
 import { splitCharge } from './testCharge.js'
+import { lineList } from './listPrice.js'
+import { discountsFor } from './discounts.js'
 import { sendPush } from './fcm.js'
 
 /**
@@ -90,6 +92,10 @@ function parse(notes) {
     lineIds: String(notes.lineIds).split(',').map(s => s.trim()).filter(Boolean),
     quotedPaise: Number(notes.quotedPaise ?? 0) || 0,
     isTestCharge: notes.testCharge === 'true',
+    // Set by create-booking-payment when a voucher was applied (193).
+    voucherId: notes.voucherId || null,
+    voucherCode: notes.voucherCode || null,
+    lineDiscounts: String(notes.lineDiscounts ?? '').split(',').map(x => Math.max(0, Math.round(Number(x) || 0))),
   }
 }
 
@@ -116,7 +122,7 @@ export async function captureBookingPayment(db, { entity, booking }) {
 
   const { data: lines, error: readErr } = await db
     .from('booking_lines')
-    .select('id, status, quoted_amount_paise, service_name')
+    .select('id, status, quoted_amount_paise, pricing_snapshot, service_name')
     .in('id', booking.lineIds)
 
   if (readErr) return { ok: false, error: readErr.message }
@@ -128,9 +134,15 @@ export async function captureBookingPayment(db, { entity, booking }) {
   const fundable = lines.filter(l => l.status === 'accepted' || l.status === 'paid')
   if (!fundable.length) return { ok: true, ignored: 'no fundable lines' }
 
-  // Weighted by the quote, so a ₹1 test distributes the way a real
-  // payment would rather than evenly across unequal lines.
-  const shares = splitCharge(capturedPaise, fundable.map(l => l.quoted_amount_paise || 1))
+  /* Weighted by what each line owes the customer — its Sambramo price less
+     any voucher saving (this order's, from the notes, or one recorded on an
+     earlier payment) — so a ₹1 test distributes the way a real payment
+     would rather than evenly across unequal lines. */
+  const fromNotes = Object.fromEntries(booking.voucherId ? booking.lineIds.map((id, i) => [id, booking.lineDiscounts[i] || 0]) : [])
+  let saved = {}
+  try { saved = await discountsFor(db, fundable.map(l => l.id)) } catch (e) { return { ok: false, error: e.message } }
+  const net = l => Math.max(1, lineList(l) - (fromNotes[l.id] ?? saved[l.id] ?? 0))
+  const shares = splitCharge(capturedPaise, fundable.map(net))
 
   const held = []
   for (let i = 0; i < fundable.length; i++) {
@@ -152,6 +164,16 @@ export async function captureBookingPayment(db, { entity, booking }) {
     // The retry landing again. The index did its job.
     if (error && error.code !== '23505') return { ok: false, error: error.message }
     held.push(line.id)
+  }
+
+  /* The voucher: each line's saving, then the voucher marked used. Before
+     the status write, for the same reason the ledger is: a failure here
+     returns an error, Razorpay retries, and every write so far is
+     idempotent. A line marked paid without its saving recorded would have
+     that saving charged back on its balance. */
+  if (booking.voucherId) {
+    const r = await recordVoucher(db, { booking, orderId: entity.order_id ?? paymentId, lineIds: held })
+    if (!r.ok) return r
   }
 
   const { error: statusErr } = await db
@@ -182,6 +204,29 @@ export async function captureBookingPayment(db, { entity, booking }) {
  * because a push did not send. The webhook returning non-2xx would make
  * Razorpay retry a capture that already succeeded.
  */
+async function recordVoucher(db, { booking, orderId, lineIds }) {
+  const rows = booking.lineIds
+    .map((id, i) => ({ line_id: id, voucher_id: booking.voucherId, voucher_code: booking.voucherCode ?? '', order_id: String(orderId), discount_paise: booking.lineDiscounts[i] || 0 }))
+    .filter(r => lineIds.includes(r.line_id) && r.discount_paise > 0)
+  if (rows.length) {
+    const { error } = await db.from('booking_line_discounts').upsert(rows, { onConflict: 'line_id', ignoreDuplicates: true })
+    if (error) return { ok: false, error: `voucher saving not recorded: ${error.message}` }
+  }
+  const usedOn = `order:${orderId}`.slice(0, 80)
+  const { data: used, error } = await db.from('customer_vouchers')
+    .update({ status: 'used', used_at: new Date().toISOString(), used_on: usedOn })
+    .eq('id', booking.voucherId).eq('status', 'available').select('id')
+  if (error) return { ok: false, error: `voucher not marked used: ${error.message}` }
+  if (!used?.length) {
+    /* Already used — by this order (a retry: fine) or by another one opened
+       at the same moment (the customer was given the saving twice). The
+       money is real either way; say so loudly for a human. */
+    const { data: v } = await db.from('customer_vouchers').select('used_on').eq('id', booking.voucherId).maybeSingle()
+    if (v?.used_on !== usedOn) console.error(`[voucher] ${booking.voucherCode} applied to ${usedOn} but already ${v?.used_on ?? 'gone'} — review`)
+  }
+  return { ok: true }
+}
+
 async function notifyPaid(db, lineIds) {
   const { data: lines } = await db
     .from('booking_lines')

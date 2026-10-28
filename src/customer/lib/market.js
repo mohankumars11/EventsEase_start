@@ -18,6 +18,10 @@
 import { supabase } from '../../lib/supabase'
 import { TRADE } from '../data/trades'
 import { pickFacets } from './needs'
+/* Every price a card or an instant quote shows is the Sambramo price — the
+   partner's price + Sambramo's margin — from the same code the server
+   charges with, so the card, the bill and the Razorpay order agree. */
+import { toList, loadMarginOverrides } from '../../../api/_lib/listPrice.js'
 
 const BLR = { lat: 12.9716, lng: 77.5946 }
 const lists = new Map()
@@ -56,7 +60,7 @@ function shape(row, version, tradeId) {
     area: row.city ?? null,
     rating: rating && rating > 0 ? rating : null,
     reviews: num(p.review_count),
-    fromPaise: num(row.from_paise),
+    fromPaise: num(row.from_paise) ? toList(row.from_paise, tradeId) : null,
     distanceKm: num(row.distance_km),
     avatar: row.avatar_url ?? p.avatar_url ?? null,
     cover: p.cover_url ?? gallery[0]?.url ?? row.avatar_url ?? null,
@@ -78,6 +82,7 @@ export function partnersFor(tradeId, { lat = BLR.lat, lng = BLR.lng, limit = 40 
   const t = TRADE[tradeId]
   const job = (async () => {
     if (!t) return []
+    await loadMarginOverrides(supabase)
     const args = { p_trade: t.name, p_lat: lat, p_lng: lng, p_limit: limit }
     const { data, error } = await supabase.rpc(tradeId === 'anchor_mc' ? 'anchor_public_listings' : 'public_listings', args)
     if (error) throw error
@@ -103,7 +108,7 @@ export function partnersFor(tradeId, { lat = BLR.lat, lng = BLR.lng, limit = 40 
     ]) : [{}, {}, {}, {}]
     const best = {}
     const offer = (vid, rank, paise, kind, unit, label = null, ref = null) => {
-      const n = Number(paise)
+      const n = toList(paise, tradeId)
       if (!(n > 0)) return
       const cur = best[vid]
       if (!cur || rank < cur.rank || (rank === cur.rank && n < cur.paise)) best[vid] = { rank, paise: n, kind, unit, label, ref }
@@ -119,7 +124,7 @@ export function partnersFor(tradeId, { lat = BLR.lat, lng = BLR.lng, limit = 40 
     /* Every priced option a master has, for the instant quote (lib/quote.js):
        hours and guests turn these into a bill the way the engine does. */
     const offers = {}
-    const put = (vid, o) => { if (Number(o.paise) > 0) (offers[vid] ??= []).push({ ...o, paise: Number(o.paise) }) }
+    const put = (vid, o) => { if (Number(o.paise) > 0) (offers[vid] ??= []).push({ ...o, paise: toList(o.paise, tradeId) }) }
     for (const x of pk.data ?? []) {
       const hrs = Number(x.trade_inputs?.duration_hours) || null
       put(x.listing_version_id, { type: 'package', paise: x.trade_inputs?.customer_paise, hours: hrs, label: x.name, ref: { type: 'package', key: x.commercial_inputs?.tier ?? null, hours: hrs } })

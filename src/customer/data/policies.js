@@ -109,8 +109,11 @@ export const POLICIES = {
         'Masters on Sambramo do not sell or supply alcohol, tobacco, firecrackers that need a licence, or anything illegal. See “What masters supply” for details.',
         'Do not take a booking off the platform to avoid fees, post false reviews, misuse offers (for example multiple accounts for a first-booking offer) or abuse refunds. We may cancel offers, recover benefits and suspend accounts that do.',
       ] },
-      { h: '6. Offers, vouchers and referrals', p: [
-        'Offers have their own conditions (minimum value, maximum discount, validity, one per person, device and payment method). Offers cannot be exchanged for cash, are not transferable, and may be changed or withdrawn. Referral rewards are given only after the referred friend completes their first paid event, and not for self-referrals or duplicate accounts.',
+      { h: '6. Prices, offers, vouchers and referrals', p: [
+        'The price shown for a booking is the Sambramo price: it includes the master’s charges and Sambramo’s service, and no booking fee is added at checkout.',
+        'Offers have their own conditions (percentage, maximum discount, validity, first booking only where stated). One offer per booking; offers cannot be combined, exchanged for cash or transferred, and may be changed or withdrawn for future use. An offer never takes a booking below the master’s own price; the exact saving is shown before you pay.',
+        'Referrals: your friend must sign up with your code before their first booking. Your reward (25% off your next event up to ₹2,500, and 5% off a later event up to ₹1,000) unlocks only when your friend has booked, paid for and completed an event AND you have booked, paid for and completed at least one event of your own. Rewards are not given for self-referrals, duplicate accounts, or cancelled or refunded bookings.',
+        'If a booking paid with an offer is cancelled, the refund is calculated on the amount you actually paid and the offer is not reissued.',
       ] },
       { h: '7. Invitations and RSVP', p: [
         'When you add guests to an invitation you confirm that you have their permission to share their name and phone number with Sambramo for that invitation. Guests’ answers and travel details are visible to you as the host. Do not use invitations to send unsolicited or promotional messages.',

@@ -295,3 +295,8 @@
 .cx-zigzag::before, .cx-zigzag::after { content: ''; position: absolute; left: 0; right: 0; height: 6px; background-size: 12px 6px; background-repeat: repeat-x; }
 .cx-zigzag::before { top: -5px; background-image: linear-gradient(135deg, #F6F3FA 25%, transparent 25%), linear-gradient(225deg, #F6F3FA 25%, transparent 25%); }
 .cx-zigzag::after { bottom: -5px; background-image: linear-gradient(45deg, #F6F3FA 25%, transparent 25%), linear-gradient(315deg, #F6F3FA 25%, transparent 25%); }
+
+/* The scratch card's band of light — transform only, so it costs no paint. */
+@keyframes cx-foil { from { transform: translateX(-120%) skewX(-18deg); } to { transform: translateX(380%) skewX(-18deg); } }
+.cx-foil-sheen { animation: cx-foil 2.6s cubic-bezier(.4,0,.2,1) infinite; }
+@media (prefers-reduced-motion: reduce) { .cx-foil-sheen { animation: none; opacity: 0; } }

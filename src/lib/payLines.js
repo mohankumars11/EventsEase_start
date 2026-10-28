@@ -19,18 +19,19 @@ export async function authHeaders() {
 }
 
 /** @returns {Promise<{ok:boolean, error?:string, dismissed?:boolean, external?:boolean}>} */
-export async function payLines({ lineIds, part = 'advance', description = 'Your booking' }) {
+export async function payLines({ lineIds, part = 'advance', description = 'Your booking', voucherId = null, full = false }) {
   const uid = (await supabase.auth.getUser()).data.user?.id
   if (!uid) return { ok: false, error: 'Please sign in again to pay.' }
 
   const res = await fetch(apiUrl('/api/create-booking-payment'), {
     method: 'POST', headers: await authHeaders(),
-    body: JSON.stringify({ customerId: uid, lineIds, part }),
+    // voucherId: the server checks it and takes the saving off the order (migration 193).
+    body: JSON.stringify({ customerId: uid, lineIds, part, ...(voucherId ? { voucherId } : {}), ...(full ? { full: true } : {}) }),
   })
   const raw = await res.text()
   let body
   try { body = JSON.parse(raw) } catch { return { ok: false, error: `Payment service error (${res.status}).` } }
-  if (!res.ok) return { ok: false, error: body.error ?? body.detail ?? 'Could not start the payment.' }
+  if (!res.ok) return { ok: false, error: body.error ?? body.detail ?? 'Could not start the payment.', code: body.code ?? null }
 
   if (body.provider === 'mock' && body.mockSettleUrl) {
     await fetch(body.mockSettleUrl, { method: 'POST' })

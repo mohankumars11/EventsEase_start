@@ -6,9 +6,14 @@
  *   node scripts/make-launcher-icon.mjs
  *
  * Plain, like Rapido / Blinkit (Mohan, 2026-10-28): the splash's flat
- * #5B21A8 ground and SAMBRAMO in heavy white Manrope, as large as the icon
- * allows — no stroke, no glow. Sized to stay whole inside the adaptive
- * icon's safe zone, so it reads on square, rounded and round launchers.
+ * #5B21A8 ground and SAMBRAMO in white Archivo Black — the display face,
+ * heavier than Manrope — "completely highlighted as per the fit": as wide
+ * as each shape allows, letters set tight so they stand as tall as they can.
+ * The adaptive foreground fills 60% of its 108 dp canvas: ~90% of the
+ * 72 dp a round mask shows, with clear space at both ends (65% was tried —
+ * the S and O touched the circle and read as cut off). Tight tracking keeps
+ * the letters as tall as the width allows. Whole on square, squircle,
+ * teardrop and round launchers alike. No stroke, no glow.
  * Writes, for every density:
  *   ic_launcher.png / ic_launcher_round.png   legacy launchers (full art)
  *   ic_launcher_foreground.png                adaptive foreground (transparent,
@@ -25,7 +30,7 @@ const ROOT = new URL('..', import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1'
 const RES = join(ROOT, 'android/app/src/customer/res')
 const DENS = { mdpi: 48, hdpi: 72, xhdpi: 96, xxhdpi: 144, xxxhdpi: 192 }
 const EDGE = ['C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe', 'C:/Program Files/Microsoft/Edge/Application/msedge.exe'].find(existsSync)
-const font = readFileSync(join(ROOT, 'public/fonts/Manrope-latin.woff2')).toString('base64')
+const font = readFileSync(join(ROOT, 'public/fonts/ArchivoBlack-Regular.woff2')).toString('base64')
 
 const sleep = ms => new Promise(r => setTimeout(r, ms))
 const PORT = 9560 + Math.floor(Math.random() * 40)
@@ -41,28 +46,28 @@ const call = (method, params) => new Promise(res => { const id = ++n; const h = 
 
 const jobs = Object.entries(DENS).flatMap(([d, px]) => [[d, 'ic_launcher', px, 'square'], [d, 'ic_launcher_round', px, 'round'], [d, 'ic_launcher_foreground', Math.round(px * 2.25), 'fg']])
 const r = await call('Runtime.evaluate', { returnByValue: true, awaitPromise: true, expression: `(async () => {
-  const f = new FontFace('Manrope', 'url(data:font/woff2;base64,${font})', { weight: '200 800' });
+  const f = new FontFace('Archivo Black', 'url(data:font/woff2;base64,${font})', { weight: '400' });
   await f.load(); document.fonts.add(f);
-  if (!document.fonts.check('800 40px Manrope')) throw new Error('Manrope did not load');
+  if (!document.fonts.check('400 40px "Archivo Black"')) throw new Error('Archivo Black did not load');
   const ground = (g, s) => { g.fillStyle = '#5B21A8'; g.fillRect(0, 0, s, s) };
   /* The word as wide as \`width\`, vertically centred on its capitals. */
   const mark = (g, cx, cy, width) => {
     let fs = width / 4;
-    g.font = '800 ' + fs + 'px Manrope';
-    if ('letterSpacing' in g) g.letterSpacing = (-fs * .01) + 'px';
-    while (g.measureText('SAMBRAMO').width > width && fs > 4) { fs -= .25; g.font = '800 ' + fs + 'px Manrope' }
+    g.font = '400 ' + fs + 'px "Archivo Black"';
+    if ('letterSpacing' in g) g.letterSpacing = (-fs * .045) + 'px';
+    while (g.measureText('SAMBRAMO').width > width && fs > 4) { fs -= .25; g.font = '400 ' + fs + 'px "Archivo Black"' }
     g.textAlign = 'center'; g.textBaseline = 'alphabetic';
-    g.fillStyle = '#FFFFFF'; g.fillText('SAMBRAMO', cx, cy + fs * .36);
+    g.fillStyle = '#FFFFFF'; g.fillText('SAMBRAMO', cx, cy + fs * .35);
   };
   return ${JSON.stringify(jobs)}.map(([d, name, s, kind]) => {
     const c = document.createElement('canvas'); c.width = s; c.height = s;
     const g = c.getContext('2d');
-    if (kind === 'fg') { mark(g, s / 2, s / 2, s * .62) }
+    if (kind === 'fg') { mark(g, s / 2, s / 2, s * .6) }
     else {
       g.save();
       if (kind === 'round') { g.beginPath(); g.arc(s / 2, s / 2, s / 2, 0, Math.PI * 2); g.clip() }
       else { const rr = s * .22; g.beginPath(); g.roundRect ? g.roundRect(0, 0, s, s, rr) : g.rect(0, 0, s, s); g.clip() }
-      ground(g, s); mark(g, s / 2, s / 2, s * (kind === 'round' ? .8 : .86));
+      ground(g, s); mark(g, s / 2, s / 2, s * (kind === 'round' ? .8 : .84));
       g.restore();
     }
     return c.toDataURL('image/png').split(',')[1];

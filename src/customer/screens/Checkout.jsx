@@ -16,10 +16,20 @@
  * payment for every instant line (lib/payLines: native sheet in the app,
  * web checkout otherwise). The Razorpay webhook, never this screen,
  * records the money; money is held until the partner delivers.
+ *
+ * ── The money, 2026-10-28 ────────────────────────────────────────────
+ * Every price is the Sambramo price (api/_lib/listPrice.js: partner price
+ * + margin); the bill says "Booking fee ₹0" because nothing is added at
+ * the end. An offer is picked here and CHECKED by the server, which takes
+ * it off the Razorpay order — the bill below is computed by the same
+ * applyOffer() so the two agree to the rupee. The schedule (payNow): in
+ * full under ₹25,000 or within 7 days of the event; otherwise the advance
+ * (never under the trade's floor) or the whole amount, the customer's
+ * choice. Everything sits in escrow until the event is delivered.
  */
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, BadgePercent, CalendarDays, Check, CheckCircle2, ChevronRight, Clock3, Loader2, Lock, MailOpen, MapPin, PartyPopper, Phone, ReceiptText, Share2, Sparkles, Zap } from 'lucide-react'
+import { ArrowLeft, BadgePercent, CalendarDays, Check, CheckCircle2, ChevronRight, Clock3, Gift, Loader2, Lock, MailOpen, MapPin, PartyPopper, Phone, ReceiptText, Share2, ShieldCheck, Sparkles, Ticket, Users, Zap } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { payLines } from '../../lib/payLines'
@@ -30,7 +40,9 @@ import { serviceArt } from '../data/art'
 import { ArtFill } from '../ui/art'
 import { hasQty } from '../lib/estimate'
 import { savedWhere } from '../lib/where'
-import { myVouchers, usable } from '../lib/rewards'
+import { myVouchers, bookingVouchers, daysLeft } from '../lib/rewards'
+import { applyOffer, payNow, canSplit, balanceDueOn, advanceFloor, PAY_RULES } from '../../../api/_lib/listPrice.js'
+import { LADDER } from '../data/policies'
 import { TRADE } from '../data/trades'
 import { OCCASION } from '../data/occasions'
 import { plural, rupees, whenLabel } from '../lib/format'
@@ -59,6 +71,10 @@ export default function Checkout() {
   const [other, setOther] = useState({ name: '', phone: '' })
   const [vouchers, setVouchers] = useState([])
   useEffect(() => { if (user) myVouchers(user.id).then(setVouchers).catch(() => {}) }, [user])
+  const [pickedId, setPickedId] = useState(undefined) // undefined: the best one; null: none
+  const [code, setCode] = useState('')
+  const [codeMsg, setCodeMsg] = useState('')
+  const [full, setFull] = useState(false)
   const [sheet, setSheet] = useState(null)
   const [quotes, setQuotes] = useState({})
   const [phase, setPhase] = useState('idle') // idle | booking | paying | done | unpaid | error
@@ -110,8 +126,28 @@ export default function Checkout() {
   const quoteLines = res.filter(r => r.q?.path === 'QUOTE')
   const blocked = res.filter(r => r.q && ['NOT_ELIGIBLE', 'ERROR'].includes(r.q.path))
   const loading = ready && res.some(r => !r.q || r.q.loading)
-  const dueNow = instant.reduce((s, r) => s + (Number(r.q.advance_paise) || Number(r.q.customer_paise) || 0), 0)
-  const total = instant.reduce((s, r) => s + (Number(r.q.customer_paise) || 0), 0)
+  /* The money. `base` is the partner's price — the floor no offer goes
+     under; a server that does not send it (older build) gets no offer. */
+  const sched = instant.map(r => {
+    const list = Number(r.q.customer_paise) || 0
+    return { key: r.line.key, trade: r.line.tradeId, list, base: Number(r.q.base_paise) || list, advance: Number(r.q.advance_paise) || list }
+  })
+  const offers = bookingVouchers(vouchers)
+  const firstOffer = offers.find(v => v.kind === 'welcome_pct') ?? offers[0] ?? null
+  const picked = pickedId === undefined ? firstOffer : offers.find(v => v.id === pickedId) ?? null
+  const billAt = (f, v = picked) => {
+    const rows = sched.map(x => ({ list: x.list, base: x.base, due: payNow({ list: x.list, advance: x.advance, eventDate: ev.date, trade: x.trade }, { full: f }) }))
+    return v ? applyOffer(rows, v) : rows.map(x => ({ discount: 0, charge: x.due }))
+  }
+  const sum = (a, k) => a.reduce((n, x) => n + x[k], 0)
+  const total = sum(sched, 'list')
+  const nowBill = billAt(full)
+  const saving = sum(nowBill, 'discount')
+  const dueNow = sum(nowBill, 'charge')
+  const splittable = sched.some(x => payNow({ list: x.list, advance: x.advance, eventDate: ev.date, trade: x.trade }) < x.list)
+  const advNow = sum(billAt(false), 'charge')
+  const fullNow = sum(billAt(true), 'charge')
+  const savingOf = v => sum(billAt(full, v), 'discount')
   const phoneOk = /^[6-9]\d{9}$/.test(phone.replace(/\D/g, '').slice(-10))
   const canPay = ready && !loading && phoneOk && (instant.length + quoteLines.length) > 0 && phase === 'idle'
   const occ = OCCASION[ev.occasionId]
@@ -147,74 +183,102 @@ export default function Checkout() {
     if (profile?.id) enableAlerts({ profileId: profile.id, app: 'customer' }).catch(() => {})
     if (!lineIds.length) { setOutcome({ paid: 0, sent, failed }); setPhase(sent ? 'done' : 'error'); return }
     setPhase('paying')
-    const p = await payLines({ lineIds, part: 'advance', description: occ ? `${occ.name} · ${plural(lineIds.length, 'master')}` : `Sambramo · ${plural(lineIds.length, 'master')}` })
-    const confirmed = await confirmPaid(p)
-    setOutcome({ paid: lineIds.length, sent, failed, error: p.error ?? null, confirmed: !!confirmed?.ok })
-    setPhase(p.ok ? 'done' : p.dismissed ? 'unpaid' : 'error')
+    await charge({ lineIds, sent, failed, voucherId: saving > 0 ? picked?.id : null })
   }
 
-  /* ── The screen (Mohan, 2026-10-28: Blinkit's checkout, for events) ── */
+  /* One Razorpay payment for every instant line. The server re-checks the
+     offer; if it refuses it (used, not a first booking…), the masters are
+     still holding the date and the customer chooses to pay without it. */
+  async function charge({ lineIds, sent = 0, failed = [], voucherId = null }) {
+    setPhase('paying')
+    const p = await payLines({ lineIds, part: 'advance', full, voucherId,
+      description: occ ? `${occ.name} · ${plural(lineIds.length, 'master')}` : `Sambramo · ${plural(lineIds.length, 'master')}` })
+    if (!p.ok && p.code === 'voucher') { setOutcome({ paid: 0, sent, failed, lineIds, error: p.error }); setPhase('offer'); return }
+    const confirmed = await confirmPaid(p)
+    setOutcome({ paid: lineIds.length, sent, failed, lineIds, error: p.error ?? null, confirmed: !!confirmed?.ok })
+    setPhase(p.ok ? 'done' : p.dismissed ? 'unpaid' : 'error')
+  }
+  function applyCode() {
+    const c = code.trim().toUpperCase()
+    const v = vouchers.find(x => String(x.code).toUpperCase() === c)
+    if (!c) return
+    if (!v) { setCodeMsg('That code isn’t on your account.'); return }
+    if (!offers.includes(v)) { setCodeMsg(v.kind === 'free_rsvp' ? 'That one is for invitations — use it when you create one.' : 'That code has been used or has expired.'); return }
+    setPickedId(v.id); setCode(''); setCodeMsg(savingOf(v) > 0 ? '' : 'Applied — it lowers the price once the masters are priced.')
+  }
+
+  /* ── The screen (Mohan, 2026-10-28): the moment business becomes revenue.
+     Plum, amethyst, gold and mint — never sky blue — and one button. ── */
   const have = lines.map(l => l.tradeId)
   const deals = [...new Map(lines.flatMap(l => companions(l.tradeId, have).map(([t, hook]) => [t, { t, hook, with: l.tradeId }]))).values()].slice(0, 6)
   const alsoLike = occ ? needsFor(occ, plan.picks[occ.id] ?? {}, ev).rows.filter(r => !have.includes(r.tradeId) && r.state !== 'skip' && !deals.some(d => d.t === r.tradeId)).slice(0, 6).map(r => r.tradeId) : []
-  const welcome = vouchers.find(v => v.kind === 'welcome_pct' && usable(v))
-  const balance = Math.max(0, total - dueNow)
+  const grand = Math.max(0, total - saving)
+  const balance = Math.max(0, grand - dueNow)
+  const dueBy = balanceDueOn(ev.date)
   const forWhom = place?.for ?? savedWhere()?.for ?? null
+  const floorPct = Math.round(Math.max(...sched.map(x => advanceFloor(x.trade)), PAY_RULES.minAdvance) * 100)
+  const steps = [['Plan', true], ['Masters', lines.length > 0], ['Details', ready && phoneOk], ['Pay', phase === 'done']]
   async function shareCheckout() {
-    const text = `${occ ? `${occ.name} on Sambramo` : 'My Sambramo plan'}${ev.date ? ` · ${whenLabel(ev.date, ev.time)}` : ''}\n${lines.map(l => `• ${TRADE[l.tradeId]?.label}: ${l.name}`).join('\n')}${total ? `\nTotal ${rupees(total)}` : ''}`
+    const text = `${occ ? `${occ.name} on Sambramo` : 'My Sambramo plan'}${ev.date ? ` · ${whenLabel(ev.date, ev.time)}` : ''}\n${lines.map(l => `• ${TRADE[l.tradeId]?.label}: ${l.name}`).join('\n')}${total ? `\nTotal ${rupees(grand)}` : ''}`
     if (navigator.share) { try { await navigator.share({ title: 'Our celebration plan', text }) } catch { /* dismissed */ } } else { try { await navigator.clipboard.writeText(text) } catch { /* off */ } }
   }
 
   return (
-    <main className="cx-enter min-h-[100dvh] bg-[#F3F4F8] pb-[calc(env(safe-area-inset-bottom,0px)+170px)]" data-checkout>
-      <header className="cx-safe-top sticky top-0 z-[120] flex items-center gap-2 bg-white px-3 pb-2.5 shadow-[0_6px_14px_-12px_rgba(20,15,31,.5)]">
-        <button type="button" onClick={() => navigate(-1)} aria-label="Back" className="cx-press grid h-11 w-11 place-items-center rounded-full shadow-[0_0_0_1px_#E7E3EE]"><ArrowLeft size={20} /></button>
-        <p className="min-w-0 flex-1 truncate text-[17px] font-extrabold">Checkout</p>
-        <button type="button" onClick={shareCheckout} className="cx-press flex h-11 items-center gap-1.5 rounded-full px-4 text-[13.5px] font-bold shadow-[0_0_0_1px_#E7E3EE]" data-share-plan><Share2 size={16} />Share</button>
+    <main className="cx-enter min-h-[100dvh] bg-[#F5F2FA] pb-[calc(env(safe-area-inset-bottom,0px)+178px)]" data-checkout>
+      <header className="cx-safe-top sticky top-0 z-[120] bg-white px-3 pb-2 shadow-[0_6px_14px_-12px_rgba(27,11,51,.45)]">
+        <div className="flex items-center gap-2">
+          <button type="button" onClick={() => navigate(-1)} aria-label="Back" className="cx-press grid h-11 w-11 place-items-center rounded-full shadow-[0_0_0_1px_#ECE6F4]"><ArrowLeft size={20} /></button>
+          <p className="min-w-0 flex-1 truncate text-[17px] font-black tracking-[-0.02em]">Checkout</p>
+          <button type="button" onClick={shareCheckout} className="cx-press flex h-11 items-center gap-1.5 rounded-full px-4 text-[13.5px] font-bold shadow-[0_0_0_1px_#ECE6F4]" data-share-plan><Share2 size={16} />Share</button>
+        </div>
+        {/* Where they are: three done, one to go */}
+        <ol className="mt-2 flex items-center px-1" data-checkout-steps>
+          {steps.map(([label, done], i) => (
+            <li key={label} className="flex flex-1 items-center last:flex-none">
+              <span className="flex flex-col items-center gap-0.5">
+                <span className={'grid h-7 w-7 place-items-center rounded-full text-[12px] font-black ' + (done ? 'bg-[#F0E9FF] text-[#5B21A8]' : i === steps.findIndex(s => !s[1]) ? 'bg-[#5B21A8] text-white shadow-[0_0_0_4px_#EDE4FF]' : 'bg-[#F3F1F7] text-[#A29BB4]')}>{done ? <Check size={14} strokeWidth={3.2} /> : i + 1}</span>
+                <span className={'text-[10.5px] font-extrabold ' + (done || i === steps.findIndex(s => !s[1]) ? 'text-[#3B1670]' : 'text-[#A29BB4]')}>{label}</span>
+              </span>
+              {i < steps.length - 1 && <span className={'mx-1 mb-4 h-[2px] flex-1 rounded ' + (done ? 'bg-[#C9B5F5]' : 'bg-[#ECE8F3]')} />}
+            </li>
+          ))}
+        </ol>
       </header>
 
-      {/* Special deals: what people add with what you picked */}
-      {deals.length > 0 && (
-        <Card title="Often booked together">
-          <div className="cx-noscroll -mx-4 flex gap-2.5 overflow-x-auto px-4 pb-1">
-            {deals.map(d => (
-              <div key={d.t} className="w-[78%] max-w-[300px] shrink-0 overflow-hidden rounded-[18px] bg-[#F3ECFF]" data-deal={d.t}>
-                <div className="m-1.5 flex items-center gap-3 rounded-[14px] bg-white p-2.5">
-                  <ArtFill art={serviceArt(d.t)} tone="#F6F1FF" className="h-14 w-14 shrink-0 rounded-[12px]" inset="8%" />
-                  <span className="min-w-0 flex-1"><span className="block truncate text-[14px] font-extrabold">{TRADE[d.t]?.label}</span><span className="line-clamp-2 block text-[11.5px] font-semibold text-[var(--ink-3)]">{d.hook}</span></span>
-                  <Link to={`/s/${d.t}${occ ? `?o=${occ.id}` : ''}`} className="shrink-0 rounded-[10px] px-3.5 py-2 text-[13px] font-extrabold text-[#5B21B6] shadow-[inset_0_0_0_1.5px_#7C3AED]">ADD</Link>
-                </div>
-                <p className="flex items-center gap-1.5 px-3 pb-2 pt-0.5 text-[12px] font-bold text-[#5B21B6]"><Sparkles size={13} />Pairs perfectly with your {TRADE[d.with]?.label.toLowerCase()}</p>
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
-
-      {/* The event and its masters */}
-      <section className="mx-3 mt-3 overflow-hidden rounded-[22px] bg-white">
-        <div className="flex items-center gap-3 p-4">
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[14px] bg-[#F3ECFF] text-[#7C3AED]"><PartyPopper size={20} /></span>
+      {/* The event, in four facts — each one a tap to change */}
+      <section className="mx-3 mt-3 overflow-hidden rounded-[24px] bg-white shadow-[0_0_0_1px_#EEE8F6]">
+        <div className="flex items-center gap-3 p-4 pb-3">
+          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-[16px] bg-gradient-to-br from-[#7C3AED] to-[#C026D3] text-white shadow-[0_10px_18px_-10px_rgba(124,58,237,.9)]"><PartyPopper size={22} /></span>
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-[17px] font-black tracking-[-0.02em]">{instant.length && !quoteLines.length ? 'Confirmed the moment you pay' : occ ? occ.name : 'Your masters'}</span>
-            <span className="block truncate text-[12.5px] font-semibold text-[var(--ink-3)]">{plural(lines.length, 'master')}{ev.date ? ` · ${whenLabel(ev.date, ev.time)}` : ''}</span>
+            <span className="block truncate text-[18px] font-black tracking-[-0.02em]">{occ ? occ.name : 'Your celebration'}</span>
+            <span className="block truncate text-[12.5px] font-semibold text-[var(--ink-3)]">{plural(lines.length, 'master')} · {instant.length && !quoteLines.length ? 'confirmed the moment you pay' : 'prices checked live'}</span>
           </span>
-          <button type="button" onClick={() => setSheet('when')} className="shrink-0 text-[13px] font-extrabold text-[#5B21B6]">{ev.date ? 'Change' : 'Add date'}</button>
         </div>
-        <div className="cx-zigzag bg-[#F6F3FA] px-4 py-2.5 text-[12.5px] font-semibold text-[var(--ink-2)]">
+        <div className="grid grid-cols-2 gap-px bg-[#F1EDF7]">
+          <Fact icon={CalendarDays} label="Date" value={ev.date ? whenLabel(ev.date) : 'Add date'} onClick={() => setSheet('when')} />
+          <Fact icon={Clock3} label="Starts" value={ev.time ? `${ev.time}${ev.hours ? ` · ${ev.hours} h` : ''}` : 'Add time'} onClick={() => setSheet('when')} />
+          <Fact icon={Users} label="Guests" value={ev.guests ? `${ev.guests} guests` : '—'} />
+          <Fact icon={MapPin} label="Venue" value={place?.area ?? 'Add venue'} onClick={() => setSheet('place')} />
+        </div>
+        <div className="cx-zigzag bg-[#F7F4FB] px-4 py-2.5 text-[12.5px] font-semibold text-[var(--ink-2)]">
           {!ready ? 'Add the date, start time and venue — then every price below is exact.' : loading ? 'Checking every master’s availability for your date…' : blocked.length ? `${plural(blocked.length, 'master')} can’t take this date — change or remove them.` : 'Every master below is free on your date.'}
         </div>
+      </section>
+
+      {/* The masters */}
+      <section className="mx-3 mt-3 overflow-hidden rounded-[24px] bg-white shadow-[0_0_0_1px_#EEE8F6]">
+        <h2 className="px-4 pt-4 text-[17px] font-black tracking-[-0.02em]">Your masters</h2>
         <ul>
           {res.map(({ line: l, q }, i) => (
-            <li key={l.key} className={(i ? 'border-t border-[#F1EFF5] ' : '') + 'flex items-center gap-3 p-4'} data-checkout-line={l.tradeId} data-path={q?.path ?? ''}>
-              <span className="relative h-16 w-16 shrink-0 overflow-hidden rounded-[14px] bg-[#F6F3FA]"><Photo src={l.cover} className="absolute inset-0 h-full w-full object-cover" /></span>
+            <li key={l.key} className={(i ? 'border-t border-[#F3F0F7] ' : '') + 'flex items-center gap-3 p-4'} data-checkout-line={l.tradeId} data-path={q?.path ?? ''}>
+              <span className="relative h-16 w-16 shrink-0 overflow-hidden rounded-[16px] bg-[#F6F3FA]"><Photo src={l.cover} className="absolute inset-0 h-full w-full object-cover" /></span>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[14.5px] font-extrabold">{l.name}</p>
                 <p className="truncate text-[12px] font-semibold text-[var(--ink-3)]">{TRADE[l.tradeId]?.label}{l.hours ? ` · ${l.hours} h` : ''}{l.guests ? ` · ${l.guests} guests` : ''}</p>
                 <p className="truncate text-[11.5px] font-bold">
                   {!ready ? <span className="text-[var(--ink-3)]">Price confirmed when the date is set</span>
                     : !q || q.loading ? <span className="text-[var(--ink-3)]">Checking…</span>
-                      : q.path === 'INSTANT' ? <span className="text-[#0B6B3D]"><Zap size={11} className="mr-0.5 inline fill-[#F5B301] text-[#F5B301]" />Confirms instantly{q.advance_paise && q.advance_paise < q.customer_paise ? ` · ${rupees(q.advance_paise)} now` : ''}</span>
+                      : q.path === 'INSTANT' ? <span className="text-[#0B7A4B]"><Zap size={11} className="mr-0.5 inline fill-[#F5B301] text-[#F5B301]" />Free on your date · confirms instantly</span>
                         : q.path === 'QUOTE' ? <span className="text-[#B45309]"><Clock3 size={11} className="mr-0.5 inline" />Master sends a price</span>
                           : <span className="text-[#C8112A]">{q.reasons_text?.[0] ?? 'Not available'}</span>}
                 </p>
@@ -222,20 +286,170 @@ export default function Checkout() {
               </div>
               <div className="flex shrink-0 flex-col items-end gap-1.5">
                 {hasQty(l) && (
-                  <span className="flex items-center rounded-[10px] bg-[#5B21B6] text-white">
+                  <span className="flex items-center rounded-[11px] bg-[#3B1670] text-white">
                     <button type="button" onClick={() => plan.setQty(l.key, Math.max(1, (l.qty ?? 1) - 1))} className="px-2.5 py-1.5 text-[15px] font-black" aria-label="Fewer">−</button>
                     <span className="cx-num min-w-[18px] text-center text-[13px] font-black">{l.qty ?? 1}</span>
                     <button type="button" onClick={() => plan.setQty(l.key, (l.qty ?? 1) + 1)} className="px-2.5 py-1.5 text-[15px] font-black" aria-label="More">+</button>
                   </span>
                 )}
                 {q?.loading ? <Loader2 size={16} className="animate-spin text-[var(--ink-3)]" />
-                  : q?.path === 'INSTANT' ? <span className="cx-num text-[15px] font-black">{rupees(q.customer_paise)}</span>
-                    : q && ['NOT_ELIGIBLE', 'ERROR'].includes(q.path) ? <Link to={`/s/${l.tradeId}${l.occasionId ? `?o=${l.occasionId}` : ''}`} className="text-[12.5px] font-extrabold text-[#5B21B6]">Change</Link>
+                  : q?.path === 'INSTANT' ? <span className="cx-num text-[15.5px] font-black">{rupees(q.customer_paise)}</span>
+                    : q && ['NOT_ELIGIBLE', 'ERROR'].includes(q.path) ? <Link to={`/s/${l.tradeId}${l.occasionId ? `?o=${l.occasionId}` : ''}`} className="text-[12.5px] font-extrabold text-[#5B21A8]">Change</Link>
                       : null}
               </div>
             </li>
           ))}
         </ul>
+      </section>
+
+      {/* Often booked together */}
+      {deals.length > 0 && (
+        <Card title="Often booked together">
+          <div className="cx-noscroll -mx-4 flex gap-2.5 overflow-x-auto px-4 pb-1">
+            {deals.map(d => (
+              <div key={d.t} className="w-[78%] max-w-[300px] shrink-0 overflow-hidden rounded-[18px] bg-gradient-to-br from-[#F4EDFF] to-[#FDF0F7]" data-deal={d.t}>
+                <div className="m-1.5 flex items-center gap-3 rounded-[14px] bg-white p-2.5">
+                  <ArtFill art={serviceArt(d.t)} tone="#F6F1FF" className="h-14 w-14 shrink-0 rounded-[12px]" inset="8%" />
+                  <span className="min-w-0 flex-1"><span className="block truncate text-[14px] font-extrabold">{TRADE[d.t]?.label}</span><span className="line-clamp-2 block text-[11.5px] font-semibold text-[var(--ink-3)]">{d.hook}</span></span>
+                  <Link to={`/s/${d.t}${occ ? `?o=${occ.id}` : ''}`} className="shrink-0 rounded-[10px] px-3.5 py-2 text-[13px] font-extrabold text-[#5B21A8] shadow-[inset_0_0_0_1.5px_#7C3AED]">ADD</Link>
+                </div>
+                <p className="flex items-center gap-1.5 px-3 pb-2 pt-0.5 text-[12px] font-bold text-[#5B21A8]"><Sparkles size={13} />Pairs perfectly with your {TRADE[d.with]?.label.toLowerCase()}</p>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {/* Offers — picked here, checked by the server, taken off the payment */}
+      <section className="mx-3 mt-3 overflow-hidden rounded-[24px] bg-white shadow-[0_0_0_1px_#EEE8F6]" data-offers>
+        <div className="flex items-center justify-between px-4 pt-4">
+          <h2 className="flex items-center gap-2 text-[17px] font-black tracking-[-0.02em]"><Ticket size={19} className="text-[#C026D3]" />Offers for you</h2>
+          <Link to="/rewards" className="flex items-center text-[12.5px] font-extrabold text-[#5B21A8]">All<ChevronRight size={15} /></Link>
+        </div>
+        {offers.length ? (
+          <div className="cx-noscroll flex gap-2.5 overflow-x-auto px-4 pb-1 pt-3">
+            {offers.map(v => {
+              const on = picked?.id === v.id
+              const save = savingOf(v)
+              return (
+                <button key={v.id} type="button" onClick={() => setPickedId(on ? null : v.id)} aria-pressed={on} data-offer={v.code}
+                  className={'cx-press relative w-[230px] shrink-0 overflow-hidden rounded-[18px] p-3.5 text-left transition ' + (on ? 'bg-gradient-to-br from-[#2A0B4F] via-[#5B21A8] to-[#A21CAF] text-white shadow-[0_16px_28px_-18px_rgba(91,33,168,.95)]' : 'bg-[#FBF8FF] text-[var(--ink)] shadow-[inset_0_0_0_1.5px_#E4D8F8]')}>
+                  <span aria-hidden className={'absolute -right-3 top-1/2 h-6 w-6 -translate-y-1/2 rounded-full ' + (on ? 'bg-white' : 'bg-white shadow-[inset_0_0_0_1.5px_#E4D8F8]')} />
+                  <span className="flex items-center justify-between">
+                    <span className={'rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.12em] ' + (on ? 'bg-[#FFC24B] text-[#3B1670]' : 'bg-[#F0E9FF] text-[#5B21A8]')}>{v.kind === 'welcome_pct' ? 'Welcome' : 'Referral'}</span>
+                    <span className={'grid h-5 w-5 place-items-center rounded-full ' + (on ? 'bg-[#FFC24B] text-[#3B1670]' : 'ring-[1.5px] ring-[#C9B5F5]')}>{on && <Check size={12} strokeWidth={3.4} />}</span>
+                  </span>
+                  <span className="mt-2 block text-[22px] font-black leading-none tracking-[-0.02em]">{v.terms?.pct ?? 25}% off</span>
+                  <span className={'mt-1 block text-[11.5px] font-bold ' + (on ? 'text-white/80' : 'text-[var(--ink-3)]')}>Up to {rupees(v.terms?.cap_paise ?? 250000)}{daysLeft(v) != null ? ` · ${daysLeft(v)} days left` : ''}</span>
+                  <span className={'cx-num mt-2 block border-t border-dashed pt-2 text-[11px] font-extrabold tracking-[0.08em] ' + (on ? 'border-white/30 text-white/90' : 'border-[#E4D8F8] text-[#5B21A8]')}>{v.code}</span>
+                  {save > 0 && <span className={'mt-1 block text-[12px] font-black ' + (on ? 'text-[#FFC24B]' : 'text-[#0B7A4B]')}>{on ? `Applied · you save ${rupees(save)}` : `Save ${rupees(save)}`}</span>}
+                </button>
+              )
+            })}
+          </div>
+        ) : (
+          <p className="px-4 pt-2 text-[12.5px] font-semibold text-[var(--ink-3)]">{user ? 'Your welcome offer appears here once it’s on your account.' : 'Sign in to collect your welcome offer — 25% off your first booking.'}</p>
+        )}
+        <div className="flex items-center gap-2 p-4 pt-3">
+          <input value={code} onChange={e => { setCode(e.target.value.toUpperCase()); setCodeMsg('') }} placeholder="Have a code? SAMBRAMO…" maxLength={32}
+            className="cx-num h-11 min-w-0 flex-1 rounded-[13px] bg-[#F7F4FB] px-3.5 text-[13.5px] font-extrabold tracking-[0.04em] outline-none ring-1 ring-[#E9E2F3] focus:ring-2 focus:ring-[#C4B5FD]" data-code-input />
+          <button type="button" onClick={applyCode} disabled={!code.trim()} className="cx-press h-11 shrink-0 rounded-[13px] px-4 text-[13.5px] font-extrabold text-[#5B21A8] shadow-[inset_0_0_0_1.5px_#7C3AED] disabled:opacity-40">Apply</button>
+        </div>
+        {codeMsg && <p className="-mt-2 px-4 pb-3 text-[12px] font-bold text-[#9D174D]">{codeMsg}</p>}
+      </section>
+
+      {/* Payment schedule — the customer's choice when the booking allows it */}
+      {instant.length > 0 && (
+        <Card title="Payment schedule">
+          {splittable ? (
+            <div className="grid grid-cols-2 gap-2" role="radiogroup" data-schedule>
+              <Plan on={!full} onClick={() => setFull(false)} title={`Pay advance`} sub={`At least ${floorPct}% · confirms now`} amount={advNow} foot={grand - advNow > 0 ? `${rupees(grand - advNow)} by ${dueBy ? dueBy.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : 'the event'}` : null} />
+              <Plan on={full} onClick={() => setFull(true)} title="Pay in full" sub="Nothing more to pay" amount={fullNow} badge="Recommended" />
+            </div>
+          ) : (
+            <p className="flex items-start gap-2 rounded-[14px] bg-[#F7F4FB] px-3 py-2.5 text-[12.5px] font-semibold text-[var(--ink-2)]"><Lock size={15} className="mt-0.5 shrink-0 text-[#5B21A8]" />Paid in full today — bookings under {rupees(PAY_RULES.fullBelowPaise)}, and anything within {PAY_RULES.fullWithinDays} days of the event, are confirmed with one payment.</p>
+          )}
+        </Card>
+      )}
+
+      {/* The bill */}
+      <Card title="Bill details">
+        <BillRow icon={ReceiptText} label="Masters’ total" value={total ? rupees(total) : ready ? (loading ? '…' : '—') : 'After the date'} note={quoteLines.length ? `+ ${plural(quoteLines.length, 'quote')} to come` : null} />
+        {saving > 0 && <BillRow icon={BadgePercent} label={`Offer · ${picked?.code}`} value={`− ${rupees(saving)}`} tone="save" />}
+        <BillRow icon={Gift} label="Booking fee" value={<span className="rounded-[6px] bg-[#E7F8EF] px-1.5 py-0.5 text-[11.5px] font-black text-[#0B7A4B]">₹0</span>} note="No charges added at the end — ever" />
+        <div className="mt-2 flex items-center justify-between border-t border-dashed border-[#E6DFF0] pt-3">
+          <span className="text-[16px] font-black">Grand total</span><span className="cx-num text-[17px] font-black">{total ? rupees(grand) : '—'}</span>
+        </div>
+        {instant.length > 0 && <div className="mt-1 flex items-center justify-between text-[13px] font-bold text-[var(--ink-2)]"><span>Pay now</span><span className="cx-num">{rupees(dueNow)}</span></div>}
+        {balance > 0 && <div className="flex items-center justify-between text-[13px] font-bold text-[var(--ink-3)]"><span>Balance by {dueBy ? dueBy.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : 'the event'}</span><span className="cx-num">{rupees(balance)}</span></div>}
+        {saving > 0 && <p className="mt-3 flex items-center gap-2 rounded-[14px] bg-gradient-to-r from-[#FFF4D6] to-[#FFE9F3] px-3 py-2.5 text-[13px] font-black text-[#7A3E00]" data-you-save>🎉 You save {rupees(saving)} on this booking</p>}
+        <p className="mt-2 text-[11.5px] font-semibold text-[var(--ink-3)]">The price you see is final — nothing is added at the end.</p>
+      </Card>
+
+      {/* Escrow — the promise that makes people pay */}
+      <section className="mx-3 mt-3 overflow-hidden rounded-[24px] bg-gradient-to-br from-[#1B0B33] via-[#2E0F5C] to-[#4A1580] p-4 text-white" data-escrow>
+        <p className="flex items-center gap-2 text-[15px] font-black"><ShieldCheck size={19} className="text-[#7CF0C0]" />Your money is held in escrow</p>
+        <div className="mt-3 grid grid-cols-4 gap-1 text-center">
+          {[['💳', 'You pay'], ['🔒', 'Held safely'], ['🎉', 'Event done'], ['🤝', 'Masters paid']].map(([e, t], i) => (
+            <span key={t} className="relative">
+              {i < 3 && <span aria-hidden className="absolute left-[62%] right-[-38%] top-4 h-[2px] bg-gradient-to-r from-[#A78BFA] to-[#7CF0C0] opacity-60" />}
+              <span className="relative mx-auto grid h-8 w-8 place-items-center rounded-full bg-white/10 text-[15px] ring-1 ring-white/20">{e}</span>
+              <span className="mt-1 block text-[11px] font-extrabold text-white/85">{t}</span>
+            </span>
+          ))}
+        </div>
+        <p className="mt-3 text-[11.5px] font-semibold text-white/70">Masters are paid only after your event is delivered. If a master cancels, every rupee comes back.</p>
+      </section>
+
+      {/* Instructions for masters */}
+      <Card title="Instructions for your masters">
+        <div className="grid grid-cols-2 gap-2">
+          {TIPS.map(([id, label, emoji]) => (
+            <button key={id} type="button" onClick={() => setTips(x => (x.includes(id) ? x.filter(y => y !== id) : [...x, id]))} aria-pressed={tips.includes(id)}
+              className={'cx-press flex min-h-[64px] flex-col justify-between rounded-[16px] p-3 text-left transition ' + (tips.includes(id) ? 'bg-[#F3ECFF] shadow-[inset_0_0_0_1.5px_#7C3AED]' : 'bg-[#F8F6FB]')} data-tip={id}>
+              <span className="flex items-center justify-between"><span className="text-[18px]">{emoji}</span><span className={'grid h-5 w-5 place-items-center rounded-[6px] ' + (tips.includes(id) ? 'bg-[#7C3AED] text-white' : 'ring-[1.5px] ring-[#7C3AED]/50')}>{tips.includes(id) && <Check size={12} strokeWidth={3.4} />}</span></span>
+              <span className="text-[12.5px] font-bold leading-tight">{label}</span>
+            </button>
+          ))}
+        </div>
+        <textarea rows={2} value={note} onChange={e => setNote(e.target.value)} maxLength={500} placeholder="Theme, colours, traditions, timings…"
+          className="mt-2 w-full resize-none rounded-[14px] bg-[#F8F6FB] px-3.5 py-3 text-[13.5px] font-semibold outline-none focus:ring-2 focus:ring-[#C4B5FD]" />
+      </Card>
+
+      {/* Contact, someone else, GSTIN */}
+      <section className="mx-3 mt-3 rounded-[24px] bg-white p-4 shadow-[0_0_0_1px_#EEE8F6]">
+        <label className="flex items-center gap-3">
+          <Phone size={18} className="text-[#5B21A8]" />
+          <span className="text-[14px] font-extrabold text-[var(--ink-3)]">+91</span>
+          <input inputMode="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="Your mobile — masters call this" className="cx-num min-w-0 flex-1 bg-transparent text-[15px] font-extrabold outline-none placeholder:text-[var(--ink-3)]" data-phone />
+          {phoneOk && <CheckCircle2 size={18} className="text-[#0B7A4B]" />}
+        </label>
+        <div className="mt-3 flex items-center justify-between border-t border-[#F3F0F7] pt-3">
+          <span className="text-[14px] font-bold">{other.name ? `On-site: ${other.name}${other.phone ? ` · ${other.phone}` : ''}` : forWhom ? `For ${forWhom.name}` : 'Booking for someone else?'}</span>
+          <button type="button" onClick={() => setSheet('other')} className="text-[13.5px] font-extrabold text-[#5B21A8]">{other.name ? 'Edit' : 'Add details'}</button>
+        </div>
+        <button type="button" onClick={() => setSheet('gst')} className="mt-3 flex w-full items-center justify-between border-t border-[#F3F0F7] pt-3 text-left">
+          <span className="min-w-0"><span className="block text-[14px] font-bold">{gstin ? `GSTIN · ${gstin}` : 'Add GSTIN'}</span><span className="block text-[11.5px] font-semibold text-[var(--ink-3)]">For company events — claim GST input credit</span></span>
+          <ChevronRight size={18} className="text-[var(--ink-3)]" />
+        </button>
+      </section>
+
+      {/* Cancellation, in short — the ladder the customer agreed to */}
+      <section className="mx-3 mt-3 rounded-[24px] bg-white p-4 shadow-[0_0_0_1px_#EEE8F6]" data-checkout-policy>
+        <p className="flex items-center gap-2 text-[15px] font-extrabold"><ShieldCheck size={18} className="text-[#5B21A8]" />Cancellation policy</p>
+        <ul className="mt-2 space-y-1">
+          {LADDER.slice(0, 5).map(r => (
+            <li key={r.when} className="flex items-baseline justify-between gap-3 text-[12px] font-semibold"><span className="text-[var(--ink-2)]">{r.when}</span><span className="shrink-0 font-extrabold text-[var(--ink)]">{r.refund}</span></li>
+          ))}
+        </ul>
+        <Link to="/legal/cancellation" className="mt-2 inline-flex items-center text-[12.5px] font-extrabold text-[#5B21A8]">View the full policy<ChevronRight size={14} /></Link>
+        <p className="mt-1 text-[11px] font-semibold text-[var(--ink-3)]">If a master cancels, you get everything back. By paying you agree to our <Link to="/legal/terms" className="font-extrabold text-[#5B21A8]">terms</Link>.</p>
+      </section>
+
+      {/* Give back — the slot for a real NGO partner */}
+      <section className="mx-3 mt-3 flex items-center gap-3 rounded-[24px] bg-gradient-to-r from-[#ECFDF5] to-[#FDF4FF] p-4">
+        <span className="text-[28px]">🤝</span>
+        <span className="min-w-0 flex-1"><span className="block text-[15px] font-black text-[#0B4F2A]">Celebrate with a cause</span><span className="block text-[12px] font-semibold text-[#3C7A5A]">Share your joy — add a meal for a child with every celebration. Launching soon with our NGO partner.</span></span>
       </section>
 
       {alsoLike.length > 0 && (
@@ -245,110 +459,33 @@ export default function Checkout() {
               <Link key={t} to={`/s/${t}?o=${occ.id}`} className="cx-press relative overflow-hidden rounded-[16px] bg-[#FBF9FD] p-2 shadow-[inset_0_0_0_1px_#EFEAF5]" data-also={t}>
                 <ArtFill art={serviceArt(t)} tone="#F6F1FF" className="aspect-square w-full rounded-[12px]" inset="8%" />
                 <span className="mt-1.5 line-clamp-2 block text-[12px] font-extrabold leading-tight">{TRADE[t]?.label}</span>
-                <span className="mt-1 inline-block rounded-[8px] px-2 py-0.5 text-[11px] font-extrabold text-[#5B21B6] shadow-[inset_0_0_0_1.5px_#7C3AED]">ADD</span>
+                <span className="mt-1 inline-block rounded-[8px] px-2 py-0.5 text-[11px] font-extrabold text-[#5B21A8] shadow-[inset_0_0_0_1.5px_#7C3AED]">ADD</span>
               </Link>
             ))}
           </div>
         </Card>
       )}
 
-      {/* Coupons */}
-      <section className="mx-3 mt-3 overflow-hidden rounded-[22px] bg-white">
-        {welcome ? (
-          <div className="flex items-center gap-3 bg-[#F0F5FF] p-4" data-coupon={welcome.code}>
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#1D4ED8] text-white"><BadgePercent size={20} /></span>
-            <span className="min-w-0 flex-1"><span className="block text-[14.5px] font-extrabold text-[#1D4ED8]">Your 25% welcome voucher is saved</span><span className="block truncate text-[12px] font-semibold text-[var(--ink-2)]">{welcome.code} · up to ₹1,500 on your first booking</span></span>
-          </div>
-        ) : (
-          <div className="flex items-center gap-3 p-4"><BadgePercent size={20} className="text-[#1D4ED8]" /><span className="text-[13.5px] font-bold text-[var(--ink-2)]">Sign in to collect your welcome vouchers</span></div>
-        )}
-        <Link to="/rewards" className="flex items-center justify-center gap-1 border-t border-[#F1EFF5] py-3 text-[13.5px] font-bold text-[var(--ink-2)]">See all coupons<ChevronRight size={15} /></Link>
-      </section>
-
-      {/* Bill details */}
-      <Card title="Bill details">
-        <BillRow icon={ReceiptText} label="Masters’ total" value={total ? rupees(total) : ready ? (loading ? '…' : '—') : 'After the date'} note={quoteLines.length ? `+ ${plural(quoteLines.length, 'quote')} to come` : null} />
-        <BillRow icon={Lock} label="Pay now" value={instant.length ? rupees(dueNow) : '—'} note={balance ? 'advance — confirms your masters' : null} />
-        {balance > 0 && <BillRow icon={CalendarDays} label="Balance before the event" value={rupees(balance)} />}
-        <div className="mt-2 flex items-center justify-between border-t border-[#F1EFF5] pt-3">
-          <span className="text-[16px] font-black">Grand total</span><span className="cx-num text-[16px] font-black">{total ? rupees(total) : '—'}</span>
-        </div>
-        <p className="mt-1 text-[11.5px] font-semibold text-[var(--ink-3)]">Includes taxes and the platform fee. Held safely until each master delivers.</p>
-      </Card>
-
-      {/* GSTIN */}
-      <button type="button" onClick={() => setSheet('gst')} className="cx-press mx-3 mt-3 flex w-[calc(100%-24px)] items-center gap-3 rounded-[22px] bg-white p-4 text-left">
-        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[14px] bg-[#EEF4FF] text-[#1D4ED8]"><BadgePercent size={20} /></span>
-        <span className="min-w-0 flex-1"><span className="block text-[15px] font-extrabold">{gstin ? `GSTIN · ${gstin}` : 'Add GSTIN'}</span><span className="block text-[12px] font-semibold text-[var(--ink-3)]">For company events — claim GST input credit</span></span>
-        <ChevronRight size={18} className="text-[var(--ink-3)]" />
-      </button>
-
-      {/* Instructions for masters */}
-      <Card title="Instructions for your masters">
-        <div className="grid grid-cols-2 gap-2">
-          {TIPS.map(([id, label, emoji]) => (
-            <button key={id} type="button" onClick={() => setTips(x => (x.includes(id) ? x.filter(y => y !== id) : [...x, id]))} aria-pressed={tips.includes(id)}
-              className={'cx-press flex min-h-[64px] flex-col justify-between rounded-[16px] p-3 text-left transition ' + (tips.includes(id) ? 'bg-[#F3ECFF] shadow-[inset_0_0_0_1.5px_#7C3AED]' : 'bg-[#F8F7FB]')} data-tip={id}>
-              <span className="flex items-center justify-between"><span className="text-[18px]">{emoji}</span><span className={'grid h-5 w-5 place-items-center rounded-[6px] ' + (tips.includes(id) ? 'bg-[#7C3AED] text-white' : 'ring-[1.5px] ring-[#7C3AED]/50')}>{tips.includes(id) && <Check size={12} strokeWidth={3.4} />}</span></span>
-              <span className="text-[12.5px] font-bold leading-tight">{label}</span>
-            </button>
-          ))}
-        </div>
-        <textarea rows={2} value={note} onChange={e => setNote(e.target.value)} maxLength={500} placeholder="Theme, colours, traditions, timings…"
-          className="mt-2 w-full resize-none rounded-[14px] bg-[#F8F7FB] px-3.5 py-3 text-[13.5px] font-semibold outline-none focus:ring-2 focus:ring-[#C4B5FD]" />
-      </Card>
-
-      {/* Contact, and booking for someone else */}
-      <section className="mx-3 mt-3 rounded-[22px] bg-white p-4">
-        <label className="flex items-center gap-3">
-          <Phone size={18} className="text-[#5B21B6]" />
-          <span className="text-[14px] font-extrabold text-[var(--ink-3)]">+91</span>
-          <input inputMode="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="Your mobile — masters call this" className="cx-num min-w-0 flex-1 bg-transparent text-[15px] font-extrabold outline-none placeholder:text-[var(--ink-3)]" data-phone />
-        </label>
-        <div className="mt-3 flex items-center justify-between border-t border-[#F1EFF5] pt-3">
-          <span className="text-[14px] font-bold">{other.name ? `On-site: ${other.name}${other.phone ? ` · ${other.phone}` : ''}` : forWhom ? `For ${forWhom.name}` : 'Booking for someone else?'}</span>
-          <button type="button" onClick={() => setSheet('other')} className="text-[13.5px] font-extrabold text-[#5B21B6]">{other.name ? 'Edit' : 'Add details'}</button>
-        </div>
-      </section>
-
-      {/* Give back — the slot for a real NGO partner */}
-      <section className="mx-3 mt-3 overflow-hidden rounded-[22px] bg-white">
-        <div className="flex items-center gap-3 bg-gradient-to-r from-[#ECFDF5] to-[#EFF6FF] p-4">
-          <span className="text-[28px]">🤝</span>
-          <span className="min-w-0 flex-1"><span className="block text-[15px] font-black text-[#0B4F2A]">Celebrate with a cause</span><span className="block text-[12px] font-semibold text-[#3C7A5A]">Share your joy — add a meal for a child with every celebration. Launching soon with our NGO partner.</span></span>
-        </div>
-      </section>
-
-      {/* Cancellation, in short */}
-      <section className="mx-3 mt-3 rounded-[22px] bg-white p-4" data-checkout-policy>
-        <p className="text-[14.5px] font-extrabold">Cancellation policy</p>
-        <p className="mt-1 text-[12.5px] font-semibold leading-relaxed text-[var(--ink-2)]">Free until a master accepts. After that, what comes back depends on how close your event is — more if you take Sambramo credit. If a master cancels, you get everything back.</p>
-        <Link to="/legal/cancellation" className="mt-1.5 inline-flex items-center text-[12.5px] font-extrabold text-[#5B21B6]">Read the full policy<ChevronRight size={14} /></Link>
-        <p className="mt-2 text-[11px] font-semibold text-[var(--ink-3)]">By paying you agree to our <Link to="/legal/terms" className="font-extrabold text-[#5B21B6]">terms</Link>.</p>
-      </section>
-
       {/* The bar: where, how you pay, and the one button */}
-      <div className="fixed inset-x-0 bottom-0 z-[130] bg-white shadow-[0_-10px_24px_-18px_rgba(20,15,31,.6)]" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 10px)' }}>
-        <button type="button" onClick={() => setSheet('place')} className="flex w-full items-center gap-3 border-b border-[#F1EFF5] bg-[#FBFAFD] px-4 py-2.5 text-left">
-          <MapPin size={20} className="shrink-0 text-[#DB2777]" />
+      <div className="fixed inset-x-0 bottom-0 z-[130] bg-white shadow-[0_-12px_26px_-18px_rgba(27,11,51,.55)]" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 10px)' }}>
+        <button type="button" onClick={() => setSheet('place')} className="flex w-full items-center gap-3 border-b border-[#F3F0F7] bg-[#FBFAFD] px-4 py-2.5 text-left">
+          <MapPin size={20} className="shrink-0 text-[#C026D3]" />
           <span className="min-w-0 flex-1"><span className="block text-[13.5px] font-extrabold">{place ? <>Celebrating at <b>{place.area}</b></> : 'Where is the celebration?'}</span><span className="block truncate text-[11.5px] font-semibold text-[var(--ink-3)]">{place?.address ?? (place ? place.area : 'Add the venue to see exact prices')}</span></span>
-          <span className="shrink-0 text-[13px] font-extrabold text-[#5B21B6]">{place ? 'Change' : 'Add'}</span>
+          <span className="shrink-0 text-[13px] font-extrabold text-[#5B21A8]">{place ? 'Change' : 'Add'}</span>
         </button>
         <div className="flex items-center gap-3 px-4 pt-2.5">
           <span className="min-w-0 flex-1">
-            <span className="block text-[10.5px] font-extrabold uppercase tracking-[0.08em] text-[var(--ink-3)]">Pay using</span>
-            <span className="block truncate text-[13.5px] font-extrabold">UPI · cards · netbanking</span>
+            <span className="flex items-baseline gap-1.5"><span className="cx-num text-[21px] font-black tracking-[-0.02em]">{instant.length ? rupees(dueNow) : '₹0'}</span>{saving > 0 && <s className="cx-num text-[12px] font-bold text-[var(--ink-3)]">{rupees(sum(billAt(full, null), 'charge'))}</s>}</span>
+            <span className="block truncate text-[11px] font-extrabold text-[var(--ink-3)]">{instant.length ? (balance ? `Advance · ${rupees(balance)} later` : saving ? `You save ${rupees(saving)}` : 'Total · nothing more to pay') : 'Nothing to pay now'}</span>
           </span>
-          <button type="button" disabled={!canPay} onClick={pay} className="cx-press cx-cta flex h-[56px] min-w-[62%] items-center justify-between gap-2 rounded-[16px] px-4 disabled:opacity-60" data-pay>
-            {phase === 'booking' || phase === 'paying' ? <span className="flex w-full items-center justify-center gap-2 text-[15px] font-extrabold"><Loader2 size={18} className="animate-spin" />{phase === 'booking' ? 'Booking…' : 'Opening payment…'}</span> : (
-              <>
-                <span className="text-left leading-tight"><span className="cx-num block text-[16px] font-black">{instant.length ? rupees(dueNow) : '₹0'}</span><span className="block text-[10px] font-extrabold uppercase tracking-[0.08em] text-white/80">{instant.length ? (balance ? 'Pay now' : 'Total') : 'Nothing now'}</span></span>
-                <span className="flex items-center gap-1 text-[16px] font-extrabold">{!user ? 'Sign in' : instant.length ? 'Pay & confirm' : 'Send requests'}<ChevronRight size={18} /></span>
-              </>
-            )}
+          <button type="button" disabled={!canPay} onClick={pay} className="cx-press cx-cta flex h-[56px] min-w-[56%] items-center justify-center gap-2 rounded-[18px] px-5 text-[16px] font-extrabold disabled:opacity-60" data-pay>
+            {phase === 'booking' || phase === 'paying' ? <><Loader2 size={18} className="animate-spin" />{phase === 'booking' ? 'Booking…' : 'Opening payment…'}</>
+              : <><Lock size={17} />{!user ? 'Sign in to pay' : instant.length ? 'Pay securely' : 'Send requests'}<ChevronRight size={18} /></>}
           </button>
         </div>
-        {!ready && <p className="px-4 pt-1.5 text-center text-[11px] font-bold text-[var(--ink-3)]">Add the date, time and venue to pay</p>}
+        <p className="flex items-center justify-center gap-1.5 px-4 pt-1.5 text-[10.5px] font-bold text-[var(--ink-3)]">
+          {!ready ? 'Add the date, time and venue to pay' : <><ShieldCheck size={12} className="text-[#0B7A4B]" />Secured by Razorpay · UPI · Cards · Netbanking · Wallets</>}
+        </p>
       </div>
 
       <WhenSheet open={sheet === 'when'} onClose={() => setSheet(null)} date={ev.date} time={ev.time} hours={ev.hours} onPick={w => { plan.setEvent(w); setSheet(null) }} />
@@ -368,6 +505,14 @@ export default function Checkout() {
           <input value={other.name} onChange={e => setOther(x => ({ ...x, name: e.target.value }))} maxLength={80} placeholder="Their name" className="h-12 w-full rounded-[13px] bg-[#F8F7FB] px-3.5 text-[15px] font-bold outline-none ring-1 ring-[#E7E1F0]" />
           <input value={other.phone} onChange={e => setOther(x => ({ ...x, phone: e.target.value }))} inputMode="tel" maxLength={16} placeholder="Their phone" className="h-12 w-full rounded-[13px] bg-[#F8F7FB] px-3.5 text-[15px] font-bold outline-none ring-1 ring-[#E7E1F0]" />
         </div>
+      </Sheet>
+      {/* The server would not take the offer — the date is still held */}
+      <Sheet open={phase === 'offer'} onClose={() => setPhase('unpaid')} title="Your offer wasn’t applied"
+        footer={<div className="grid gap-2">
+          <button type="button" onClick={() => { setPickedId(null); charge({ lineIds: outcome?.lineIds ?? [], sent: outcome?.sent ?? 0, failed: outcome?.failed ?? [] }) }} className="cx-press cx-cta h-12 w-full rounded-[16px] text-[14.5px] font-extrabold" data-pay-without>Pay without the offer</button>
+          <button type="button" onClick={() => setPhase('unpaid')} className="h-11 w-full rounded-[16px] text-[13.5px] font-extrabold text-[#5B21A8]">Pay later from Plans</button>
+        </div>}>
+        <p className="pb-2 text-[14px] font-semibold leading-relaxed text-[var(--ink-2)]">{outcome?.error ?? 'This offer can’t be used on this booking.'} Your masters are holding the date.</p>
       </Sheet>
       <Sheet open={['done', 'unpaid', 'error'].includes(phase)} onClose={() => navigate('/plans')} title={phase === 'done' ? 'You are booked' : phase === 'unpaid' ? 'Booked — payment pending' : 'Something went wrong'}>
         <div className="pb-4">
@@ -398,19 +543,42 @@ const TIP_TEXT = { call: 'Please call before arriving', surprise: 'It is a SURPR
 
 function Card({ title, children }) {
   return (
-    <section className="mx-3 mt-3 rounded-[22px] bg-white p-4">
-      {title && <h2 className="mb-3 text-[18px] font-black tracking-[-0.02em]">{title}</h2>}
+    <section className="mx-3 mt-3 rounded-[24px] bg-white p-4 shadow-[0_0_0_1px_#EEE8F6]">
+      {title && <h2 className="mb-3 text-[17px] font-black tracking-[-0.02em]">{title}</h2>}
       {children}
     </section>
   )
 }
 
-function BillRow({ icon: Icon, label, value, note }) {
+function Fact({ icon: Icon, label, value, onClick }) {
+  const Tag = onClick ? 'button' : 'div'
+  return (
+    <Tag {...(onClick ? { type: 'button', onClick } : {})} className="flex items-center gap-2.5 bg-white px-4 py-3 text-left">
+      <Icon size={17} className="shrink-0 text-[#7C3AED]" />
+      <span className="min-w-0"><span className="block text-[10.5px] font-extrabold uppercase tracking-[0.08em] text-[var(--ink-3)]">{label}</span><span className="block truncate text-[13.5px] font-extrabold">{value}</span></span>
+    </Tag>
+  )
+}
+
+function Plan({ on, onClick, title, sub, amount, foot, badge }) {
+  return (
+    <button type="button" role="radio" aria-checked={on} onClick={onClick}
+      className={'cx-press relative flex flex-col rounded-[18px] p-3.5 text-left transition ' + (on ? 'bg-[#F6F0FF] shadow-[inset_0_0_0_2px_#5B21A8]' : 'bg-[#FBFAFD] shadow-[inset_0_0_0_1.5px_#ECE6F4]')} data-plan={title}>
+      {badge && <span className="absolute -top-2 right-3 rounded-full bg-gradient-to-r from-[#0E9F6E] to-[#10B981] px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.08em] text-white">{badge}</span>}
+      <span className="flex items-center gap-2"><span className={'grid h-[18px] w-[18px] place-items-center rounded-full ' + (on ? 'bg-[#5B21A8]' : 'ring-2 ring-[#C9B5F5]')}>{on && <span className="h-[7px] w-[7px] rounded-full bg-white" />}</span><span className="text-[14px] font-extrabold">{title}</span></span>
+      <span className="cx-num mt-2 text-[19px] font-black tracking-[-0.02em]">{rupees(amount)}</span>
+      <span className="text-[11.5px] font-bold text-[var(--ink-3)]">{sub}</span>
+      {foot && <span className="mt-1 text-[11px] font-bold text-[#7A3E00]">{foot}</span>}
+    </button>
+  )
+}
+
+function BillRow({ icon: Icon, label, value, note, tone }) {
   return (
     <div className="flex items-start gap-2.5 py-1.5">
-      <Icon size={16} className="mt-0.5 shrink-0 text-[var(--ink-2)]" />
-      <span className="min-w-0 flex-1"><span className="block text-[13.5px] font-semibold text-[var(--ink)]">{label}</span>{note && <span className="block text-[11px] font-semibold text-[var(--ink-3)]">{note}</span>}</span>
-      <span className="cx-num shrink-0 text-[13.5px] font-bold">{value}</span>
+      <Icon size={16} className={'mt-0.5 shrink-0 ' + (tone === 'save' ? 'text-[#0B7A4B]' : 'text-[var(--ink-2)]')} />
+      <span className="min-w-0 flex-1"><span className={'block text-[13.5px] font-semibold ' + (tone === 'save' ? 'text-[#0B7A4B]' : 'text-[var(--ink)]')}>{label}</span>{note && <span className="block text-[11px] font-semibold text-[var(--ink-3)]">{note}</span>}</span>
+      <span className={'cx-num shrink-0 text-[13.5px] font-bold ' + (tone === 'save' ? 'text-[#0B7A4B]' : '')}>{value}</span>
     </div>
   )
 }

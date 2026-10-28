@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { cors } from './_lib/cors.js'
 import { authenticatedUser } from './_lib/auth.js'
 import { tradeNameFor, PLATFORM_FEE_RATE } from './_lib/tradeNames.js'
+import { loadMarginOverrides, marginPct, toListAt } from './_lib/listPrice.js'
 
 const url = process.env.VITE_SUPABASE_URL
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -106,6 +107,14 @@ export default async function handler(req, res) {
   try {
     const quoted = Math.max(1, Math.round(Number(response.customer_amount_paise)))
     const fee = Math.max(0, Math.round(Number(response.platform_fee_paise)))
+    /* The customer pays the Sambramo price of the partner's quote, at the
+       margin the request was made at (api/_lib/listPrice.js) — the same
+       figure their quote card showed. quoted/fee/partner stay the partner's. */
+    await loadMarginOverrides(db)
+    const demandMargin = Number(request.canonical_demand?.margin_pct)
+    const MARGIN = demandMargin >= 0 && demandMargin <= 1 && request.canonical_demand?.margin_pct != null
+      ? demandMargin : marginPct(request.trade_id, request.service_location?.city)
+    const LIST = toListAt(quoted, MARGIN)
     const partner = Math.max(1, quoted - fee)
     const now = new Date().toISOString()
     const demand = request.canonical_demand ?? {}
@@ -153,8 +162,11 @@ export default async function handler(req, res) {
              carry none and are paid in full, as before. */
           ...(/^(anchor|trades)-engine/.test(String(demand.engine ?? '')) && Number(demand.advance_pct) > 0 && Number(demand.advance_pct) < 100
             ? { advance_pct: Number(demand.advance_pct),
-                advance_paise: Math.min(quoted, Math.round((quoted * Number(demand.advance_pct)) / 100 / 10) * 10) }
+                advance_paise: Math.min(quoted, Math.round((quoted * Number(demand.advance_pct)) / 100 / 10) * 10),
+                list_advance_paise: Math.min(LIST, Math.round((LIST * Number(demand.advance_pct)) / 100 / 100) * 100) }
             : {}),
+          list_paise: LIST,
+          margin_pct: MARGIN,
         },
         policy_version: VERSION,
       },
@@ -186,7 +198,7 @@ export default async function handler(req, res) {
         .neq('id', response.id)
     }
 
-    return res.status(200).json({ ok: true, lineId: line.id, bookingRequestId: request.booking_request_id, quoteResponseId: response.id, amountPaise: quoted })
+    return res.status(200).json({ ok: true, lineId: line.id, bookingRequestId: request.booking_request_id, quoteResponseId: response.id, amountPaise: LIST })
   } catch (e) {
     await db.from('sambramo_quote_requests')
       .update({ state: request.state, updated_at: new Date().toISOString() })

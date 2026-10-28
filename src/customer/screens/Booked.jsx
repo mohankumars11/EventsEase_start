@@ -193,7 +193,7 @@ function BookingCard({ line: l }) {
           {l.request.date && <span className="flex items-center gap-1"><CalendarDays size={12} />{dayLabel(l.request.date)}</span>}
           {l.request.area && <span className="flex items-center gap-1"><MapPin size={12} />{l.request.area}</span>}
         </p>
-        <p className="cx-num mt-1 text-[13.5px] font-extrabold">{rupees(l.quoted_amount_paise)}</p>
+        <p className="cx-num mt-1 text-[13.5px] font-extrabold">{rupees(l.listPaise ?? l.quoted_amount_paise)}</p>
       </div>
     </Link>
   )

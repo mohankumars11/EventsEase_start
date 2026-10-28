@@ -294,7 +294,7 @@ export default function Home() {
       <section className="relative mt-4 overflow-hidden bg-gradient-to-r from-[#FFF4D6] via-[#FFEBD2] to-[#FFE0EC] px-4 py-5" data-offer>
         <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#B45309]">Welcome offer</p>
         <p className="mt-1 text-[30px] font-black leading-none tracking-[-0.04em] text-[#1C1033]">25% OFF</p>
-        <p className="mt-1 max-w-[62%] text-[12.5px] font-semibold leading-snug text-[#5B4A3A]">On your first celebration booking — up to ₹1,500. Yours on sign-up.</p>
+        <p className="mt-1 max-w-[62%] text-[12.5px] font-semibold leading-snug text-[#5B4A3A]">On your first celebration booking — up to ₹2,500. Yours on sign-up.</p>
         <Link to="/rewards" className="cx-press mt-3 inline-flex h-10 items-center gap-1.5 rounded-full bg-[#1C1033] px-4 text-[13px] font-extrabold text-white" data-offer-cta>See my 25% voucher<ArrowRight size={15} /></Link>
         <Gift size={92} strokeWidth={1.2} className="absolute -right-2 bottom-2 text-[#F59E0B]/40" />
       </section>
