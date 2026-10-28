@@ -23,6 +23,7 @@ import Onboarding, { onboardFlags } from './screens/Onboarding'
 import { savedWhere } from './lib/where'
 import { loadRules } from './lib/eventPlans'
 import { setActiveRules } from './lib/recommend360'
+import { flushConsent } from './lib/rewards'
 import './cx.css'
 
 /* Screens load on their own, but never on the tap: right after Home has
@@ -67,6 +68,7 @@ const Help = screen(() => import('./screens/Help'))
 const Wallet = screen(() => import('./screens/Wallet'))
 const Negotiate = screen(() => import('./screens/Negotiate'))
 const Refer = screen(() => import('./screens/Refer'))
+const Legal = screen(() => import('./screens/Legal'))
 const Rsvp = screen(() => import('./screens/Rsvp'))
 const CircleWelcome = screen(() => import('./screens/CircleWelcome'))
 
@@ -106,14 +108,14 @@ function useOnboarding() {
   const { user, loading } = useAuth()
   const [, bump] = useState(0)
   if (loading) return { step: 'loading' }
-  const step = !savedWhere() ? 'where' : !user ? 'signin' : !onboardFlags().alerts ? 'alerts' : null
+  const step = !savedWhere() ? 'where' : !user ? 'signin' : !onboardFlags().rewards ? 'rewards' : null
   return { step, next: () => bump(n => n + 1) }
 }
 
 export default function CustomerApp() {
   /* The published 360° rule set, if one exists; the bundled rules until then. */
   useEffect(() => { loadRules().then(setActiveRules).catch(() => {}) }, [])
-  useEffect(() => { warmScreens() }, [])
+  useEffect(() => { warmScreens(); flushConsent().catch(() => {}) }, [])
   const { pathname } = useLocation()
   const { step, next } = useOnboarding()
   /* A guest opening their RSVP link needs no sign-in, location or alerts. */
@@ -154,6 +156,9 @@ export default function CustomerApp() {
             <Route path="/invites/:id" element={<InviteHost />} />
             <Route path="/invites/:id/edit" element={<InviteEdit />} />
             <Route path="/refer" element={<Refer />} />
+            <Route path="/rewards" element={<Wallet />} />
+            <Route path="/legal" element={<Legal />} />
+            <Route path="/legal/:doc" element={<Legal />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>

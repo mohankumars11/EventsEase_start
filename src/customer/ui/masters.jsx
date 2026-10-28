@@ -117,7 +117,7 @@ export function MastersPanel({ tradeId, occasionId = null, guests = null, onCoun
         <FChip on={comparing} onClick={() => { setComparing(c => !c); setPicked([]) }} icon={comparing ? X : Scale} plain>{comparing ? 'Done' : 'Compare'}</FChip>
       </div>
       <div className="cx-noscroll mx-3 mb-2.5 flex gap-3 overflow-x-auto text-[11.5px] font-extrabold text-[#0B6B3D]" data-hooks>
-        {['Ready to book', 'Instant payment', '10% off first booking', 'Free cancellation before acceptance'].map(h => <span key={h} className="flex shrink-0 items-center gap-1"><Check size={12} strokeWidth={3.2} />{h}</span>)}
+        {['Ready to book', 'Instant payment', '25% off first booking', 'Free cancellation before acceptance'].map(h => <span key={h} className="flex shrink-0 items-center gap-1"><Check size={12} strokeWidth={3.2} />{h}</span>)}
       </div>
       {comparing && <p className="mx-3 mb-2.5 rounded-[14px] bg-[var(--brand-tint)] px-3 py-2 text-[12px] font-bold text-[var(--brand-deep)]">Tap <b>Compare</b> on up to three masters.</p>}
 

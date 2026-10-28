@@ -90,7 +90,7 @@ export function FamilyCard({ family, index = 0 }) {
 
 /* The line under an occasion: short, true, and it moves — staggered so a
    grid of them ripples instead of flashing together. */
-const HOOKS = ['Ready to book', 'Book in minutes', '10% off first', 'Masters ready', 'Enjoy it all']
+const HOOKS = ['Ready to book', 'Book in minutes', '25% off first', 'Masters ready', 'Enjoy it all']
 export function OccasionCard({ occasion, index = 0 }) {
   return (
     <Card to={`/o/${occasion.id}`} art={occasionArt(occasion)} tone={occasion.tone} title={occasion.name} data={{ 'data-occasion': occasion.id }}>

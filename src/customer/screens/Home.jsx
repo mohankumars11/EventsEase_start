@@ -293,7 +293,7 @@ export default function Home() {
       {/* ── The offer, edge to edge ──────────────────────────────────── */}
       <section className="relative mt-4 overflow-hidden bg-gradient-to-r from-[#FFF4D6] via-[#FFEBD2] to-[#FFE0EC] px-4 py-5" data-offer>
         <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#B45309]">Welcome offer</p>
-        <p className="mt-1 text-[30px] font-black leading-none tracking-[-0.04em] text-[#1C1033]">10% OFF</p>
+        <p className="mt-1 text-[30px] font-black leading-none tracking-[-0.04em] text-[#1C1033]">25% OFF</p>
         <p className="mt-1 max-w-[62%] text-[12.5px] font-semibold leading-snug text-[#5B4A3A]">On your first celebration booking, plus a welcome hamper.</p>
         <button type="button" onClick={() => { choose('occasions'); toGrid() }} className="cx-press mt-3 inline-flex h-10 items-center gap-1.5 rounded-full bg-[#1C1033] px-4 text-[13px] font-extrabold text-white">Book a celebration<ArrowRight size={15} /></button>
         <Gift size={92} strokeWidth={1.2} className="absolute -right-2 bottom-2 text-[#F59E0B]/40" />
@@ -303,7 +303,7 @@ export default function Home() {
       <section className="relative overflow-hidden bg-gradient-to-r from-[#E8F8EE] to-[#E6F2FF] px-4 py-5" data-service-band>
         <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#0C831F]">Book a service</p>
         <p className="mt-1 text-[24px] font-black leading-[1.05] tracking-[-0.04em] text-[#1C1033]">One master,<br /><span className="text-[#0C831F]">booked in a minute</span></p>
-        <p className="mt-1 max-w-[56%] text-[12.5px] font-semibold leading-snug text-[#3F5A4B]">A photographer, a cook, a DJ — price upfront, 10% off your first booking.</p>
+        <p className="mt-1 max-w-[56%] text-[12.5px] font-semibold leading-snug text-[#3F5A4B]">A photographer, a cook, a DJ — price upfront, 25% off your first booking.</p>
         <Link to="/s" className="cx-press relative z-10 mt-3 inline-flex h-11 items-center gap-2 rounded-full bg-[#0C831F] pl-4 pr-1.5 text-[13.5px] font-extrabold text-white shadow-[0_10px_22px_-10px_rgba(12,131,31,.9)]" data-book-service>
           <Zap size={16} />Book a service<span className="grid h-8 w-8 place-items-center rounded-full bg-white text-[#0C831F]"><ArrowRight size={16} /></span>
         </Link>
@@ -337,7 +337,7 @@ function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.fl
    the payment going through. The chips ask, they do not boast. */
 const SCENES = {
   occasions: [
-    { lines: ['Book Your', 'Celebration', 'in Minutes'], ask: ['Booked your party yet?', '10% off your first booking'],
+    { lines: ['Book Your', 'Celebration', 'in Minutes'], ask: ['Booked your party yet?', '25% off your first booking'],
       card: { icon: CalendarCheck2, tone: '#7C3AED', title: 'Birthday Party', sub: '6 masters lined up', meter: 1 } },
     { lines: ['Invite', 'Everyone in', 'One Tap'], ask: ['Who’s coming? Know it live', 'Free WhatsApp RSVP'],
       card: { icon: MailOpen, tone: '#DB2777', title: 'WhatsApp invites', sub: 'Live RSVP headcount', to: '/invites' } },
@@ -355,7 +355,7 @@ const SCENES = {
       card: { icon: UtensilsCrossed, tone: '#B45309', title: 'Private dinner', sub: 'For 2 to 50 guests', to: '/o/private-dinner-party' } },
   ],
   services: [
-    { lines: ['Book the', 'Right Service', 'in Minutes'], ask: ['Need a photographer today?', '10% off your first booking'],
+    { lines: ['Book the', 'Right Service', 'in Minutes'], ask: ['Need a photographer today?', '25% off your first booking'],
       card: { icon: CalendarCheck2, tone: '#7C3AED', title: '11 photographers', sub: 'Near you · instant' } },
     { lines: ['Invite', 'Everyone in', 'One Tap'], ask: ['Who’s coming? Know it live', 'Free WhatsApp RSVP'],
       card: { icon: MailOpen, tone: '#DB2777', title: 'WhatsApp invites', sub: 'Live RSVP headcount', to: '/invites' } },

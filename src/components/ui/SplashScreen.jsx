@@ -41,7 +41,6 @@ import './SplashScreen.css'
 
 const HOLD_MS = 2850
 const FADE_MS = 260
-const LETTERS = 'SAMBRAMO'.split('')
 
 export default function SplashScreen() {
   const [leaving, setLeaving] = useState(false)
@@ -49,7 +48,12 @@ export default function SplashScreen() {
 
   useEffect(() => {
     const leave = window.setTimeout(() => setLeaving(true), HOLD_MS)
-    const gone = window.setTimeout(() => setDone(true), HOLD_MS + FADE_MS)
+    const gone = window.setTimeout(() => {
+      setDone(true)
+      /* The customer app's first-run location prompt waits for this. */
+      window.__sbmSplashGone = true
+      window.dispatchEvent(new Event('sbm:splash-gone'))
+    }, HOLD_MS + FADE_MS)
     return () => {
       window.clearTimeout(leave)
       window.clearTimeout(gone)
@@ -63,13 +67,8 @@ export default function SplashScreen() {
       className={`app-splash fixed inset-0 z-[200] flex flex-col items-center justify-center ${leaving ? 'app-splash-is-leaving' : ''}`}
       role="presentation"
     >
-      <div className="app-splash-wordmark" aria-label="Sambramo">
-        {LETTERS.map((letter, index) => (
-          <span key={`${letter}-${index}`} style={{ '--i': index }}>
-            {letter}
-          </span>
-        ))}
-      </div>
+      {/* The whole name at once, bold (Mohan, 2026-10-28) — not letter by letter. */}
+      <div className="app-splash-wordmark app-splash-word" aria-label="Sambramo">SAMBRAMO</div>
 
       {/* ── The tagline, as the reference sets it ────────────────────
           Blinkit puts "India's Last Minute App" directly under the
@@ -83,7 +82,7 @@ export default function SplashScreen() {
           would be putting a claim on the first screen anybody sees. So
           the rule goes with it: a hairline under a tagline with
           nothing beneath it is a line that dangles. */}
-      <p className="app-splash-tagline">Event Booking Done in Minutes</p>
+      <p className="app-splash-tagline"><span className="app-splash-hl">Event booking</span> done in minutes</p>
 
       {/* The reference has NO loader — Zomato shows the lockup and
           nothing else. Asked for one, so it is here, but kept at the

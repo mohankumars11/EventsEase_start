@@ -1,7 +1,8 @@
 /**
- * The first run, straight after the splash: where you are, who you are,
- * and may we tell you when a master replies. Three screens, one job each,
- * the same order and the same calls as the partner app's front door.
+ * The first run, straight AFTER the splash (Mohan, 2026-10-28): where you
+ * are, who you are, then the welcome scratch cards — and Home. Three
+ * screens, one job each. Notifications are asked for from Account →
+ * Settings, not here, so nothing stands between the scratch cards and Home.
  *
  *   1. Location  — the OS prompt fires on arrival (captureLocation), then
  *                  the point is named and checked against the markets.
@@ -28,13 +29,18 @@ import { validateField, normalise, SEVERITY } from '../../lib/validation/fieldRu
 import { BENGALURU_AREAS } from '../../data/bengaluruAreas'
 import { artFor } from '../data/art'
 import { locate, saveWhere, km } from '../lib/where'
+import { claimWelcome, recordConsent, welcomeFine } from '../lib/rewards'
+import { AgreeLine, PolicyDoc } from './Legal'
+import { POLICIES } from '../data/policies'
+import { Sheet } from '../ui/kit'
+import ScratchCard from '../ui/ScratchCard'
 
 const FLAG = 'sbm.cx.onboard.v1'
 export const onboardFlags = () => { try { return JSON.parse(localStorage.getItem(FLAG) ?? '{}') } catch { return {} } }
 const setFlag = patch => { try { localStorage.setItem(FLAG, JSON.stringify({ ...onboardFlags(), ...patch })) } catch { /* storage off */ } }
 
 export default function Onboarding({ step, onDone }) {
-  const steps = ['where', 'signin', 'alerts']
+  const steps = ['where', 'signin', 'rewards']
   const at = steps.indexOf(step)
   return (
     <main className="cx-enter flex min-h-[100dvh] flex-col bg-white" data-onboarding={step}>
@@ -44,6 +50,7 @@ export default function Onboarding({ step, onDone }) {
       {step === 'where' && <Where onDone={onDone} />}
       {step === 'signin' && <SignIn />}
       {step === 'alerts' && <Alerts onDone={onDone} />}
+      {step === 'rewards' && <Rewards onDone={onDone} />}
     </main>
   )
 }
@@ -86,8 +93,9 @@ function Where({ onDone }) {
       setTimeout(onDone, 1100)
     } else setState('outside')
   }
-  /* The prompt is the first thing on screen, as on the partner app. */
-  useEffect(() => { if (!asked.current) { asked.current = true; ask() } }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  /* The OS prompt waits for the splash to finish — it used to pop up over it. */
+  const splashGone = useSplashGone()
+  useEffect(() => { if (splashGone && !asked.current) { asked.current = true; ask() } }, [splashGone]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const pick = a => { saveWhere({ area: a.name, city: 'Bengaluru', lat: a.lat, lng: a.lng, market: 'BLR', source: 'picked' }); onDone() }
   const areas = useMemo(() => {
@@ -161,6 +169,7 @@ function SignIn() {
   const [error, setError] = useState(null)
   const [resendIn, setResendIn] = useState(0)
   const codeRef = useRef(null)
+  const [doc, setDoc] = useState(null)
   const emailOk = !!email.trim() && validateField('login_email', email).severity !== SEVERITY.ERROR
   const codeCheck = validateField('otp_code', code, { length: 6 })
   useEffect(() => { if (!resendIn) return; const t = setTimeout(() => setResendIn(n => n - 1), 1000); return () => clearTimeout(t) }, [resendIn])
@@ -177,7 +186,7 @@ function SignIn() {
     if (busy || codeCheck.severity === SEVERITY.ERROR) return
     setBusy(true); setError(null)
     /* The session lands in AuthContext; CustomerApp sees the user and moves on. */
-    try { await verifyEmailOtp(normalise('login_email', email), codeCheck.value) }
+    try { await verifyEmailOtp(normalise('login_email', email), codeCheck.value); recordConsent('email_otp').catch(() => {}) }
     catch (e) { setError(e?.message || 'That code did not work. Check it, or send a new one.'); setBusy(false) }
   }
 
@@ -209,8 +218,9 @@ function SignIn() {
             <button type="button" disabled={resendIn > 0} onClick={send} className="text-[var(--brand)] disabled:text-[var(--ink-3)]">{resendIn ? `Resend in ${resendIn}s` : 'Send a new code'}</button>
           </div>
         )}
-        <p className="mt-4 flex items-center justify-center gap-1.5 text-center text-[11.5px] font-semibold text-[var(--ink-3)]"><ShieldCheck size={14} />By continuing you agree to the Terms and Privacy Policy.</p>
+        <div className="mt-4 flex items-start gap-1.5 text-center"><ShieldCheck size={14} className="mt-[2px] shrink-0 text-[var(--ink-3)]" /><AgreeLine onOpen={setDoc} className="text-left" /></div>
       </div>
+      <Sheet open={!!doc} onClose={() => setDoc(null)} title={doc ? POLICIES[doc].title : ''}>{doc && <div className="pb-4"><PolicyDoc id={doc} compact /></div>}</Sheet>
     </section>
   )
 }
@@ -258,6 +268,72 @@ function Alerts({ onDone }) {
         <button type="button" onClick={() => finish(state === 'on' ? 'on' : 'later')} className="mt-2 h-11 w-full text-[13.5px] font-extrabold text-[var(--ink-3)]" data-skip-alerts>
           {state === 'off' ? 'Continue' : 'Not now'}
         </button>
+      </div>
+    </section>
+  )
+}
+
+/* The splash (components/ui/SplashScreen) says when it has gone. */
+function useSplashGone() {
+  const [gone, setGone] = useState(() => typeof window !== 'undefined' && !!window.__sbmSplashGone)
+  useEffect(() => {
+    if (gone) return
+    const on = () => setGone(true)
+    window.addEventListener('sbm:splash-gone', on)
+    const t = setTimeout(on, 3600)
+    return () => { window.removeEventListener('sbm:splash-gone', on); clearTimeout(t) }
+  }, [gone])
+  return gone
+}
+
+/* ── 3. Welcome scratch cards ─────────────────────────────────────── */
+const REWARD_ART = {
+  free_rsvp: { emoji: '💌', tone: 'linear-gradient(160deg, #FFF1F7 0%, #FCE7F3 55%, #F5E8FF 100%)', ink: '#9D174D', kicker: 'Free RSVP', big: 'FREE', unit: 'first invitation', line: 'Premium designs, live RSVP, guest care & style circles — on us for your first invitation.', cta: 'Use it in Invitations' },
+  welcome_pct: { emoji: '🎉', tone: 'linear-gradient(160deg, #FFF8E7 0%, #FFEFD0 55%, #FFE4EC 100%)', ink: '#9A3412', kicker: 'Welcome offer', big: '25%', unit: 'OFF', line: welcomeFine, cta: 'Use on my first booking' },
+}
+function Rewards({ onDone }) {
+  const { user, profile } = useAuth()
+  const [list, setList] = useState(null)
+  const [k, setK] = useState(0)
+  const [open, setOpen] = useState({})
+  useEffect(() => { claimWelcome(user?.id).then(l => setList((l ?? []).filter(v => REWARD_ART[v.kind]))).catch(() => setList([])) }, [user?.id])
+  const finish = () => { setFlag({ rewards: 'claimed' }); onDone() }
+  const first = (profile?.full_name ?? user?.user_metadata?.full_name ?? '').trim().split(/\s+/)[0]
+  const cur = list?.[k]
+  const a = cur ? REWARD_ART[cur.kind] : null
+  const isLast = list && k >= list.length - 1
+  return (
+    <section className="relative flex flex-1 flex-col overflow-hidden bg-[radial-gradient(120%_70%_at_50%_0%,#3B0F80_0%,#1A0838_60%,#0D0420_100%)] text-white" data-rewards>
+      <div aria-hidden className="cx-reward-glow pointer-events-none absolute left-1/2 top-[28%] h-[340px] w-[340px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(236,72,153,.35)_0%,transparent_65%)]" />
+      <div className="relative px-6 pt-8 text-center">
+        <p className="text-[13px] font-extrabold uppercase tracking-[0.2em] text-[#F9A8D4]">Congratulations</p>
+        <h1 className="mt-2 text-[28px] font-black leading-[1.08] tracking-[-0.03em]">Welcome to Sambramo{first ? `, ${first}` : ''} 💜</h1>
+        <p className="mt-2 text-[14px] font-semibold text-white/75">{list === null ? 'Wrapping your welcome gifts…' : list.length ? `You’ve earned ${list.length} scratch card${list.length === 1 ? '' : 's'}. Scratch to unlock!` : 'Your rewards will appear in Account → Rewards.'}</p>
+      </div>
+      <div className="relative mx-auto mt-6 w-[80%] max-w-[320px]">
+        {list === null && <div className="grid aspect-square place-items-center rounded-[26px] bg-white/10"><Loader2 className="animate-spin" /></div>}
+        {cur && (
+          <ScratchCard key={cur.id} className="aspect-square" onReveal={() => setOpen(o => ({ ...o, [cur.id]: true }))}>
+            <div className="flex h-full flex-col items-center justify-center p-5 text-center" style={{ background: a.tone, color: a.ink }} data-reward={cur.kind}>
+              <span className="text-[44px] leading-none">{a.emoji}</span>
+              <p className="mt-2 text-[11px] font-extrabold uppercase tracking-[0.2em] opacity-80">{a.kicker}</p>
+              <p className="mt-1 text-[54px] font-black leading-none tracking-[-0.04em]">{a.big}<span className="ml-1 text-[18px] tracking-normal">{a.unit}</span></p>
+              <p className="mt-2 text-[12.5px] font-bold leading-snug opacity-85">{a.line}</p>
+              <p className="mt-3 rounded-full border border-dashed border-current px-3 py-1 text-[12px] font-black tracking-[0.12em]">{cur.code}</p>
+            </div>
+          </ScratchCard>
+        )}
+      </div>
+      {list?.length > 1 && <div className="relative mt-4 flex justify-center gap-1.5">{list.map((v, i) => <span key={v.id} className={'h-1.5 rounded-full transition-all ' + (i === k ? 'w-5 bg-white' : 'w-1.5 bg-white/35')} />)}</div>}
+      <div className="relative mt-auto px-5 pb-[calc(env(safe-area-inset-bottom,0px)+20px)] pt-6">
+        {cur && open[cur.id] ? (
+          <button type="button" onClick={() => (isLast ? finish() : setK(x => x + 1))} className="cx-press cx-pop flex h-14 w-full items-center justify-center gap-2 rounded-[18px] bg-white text-[16px] font-extrabold text-[#3B0F80]" data-reward-next>
+            {isLast ? 'Start celebrating' : 'Scratch the next card'}<ArrowRight size={18} />
+          </button>
+        ) : (
+          <p className="text-center text-[13px] font-bold text-white/70">{cur ? 'Scratch the card with your finger 👆' : ''}</p>
+        )}
+        <button type="button" onClick={finish} className="mt-2 h-11 w-full text-[13px] font-extrabold text-white/60" data-reward-later>{list?.length ? 'Later — they’re saved in Account → Rewards' : 'Continue'}</button>
       </div>
     </section>
   )
