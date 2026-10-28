@@ -30,7 +30,8 @@ export default function CompareSheet({ open, onClose, tradeId, partners, occasio
     { label: 'Distance', get: p => p.distanceKm, show: p => (p.distanceKm != null ? <span className="cx-num">{p.distanceKm} km</span> : p.area ?? '—'), win: best(p => p.distanceKm) },
     { label: 'Booking', get: p => (p.instant ? 1 : 0), show: p => (p.instant ? 'Instant' : `Quote${p.quoteHours ? ` in ${p.quoteHours}h` : ''}`), win: partners.some(p => p.instant) && partners.some(p => !p.instant) ? 1 : null },
     { label: 'Pay at booking', get: p => p.advancePct, show: p => (p.advancePct == null ? '—' : p.advancePct >= 100 ? 'In full' : `${p.advancePct}% advance`), win: best(p => p.advancePct) },
-    { label: 'Cancellation', get: () => null, show: p => CANCEL[p.cancellation] ?? '—' },
+    // One policy for every master on Sambramo (customer/data/policies.js) — not a per-listing label that contradicts it.
+    { label: 'Cancellation', get: () => null, show: () => 'Sambramo policy · full refund before accepting' },
     { label: 'Experience', get: p => p.years, show: p => (p.years ? `${p.years} yrs` : '—'), win: best(p => p.years, 'max') },
   ]
   return (

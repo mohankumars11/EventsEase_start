@@ -161,9 +161,10 @@ export function inviteText(inv, guest = null, { reminder = false } = {}) {
 /** WhatsApp to one number (or the chooser when there is none). */
 export const whatsappUrl = (text, phone = null) => `https://wa.me/${phone ? phone.replace(/\D/g, '') : ''}?text=${encodeURIComponent(text)}`
 
+/* Native share sheet in the APK (lib/share.js) — the WebView has no navigator.share. */
 export async function shareText(text, title = 'Invitation') {
-  if (navigator.share) { try { await navigator.share({ title, text }); return 'shared' } catch { return 'dismissed' } }
-  try { await navigator.clipboard.writeText(text); return 'copied' } catch { return 'failed' }
+  const { shareOut } = await import('./share')
+  return shareOut({ title, text })
 }
 
 export async function markSent(ids, field = 'sent_at') {

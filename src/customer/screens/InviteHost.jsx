@@ -13,6 +13,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Check, ChevronRight, Download, Eye, Link2, Loader2, MessageCircle, Pencil, Plus, Trash2, UserCheck, Users } from 'lucide-react'
 import { OCCASION } from '../data/occasions'
 import { usePlan } from '../state/PlanContext'
+import { copyText, openExternal } from '../lib/share'
 import { MEALS, STATUS, addGuests, getInvitation, guestsCsv, inviteText, markSent, parseGuestList, removeGuest, rsvpLink, saveInvitation, shareText, tally, updateGuest, whatsappUrl } from '../lib/rsvp'
 import { BackHeader, Sheet } from '../ui/kit'
 import InviteCard from '../ui/InviteCard'
@@ -55,7 +56,7 @@ export default function InviteHost() {
   async function sendTo(g) {
     await ensureSent()
     const reminder = !!g.sent_at && g.status === 'pending'
-    window.open(whatsappUrl(inviteText(inv, g, { reminder }), g.phone), '_blank')
+    openExternal(whatsappUrl(inviteText(inv, g, { reminder }), g.phone))
     await markSent([g.id], reminder ? 'reminded_at' : 'sent_at').catch(() => {})
     load()
   }
@@ -329,7 +330,7 @@ function GuestSheet({ g, inv, onClose, onChanged }) {
         )}
         <p className="text-[12px]">{g.sent_at ? `Sent ${new Date(g.sent_at).toLocaleDateString('en-IN')}` : 'Not sent yet'}{g.opened_at ? ' · seen' : ''}{g.responded_at ? ` · replied ${new Date(g.responded_at).toLocaleDateString('en-IN')}` : ''}</p>
         <div className="grid grid-cols-2 gap-2 pt-1">
-          <button type="button" onClick={async () => { try { await navigator.clipboard.writeText(rsvpLink(g.token)); setCopied(true) } catch { /* off */ } }} className="cx-press h-11 rounded-[13px] bg-[#F4F1F8] text-[13px] font-extrabold text-[var(--am-ink)]">{copied ? 'Copied' : 'Copy their link'}</button>
+          <button type="button" onClick={async () => { if (await copyText(rsvpLink(g.token))) setCopied(true) }} className="cx-press h-11 rounded-[13px] bg-[#F4F1F8] text-[13px] font-extrabold text-[var(--am-ink)]">{copied ? 'Copied' : 'Copy their link'}</button>
           <button type="button" onClick={async () => { await updateGuest(g.id, { party_limit: Math.min(50, g.party_limit + 1) }); onChanged() }} className="cx-press h-11 rounded-[13px] bg-[#F4F1F8] text-[13px] font-extrabold text-[var(--am-ink)]">+1 person allowed</button>
         </div>
         <button type="button" onClick={async () => { if (confirm(`Remove ${g.name} from the list?`)) { await removeGuest(g.id); onChanged() } }} className="flex items-center gap-1.5 pt-2 text-[13px] font-extrabold text-[#9B1A2A]"><Trash2 size={15} />Remove guest</button>

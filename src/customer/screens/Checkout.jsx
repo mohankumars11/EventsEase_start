@@ -43,6 +43,7 @@ import { savedWhere } from '../lib/where'
 import { myVouchers, bookingVouchers, daysLeft } from '../lib/rewards'
 import { applyOffer, payNow, canSplit, balanceDueOn, advanceFloor, PAY_RULES } from '../../../api/_lib/listPrice.js'
 import { LADDER } from '../data/policies'
+import { shareOut } from '../lib/share'
 import { TRADE } from '../data/trades'
 import { OCCASION } from '../data/occasions'
 import { plural, rupees, whenLabel } from '../lib/format'
@@ -220,7 +221,7 @@ export default function Checkout() {
   const steps = [['Plan', true], ['Masters', lines.length > 0], ['Details', ready && phoneOk], ['Pay', phase === 'done']]
   async function shareCheckout() {
     const text = `${occ ? `${occ.name} on Sambramo` : 'My Sambramo plan'}${ev.date ? ` · ${whenLabel(ev.date, ev.time)}` : ''}\n${lines.map(l => `• ${TRADE[l.tradeId]?.label}: ${l.name}`).join('\n')}${total ? `\nTotal ${rupees(grand)}` : ''}`
-    if (navigator.share) { try { await navigator.share({ title: 'Our celebration plan', text }) } catch { /* dismissed */ } } else { try { await navigator.clipboard.writeText(text) } catch { /* off */ } }
+    await shareOut({ title: 'Our celebration plan', text })
   }
 
   return (
@@ -422,17 +423,23 @@ export default function Checkout() {
         </button>
       </section>
 
-      {/* Cancellation, in short — the ladder the customer agreed to */}
-      <section className="mx-3 mt-3 rounded-[24px] bg-white p-4 shadow-[0_0_0_1px_#EEE8F6]" data-checkout-policy>
-        <p className="flex items-center gap-2 text-[15px] font-extrabold"><ShieldCheck size={18} className="text-[#5B21A8]" />Cancellation policy</p>
-        <ul className="mt-2 space-y-1">
-          {LADDER.slice(0, 5).map(r => (
-            <li key={r.when} className="flex items-baseline justify-between gap-3 text-[12px] font-semibold"><span className="text-[var(--ink-2)]">{r.when}</span><span className="shrink-0 font-extrabold text-[var(--ink)]">{r.refund}</span></li>
-          ))}
-        </ul>
-        <Link to="/legal/cancellation" className="mt-2 inline-flex items-center text-[12.5px] font-extrabold text-[#5B21A8]">View the full policy<ChevronRight size={14} /></Link>
-        <p className="mt-1 text-[11px] font-semibold text-[var(--ink-3)]">If a master cancels, you get everything back. By paying you agree to our <Link to="/legal/terms" className="font-extrabold text-[#5B21A8]">terms</Link>.</p>
-      </section>
+      {/* Cancellation — one line, folded; the ladder opens on a tap (Mohan: no verbose policy on the pay screen) */}
+      <details className="group mx-3 mt-3 rounded-[20px] bg-white shadow-[0_0_0_1px_#EEE8F6]" data-checkout-policy>
+        <summary className="flex cursor-pointer list-none items-center gap-3 p-4">
+          <ShieldCheck size={18} className="shrink-0 text-[#5B21A8]" />
+          <span className="min-w-0 flex-1"><span className="block text-[14.5px] font-extrabold">Cancellation policy</span><span className="block truncate text-[12px] font-semibold text-[var(--ink-3)]">Full refund until a master accepts</span></span>
+          <ChevronRight size={18} className="shrink-0 text-[var(--ink-3)] transition group-open:rotate-90" />
+        </summary>
+        <div className="border-t border-[#F3F0F7] px-4 pb-4 pt-3">
+          <ul className="space-y-1">
+            {LADDER.map(r => (
+              <li key={r.when} className="flex items-baseline justify-between gap-3 text-[12px] font-semibold"><span className="text-[var(--ink-2)]">{r.when}</span><span className="shrink-0 font-extrabold text-[var(--ink)]">{r.refund}</span></li>
+            ))}
+          </ul>
+          <Link to="/legal/cancellation" className="mt-2 inline-flex items-center text-[12.5px] font-extrabold text-[#5B21A8]">View the full policy<ChevronRight size={14} /></Link>
+        </div>
+      </details>
+      <p className="mx-4 mt-2 text-[11px] font-semibold text-[var(--ink-3)]">If a master cancels, you get everything back. By paying you agree to our <Link to="/legal/terms" className="font-extrabold text-[#5B21A8]">terms</Link>.</p>
 
       {/* Give back — the slot for a real NGO partner */}
       <section className="mx-3 mt-3 flex items-center gap-3 rounded-[24px] bg-gradient-to-r from-[#ECFDF5] to-[#FDF4FF] p-4">

@@ -43,7 +43,19 @@ export function marketAt(lat, lng) {
  * Ask the phone. Resolves { ok, reason?, place?, market? } and never
  * rejects — `reason` is 'denied' | 'unavailable' | 'unsupported'.
  */
+/* The OS location prompt must never appear over the splash (Mohan,
+   2026-10-28): whoever asks, wait until the splash has gone, plus a beat. */
+function splashGone() {
+  if (typeof window === 'undefined' || window.__sbmSplashGone || !document.querySelector('.app-splash')) return Promise.resolve()
+  return new Promise(r => {
+    const go = () => { window.removeEventListener('sbm:splash-gone', go); setTimeout(r, 350) }
+    window.addEventListener('sbm:splash-gone', go)
+    setTimeout(r, 4200)
+  })
+}
+
 export async function locate() {
+  await splashGone()
   const res = await captureLocation()
   if (!res.ok) return { ok: false, reason: res.reason }
   const { lat, lng } = res.fix

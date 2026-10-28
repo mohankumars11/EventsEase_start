@@ -27,6 +27,7 @@ import { useAuth } from '../../context/AuthContext'
 import { BackHeader } from '../ui/kit'
 import Twinkle from '../ui/Twinkle'
 import { WELCOME, REFERRAL, myVouchers, myReferrals, claimReferralRewards, usable } from '../lib/rewards'
+import { copyText, openExternal, shareOut, whatsappLink } from '../lib/share'
 
 const PUBLIC_ORIGIN = 'https://sambramoh.vercel.app'
 const rs = p => `₹${Math.round(p / 100).toLocaleString('en-IN')}`
@@ -49,13 +50,14 @@ export default function Refer() {
   const text = `I plan our celebrations on Sambramo — every master you need, booked in minutes. Join with my code ${code ?? ''} and get ${WELCOME.pct}% off your first booking + your first invitation free 🎉`
   const flash = k => { setCopied(k); setTimeout(() => setCopied(''), 1600) }
   async function copy(what = 'link') {
-    try { await navigator.clipboard.writeText(what === 'code' ? (code ?? '') : `${text}\n${link}`); flash(what) } catch { /* clipboard off */ }
+    if (await copyText(what === 'code' ? (code ?? '') : `${text}\n${link}`)) flash(what)
   }
+  /* Native share sheet in the APK; WhatsApp through the system (lib/share.js). */
   async function share() {
-    if (navigator.share) { try { await navigator.share({ title: 'Celebrate together on Sambramo', text, url: link }); return } catch { return } }
-    copy('link')
+    const r = await shareOut({ title: 'Celebrate together on Sambramo', text, url: link })
+    if (r === 'copied') flash('link')
   }
-  const wa = `https://wa.me/?text=${encodeURIComponent(`${text}\n${link}`)}`
+  const wa = whatsappLink(`${text}\n${link}`)
   const claimable = refs ? Math.max(0, (refs.eligible ? refs.done : 0) - (refs.claimed ?? 0)) : 0
   async function claim() {
     setClaiming(true); setClaimMsg('')
@@ -73,7 +75,7 @@ export default function Refer() {
       <HoloTicket code={code} copied={copied === 'code'} onCopy={() => copy('code')} />
 
       <div className="mx-3 mt-3 grid grid-cols-[1fr_auto_auto] gap-2">
-        <a href={wa} target="_blank" rel="noreferrer" className="cx-press flex h-14 items-center justify-center gap-2 rounded-[18px] bg-[#25D366] text-[15px] font-extrabold text-white shadow-[0_12px_24px_-14px_rgba(37,211,102,.9)]" data-share-whatsapp><MessageCircle size={19} />Invite on WhatsApp</a>
+        <a href={wa} onClick={e => { e.preventDefault(); openExternal(wa) }} rel="noreferrer" className="cx-press flex h-14 items-center justify-center gap-2 rounded-[18px] bg-[#25D366] text-[15px] font-extrabold text-white shadow-[0_12px_24px_-14px_rgba(37,211,102,.9)]" data-share-whatsapp><MessageCircle size={19} />Invite on WhatsApp</a>
         <button type="button" onClick={share} aria-label="Share" className="cx-press grid h-14 w-14 place-items-center rounded-[18px] bg-white text-[#5B21A8] shadow-[0_0_0_1px_#EEE6FA]" data-share><Share2 size={19} /></button>
         <button type="button" onClick={() => copy('link')} aria-label="Copy link" className="cx-press grid h-14 w-14 place-items-center rounded-[18px] bg-white text-[#5B21A8] shadow-[0_0_0_1px_#EEE6FA]">{copied === 'link' ? <Check size={19} strokeWidth={3} /> : <Copy size={19} />}</button>
       </div>

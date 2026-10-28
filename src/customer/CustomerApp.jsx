@@ -13,6 +13,7 @@
  * whenever a partner has been picked; focused screens (an occasion, a
  * partner, checkout) hide the tabs and carry their own action bar.
  */
+import { installExternalLinks } from './lib/share'
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
@@ -115,7 +116,8 @@ function useOnboarding() {
 export default function CustomerApp() {
   /* The published 360° rule set, if one exists; the bundled rules until then. */
   useEffect(() => { loadRules().then(setActiveRules).catch(() => {}) }, [])
-  useEffect(() => { warmScreens(); flushConsent().catch(() => {}) }, [])
+  // installExternalLinks: on the phone, WhatsApp / Maps / outside links open through the system (lib/share.js).
+  useEffect(() => { warmScreens(); flushConsent().catch(() => {}); installExternalLinks() }, [])
   const { pathname } = useLocation()
   const { step, next } = useOnboarding()
   /* A guest opening their RSVP link needs no sign-in, location or alerts. */

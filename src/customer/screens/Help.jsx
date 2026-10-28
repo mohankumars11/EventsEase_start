@@ -1,13 +1,14 @@
 /**
  * Help — reachable from the headset on Home and from the search hub.
- * Real channels (BRAND's support line, WhatsApp and email) and the real
- * cancellation ladder from config/policies.js, so what it promises is
- * what the money engine does.
+ * Real channels (BRAND's support line, WhatsApp and email) and the
+ * cancellation ladder the customer agreed to at sign-in
+ * (customer/data/policies.js LADDER — the same one on Checkout and
+ * /legal/cancellation), so the app says one thing everywhere.
  */
 import { Link } from 'react-router-dom'
 import { ChevronRight, Mail, MessageCircle, Phone, ReceiptText, ShieldCheck } from 'lucide-react'
 import { BRAND } from '../../config/sambramo'
-import { CANCELLATION_LADDER } from '../../config/policies'
+import { LADDER } from '../data/policies'
 import { BackHeader } from '../ui/kit'
 
 const FAQ = [
@@ -42,16 +43,17 @@ export default function Help() {
 
       <section className="px-4 pt-7" id="cancellation">
         <h2 className="flex items-center gap-2 text-[17px] font-extrabold tracking-[-0.025em]"><ShieldCheck size={18} className="text-[#0F9D58]" />Cancellation policy</h2>
-        <p className="mt-1 text-[12.5px] font-semibold text-[var(--ink-3)]">Any deduction goes to your master for the day they kept for you — never to us.</p>
+        <p className="mt-1 text-[12.5px] font-semibold text-[var(--ink-3)]">What comes back depends on how close to the event you cancel — more if you take it as Sambramo credit. If a master cancels, you get everything back.</p>
         <ol className="mt-3 overflow-hidden rounded-[18px] shadow-[0_0_0_1px_#EEE6FA]">
-          {CANCELLATION_LADDER.rungs.map((r, i) => (
-            <li key={r.id} className={'flex items-start gap-3 bg-white p-3 ' + (i ? 'border-t border-[#F1ECF8]' : '')}>
-              <span className="cx-num w-14 shrink-0 text-[18px] font-black tracking-[-0.03em] text-[#0F9D58]">{r.refundPct}%</span>
-              <span><span className="block text-[13.5px] font-extrabold">{r.id === 'before_accept' ? 'Before a master accepts' : r.hoursBefore >= 48 ? 'More than 2 days before' : r.hoursBefore >= 12 ? '12 hours to 2 days before' : r.hoursBefore >= 0 ? 'Within 12 hours' : 'After it has started'} · refunded</span>
-                <span className="block text-[12px] font-semibold text-[var(--ink-2)]">{r.why}</span></span>
+          {LADDER.map((r, i) => (
+            <li key={r.when} className={'flex items-start gap-3 bg-white p-3 ' + (i ? 'border-t border-[#F1ECF8]' : '')}>
+              <span className={'w-[92px] shrink-0 text-[13px] font-black leading-tight ' + (/^Full/.test(r.refund) ? 'text-[#0F9D58]' : /^No/.test(r.refund) ? 'text-[#B42318]' : 'text-[#B45309]')}>{r.refund}</span>
+              <span className="min-w-0"><span className="block text-[13.5px] font-extrabold">{r.when}</span>
+                {(r.credit || r.note) && <span className="block text-[12px] font-semibold text-[var(--ink-2)]">{[r.credit, r.note].filter(Boolean).join(' · ')}</span>}</span>
             </li>
           ))}
         </ol>
+        <Link to="/legal/cancellation" className="mt-2 inline-flex items-center text-[12.5px] font-extrabold text-[var(--brand)]">Read the full policy<ChevronRight size={14} /></Link>
       </section>
 
       <section className="px-4 pt-7">

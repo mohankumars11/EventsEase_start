@@ -89,7 +89,7 @@ export default function Search() {
             [CalendarDays, 'My bookings', '/plans', '#0F9D58', '#E7F8EF'],
             [RotateCcw, plan.bookings.length ? 'Book again' : 'Saved masters', plan.bookings.length ? '/plans' : '/saved', '#EA580C', '#FFF1E6'],
             [Headset, 'Help', '/help', '#DB2777', '#FDEBF3'],
-            [ShieldCheck, 'Cancellation', '/help#cancellation', '#0F766E', '#E6F6F4'],
+            [ShieldCheck, 'Cancellation', '/legal/cancellation', '#0F766E', '#E6F6F4'],
             [Users, 'Refer & earn', '/refer', '#7C3AED', '#F3ECFF'],
             [MailOpen, 'Invites & RSVP', '/invites', '#DB2777', '#FDECF4'],
             [Wallet, 'Wallet', '/wallet', '#0C831F', '#E9F8EF'],

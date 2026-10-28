@@ -8,6 +8,7 @@
  * says so); refer & earn; gift cards to come. Nothing here claims money
  * that is not there.
  */
+import { copyText } from '../lib/share'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Check, ChevronRight, Copy, Gift, IndianRupee, Loader2, Ticket } from 'lucide-react'
@@ -24,7 +25,7 @@ export default function Wallet() {
     if (!user) { setList([]); return }
     myVouchers(user.id).then(l => (l.length ? l : claimWelcome(user.id))).then(setList).catch(() => setList([]))
   }, [user])
-  const copy = async c => { try { await navigator.clipboard.writeText(c); setCopied(c); setTimeout(() => setCopied(''), 1500) } catch { /* off */ } }
+  const copy = async c => { if (await copyText(c)) { setCopied(c); setTimeout(() => setCopied(''), 1500) } }
 
   return (
     <main className="cx-enter min-h-[100dvh] bg-[#FFF7EE] pb-[calc(env(safe-area-inset-bottom,0px)+40px)]" data-rewards-wallet>
