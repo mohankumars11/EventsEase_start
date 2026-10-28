@@ -45,9 +45,8 @@ export default function Onboarding({ step, onDone }) {
   const at = steps.indexOf(step)
   return (
     <main className="cx-enter flex min-h-[100dvh] flex-col bg-white" data-onboarding={step}>
-      <div className="cx-safe-top flex gap-1.5 px-5 pt-3" aria-hidden>
-        {steps.map((s, i) => <span key={s} className={'h-1 flex-1 rounded-full transition-colors duration-500 ' + (i <= at ? 'bg-[var(--brand)]' : 'bg-[var(--am-100)]')} />)}
-      </div>
+      {/* No step bars (Mohan, 2026-10-28: "the screen should be completely plain") — the steps run behind it. */}
+      {step !== 'rewards' && <div className="cx-safe-top" aria-hidden data-step={at} />}
       {step === 'where' && <Where onDone={onDone} />}
       {step === 'signin' && <SignIn />}
       {step === 'alerts' && <Alerts onDone={onDone} />}
@@ -305,11 +304,16 @@ function Rewards({ onDone }) {
   const isLast = list && k >= list.length - 1
   return (
     <section className="relative flex flex-1 flex-col overflow-hidden bg-[radial-gradient(120%_70%_at_50%_0%,#3B0F80_0%,#1A0838_60%,#0D0420_100%)] text-white" data-rewards>
+      <div className="cx-safe-top" aria-hidden />
       <div aria-hidden className="cx-reward-glow pointer-events-none absolute left-1/2 top-[28%] h-[340px] w-[340px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(236,72,153,.35)_0%,transparent_65%)]" />
       <div className="relative px-6 pt-8 text-center">
         <p className="text-[13px] font-extrabold uppercase tracking-[0.2em] text-[#F9A8D4]">Congratulations</p>
-        <h1 className="mt-2 text-[28px] font-black leading-[1.08] tracking-[-0.03em]">Welcome to Sambramo{first ? `, ${first}` : ''} 💜</h1>
-        <p className="mt-2 text-[14px] font-semibold text-white/75">{list === null ? 'Wrapping your welcome gifts…' : list.length ? `You’ve earned ${list.length} scratch card${list.length === 1 ? '' : 's'}. Scratch to unlock!` : 'Your rewards will appear in Account → Rewards.'}</p>
+        {/* The name as the splash sets it (Manrope 900, 0.06em, the same glow) — one brand from the first screen on. */}
+        <h1 className="mt-2 leading-none">
+          <span className="block text-[20px] font-extrabold tracking-[-0.01em] text-white/90">Welcome to</span>
+          <span className="cx-brand mt-1.5 block text-[40px] text-white" style={{ textShadow: '0 0 1px rgba(255,255,255,.9), 0 5px 24px rgba(255,255,255,.12)' }}>Sambramo</span>
+        </h1>
+        <p className="mt-3 text-[14px] font-semibold text-white/75">{list === null ? 'Wrapping your welcome gifts…' : list.length ? `${first ? `${first}, you’ve` : 'You’ve'} earned ${list.length} scratch card${list.length === 1 ? '' : 's'}. Scratch to unlock!` : 'Your rewards will appear in Account → Rewards.'}</p>
       </div>
       <div className="relative mx-auto mt-6 w-[80%] max-w-[320px]">
         {list === null && <div className="grid aspect-square place-items-center rounded-[26px] bg-white/10"><Loader2 className="animate-spin" /></div>}
