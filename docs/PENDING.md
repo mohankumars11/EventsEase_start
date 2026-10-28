@@ -8,6 +8,7 @@ Last updated 27 Oct 2026, branch `feature/customer-app-masters`.
 |---|---|---|---|
 | 1 | **Web deploy (owner decides when)** | Nothing is deployed from here — the customer app ships as an APK. Guest RSVP links (`/rsvp/…`) open in a browser only once the owner deploys this build to sambramoh.vercel.app; phones also need `/api/anchor` (today they reach the laptop API on Wi-Fi). | Owner's deploy |
 | 2 | ~~Apply migration 191~~ | Applied 27 Oct; `check-rsvp-live.mjs` passes 17/17. | Done |
+| 2b | **Apply migration 192** (guest care & style circles) | Travel & stay on the guest's invite, the host's arrivals board / pickups / rooms / VIPs, "where guests stay", and style circles (outfit chat, circle join links) are all hidden until it is pasted. Written 28 Oct; parses clean. | Paste `192_sambramo_guest_care_style_circles.sql`, then `node --env-file=.env scripts/check-guest-care-live.mjs` |
 | 3 | **Razorpay live mode** | Only ₹1 test payments run today. | Activate account, live keys |
 | 4 | **Phone OTP** | Email OTP until DLT registration (1–2 weeks). | DLT registration |
 | 5 | **Listing data exposure** | `sambramo_listing_versions.answers` is public and holds caterers' FSSAI numbers and declarations. The app never shows them, but anyone with the anon key can read them. | Restrict columns / a view |
