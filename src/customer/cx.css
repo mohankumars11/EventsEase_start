@@ -300,3 +300,22 @@
 @keyframes cx-foil { from { transform: translateX(-120%) skewX(-18deg); } to { transform: translateX(380%) skewX(-18deg); } }
 .cx-foil-sheen { animation: cx-foil 2.6s cubic-bezier(.4,0,.2,1) infinite; }
 @media (prefers-reduced-motion: reduce) { .cx-foil-sheen { animation: none; opacity: 0; } }
+
+/* The pay button's shine: a band of light crossing it every few seconds.
+   Transform only. Used with .cx-cta (Checkout "Pay securely", rewards). */
+.cx-pay { position: relative; overflow: hidden; box-shadow: 0 14px 28px -14px rgba(91, 33, 168, .85); }
+.cx-pay::after { content: ''; position: absolute; inset: 0 auto 0 0; width: 40%; pointer-events: none;
+  background: linear-gradient(100deg, transparent 0%, rgba(255,255,255,.38) 50%, transparent 100%);
+  transform: translateX(-130%) skewX(-18deg); animation: cx-pay-shine 3.2s ease-in-out 1s infinite; }
+.cx-pay:disabled::after { animation: none; opacity: 0; }
+@keyframes cx-pay-shine { 0%, 55% { transform: translateX(-130%) skewX(-18deg); } 85%, 100% { transform: translateX(330%) skewX(-18deg); } }
+@media (prefers-reduced-motion: reduce) { .cx-pay::after { animation: none; opacity: 0; } }
+
+/* The brand, one way everywhere (Mohan, 2026-10-28): the splash's wordmark —
+   Manrope 900, 0.06em (SplashScreen.css .app-splash-word). Codes that carry
+   the name (SAMBRAMO-RSVP-…) use the same family, not the number face. */
+.cx-brand { font-family: Manrope, system-ui, sans-serif; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; }
+.cx-code { font-family: Manrope, system-ui, sans-serif; font-weight: 800; letter-spacing: .06em; font-variant-numeric: tabular-nums; }
+@keyframes cx-twinkle { 0%, 100% { opacity: 0; transform: scale(.3) rotate(0deg); } 45% { opacity: 1; transform: scale(1) rotate(25deg); } 70% { opacity: .5; transform: scale(.75) rotate(40deg); } }
+.cx-twinkle { opacity: 0; animation: cx-twinkle 2.4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .cx-twinkle { animation: none; opacity: .7; transform: none; } }

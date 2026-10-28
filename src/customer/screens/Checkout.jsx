@@ -27,9 +27,9 @@
  * (never under the trade's floor) or the whole amount, the customer's
  * choice. Everything sits in escrow until the event is delivered.
  */
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, BadgePercent, CalendarDays, Check, CheckCircle2, ChevronRight, Clock3, Gift, Loader2, Lock, MailOpen, MapPin, PartyPopper, Phone, ReceiptText, Share2, ShieldCheck, Sparkles, Ticket, Users, Zap } from 'lucide-react'
+import { ArrowLeft, BadgeCheck, BadgePercent, CalendarDays, Check, CheckCircle2, ChevronRight, Clock3, CreditCard, Gift, HandCoins, Loader2, Lock, MailOpen, MapPin, PartyPopper, Phone, ReceiptText, Share2, ShieldCheck, Sparkles, Ticket, Users, Zap } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { payLines } from '../../lib/payLines'
@@ -333,16 +333,16 @@ export default function Checkout() {
               const save = savingOf(v)
               return (
                 <button key={v.id} type="button" onClick={() => setPickedId(on ? null : v.id)} aria-pressed={on} data-offer={v.code}
-                  className={'cx-press relative w-[230px] shrink-0 overflow-hidden rounded-[18px] p-3.5 text-left transition ' + (on ? 'bg-gradient-to-br from-[#2A0B4F] via-[#5B21A8] to-[#A21CAF] text-white shadow-[0_16px_28px_-18px_rgba(91,33,168,.95)]' : 'bg-[#FBF8FF] text-[var(--ink)] shadow-[inset_0_0_0_1.5px_#E4D8F8]')}>
-                  <span aria-hidden className={'absolute -right-3 top-1/2 h-6 w-6 -translate-y-1/2 rounded-full ' + (on ? 'bg-white' : 'bg-white shadow-[inset_0_0_0_1.5px_#E4D8F8]')} />
+                  className={'cx-press relative w-[230px] shrink-0 overflow-hidden rounded-[18px] p-3.5 text-left transition ' + (on ? 'bg-gradient-to-br from-[#FFFFFF] via-[#F6F0FF] to-[#FFF1F8] text-[var(--ink)] shadow-[inset_0_0_0_2px_#7C3AED,0_14px_26px_-18px_rgba(91,33,168,.8)]' : 'bg-[#FBF8FF] text-[var(--ink)] shadow-[inset_0_0_0_1.5px_#E4D8F8]')}>
+                  <span aria-hidden className={'absolute -right-3 top-1/2 h-6 w-6 -translate-y-1/2 rounded-full bg-white ' + (on ? 'shadow-[inset_0_0_0_2px_#7C3AED]' : 'shadow-[inset_0_0_0_1.5px_#E4D8F8]')} />
                   <span className="flex items-center justify-between">
-                    <span className={'rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.12em] ' + (on ? 'bg-[#FFC24B] text-[#3B1670]' : 'bg-[#F0E9FF] text-[#5B21A8]')}>{v.kind === 'welcome_pct' ? 'Welcome' : 'Referral'}</span>
-                    <span className={'grid h-5 w-5 place-items-center rounded-full ' + (on ? 'bg-[#FFC24B] text-[#3B1670]' : 'ring-[1.5px] ring-[#C9B5F5]')}>{on && <Check size={12} strokeWidth={3.4} />}</span>
+                    <span className={'rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.12em] ' + (on ? 'bg-[#5B21A8] text-white' : 'bg-[#F0E9FF] text-[#5B21A8]')}>{v.kind === 'welcome_pct' ? 'Welcome' : 'Referral'}</span>
+                    <span className={'grid h-5 w-5 place-items-center rounded-full ' + (on ? 'bg-[#0E9F6E] text-white' : 'ring-[1.5px] ring-[#C9B5F5]')}>{on && <Check size={12} strokeWidth={3.4} />}</span>
                   </span>
-                  <span className="mt-2 block text-[22px] font-black leading-none tracking-[-0.02em]">{v.terms?.pct ?? 25}% off</span>
-                  <span className={'mt-1 block text-[11.5px] font-bold ' + (on ? 'text-white/80' : 'text-[var(--ink-3)]')}>Up to {rupees(v.terms?.cap_paise ?? 250000)}{daysLeft(v) != null ? ` · ${daysLeft(v)} days left` : ''}</span>
-                  <span className={'cx-num mt-2 block border-t border-dashed pt-2 text-[11px] font-extrabold tracking-[0.08em] ' + (on ? 'border-white/30 text-white/90' : 'border-[#E4D8F8] text-[#5B21A8]')}>{v.code}</span>
-                  {save > 0 && <span className={'mt-1 block text-[12px] font-black ' + (on ? 'text-[#FFC24B]' : 'text-[#0B7A4B]')}>{on ? `Applied · you save ${rupees(save)}` : `Save ${rupees(save)}`}</span>}
+                  <span className="mt-2 block text-[22px] font-black leading-none tracking-[-0.02em] text-[#3B1670]">{v.terms?.pct ?? 25}% off</span>
+                  <span className="mt-1 block text-[11.5px] font-bold text-[var(--ink-3)]">Up to {rupees(v.terms?.cap_paise ?? 250000)}{daysLeft(v) != null ? ` · ${daysLeft(v)} days left` : ''}</span>
+                  <span className="cx-code mt-2 block border-t border-dashed border-[#E4D8F8] pt-2 text-[11px] text-[#5B21A8]">{v.code}</span>
+                  {save > 0 && <span className="mt-1 block text-[12px] font-black text-[#0B7A4B]">{on ? `Applied · you save ${rupees(save)}` : `Save ${rupees(save)}`}</span>}
                 </button>
               )
             })}
@@ -386,20 +386,8 @@ export default function Checkout() {
         <p className="mt-2 text-[11.5px] font-semibold text-[var(--ink-3)]">The price you see is final — nothing is added at the end.</p>
       </Card>
 
-      {/* Escrow — the promise that makes people pay */}
-      <section className="mx-3 mt-3 overflow-hidden rounded-[24px] bg-gradient-to-br from-[#1B0B33] via-[#2E0F5C] to-[#4A1580] p-4 text-white" data-escrow>
-        <p className="flex items-center gap-2 text-[15px] font-black"><ShieldCheck size={19} className="text-[#7CF0C0]" />Your money is held in escrow</p>
-        <div className="mt-3 grid grid-cols-4 gap-1 text-center">
-          {[['💳', 'You pay'], ['🔒', 'Held safely'], ['🎉', 'Event done'], ['🤝', 'Masters paid']].map(([e, t], i) => (
-            <span key={t} className="relative">
-              {i < 3 && <span aria-hidden className="absolute left-[62%] right-[-38%] top-4 h-[2px] bg-gradient-to-r from-[#A78BFA] to-[#7CF0C0] opacity-60" />}
-              <span className="relative mx-auto grid h-8 w-8 place-items-center rounded-full bg-white/10 text-[15px] ring-1 ring-white/20">{e}</span>
-              <span className="mt-1 block text-[11px] font-extrabold text-white/85">{t}</span>
-            </span>
-          ))}
-        </div>
-        <p className="mt-3 text-[11.5px] font-semibold text-white/70">Masters are paid only after your event is delivered. If a master cancels, every rupee comes back.</p>
-      </section>
+      {/* Escrow, live — the promise that makes people pay, one step at a time */}
+      <EscrowLive pay={instant.length ? dueNow : 0} date={ev.date} masters={instant.length || lines.length} />
 
       {/* Instructions for masters */}
       <Card title="Instructions for your masters">
@@ -478,7 +466,7 @@ export default function Checkout() {
             <span className="flex items-baseline gap-1.5"><span className="cx-num text-[21px] font-black tracking-[-0.02em]">{instant.length ? rupees(dueNow) : '₹0'}</span>{saving > 0 && <s className="cx-num text-[12px] font-bold text-[var(--ink-3)]">{rupees(sum(billAt(full, null), 'charge'))}</s>}</span>
             <span className="block truncate text-[11px] font-extrabold text-[var(--ink-3)]">{instant.length ? (balance ? `Advance · ${rupees(balance)} later` : saving ? `You save ${rupees(saving)}` : 'Total · nothing more to pay') : 'Nothing to pay now'}</span>
           </span>
-          <button type="button" disabled={!canPay} onClick={pay} className="cx-press cx-cta flex h-[56px] min-w-[56%] items-center justify-center gap-2 rounded-[18px] px-5 text-[16px] font-extrabold disabled:opacity-60" data-pay>
+          <button type="button" disabled={!canPay} onClick={pay} className="cx-press cx-cta cx-pay flex h-[56px] min-w-[56%] items-center justify-center gap-2 rounded-[18px] px-5 text-[16px] font-extrabold disabled:opacity-60" data-pay>
             {phase === 'booking' || phase === 'paying' ? <><Loader2 size={18} className="animate-spin" />{phase === 'booking' ? 'Booking…' : 'Opening payment…'}</>
               : <><Lock size={17} />{!user ? 'Sign in to pay' : instant.length ? 'Pay securely' : 'Send requests'}<ChevronRight size={18} /></>}
           </button>
@@ -570,6 +558,56 @@ function Plan({ on, onClick, title, sub, amount, foot, badge }) {
       <span className="text-[11.5px] font-bold text-[var(--ink-3)]">{sub}</span>
       {foot && <span className="mt-1 text-[11px] font-bold text-[#7A3E00]">{foot}</span>}
     </button>
+  )
+}
+
+/* The escrow promise, live (Mohan, 2026-10-28): light, strong ink, real
+   icons, and the five steps lighting up one after another — what happens
+   to the money, in order, with the amount the customer is about to pay. */
+function EscrowLive({ pay, date, masters }) {
+  const [at, setAt] = useState(0)
+  const reduce = useRef(typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)
+  useEffect(() => {
+    if (reduce.current) { setAt(4); return }
+    const t = setInterval(() => setAt(x => (x + 1) % 6), 1100)
+    return () => clearInterval(t)
+  }, [])
+  const day = date ? new Date(`${date}T00:00:00`).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : 'your date'
+  const steps = [
+    [CreditCard, pay ? `You pay ${rupees(pay)}` : 'You pay', 'UPI, card or netbanking — through Razorpay', 'Now'],
+    [Lock, 'Held securely in escrow', 'Sambramo holds it. No master can touch it yet.', 'Instantly'],
+    [BadgeCheck, `${masters > 1 ? 'Your masters are' : 'Your master is'} confirmed`, 'Told at once — they call you before the day', 'In seconds'],
+    [PartyPopper, 'Your event happens', 'You celebrate; we stay on call', day],
+    [HandCoins, 'Released to your masters', 'Only after the event is delivered', 'After the event'],
+  ]
+  return (
+    <section className="mx-3 mt-3 overflow-hidden rounded-[24px] bg-white shadow-[0_0_0_1.5px_#CDEFDC]" data-escrow>
+      <div className="flex items-center gap-3 bg-gradient-to-r from-[#E9FBF2] to-[#F4FDF8] px-4 py-3.5">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[13px] bg-[#0E9F6E] text-white shadow-[0_8px_16px_-10px_rgba(14,159,110,.9)]"><ShieldCheck size={21} strokeWidth={2.4} /></span>
+        <span className="min-w-0 flex-1"><span className="block text-[15.5px] font-black tracking-[-0.01em] text-[#064E3B]">Your payment is protected</span><span className="block text-[12px] font-bold text-[#047857]">Held in escrow until your event is delivered</span></span>
+        <span className="flex shrink-0 items-center gap-1 rounded-full bg-white px-2 py-1 text-[10.5px] font-black uppercase tracking-[0.08em] text-[#047857] ring-1 ring-[#BFEBD5]"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#10B981]" />Live</span>
+      </div>
+      <ol className="relative px-4 pb-3 pt-3">
+        <span aria-hidden className="absolute bottom-7 left-[35px] top-7 w-[2px] rounded bg-[#E3F5EC]" />
+        <span aria-hidden className="absolute left-[35px] top-7 w-[2px] rounded bg-gradient-to-b from-[#10B981] to-[#0E9F6E] transition-all duration-700 ease-out" style={{ height: `calc((100% - 56px) * ${Math.min(at, 4) / 4})` }} />
+        {steps.map(([Icon, title, sub, when], i) => {
+          const done = i < at, now = i === Math.min(at, 4)
+          return (
+            <li key={title} className="relative flex items-center gap-3 py-2" data-escrow-step={i}>
+              <span className={'relative z-[1] grid h-[38px] w-[38px] shrink-0 place-items-center rounded-full transition-all duration-500 ' + (done ? 'bg-[#0E9F6E] text-white' : now ? 'bg-white text-[#0E9F6E] shadow-[0_0_0_2px_#10B981,0_0_0_7px_rgba(16,185,129,.16)]' : 'bg-[#F3F8F5] text-[#9BB3A6]')}>
+                {done ? <Check size={18} strokeWidth={3} /> : <Icon size={18} strokeWidth={2.3} />}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className={'block text-[14px] font-extrabold transition-colors duration-500 ' + (done || now ? 'text-[#0F2A1E]' : 'text-[#7C8E84]')}>{title}</span>
+                <span className="block truncate text-[11.5px] font-semibold text-[#5E7268]">{sub}</span>
+              </span>
+              <span className={'shrink-0 rounded-full px-2 py-0.5 text-[10.5px] font-extrabold transition-colors duration-500 ' + (now ? 'bg-[#0E9F6E] text-white' : done ? 'bg-[#E7F8EF] text-[#047857]' : 'bg-[#F3F8F5] text-[#7C8E84]')}>{when}</span>
+            </li>
+          )
+        })}
+      </ol>
+      <p className="border-t border-[#EAF6EF] px-4 py-2.5 text-[11.5px] font-bold text-[#3F5A4C]">If a master cancels, every rupee comes back to you.</p>
+    </section>
   )
 }
 

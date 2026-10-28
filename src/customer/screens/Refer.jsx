@@ -25,6 +25,7 @@ import { Link } from 'react-router-dom'
 import { Check, ChevronDown, ChevronRight, Copy, Gift, Loader2, MessageCircle, PartyPopper, Share2, Sparkles, Trophy, UserPlus, Wallet } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { BackHeader } from '../ui/kit'
+import Twinkle from '../ui/Twinkle'
 import { WELCOME, REFERRAL, myVouchers, myReferrals, claimReferralRewards, usable } from '../lib/rewards'
 
 const PUBLIC_ORIGIN = 'https://sambramoh.vercel.app'
@@ -181,17 +182,18 @@ function HoloTicket({ code, copied, onCopy }) {
   return (
     <div className="mx-3 mt-2" style={{ perspective: '900px' }}>
       <section ref={ref} onPointerMove={move} onPointerDown={move} onPointerLeave={() => setT(s => ({ ...s, on: false }))}
-        className="relative overflow-hidden rounded-[28px] text-white shadow-[0_26px_48px_-26px_rgba(58,18,144,.95)] transition-transform duration-200 ease-out"
-        style={{ transform: `rotateX(${rx}deg) rotateY(${ry}deg)`, background: 'radial-gradient(120% 90% at 0% 0%, #7C3AED 0%, transparent 55%), radial-gradient(90% 80% at 100% 100%, #DB2777 0%, transparent 60%), linear-gradient(135deg, #1B0B33 0%, #3B1670 55%, #5B21A8 100%)', touchAction: 'pan-y' }} data-ref-ticket>
-        <div aria-hidden className="pointer-events-none absolute inset-0 opacity-70 mix-blend-screen" style={{ background: `radial-gradient(240px 160px at ${t.x * 100}% ${t.y * 100}%, rgba(255,255,255,.35), transparent 60%), conic-gradient(from ${t.x * 360}deg at 50% 50%, rgba(124,240,192,.0), rgba(124,240,192,.18), rgba(255,194,75,.18), rgba(244,114,182,.18), rgba(124,240,192,.0))` }} />
-        <div aria-hidden className="pointer-events-none absolute inset-0 opacity-40" style={{ backgroundImage: 'radial-gradient(rgba(255,255,255,.16) 1.2px, transparent 1.3px)', backgroundSize: '16px 16px' }} />
+        className="relative overflow-hidden rounded-[28px] text-[#1B0B33] shadow-[0_22px_44px_-26px_rgba(91,33,168,.7)] ring-1 ring-[#E9DDFB] transition-transform duration-200 ease-out"
+        style={{ transform: `rotateX(${rx}deg) rotateY(${ry}deg)`, background: 'radial-gradient(110% 90% at 0% 0%, #EBDDFF 0%, transparent 55%), radial-gradient(90% 80% at 100% 100%, #FFE0EF 0%, transparent 60%), linear-gradient(135deg, #FFFFFF 0%, #FAF6FF 55%, #FFF6FA 100%)', touchAction: 'pan-y' }} data-ref-ticket>
+        <div aria-hidden className="pointer-events-none absolute inset-0 opacity-90" style={{ background: `radial-gradient(240px 160px at ${t.x * 100}% ${t.y * 100}%, rgba(255,255,255,.9), transparent 60%), conic-gradient(from ${t.x * 360}deg at 50% 50%, rgba(52,211,153,0), rgba(52,211,153,.14), rgba(251,191,36,.14), rgba(244,114,182,.14), rgba(52,211,153,0))` }} />
+        <div aria-hidden className="pointer-events-none absolute inset-0 opacity-60" style={{ backgroundImage: 'radial-gradient(rgba(91,33,168,.10) 1.2px, transparent 1.3px)', backgroundSize: '16px 16px' }} />
+        <Twinkle />
         <div className="relative p-5">
-          <p className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[0.2em] text-white/75"><Sparkles size={13} />Sambramo · invite pass</p>
+          <p className="flex items-center gap-2 text-[#5B21A8]"><span className="cx-brand text-[15px]">Sambramo</span><span className="rounded-full bg-[#F0E9FF] px-2 py-0.5 text-[11px] font-extrabold">Invite pass</span><Sparkles size={14} className="text-[#C026D3]" /></p>
           <div className="mt-3 grid grid-cols-2 gap-2.5">
-            <span className="rounded-[18px] bg-white/10 p-3 ring-1 ring-white/20">
-              <span className="block text-[11px] font-extrabold uppercase tracking-[0.12em] text-white/70">They get</span>
-              <span className="mt-1 block text-[30px] font-black leading-none">25%</span>
-              <span className="mt-1 block text-[11.5px] font-bold text-white/85">off their first booking + free invite</span>
+            <span className="rounded-[18px] bg-white p-3 shadow-[0_10px_22px_-16px_rgba(91,33,168,.7)] ring-1 ring-[#EADFFB]">
+              <span className="block text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#7A6E8F]">They get</span>
+              <span className="mt-1 block text-[30px] font-black leading-none text-[#5B21A8]">25%</span>
+              <span className="mt-1 block text-[11.5px] font-bold text-[#4A3B5E]">off their first booking + free invite</span>
             </span>
             <span className="rounded-[18px] bg-gradient-to-br from-[#FFC24B] to-[#FF8A4C] p-3 text-[#3B1670] shadow-[0_10px_24px_-12px_rgba(255,194,75,.9)]">
               <span className="block text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#3B1670]/70">You get</span>
@@ -201,15 +203,15 @@ function HoloTicket({ code, copied, onCopy }) {
           </div>
         </div>
         <div className="relative flex items-center">
-          <span className="absolute -left-3 h-6 w-6 rounded-full bg-[#F5F2FA]" /><span className="absolute -right-3 h-6 w-6 rounded-full bg-[#F5F2FA]" />
-          <span className="mx-5 h-0 flex-1 border-t-2 border-dashed border-white/35" />
+          <span className="absolute -left-3 h-6 w-6 rounded-full bg-[#F5F2FA] ring-1 ring-[#E9DDFB]" /><span className="absolute -right-3 h-6 w-6 rounded-full bg-[#F5F2FA] ring-1 ring-[#E9DDFB]" />
+          <span className="mx-5 h-0 flex-1 border-t-2 border-dashed border-[#DCCBF7]" />
         </div>
         <div className="relative flex items-center gap-3 p-5 pt-4">
           <div className="min-w-0 flex-1">
-            <p className="text-[10.5px] font-extrabold uppercase tracking-[0.18em] text-white/65">Your code</p>
-            <p className="cx-num mt-0.5 truncate text-[28px] font-black tracking-[0.12em]" data-ref-code>{code ?? '· · · · ·'}</p>
+            <p className="text-[10.5px] font-extrabold uppercase tracking-[0.18em] text-[#7A6E8F]">Your code</p>
+            <p className="cx-code mt-0.5 truncate text-[28px] text-[#3B1670]" data-ref-code>{code ?? '· · · · ·'}</p>
           </div>
-          <button type="button" onClick={onCopy} disabled={!code} className="cx-press flex h-11 items-center gap-1.5 rounded-full bg-white px-4 text-[13px] font-extrabold text-[#3B1670] disabled:opacity-50" data-copy-code>
+          <button type="button" onClick={onCopy} disabled={!code} className="cx-press cx-cta flex h-11 items-center gap-1.5 rounded-full px-4 text-[13px] font-extrabold disabled:opacity-50" data-copy-code>
             {copied ? <><Check size={15} strokeWidth={3} />Copied</> : <><Copy size={15} />Copy</>}
           </button>
         </div>
@@ -229,9 +231,10 @@ export function MiniVoucher({ v }) {
   const ref = v.kind === 'referral_pct'
   return (
     <Link to={rsvp ? '/invites/new' : '/explore'} className={'relative block w-[190px] shrink-0 overflow-hidden rounded-[18px] p-3 ' + (ok ? (rsvp ? 'bg-[#FDF2F8]' : ref ? 'bg-[#F3ECFF]' : 'bg-[#FFF8E7]') : 'bg-[#F4F1F8] opacity-70')} data-mini-voucher={v.kind}>
+      {ok && <Twinkle count={4} color={rsvp ? '#DB2777' : '#7C3AED'} />}
       <span className="text-[20px]">{rsvp ? '💌' : ref ? '🏆' : '🎉'}</span>
       <span className={'block text-[13.5px] font-black ' + (rsvp ? 'text-[#9D174D]' : ref ? 'text-[#5B21A8]' : 'text-[#9A3412]')}>{rsvp ? 'Free first invitation' : ref ? `${v.terms?.pct ?? 25}% off · referral` : `${v.terms?.pct ?? 25}% off first booking`}</span>
-      <span className="cx-num block truncate text-[10.5px] font-extrabold tracking-[0.06em] text-[var(--ink-3)]">{v.code}</span>
+      <span className="cx-code block truncate text-[10.5px] text-[var(--ink-3)]">{v.code}</span>
       <span className="block text-[11px] font-bold text-[var(--ink-3)]">{ok ? 'Ready to use' : v.status === 'used' ? 'Used' : 'Expired'}</span>
     </Link>
   )

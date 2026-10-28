@@ -82,7 +82,7 @@ export default function SplashScreen() {
           would be putting a claim on the first screen anybody sees. So
           the rule goes with it: a hairline under a tagline with
           nothing beneath it is a line that dangles. */}
-      <p className="app-splash-tagline"><span className="app-splash-hl">Event booking</span> done in minutes</p>
+      <p className="app-splash-tagline"><span className="app-splash-hl">Event Booking</span> Done In Minutes</p>
 
       {/* The reference has NO loader — Zomato shows the lockup and
           nothing else. Asked for one, so it is here, but kept at the

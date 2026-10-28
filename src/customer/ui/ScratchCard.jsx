@@ -3,7 +3,7 @@
  * should move here and there instead of the person doing it").
  *
  * The reward is rendered underneath; a canvas on top is painted as
- * holographic foil — deep plum, iridescent bands, a fine grain, the
+ * holographic pearl foil — white to lilac, iridescent bands, a fine grain, the
  * SAMBRAMO wordmark — with a band of light that keeps sweeping across it.
  * After a beat, a glowing hand zig-zags over the card and erases the foil
  * as it goes; a finger can scratch too, at any time. When about 45% is
@@ -12,6 +12,7 @@
  * not run.
  */
 import { useEffect, useRef, useState } from 'react'
+import Twinkle from './Twinkle'
 
 export default function ScratchCard({ children, onReveal, className = '', auto = true }) {
   const box = useRef(null)
@@ -45,10 +46,10 @@ export default function ScratchCard({ children, onReveal, className = '', auto =
     const g = c.getContext('2d')
     g.scale(dpr, dpr)
     const base = g.createLinearGradient(0, 0, w, h)
-    base.addColorStop(0, '#1B0B33'); base.addColorStop(0.5, '#3B1670'); base.addColorStop(1, '#5B21A8')
+    base.addColorStop(0, '#FFFFFF'); base.addColorStop(0.5, '#EFE6FF'); base.addColorStop(1, '#FCE4F1')
     g.fillStyle = base; g.fillRect(0, 0, w, h)
     /* iridescent bands, laid diagonally */
-    const bands = [['rgba(124,240,192,.30)', 0.18], ['rgba(255,194,75,.26)', 0.42], ['rgba(244,114,182,.30)', 0.64], ['rgba(167,139,250,.34)', 0.86]]
+    const bands = [['rgba(52,211,153,.30)', 0.18], ['rgba(251,191,36,.30)', 0.42], ['rgba(244,114,182,.32)', 0.64], ['rgba(139,92,246,.30)', 0.86]]
     g.save(); g.translate(w / 2, h / 2); g.rotate(-0.5); g.translate(-w, -h)
     for (const [col, at] of bands) {
       const y = at * h * 2, lg = g.createLinearGradient(0, y - h * 0.22, 0, y + h * 0.22)
@@ -58,28 +59,30 @@ export default function ScratchCard({ children, onReveal, className = '', auto =
     g.restore()
     /* grain */
     for (let i = 0; i < 900; i++) {
-      g.fillStyle = `rgba(255,255,255,${(i % 7) * 0.012})`
+      g.fillStyle = `rgba(91,33,168,${(i % 7) * 0.008})`
       g.fillRect((i * 73.3) % w, (i * 37.7) % h, 1.2, 1.2)
     }
     /* sparkles */
-    g.fillStyle = 'rgba(255,255,255,.85)'
+    g.fillStyle = 'rgba(192,38,211,.55)'
     for (const [fx, fy, s] of [[0.14, 0.16, 5], [0.86, 0.22, 4], [0.78, 0.78, 6], [0.2, 0.82, 3.5], [0.52, 0.12, 3]]) {
       const x = fx * w, y = fy * h
       g.beginPath(); g.moveTo(x, y - s * 2); g.lineTo(x + s * 0.5, y - s * 0.5); g.lineTo(x + s * 2, y); g.lineTo(x + s * 0.5, y + s * 0.5)
       g.lineTo(x, y + s * 2); g.lineTo(x - s * 0.5, y + s * 0.5); g.lineTo(x - s * 2, y); g.lineTo(x - s * 0.5, y - s * 0.5); g.closePath(); g.fill()
     }
     g.textAlign = 'center'
-    g.fillStyle = 'rgba(255,255,255,.62)'
-    g.font = `800 ${Math.round(w * 0.042)}px Manrope, system-ui, sans-serif`
-    if ('letterSpacing' in g) g.letterSpacing = `${Math.round(w * 0.012)}px`
+    /* the wordmark exactly as the splash sets it: Manrope 900, 0.06em */
+    const wf = Math.round(w * 0.06)
+    g.fillStyle = 'rgba(91,33,168,.8)'
+    g.font = `900 ${wf}px Manrope, system-ui, sans-serif`
+    if ('letterSpacing' in g) g.letterSpacing = `${(wf * 0.06).toFixed(1)}px`
     g.fillText('SAMBRAMO', w / 2, h * 0.2)
     const tg = g.createLinearGradient(w * 0.2, 0, w * 0.8, 0)
-    tg.addColorStop(0, '#FFFFFF'); tg.addColorStop(0.5, '#FDE68A'); tg.addColorStop(1, '#F9A8D4')
+    tg.addColorStop(0, '#5B21A8'); tg.addColorStop(0.5, '#A21CAF'); tg.addColorStop(1, '#DB2777')
     g.fillStyle = tg
     if ('letterSpacing' in g) g.letterSpacing = '0px'
     g.font = `900 ${Math.round(w * 0.15)}px Manrope, system-ui, sans-serif`
     g.fillText('SCRATCH', w / 2, h * 0.54)
-    g.fillStyle = 'rgba(255,255,255,.78)'
+    g.fillStyle = 'rgba(59,22,112,.78)'
     g.font = `800 ${Math.round(w * 0.045)}px Manrope, system-ui, sans-serif`
     g.fillText('A welcome gift is hiding here', w / 2, h * 0.66)
   }, [])
@@ -96,7 +99,8 @@ export default function ScratchCard({ children, onReveal, className = '', auto =
       .map(([x, y]) => [x * w, y * h])
     const seg = pts.slice(1).map((p, i) => Math.hypot(p[0] - pts[i][0], p[1] - pts[i][1]))
     const len = seg.reduce((a, b) => a + b, 0)
-    const dur = 2600, startAt = 650, r = Math.max(22, w * 0.1)
+    /* slow enough to enjoy: ~3.4 s of hand, and it uncovers most of the card before it lifts */
+    const dur = 3400, startAt = 600, r = Math.max(20, w * 0.085)
     let raf = 0, t0 = 0, last = null, checks = 0
     const at = d => {
       let i = 0
@@ -117,7 +121,7 @@ export default function ScratchCard({ children, onReveal, className = '', auto =
       if (last) { const steps = Math.ceil(Math.hypot(x - last[0], y - last[1]) / (r * 0.4)); for (let s = 1; s <= steps; s++) erase(last[0] + ((x - last[0]) * s) / steps, last[1] + ((y - last[1]) * s) / steps, r) }
       else erase(x, y, r)
       last = [x, y]
-      if (++checks % 10 === 0 && cleared() > 0.45) { reveal(); hd.style.opacity = '0'; return }
+      if (++checks % 10 === 0 && cleared() > 0.7) { reveal(); hd.style.opacity = '0'; return }
       if (k < 1) raf = requestAnimationFrame(step)
       else { hd.style.opacity = '0'; reveal() }
     }
@@ -133,10 +137,11 @@ export default function ScratchCard({ children, onReveal, className = '', auto =
   }
 
   return (
-    <div ref={box} className={'relative overflow-hidden rounded-[26px] shadow-[0_30px_60px_-24px_rgba(27,11,51,.85)] ' + className} data-scratch={done ? 'open' : 'covered'}>
+    <div ref={box} className={'relative overflow-hidden rounded-[26px] shadow-[0_26px_50px_-24px_rgba(91,33,168,.55)] ring-1 ring-[#EADFFB] ' + className} data-scratch={done ? 'open' : 'covered'}>
       <div className="absolute inset-0">{children}</div>
       <canvas ref={cv} onPointerDown={scratch} onPointerMove={scratch} className={'absolute inset-0 h-full w-full touch-none transition-opacity duration-500 ' + (done ? 'pointer-events-none opacity-0' : 'opacity-100')} aria-label="Scratch to reveal your reward" />
-      {!done && <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden"><span className="cx-foil-sheen absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-white/25 to-transparent" /></span>}
+      {!done && <Twinkle color="#A21CAF" accent="#F59E0B" />}
+      {!done && <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden"><span className="cx-foil-sheen absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-white/70 to-transparent" /></span>}
       <span ref={hand} aria-hidden className="pointer-events-none absolute left-0 top-0 z-[2] opacity-0 transition-opacity duration-200" style={{ willChange: 'transform' }}>
         <span className="relative block text-[36px] leading-none drop-shadow-[0_6px_10px_rgba(0,0,0,.45)]">
           <span className="absolute -left-2 -top-2 h-[52px] w-[52px] rounded-full bg-[#FDE68A]/30 blur-[10px]" />
@@ -144,7 +149,7 @@ export default function ScratchCard({ children, onReveal, className = '', auto =
         </span>
       </span>
       {done && <Burst />}
-      {!done && <button type="button" onClick={reveal} className="absolute bottom-3 left-1/2 z-[3] -translate-x-1/2 rounded-full bg-white/15 px-3 py-1 text-[11.5px] font-extrabold text-white ring-1 ring-white/35" data-reveal>Tap to reveal</button>}
+      {!done && <button type="button" onClick={reveal} className="absolute bottom-3 left-1/2 z-[3] -translate-x-1/2 rounded-full bg-white px-3 py-1 text-[11.5px] font-extrabold text-[#5B21A8] shadow-[0_6px_14px_-8px_rgba(91,33,168,.6)] ring-1 ring-[#E4D8F8]" data-reveal>Tap to reveal</button>}
     </div>
   )
 }

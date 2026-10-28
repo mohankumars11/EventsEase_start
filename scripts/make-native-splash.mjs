@@ -10,7 +10,7 @@
  * was the old serif "Sambramo · Celebrations, arranged" on a dark royal
  * gradient — so a customer saw two different splashes. This redraws every
  * size with exactly what the in-app splash shows: the flat #5B21A8 ground,
- * SAMBRAMO in heavy Manrope, and "Event booking done in minutes" with the
+ * SAMBRAMO in heavy Manrope, and "Event Booking Done In Minutes" with the
  * lead words highlighted. The sizes are read from the existing files.
  *
  * Drawn by headless Edge's canvas (no image library on this machine),
@@ -60,9 +60,9 @@ const r = await call('Runtime.evaluate', { returnByValue: true, awaitPromise: tr
     g.fillText('SAMBRAMO', w / 2, cy);
     g.shadowBlur = 0;
     if ('letterSpacing' in g) g.letterSpacing = '0px';
-    // the tagline: "Event booking" on a highlighter pill, then "done in minutes"
+    // the tagline: "Event Booking" on a highlighter pill, then "Done In Minutes"
     const ts = Math.round(base * 0.046);
-    const lead = 'Event booking', rest = ' done in minutes';
+    const lead = 'Event Booking', rest = ' Done In Minutes';
     g.font = '800 ' + ts + 'px Manrope'; const lw = g.measureText(lead).width;
     g.font = '600 ' + ts + 'px Manrope'; const rw = g.measureText(rest).width;
     const pad = ts * 0.28, total = lw + pad * 2 + rw, x0 = w / 2 - total / 2, ty = cy + ws * 0.62 + ts;

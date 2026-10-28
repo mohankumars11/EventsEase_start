@@ -33,6 +33,7 @@ import { claimWelcome, recordConsent, welcomeFine } from '../lib/rewards'
 import { AgreeLine, PolicyDoc } from './Legal'
 import { POLICIES } from '../data/policies'
 import { Sheet } from '../ui/kit'
+import Twinkle from '../ui/Twinkle'
 import ScratchCard from '../ui/ScratchCard'
 
 const FLAG = 'sbm.cx.onboard.v1'
@@ -288,8 +289,8 @@ function useSplashGone() {
 
 /* ── 3. Welcome scratch cards ─────────────────────────────────────── */
 const REWARD_ART = {
-  free_rsvp: { emoji: '💌', tone: 'radial-gradient(110% 80% at 50% 0%, rgba(192,38,211,.55) 0%, transparent 60%), linear-gradient(160deg, #1B0B33 0%, #3B1670 55%, #6B1D6E 100%)', ink: '#FFFFFF', glow: '#F9A8D4', kicker: 'Free RSVP', big: 'FREE', unit: 'first invitation', line: 'Premium designs, live RSVP, guest care & style circles — on us for your first invitation.', cta: 'Use it in Invitations' },
-  welcome_pct: { emoji: '🎉', tone: 'radial-gradient(110% 80% at 50% 0%, rgba(245,158,11,.5) 0%, transparent 58%), linear-gradient(160deg, #140828 0%, #2E0F5C 55%, #5B21A8 100%)', ink: '#FFFFFF', glow: '#FFC24B', kicker: 'Welcome offer', big: '25%', unit: 'OFF', line: welcomeFine, cta: 'Use on my first booking' },
+  free_rsvp: { emoji: '💌', tone: 'radial-gradient(110% 80% at 50% 0%, rgba(244,114,182,.28) 0%, transparent 60%), linear-gradient(160deg, #FFFFFF 0%, #FFF0F7 55%, #F5ECFF 100%)', ink: '#5B1240', glow: '#DB2777', kicker: 'Free RSVP', big: 'FREE', unit: 'first invitation', line: 'Premium designs, live RSVP, guest care & style circles — on us for your first invitation.', cta: 'Use it in Invitations' },
+  welcome_pct: { emoji: '🎉', tone: 'radial-gradient(110% 80% at 50% 0%, rgba(251,191,36,.32) 0%, transparent 58%), linear-gradient(160deg, #FFFFFF 0%, #FFF7E6 55%, #FFEFF4 100%)', ink: '#5A2A00', glow: '#EA580C', kicker: 'Welcome offer', big: '25%', unit: 'OFF', line: welcomeFine, cta: 'Use on my first booking' },
 }
 function Rewards({ onDone }) {
   const { user, profile } = useAuth()
@@ -303,37 +304,39 @@ function Rewards({ onDone }) {
   const a = cur ? REWARD_ART[cur.kind] : null
   const isLast = list && k >= list.length - 1
   return (
-    <section className="relative flex flex-1 flex-col overflow-hidden bg-[radial-gradient(120%_70%_at_50%_0%,#3B0F80_0%,#1A0838_60%,#0D0420_100%)] text-white" data-rewards>
-      <div aria-hidden className="cx-reward-glow pointer-events-none absolute left-1/2 top-[28%] h-[340px] w-[340px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(236,72,153,.35)_0%,transparent_65%)]" />
+    <section className="relative flex flex-1 flex-col overflow-hidden bg-[radial-gradient(120%_70%_at_50%_0%,#F1E8FF_0%,#FFF7FB_55%,#FFFFFF_100%)] text-[#1B0B33]" data-rewards>
+      <div aria-hidden className="cx-reward-glow pointer-events-none absolute left-1/2 top-[28%] h-[340px] w-[340px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(236,72,153,.18)_0%,transparent_65%)]" />
       <div className="relative px-6 pt-8 text-center">
-        <p className="text-[13px] font-extrabold uppercase tracking-[0.2em] text-[#F9A8D4]">Congratulations</p>
+        <p className="text-[13px] font-extrabold uppercase tracking-[0.2em] text-[#C026D3]">Congratulations</p>
         <h1 className="mt-2 text-[28px] font-black leading-[1.08] tracking-[-0.03em]">Welcome to Sambramo{first ? `, ${first}` : ''} 💜</h1>
-        <p className="mt-2 text-[14px] font-semibold text-white/75">{list === null ? 'Wrapping your welcome gifts…' : list.length ? `You’ve earned ${list.length} scratch card${list.length === 1 ? '' : 's'}. Scratch to unlock!` : 'Your rewards will appear in Account → Rewards.'}</p>
+        <p className="mt-2 text-[14px] font-semibold text-[#5B4A72]">{list === null ? 'Wrapping your welcome gifts…' : list.length ? `You’ve earned ${list.length} scratch card${list.length === 1 ? '' : 's'}. Scratch to unlock!` : 'Your rewards will appear in Account → Rewards.'}</p>
       </div>
       <div className="relative mx-auto mt-6 w-[80%] max-w-[320px]">
-        {list === null && <div className="grid aspect-square place-items-center rounded-[26px] bg-white/10"><Loader2 className="animate-spin" /></div>}
+        {list === null && <div className="grid aspect-square place-items-center rounded-[26px] bg-white shadow-[0_0_0_1px_#EEE6FA]"><Loader2 className="animate-spin text-[#5B21A8]" /></div>}
         {cur && (
           <ScratchCard key={cur.id} className="aspect-square" onReveal={() => setOpen(o => ({ ...o, [cur.id]: true }))}>
-            <div className="flex h-full flex-col items-center justify-center p-5 text-center" style={{ background: a.tone, color: a.ink }} data-reward={cur.kind}>
+            <div className="relative flex h-full flex-col items-center justify-center p-5 text-center" style={{ background: a.tone, color: a.ink }} data-reward={cur.kind}>
+              <Twinkle color={a.glow} />
+              <p className="cx-brand absolute left-0 right-0 top-4 text-[12px] text-[#5B21A8]/80">Sambramo</p>
               <span className="text-[44px] leading-none">{a.emoji}</span>
               <p className="mt-2 text-[11px] font-extrabold uppercase tracking-[0.2em] opacity-80">{a.kicker}</p>
-              <p className="mt-1 text-[54px] font-black leading-none tracking-[-0.04em]" style={{ color: a.glow, textShadow: `0 0 26px ${a.glow}88` }}>{a.big}<span className="ml-1 text-[18px] tracking-normal">{a.unit}</span></p>
+              <p className="mt-1 text-[54px] font-black leading-none tracking-[-0.04em]" style={{ color: a.glow, textShadow: `0 8px 22px ${a.glow}33` }}>{a.big}<span className="ml-1 text-[18px] tracking-normal">{a.unit}</span></p>
               <p className="mt-2 text-[12.5px] font-bold leading-snug opacity-85">{a.line}</p>
-              <p className="cx-num mt-3 rounded-full bg-white/10 px-3 py-1 text-[12px] font-black tracking-[0.12em] ring-1 ring-white/30" style={{ color: a.glow }}>{cur.code}</p>
+              <p className="cx-code mt-3 rounded-full bg-white px-3 py-1 text-[12px] shadow-[0_6px_14px_-8px_rgba(91,33,168,.5)] ring-1 ring-current" style={{ color: a.glow }}>{cur.code}</p>
             </div>
           </ScratchCard>
         )}
       </div>
-      {list?.length > 1 && <div className="relative mt-4 flex justify-center gap-1.5">{list.map((v, i) => <span key={v.id} className={'h-1.5 rounded-full transition-all ' + (i === k ? 'w-5 bg-white' : 'w-1.5 bg-white/35')} />)}</div>}
+      {list?.length > 1 && <div className="relative mt-4 flex justify-center gap-1.5">{list.map((v, i) => <span key={v.id} className={'h-1.5 rounded-full transition-all ' + (i === k ? 'w-5 bg-[#5B21A8]' : 'w-1.5 bg-[#5B21A8]/25')} />)}</div>}
       <div className="relative mt-auto px-5 pb-[calc(env(safe-area-inset-bottom,0px)+20px)] pt-6">
         {cur && open[cur.id] ? (
-          <button type="button" onClick={() => (isLast ? finish() : setK(x => x + 1))} className="cx-press cx-pop flex h-14 w-full items-center justify-center gap-2 rounded-[18px] bg-white text-[16px] font-extrabold text-[#3B0F80]" data-reward-next>
+          <button type="button" onClick={() => (isLast ? finish() : setK(x => x + 1))} className="cx-press cx-pop cx-cta cx-pay flex h-14 w-full items-center justify-center gap-2 rounded-[18px] text-[16px] font-extrabold" data-reward-next>
             {isLast ? 'Start celebrating' : 'Scratch the next card'}<ArrowRight size={18} />
           </button>
         ) : (
-          <p className="text-center text-[13px] font-bold text-white/70">{cur ? 'Scratch the card with your finger 👆' : ''}</p>
+          <p className="text-center text-[13px] font-bold text-[#5B4A72]">{cur ? 'Watch it scratch — or use your finger' : ''}</p>
         )}
-        <button type="button" onClick={finish} className="mt-2 h-11 w-full text-[13px] font-extrabold text-white/60" data-reward-later>{list?.length ? 'Later — they’re saved in Account → Rewards' : 'Continue'}</button>
+        <button type="button" onClick={finish} className="mt-2 h-11 w-full text-[13px] font-extrabold text-[#7A6E8F]" data-reward-later>{list?.length ? 'Later — they’re saved in Account → Rewards' : 'Continue'}</button>
       </div>
     </section>
   )

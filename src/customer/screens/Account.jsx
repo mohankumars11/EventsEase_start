@@ -67,22 +67,22 @@ export default function Account() {
       </header>
 
       {/* Who you are */}
-      <section className="mx-3 mt-3 overflow-hidden rounded-[26px] bg-gradient-to-br from-[#1C1033] via-[#3B1A6B] to-[#5B21B6] p-4 text-white shadow-[0_22px_40px_-26px_rgba(28,16,51,.9)]" data-profile-card>
+      <section className="mx-3 mt-3 overflow-hidden rounded-[26px] bg-gradient-to-br from-[#FFFFFF] via-[#F6F0FF] to-[#FFF1F8] p-4 text-[#1B0B33] shadow-[0_18px_36px_-26px_rgba(91,33,168,.7)] ring-1 ring-[#E9DDFB]" data-profile-card>
         <div className="flex items-center gap-3.5">
-          <span className="relative grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-[22px] bg-gradient-to-br from-[#A78BFA] to-[#DB2777] text-[24px] font-black ring-2 ring-white/30">
+          <span className="relative grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-[22px] bg-gradient-to-br from-[#A78BFA] to-[#DB2777] text-[24px] font-black text-white ring-2 ring-white">
             {photo ? <img src={photo} alt="" className="absolute inset-0 h-full w-full object-cover" referrerPolicy="no-referrer" /> : (name ? name[0].toUpperCase() : <UserRound size={26} />)}
           </span>
           <div className="min-w-0 flex-1">
-            {user ? <><p className="truncate text-[19px] font-black tracking-[-0.02em]">{name}</p><p className="truncate text-[12.5px] font-semibold text-white/70">{user.email}</p></>
-              : <><p className="text-[17px] font-black">Plan, book and pay in one place</p><button type="button" onClick={() => setSignIn(true)} className="cx-press mt-2 rounded-full bg-white px-4 py-2 text-[13px] font-extrabold text-[#3B1A6B]">Sign in</button></>}
+            {user ? <><p className="truncate text-[19px] font-black tracking-[-0.02em]">{name}</p><p className="truncate text-[12.5px] font-semibold text-[#6B5E80]">{user.email}</p></>
+              : <><p className="text-[17px] font-black">Plan, book and pay in one place</p><button type="button" onClick={() => setSignIn(true)} className="cx-press cx-cta mt-2 rounded-full px-4 py-2 text-[13px] font-extrabold">Sign in</button></>}
           </div>
         </div>
         <div className="mt-4 grid grid-cols-4 gap-2 text-center">
           {[[CalendarHeart, 'Bookings', '/plans', plan.bookings?.length], [MailOpen, 'Invites', '/invites'], [Gift, 'Rewards', '/rewards'], [Heart, 'Saved', '/saved', plan.saved.length]].map(([I, l, to, n]) => (
-            <Link key={l} to={to} className="cx-press relative rounded-[16px] bg-white/10 py-3 ring-1 ring-white/15" data-quick={l}>
-              <I size={20} className="mx-auto" />
+            <Link key={l} to={to} className="cx-press relative rounded-[16px] bg-white py-3 text-[#3B1670] shadow-[0_8px_18px_-14px_rgba(91,33,168,.7)] ring-1 ring-[#EEE6FA]" data-quick={l}>
+              <I size={20} className="mx-auto text-[#7C3AED]" />
               <span className="mt-1 block text-[11.5px] font-extrabold">{l}</span>
-              {n ? <span className="cx-num absolute right-1.5 top-1.5 rounded-full bg-[#F472B6] px-1.5 text-[10px] font-black">{n}</span> : null}
+              {n ? <span className="cx-num absolute right-1.5 top-1.5 rounded-full bg-[#DB2777] px-1.5 text-[10px] font-black text-white">{n}</span> : null}
             </Link>
           ))}
         </div>
