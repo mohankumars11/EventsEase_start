@@ -14,7 +14,7 @@
 // forgotten regeneration is a broken build rather than a price that is
 // quietly out of date.
 //
-// inputs: fe426fe5431e71f5
+// inputs: 0f1d60e7364a1980
 // src/data/servicePricing.js
 var SIZE_BANDS = [
   { upTo: 30, factor: 0.45 },
@@ -4119,6 +4119,11 @@ var CANCELLATION_LADDER = {
    * wins. `hoursBefore: null` means "regardless of the date" — it is the
    * pre-acceptance rung, and it is about state, not time.
    */
+  /* The ladder the customer agrees to at sign-in (Mohan, 2026-10-28;
+     customer/data/policies.js LADDER is its wording). Migration 195's
+     cancellation_quote() is the copy that moves money; this one is the
+     copy that explains it. What is kept splits between the master and
+     Sambramo the way a delivered booking would. */
   rungs: [
     {
       id: "before_accept",
@@ -4130,31 +4135,49 @@ var CANCELLATION_LADDER = {
       why: "No master has accepted yet, so nobody has cleared their day."
     },
     {
-      id: "over_48h",
-      hoursBefore: 48,
+      id: "grace_15min",
+      hoursBefore: 72,
       requiresAccepted: true,
-      refundPct: 90,
-      partnerPct: 10,
-      scan: "10% goes to your master",
-      why: "They can still fill the day, but they turned work down for you."
+      refundPct: 100,
+      partnerPct: 0,
+      scan: "Full refund",
+      why: "Changed your mind within 15 minutes of paying, with the event at least 3 days away."
     },
     {
-      id: "within_48h",
-      hoursBefore: 12,
-      requiresAccepted: true,
-      refundPct: 75,
-      partnerPct: 25,
-      scan: "25% goes to your master",
-      why: "Two days out, most of the good work for that day is already taken."
-    },
-    {
-      id: "within_12h",
-      hoursBefore: 0,
+      id: "over_15d",
+      hoursBefore: 360,
       requiresAccepted: true,
       refundPct: 50,
       partnerPct: 50,
-      scan: "Half goes to your master",
-      why: "They have almost certainly bought materials and cannot refill the day."
+      scan: "50% refund",
+      why: "More than 15 days out \u2014 your master turned other work away for your date."
+    },
+    {
+      id: "days_7_15",
+      hoursBefore: 168,
+      requiresAccepted: true,
+      refundPct: 25,
+      partnerPct: 75,
+      scan: "25% refund",
+      why: "One to two weeks out, the date is hard to fill again."
+    },
+    {
+      id: "under_7d",
+      hoursBefore: 48,
+      requiresAccepted: true,
+      refundPct: 0,
+      partnerPct: 100,
+      scan: "No refund",
+      why: "Less than 7 days out \u2014 the master has turned other work away for your date."
+    },
+    {
+      id: "within_48h",
+      hoursBefore: 0,
+      requiresAccepted: true,
+      refundPct: 0,
+      partnerPct: 100,
+      scan: "No refund",
+      why: "Within 48 hours the master has bought materials and planned the day."
     },
     {
       id: "after_start",
@@ -4167,16 +4190,19 @@ var CANCELLATION_LADDER = {
     }
   ]
 };
-function instantCancellationRung({ eventDate, accepted, now = /* @__PURE__ */ new Date() }) {
+function instantCancellationRung({ eventDate, accepted, paidAt = null, now = /* @__PURE__ */ new Date() }) {
   const ladder = CANCELLATION_LADDER.rungs;
-  if (!accepted) return ladder.find((r) => r.id === "before_accept");
+  const rung = (id) => ladder.find((r) => r.id === id);
+  if (!accepted) return rung("before_accept");
   const when = eventDate instanceof Date ? eventDate : new Date(eventDate);
   if (Number.isNaN(when.getTime())) {
-    return ladder.find((r) => r.id === "over_48h");
+    return rung("over_15d");
   }
   const hoursOut = (when.getTime() - now.getTime()) / 36e5;
-  if (hoursOut < 0) return ladder.find((r) => r.id === "after_start");
-  return ladder.find((r) => r.requiresAccepted && r.hoursBefore >= 0 && hoursOut >= r.hoursBefore) ?? ladder.find((r) => r.id === "within_12h");
+  const paid = paidAt ? new Date(paidAt) : null;
+  if (paid && !Number.isNaN(paid.getTime()) && now - paid <= 15 * 6e4 && hoursOut >= 72) return rung("grace_15min");
+  if (hoursOut < 0) return rung("after_start");
+  return ladder.find((r) => r.requiresAccepted && r.id !== "grace_15min" && r.hoursBefore >= 0 && hoursOut >= r.hoursBefore) ?? rung("within_48h");
 }
 
 // src/config/instantBooking.js

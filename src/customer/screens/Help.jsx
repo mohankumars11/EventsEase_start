@@ -8,7 +8,7 @@
 import { Link } from 'react-router-dom'
 import { ChevronRight, Mail, MessageCircle, Phone, ReceiptText, ShieldCheck } from 'lucide-react'
 import { BRAND } from '../../config/sambramo'
-import { LADDER } from '../data/policies'
+import { LADDER, POLICY_VERSION } from '../data/policies'
 import { BackHeader } from '../ui/kit'
 
 const FAQ = [
@@ -66,7 +66,7 @@ export default function Help() {
             </details>
           ))}
         </div>
-        <p className="mt-6 text-[11.5px] font-semibold text-[var(--ink-3)]">Policy version {CANCELLATION_LADDER.version}. Terms of service apply to every booking.</p>
+        <p className="mt-6 text-[11.5px] font-semibold text-[var(--ink-3)]">Policy version {POLICY_VERSION}. Terms of service apply to every booking.</p>
       </section>
     </main>
   )

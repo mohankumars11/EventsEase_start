@@ -18,6 +18,9 @@ import { supabase } from '../../lib/supabase'
 import { myBookings, acceptQuote, confirmPaid, LINE_STATE } from '../lib/bookings'
 import { dayLabel, plural, rupees } from '../lib/format'
 import SignInSheet from './SignInSheet'
+import { Sheet } from '../ui/kit'
+import { CANCELLATION_LADDER } from '../../config/policies'
+import { BRAND } from '../../config/sambramo'
 
 const TONE = {
   ok: 'bg-[var(--ok-tint)] text-[var(--ok)]', act: 'bg-[#FFF4DA] text-[#7A4B00]', wait: 'bg-[var(--am-100)] text-[var(--am-ink)]',
@@ -40,6 +43,7 @@ export default function Booked({ tab = 'all' }) {
   const [busy, setBusy] = useState(null)
   const [msg, setMsg] = useState('')
   const [signIn, setSignIn] = useState(false)
+  const [cancelFor, setCancelFor] = useState(null)
 
   const load = useCallback(async () => {
     if (!user) return
@@ -120,6 +124,9 @@ export default function Booked({ tab = 'all' }) {
       {[...due, ...live].map((l, k) => (
         <div key={l.id}>
           <BookingCard line={l} />
+          {['pending', 'dispatching', 'accepted', 'paid'].includes(l.status) && (
+            <button type="button" onClick={() => setCancelFor(l)} className="ml-3 mt-1 text-[12px] font-extrabold text-[var(--ink-3)] underline-offset-2 hover:underline" data-cancel-open>Cancel booking</button>
+          )}
           {again && l.id === again.id && k === [...due, ...live].findIndex(x => x.id === again.id) && <BookAgain line={l} />}
         </div>
       ))}
@@ -162,6 +169,7 @@ export default function Booked({ tab = 'all' }) {
       ))}
 
       {!empty && <button type="button" onClick={load} className="cx-press mx-auto flex items-center gap-1.5 rounded-full px-3 py-2 text-[12.5px] font-extrabold text-[var(--brand)]"><RefreshCw size={14} />Refresh</button>}
+      <CancelSheet line={cancelFor} onClose={() => setCancelFor(null)} onDone={() => { setCancelFor(null); load() }} />
     </div>
   )
 }
@@ -216,5 +224,69 @@ function BookAgain({ line: l }) {
         <Link to={to} className="cx-press flex h-12 items-center justify-center gap-1.5 rounded-[16px] bg-white text-[13.5px] font-extrabold text-[var(--am-ink)] ring-1 ring-[#D6C2FF]"><FileText size={16} />View details</Link>
       </div>
     </section>
+  )
+}
+
+/* Cancel one booking (Mohan, 2026-10-28: the policy says "My Bookings →
+   the booking → Cancel", so it must exist). The server quotes first —
+   cancellation_quote, the same function that moves the money — and the
+   customer sees exactly what comes back before confirming. Until
+   migration 195 is pasted the database still answers on the OLD ladder,
+   so a quote without policy 2026-10-28 is refused here rather than
+   refunded on terms the customer never agreed to. */
+function CancelSheet({ line, onClose, onDone }) {
+  const [q, setQ] = useState(null)
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState('')
+  const [why, setWhy] = useState('')
+  useEffect(() => {
+    if (!line) return
+    setQ(null); setErr(''); setWhy('')
+    supabase.rpc('cancellation_quote', { p_line_id: line.id }).then(({ data, error }) => setQ(error ? { ok: false, error: error.message } : data))
+  }, [line?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+  const rung = q?.rung ? CANCELLATION_LADDER.rungs.find(r => r.id === q.rung) : null
+  const current = q?.ok && q.policy === '2026-10-28'
+  async function go() {
+    setBusy(true); setErr('')
+    const { data, error } = await supabase.rpc('cancel_line', { p_line_id: line.id, p_reason: why || null })
+    setBusy(false)
+    if (error || !data?.ok) { setErr(error?.message ?? data?.scan ?? 'Could not cancel this booking.'); return }
+    onDone()
+  }
+  const REASONS = ['Plans changed', 'Booked by mistake', 'Found someone else', 'Event cancelled']
+  return (
+    <Sheet open={!!line} onClose={onClose} title="Cancel this booking?"
+      footer={current ? (
+        <div className="grid gap-2">
+          <button type="button" disabled={busy} onClick={go} className="cx-press h-12 w-full rounded-[16px] bg-[#B42318] text-[14.5px] font-extrabold text-white disabled:opacity-60" data-cancel-confirm>
+            {busy ? <Loader2 size={17} className="mx-auto animate-spin" /> : (q.refund_paise > 0 ? `Cancel · ${rupees(q.refund_paise)} back to you` : 'Cancel booking')}
+          </button>
+          <button type="button" onClick={onClose} className="h-11 w-full rounded-[16px] text-[13.5px] font-extrabold text-[var(--brand)]">Keep my booking</button>
+        </div>
+      ) : null}>
+      <div className="pb-2">
+        <p className="text-[14.5px] font-extrabold">{line?.service_name}</p>
+        {!q ? <p className="mt-3 flex items-center gap-2 text-[13px] font-semibold text-[var(--ink-3)]"><Loader2 size={15} className="animate-spin" />Working out your refund…</p>
+          : !current ? (
+            <p className="mt-3 rounded-[14px] bg-[#FFF8EB] px-3 py-2.5 text-[13px] font-semibold leading-relaxed text-[#7A4A00]" data-cancel-closed>
+              Cancellations are being moved to our new policy. Call or WhatsApp us on {BRAND.supportPhone} and we will cancel it for you today, on the policy you agreed to.
+            </p>
+          ) : (
+            <>
+              <div className="mt-3 rounded-[16px] bg-[#F7F4FB] p-3.5" data-cancel-quote={q.rung}>
+                <p className="text-[22px] font-black tracking-[-0.02em]">{q.held_paise > 0 ? `${rupees(q.refund_paise)} back` : 'Free to cancel'}</p>
+                <p className="text-[12.5px] font-bold text-[var(--ink-2)]">{q.held_paise > 0 ? `of ${rupees(q.held_paise)} paid · ${rung?.scan ?? `${q.refund_pct}% refund`}` : 'Nothing has been paid on this booking yet.'}</p>
+                {q.held_paise > 0 && rung?.why && <p className="mt-1.5 text-[12px] font-semibold text-[var(--ink-3)]">{rung.why}</p>}
+              </div>
+              <p className="mt-3 text-[12.5px] font-extrabold">Why are you cancelling?</p>
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
+                {REASONS.map(r => <button key={r} type="button" onClick={() => setWhy(r)} aria-pressed={why === r} className={'cx-press rounded-full px-3 py-1.5 text-[12px] font-bold ' + (why === r ? 'bg-[#5B21A8] text-white' : 'bg-[#F3EEFA] text-[var(--ink-2)]')}>{r}</button>)}
+              </div>
+              <p className="mt-3 text-[11.5px] font-semibold text-[var(--ink-3)]">Refunds reach your original payment method in 5–7 working days. <Link to="/legal/cancellation" className="font-extrabold text-[var(--brand)]">Cancellation policy</Link></p>
+            </>
+          )}
+        {err && <p className="mt-2 text-[12.5px] font-bold text-[#B42318]">{err}</p>}
+      </div>
+    </Sheet>
   )
 }

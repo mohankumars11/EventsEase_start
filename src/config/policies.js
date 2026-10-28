@@ -366,52 +366,26 @@ export const CANCELLATION_LADDER = {
    * wins. `hoursBefore: null` means "regardless of the date" — it is the
    * pre-acceptance rung, and it is about state, not time.
    */
+  /* The ladder the customer agrees to at sign-in (Mohan, 2026-10-28;
+     customer/data/policies.js LADDER is its wording). Migration 195's
+     cancellation_quote() is the copy that moves money; this one is the
+     copy that explains it. What is kept splits between the master and
+     Sambramo the way a delivered booking would. */
   rungs: [
-    {
-      id: 'before_accept',
-      hoursBefore: null,
-      requiresAccepted: false,
-      refundPct: 100,
-      partnerPct: 0,
-      scan: 'Full refund',
-      why: 'No master has accepted yet, so nobody has cleared their day.',
-    },
-    {
-      id: 'over_48h',
-      hoursBefore: 48,
-      requiresAccepted: true,
-      refundPct: 90,
-      partnerPct: 10,
-      scan: '10% goes to your master',
-      why: 'They can still fill the day, but they turned work down for you.',
-    },
-    {
-      id: 'within_48h',
-      hoursBefore: 12,
-      requiresAccepted: true,
-      refundPct: 75,
-      partnerPct: 25,
-      scan: '25% goes to your master',
-      why: 'Two days out, most of the good work for that day is already taken.',
-    },
-    {
-      id: 'within_12h',
-      hoursBefore: 0,
-      requiresAccepted: true,
-      refundPct: 50,
-      partnerPct: 50,
-      scan: 'Half goes to your master',
-      why: 'They have almost certainly bought materials and cannot refill the day.',
-    },
-    {
-      id: 'after_start',
-      hoursBefore: -1,
-      requiresAccepted: true,
-      refundPct: 0,
-      partnerPct: 100,
-      scan: 'No refund',
-      why: 'The day has started. If something went wrong, raise an issue instead.',
-    },
+    { id: 'before_accept', hoursBefore: null, requiresAccepted: false, refundPct: 100, partnerPct: 0,
+      scan: 'Full refund', why: 'No master has accepted yet, so nobody has cleared their day.' },
+    { id: 'grace_15min', hoursBefore: 72, requiresAccepted: true, refundPct: 100, partnerPct: 0,
+      scan: 'Full refund', why: 'Changed your mind within 15 minutes of paying, with the event at least 3 days away.' },
+    { id: 'over_15d', hoursBefore: 360, requiresAccepted: true, refundPct: 50, partnerPct: 50,
+      scan: '50% refund', why: 'More than 15 days out — your master turned other work away for your date.' },
+    { id: 'days_7_15', hoursBefore: 168, requiresAccepted: true, refundPct: 25, partnerPct: 75,
+      scan: '25% refund', why: 'One to two weeks out, the date is hard to fill again.' },
+    { id: 'under_7d', hoursBefore: 48, requiresAccepted: true, refundPct: 0, partnerPct: 100,
+      scan: 'No refund', why: 'Less than 7 days out — the master has turned other work away for your date.' },
+    { id: 'within_48h', hoursBefore: 0, requiresAccepted: true, refundPct: 0, partnerPct: 100,
+      scan: 'No refund', why: 'Within 48 hours the master has bought materials and planned the day.' },
+    { id: 'after_start', hoursBefore: -1, requiresAccepted: true, refundPct: 0, partnerPct: 100,
+      scan: 'No refund', why: 'The day has started. If something went wrong, raise an issue instead.' },
   ],
 }
 
@@ -423,23 +397,23 @@ export const CANCELLATION_LADDER = {
  * week earlier. Each line carries its own `accepted_at` and its own
  * `policy_version` (migration 059) for exactly this.
  */
-export function instantCancellationRung({ eventDate, accepted, now = new Date() }) {
+export function instantCancellationRung({ eventDate, accepted, paidAt = null, now = new Date() }) {
   const ladder = CANCELLATION_LADDER.rungs
+  const rung = id => ladder.find(r => r.id === id)
 
-  if (!accepted) return ladder.find(r => r.id === 'before_accept')
+  if (!accepted) return rung('before_accept')
 
   const when = eventDate instanceof Date ? eventDate : new Date(eventDate)
   if (Number.isNaN(when.getTime())) {
     // An unparseable date must not silently become "no refund". Fall to
     // the most generous accepted rung and let a human look at it.
-    return ladder.find(r => r.id === 'over_48h')
+    return rung('over_15d')
   }
 
   const hoursOut = (when.getTime() - now.getTime()) / 3_600_000
-  if (hoursOut < 0) return ladder.find(r => r.id === 'after_start')
+  const paid = paidAt ? new Date(paidAt) : null
+  if (paid && !Number.isNaN(paid.getTime()) && now - paid <= 15 * 60_000 && hoursOut >= 72) return rung('grace_15min')
+  if (hoursOut < 0) return rung('after_start')
 
-  return (
-    ladder.find(r => r.requiresAccepted && r.hoursBefore >= 0 && hoursOut >= r.hoursBefore)
-    ?? ladder.find(r => r.id === 'within_12h')
-  )
+  return ladder.find(r => r.requiresAccepted && r.id !== 'grace_15min' && r.hoursBefore >= 0 && hoursOut >= r.hoursBefore) ?? rung('within_48h')
 }
