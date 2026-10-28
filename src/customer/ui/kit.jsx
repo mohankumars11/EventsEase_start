@@ -111,21 +111,21 @@ export function PlanBar({ withTabs = true }) {
   return (
     <div className="pointer-events-none fixed inset-x-0 z-[140] px-3 transition-[bottom] duration-200 ease-out" style={{ bottom: withTabs && !moving ? 'calc(env(safe-area-inset-bottom, 0px) + 88px)' : 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}>
       <button type="button" onClick={() => navigate('/plan')} data-plan-bar
-        className="cx-press cx-pop pointer-events-auto mx-auto flex w-full max-w-[540px] items-center gap-3 rounded-[22px] bg-gradient-to-b from-[#F1E9FF] to-[#E2D2FF] p-2 pr-2.5 text-left text-[var(--am-ink)] shadow-[0_0_0_1px_#D6C2FF,0_18px_36px_-16px_rgba(58,18,144,.75)]">
+        className="cx-press cx-pop cx-cta pointer-events-auto mx-auto flex w-full max-w-[540px] items-center gap-3 rounded-[22px] p-2 pr-2.5 text-left text-white shadow-[0_18px_36px_-16px_rgba(58,18,144,.85)]">
         <span className="flex shrink-0 -space-x-3 pl-1">
           {basket.slice(0, 3).map(l => (
-            <span key={l.key} className="relative h-9 w-9 overflow-hidden rounded-[13px] bg-white ring-2 ring-[#EAE0FF]">
+            <span key={l.key} className="relative h-9 w-9 overflow-hidden rounded-[13px] bg-white ring-2 ring-[#5B21B6]">
               <Photo src={l.cover} className="h-full w-full object-cover" />
             </span>
           ))}
         </span>
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[13.5px] font-extrabold">{plural(basket.length, 'service')} picked</span>
-          <span className="block truncate text-[12px] font-bold text-[#5B3FA0]">
+          <span className="block truncate text-[12px] font-bold text-white/80">
             {total ? <><span className="cx-num">{rupees(total)}</span> onwards</> : 'Quotes on the way'}{instant ? ` · ${instant} instant` : ''}
           </span>
         </span>
-        <span className="flex shrink-0 items-center gap-1 rounded-full bg-white px-3.5 py-2 text-[13px] font-extrabold text-[var(--am-ink)] shadow-[0_4px_10px_-6px_rgba(58,18,144,.6)]">Review <ArrowRight size={15} /></span>
+        <span className="flex shrink-0 items-center gap-1 rounded-full bg-white px-3.5 py-2 text-[13px] font-extrabold text-[#4C1D95] shadow-[0_4px_10px_-6px_rgba(0,0,0,.4)]">Checkout <ArrowRight size={15} /></span>
       </button>
     </div>
   )

@@ -21,7 +21,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowRight, BadgeCheck, Bell, CalendarCheck2, CalendarClock, ChevronDown, ChevronRight, Gift, Headset, IndianRupee, Loader2, LocateFixed, MailOpen, MapPin, Mic, Music2, PartyPopper, RotateCcw, Search, ShieldCheck, Users, UtensilsCrossed, Zap } from 'lucide-react'
+import { ArrowRight, BadgeCheck, CalendarCheck2, CalendarClock, ChevronDown, ChevronRight, Gift, Headset, IndianRupee, Loader2, LocateFixed, MailOpen, MapPin, Mic, Music2, PartyPopper, RotateCcw, Search, ShieldCheck, Users, UtensilsCrossed, Zap } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { BENGALURU_AREAS } from '../../data/bengaluruAreas'
 import { CATEGORIES, OCCASION, OCCASIONS } from '../data/occasions'
@@ -32,6 +32,7 @@ import { Card, CategoryCard, FamilyCard, Rotator, ServiceCard } from '../ui/art'
 import { Sheet } from '../ui/kit'
 import { OfferDeck } from '../ui/offers'
 import Spotlight from '../ui/Spotlight'
+import LocationSheet from '../ui/LocationSheet'
 import { locate, saveWhere, savedWhere } from '../lib/where'
 import { listen, canListen } from '../lib/voice'
 
@@ -113,7 +114,7 @@ export default function Home() {
             <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#EFE6FF]"><MapPin size={16} className="fill-[var(--brand)] text-[#EFE6FF]" strokeWidth={1.6} /></span>
             <span className="min-w-0">
               <span className="flex items-center gap-0.5 text-[13.5px] font-extrabold leading-tight tracking-[-0.015em]"><span className="truncate">{where?.area ?? 'Bengaluru'}</span><ChevronDown size={14} className="shrink-0" /></span>
-              <span className="block truncate text-[10.5px] font-semibold leading-tight text-[var(--ink-3)]">{[where?.city ?? 'Bengaluru', where?.pincode].filter(Boolean).join(', ')}{where?.test ? ' · testing' : ''}</span>
+              <span className="block truncate text-[10.5px] font-semibold leading-tight text-[var(--ink-3)]">{where?.for?.name ? `For ${where.for.name} · ` : ''}{[where?.city ?? 'Bengaluru', where?.pincode].filter(Boolean).join(', ')}{where?.test ? ' · testing' : ''}</span>
             </span>
           </button>
           <div className="flex shrink-0 items-center gap-1.5">
@@ -125,7 +126,6 @@ export default function Home() {
               <MailOpen size={19} />
               {!invitesSeen && <span className="absolute -right-1 -top-1 rounded-full bg-[#DB2777] px-1.5 py-[1px] text-[8.5px] font-black tracking-[0.04em] text-white ring-2 ring-[#FFF7EE]">NEW</span>}
             </Link>
-            <Link to="/notifications" aria-label="Notifications" className="cx-press grid h-10 w-10 place-items-center rounded-full bg-white text-[var(--am-ink)] shadow-[0_4px_12px_-6px_rgba(58,18,144,.35)]"><Bell size={18} /></Link>
             <Link to="/me" aria-label="Your profile" className="cx-press relative grid h-10 w-10 place-items-center overflow-hidden rounded-full bg-gradient-to-br from-[#A57BFF] to-[#6D35E0] text-[15px] font-extrabold text-white ring-2 ring-white" data-avatar>
               {photo ? <img src={photo} alt="" className="absolute inset-0 h-full w-full object-cover" referrerPolicy="no-referrer" /> : initial}
             </Link>
@@ -269,11 +269,11 @@ export default function Home() {
           </span>
           <ChevronRight size={17} className="shrink-0 text-[var(--brand)]" />
         </Link>
-        <Link to="/help#cancellation" className="cx-press flex items-center gap-3 rounded-[18px] bg-white p-3 shadow-[0_0_0_1px_#EEE6FA]" data-refunds>
+        <Link to="/legal/cancellation" className="cx-press flex items-center gap-3 rounded-[18px] bg-white p-3 shadow-[0_0_0_1px_#EEE6FA]" data-refunds>
           <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[12px] bg-[#E9F8EF] text-[#0C831F]"><RotateCcw size={19} /></span>
           <span className="min-w-0 flex-1">
             <span className="block text-[14px] font-extrabold text-[var(--ink)]">Refunds & cancellation, made clear</span>
-            <span className="block truncate text-[11.5px] font-semibold text-[var(--ink-3)]">100% back before a master accepts · 90% up to 2 days before</span>
+            <span className="block truncate text-[11.5px] font-semibold text-[var(--ink-3)]">Free cancellation until a master accepts · see how refunds work</span>
           </span>
           <ChevronRight size={17} className="shrink-0 text-[var(--brand)]" />
         </Link>
@@ -294,8 +294,8 @@ export default function Home() {
       <section className="relative mt-4 overflow-hidden bg-gradient-to-r from-[#FFF4D6] via-[#FFEBD2] to-[#FFE0EC] px-4 py-5" data-offer>
         <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#B45309]">Welcome offer</p>
         <p className="mt-1 text-[30px] font-black leading-none tracking-[-0.04em] text-[#1C1033]">25% OFF</p>
-        <p className="mt-1 max-w-[62%] text-[12.5px] font-semibold leading-snug text-[#5B4A3A]">On your first celebration booking, plus a welcome hamper.</p>
-        <button type="button" onClick={() => { choose('occasions'); toGrid() }} className="cx-press mt-3 inline-flex h-10 items-center gap-1.5 rounded-full bg-[#1C1033] px-4 text-[13px] font-extrabold text-white">Book a celebration<ArrowRight size={15} /></button>
+        <p className="mt-1 max-w-[62%] text-[12.5px] font-semibold leading-snug text-[#5B4A3A]">On your first celebration booking — up to ₹1,500. Yours on sign-up.</p>
+        <Link to="/rewards" className="cx-press mt-3 inline-flex h-10 items-center gap-1.5 rounded-full bg-[#1C1033] px-4 text-[13px] font-extrabold text-white" data-offer-cta>See my 25% voucher<ArrowRight size={15} /></Link>
         <Gift size={92} strokeWidth={1.2} className="absolute -right-2 bottom-2 text-[#F59E0B]/40" />
       </section>
 
@@ -323,7 +323,7 @@ export default function Home() {
 
       <SignOff />
 
-      <WhereSheet open={whereOpen} onClose={() => setWhereOpen(false)} onPick={p => { saveWhere(p); setWhere(savedWhere()); setWhereOpen(false) }} />
+      <LocationSheet open={whereOpen} onClose={() => setWhereOpen(false)} onPick={p => { saveWhere(p); setWhere(savedWhere()); setWhereOpen(false) }} />
     </main>
   )
 }
@@ -338,15 +338,15 @@ function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.fl
 const SCENES = {
   occasions: [
     { lines: ['Book Your', 'Celebration', 'in Minutes'], ask: ['Booked your party yet?', '25% off your first booking'],
-      card: { icon: CalendarCheck2, tone: '#7C3AED', title: 'Birthday Party', sub: '6 masters lined up', meter: 1 } },
+      card: { icon: CalendarCheck2, tone: '#7C3AED', title: 'Birthday Party', sub: '6 masters lined up', meter: 1, to: '/o/birthday-party' } },
     { lines: ['Invite', 'Everyone in', 'One Tap'], ask: ['Who’s coming? Know it live', 'Free WhatsApp RSVP'],
       card: { icon: MailOpen, tone: '#DB2777', title: 'WhatsApp invites', sub: 'Live RSVP headcount', to: '/invites' } },
     { lines: ['No Waiting', 'for Quotes.', 'Prices Upfront'], ask: ['Seen the price before you book?', 'No “we’ll call you back”'],
-      card: { icon: IndianRupee, tone: '#B45309', title: '₹815 / plate', sub: 'Catering · price shown upfront' } },
+      card: { icon: IndianRupee, tone: '#B45309', title: '₹815 / plate', sub: 'Catering · price shown upfront', to: '/s/catering_food' } },
     { lines: ['No Chasing', 'for Replies.', 'Masters Ready'], ask: ['Tried instant booking?', 'Ready on your date'],
-      card: { icon: Zap, tone: '#0C831F', title: 'Accepted', sub: 'Photographer · 0 min wait' } },
+      card: { icon: Zap, tone: '#0C831F', title: 'Accepted', sub: 'Photographer · 0 min wait', to: '/s/photography' } },
     { lines: ['Confirmed', 'the Moment', 'You Pay'], ask: ['Your money stays safe', 'Full refund before acceptance'],
-      card: { icon: ShieldCheck, tone: '#0C831F', title: 'Payment secured', sub: 'Booking confirmed', razorpay: true } },
+      card: { icon: ShieldCheck, tone: '#0C831F', title: 'Payment secured', sub: 'Booking confirmed', razorpay: true, to: '/legal/cancellation' } },
     { lines: ['Plan a', 'Surprise', 'Birthday'], ask: ['They’ll never see it coming', 'Cake, décor & a photographer'],
       card: { icon: PartyPopper, tone: '#DB2777', title: 'Surprise Birthday', sub: 'Ready in 4 taps', to: '/o/surprise-birthday-party' } },
     { lines: ['Weekend', 'Party?', 'Sorted.'], ask: ['This Saturday, all set', 'DJ, food & lights in one go'],
@@ -356,15 +356,15 @@ const SCENES = {
   ],
   services: [
     { lines: ['Book the', 'Right Service', 'in Minutes'], ask: ['Need a photographer today?', '25% off your first booking'],
-      card: { icon: CalendarCheck2, tone: '#7C3AED', title: '11 photographers', sub: 'Near you · instant' } },
+      card: { icon: CalendarCheck2, tone: '#7C3AED', title: '11 photographers', sub: 'Near you · instant', to: '/s/photography' } },
     { lines: ['Invite', 'Everyone in', 'One Tap'], ask: ['Who’s coming? Know it live', 'Free WhatsApp RSVP'],
       card: { icon: MailOpen, tone: '#DB2777', title: 'WhatsApp invites', sub: 'Live RSVP headcount', to: '/invites' } },
     { lines: ['No Enquiries.', 'No Waiting.', 'Just Book'], ask: ['Seen the price before you book?', 'Pick, pay, done'],
-      card: { icon: IndianRupee, tone: '#B45309', title: '₹4,348', sub: 'Photography · price upfront' } },
+      card: { icon: IndianRupee, tone: '#B45309', title: '₹4,348', sub: 'Photography · price upfront', to: '/s/photography' } },
     { lines: ['Masters Are', 'Ready for', 'Your Date'], ask: ['Tried instant booking?', 'Verified before they go live'],
-      card: { icon: BadgeCheck, tone: '#0C831F', title: 'Verified master', sub: 'ID and work checked' } },
+      card: { icon: BadgeCheck, tone: '#0C831F', title: 'Verified master', sub: 'ID and work checked', to: '/s' } },
     { lines: ['Confirmed', 'the Moment', 'You Pay'], ask: ['Your money stays safe', 'Full refund before acceptance'],
-      card: { icon: ShieldCheck, tone: '#0C831F', title: 'Payment secured', sub: 'Master confirmed', razorpay: true } },
+      card: { icon: ShieldCheck, tone: '#0C831F', title: 'Payment secured', sub: 'Master confirmed', razorpay: true, to: '/legal/cancellation' } },
   ],
 }
 /* The four promises as marks a customer has seen on real apps: a bolt for
@@ -427,7 +427,7 @@ function Hero({ door }) {
         <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-[#7C3AED]" /><span className="truncate">{s.ask[0]}</span>
       </p>
       <div className="relative mt-1 min-h-[176px]">
-        <div className="relative z-10 w-[56%] pl-4 pt-1">
+        <Link to={C.to ?? (door === 'services' ? '/s' : '/explore#celebrations')} className="relative z-10 block w-[56%] pl-4 pt-1" data-hero-open>
           <h1 key={`${door}-${i}`} className="cx-rise min-h-[90px] text-[28px] font-black leading-[1.02] tracking-[-0.045em] text-[#16092E]" aria-live="polite">
             {s.lines[0]}<br />{s.lines[1]}<br />
             <span className="bg-gradient-to-r from-[#7C3AED] to-[#A855F7] bg-clip-text text-transparent">{s.lines[2]}</span>
@@ -439,10 +439,10 @@ function Hero({ door }) {
               </span>
             ))}
           </div>
-        </div>
-        <div className="pointer-events-none absolute bottom-0 right-0 top-0 w-[50%]">
+        </Link>
+        <Link to={C.to ?? (door === 'services' ? '/s' : '/explore#celebrations')} aria-label={C.title} className="absolute bottom-0 right-0 top-0 w-[50%]">
           <img src={artFor('hero-booking') ?? artFor('hero-family')} alt="" className="absolute inset-0 h-full w-full object-cover object-[60%_30%] mix-blend-multiply [mask-image:linear-gradient(90deg,transparent_0%,#000_20%)]" />
-        </div>
+        </Link>
       </div>
       {/* The live card and the offer sit BELOW the picture, never on it. */}
       <div className="mt-2 flex items-stretch gap-2 px-4" data-hero-below>
@@ -458,7 +458,7 @@ function Hero({ door }) {
           {C.meter && <span className="mt-1.5 block h-1 overflow-hidden rounded-full bg-[#EDE6FB]"><span className="block h-full w-[78%] animate-pulse rounded-full bg-[#7C3AED]" /></span>}
           {C.razorpay && <span className="mt-1 flex items-center gap-1 text-[9.5px] font-bold text-[#5F5675]"><ShieldCheck size={10} className="text-[#0F9D58]" />Secured by <RazorpayMark /></span>}
         </Live>
-        <span key={`b${door}${i}`} className="cx-pop flex w-[36%] shrink-0 items-center justify-center rounded-[16px] bg-[#0C831F] px-2 py-2 text-center text-[11.5px] font-extrabold leading-tight text-white shadow-[0_8px_18px_-10px_rgba(12,131,31,.9)]" style={{ animationDelay: '.15s' }}>{s.ask[1]}</span>
+        <Link to={door === 'services' ? '/s' : '/rewards'} key={`b${door}${i}`} className="cx-pop flex w-[36%] shrink-0 items-center justify-center rounded-[16px] bg-[#0C831F] px-2 py-2 text-center text-[11.5px] font-extrabold leading-tight text-white shadow-[0_8px_18px_-10px_rgba(12,131,31,.9)]" style={{ animationDelay: '.15s' }}>{s.ask[1]}</Link>
       </div>
     </div>
   )
@@ -531,48 +531,6 @@ function Heart() {
       <path d="M16 28.5S1 19.6 1 9.4C1 4.6 4.7 1 9.2 1c2.9 0 5.4 1.5 6.8 3.8C17.4 2.5 19.9 1 22.8 1 27.3 1 31 4.6 31 9.4 31 19.6 16 28.5 16 28.5z" fill="#FF0F2E" />
       <path d="M8.6 5.2c-2 .3-3.6 2-3.8 4.1" stroke="#FFC2CB" strokeWidth="2" strokeLinecap="round" fill="none" />
     </svg>
-  )
-}
-
-/* ── Where am I ──────────────────────────────────────────────────── */
-function WhereSheet({ open, onClose, onPick }) {
-  const [q, setQ] = useState('')
-  const [busy, setBusy] = useState(false)
-  const [err, setErr] = useState('')
-  const list = useMemo(() => {
-    const t = q.trim().toLowerCase()
-    return BENGALURU_AREAS.filter(a => !t || a.name.toLowerCase().includes(t)).sort((a, b) => a.tier - b.tier || a.name.localeCompare(b.name))
-  }, [q])
-  async function here() {
-    setBusy(true); setErr('')
-    const r = await locate()
-    setBusy(false)
-    if (!r.ok) { setErr('Location is off. Pick your area below.'); return }
-    if (!r.market?.live) { setErr(`You are in ${r.place.area}. We are live in Bengaluru — pick an area below.`); return }
-    onPick({ ...r.place, market: r.market.id, test: !!r.market.test })
-  }
-  return (
-    <Sheet open={open} onClose={onClose} title="Where are you?">
-      <button type="button" onClick={here} className="cx-press cx-btn flex w-full items-center gap-3 rounded-[18px] px-4 py-3.5 text-left">
-        {busy ? <Loader2 size={20} className="animate-spin" /> : <LocateFixed size={20} />}
-        <span className="flex-1 text-[14.5px] font-extrabold">Use my current location</span><ArrowRight size={16} />
-      </button>
-      {err && <p className="mt-2 text-[12.5px] font-bold text-[#9B1A2A]">{err}</p>}
-      <label className="mt-4 flex h-12 items-center gap-2.5 rounded-[16px] bg-[var(--am-50)] px-3.5 ring-1 ring-[var(--am-200)]">
-        <Search size={17} className="text-[var(--brand)]" />
-        <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search your area" className="h-full flex-1 bg-transparent text-[14px] font-bold outline-none placeholder:text-[var(--ink-3)]" />
-      </label>
-      <ul className="mt-2 max-h-[40dvh] overflow-y-auto pb-2">
-        {list.map(a => (
-          <li key={a.name}>
-            <button type="button" onClick={() => onPick({ area: a.name, city: 'Bengaluru', lat: a.lat, lng: a.lng, market: 'BLR', source: 'picked' })}
-              className="cx-press flex w-full items-center gap-3 border-b border-[var(--line)] py-3 text-left text-[14.5px] font-bold last:border-0">
-              <MapPin size={16} className="text-[var(--brand)]" />{a.name}
-            </button>
-          </li>
-        ))}
-      </ul>
-    </Sheet>
   )
 }
 
