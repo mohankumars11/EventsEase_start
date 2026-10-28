@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The adaptive icon's ground — the same gradient as the legacy icon and the splash. scripts/make-launcher-icon.mjs -->
+<!-- The adaptive icon's ground — the splash's flat #5B21A8. scripts/make-launcher-icon.mjs -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-    <gradient android:type="linear" android:angle="315" android:startColor="#8B5CF6" android:centerColor="#5B21A8" android:endColor="#3B0F80" />
+    <solid android:color="#5B21A8" />
 </shape>

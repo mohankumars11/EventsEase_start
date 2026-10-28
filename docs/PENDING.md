@@ -9,6 +9,9 @@ Last updated 27 Oct 2026, branch `feature/customer-app-masters`.
 | 1 | **Web deploy (owner decides when)** | Nothing is deployed from here — the customer app ships as an APK. Guest RSVP links (`/rsvp/…`) open in a browser only once the owner deploys this build to sambramoh.vercel.app; phones also need `/api/anchor` (today they reach the laptop API on Wi-Fi). | Owner's deploy |
 | 2 | ~~Apply migration 191~~ | Applied 27 Oct; `check-rsvp-live.mjs` passes 17/17. | Done |
 | 2b | ~~Apply migration 192~~ (guest care & style circles) | Applied 28 Oct; `check-guest-care-live.mjs` passes 19/19 and `check-rsvp-live.mjs` still passes 17/17. | Done |
+| 2c | **Apply migration 193** (consent records, vouchers, city interest) | Until pasted: the OTP-time acceptance waits on the phone and is sent next launch; welcome vouchers live only on that phone; "notify me" for other cities is kept locally. | Paste `193_sambramo_consent_vouchers_city_interest.sql` |
+| 2d | **Lawyer review + Grievance Officer** | `src/customer/data/policies.js` (terms, cancellation & refunds, privacy, supply rules) is a careful draft, not legal advice; the E-Commerce Rules 2020 require a named Grievance Officer in the app. | Review; fill `GRIEVANCE` |
+| 2e | **25% welcome offer: who funds it** | Shown everywhere and issued as a real voucher, but not yet taken off the payment (`api/create-booking-payment.js`). Recommendation and the change needed: `docs/LAUNCH-OFFERS-AND-POLICIES.md`. | Decide; then wire it |
 | 3 | **Razorpay live mode** | Only ₹1 test payments run today. | Activate account, live keys |
 | 4 | **Phone OTP** | Email OTP until DLT registration (1–2 weeks). | DLT registration |
 | 5 | **Listing data exposure** | `sambramo_listing_versions.answers` is public and holds caterers' FSSAI numbers and declarations. The app never shows them, but anyone with the anon key can read them. | Restrict columns / a view |

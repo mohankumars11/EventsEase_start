@@ -49,7 +49,7 @@ export default function Refer() {
   return (
     <main className="cx-enter min-h-[100dvh] bg-[#FFF7EE] pb-[calc(env(safe-area-inset-bottom,0px)+40px)]" data-refer-page>
       <BackHeader title="Refer & earn" sub="Celebrate together" />
-      <img src={artFor('promo-refer')} alt="Celebrate together — refer your friends and family" className="mx-3 block aspect-[1670/560] w-[calc(100%-24px)] rounded-[24px] object-cover object-[50%_0%] shadow-[0_18px_32px_-22px_rgba(58,18,144,.7)]" />
+      <img src={artFor('promo-refer')} alt="Celebrate together — refer your friends and family" className="mx-3 block aspect-[1670/520] w-[calc(100%-24px)] rounded-[24px] object-cover object-[50%_0%] shadow-[0_18px_32px_-22px_rgba(58,18,144,.7)]" />
 
       {/* The ticket */}
       <section className="relative mx-3 mt-4 overflow-hidden rounded-[26px] bg-gradient-to-br from-[#5B21B6] via-[#7C3AED] to-[#DB2777] text-white shadow-[0_24px_44px_-24px_rgba(124,58,237,.9)]" data-ref-ticket>
