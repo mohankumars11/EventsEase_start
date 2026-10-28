@@ -68,6 +68,7 @@ const Wallet = screen(() => import('./screens/Wallet'))
 const Negotiate = screen(() => import('./screens/Negotiate'))
 const Refer = screen(() => import('./screens/Refer'))
 const Rsvp = screen(() => import('./screens/Rsvp'))
+const CircleWelcome = screen(() => import('./screens/CircleWelcome'))
 
 /* One module per idle slot, so warming never competes with a scroll or a tap. */
 function warmScreens() {
@@ -117,7 +118,7 @@ export default function CustomerApp() {
   const { step, next } = useOnboarding()
   /* A guest opening their RSVP link needs no sign-in, location or alerts. */
   if (pathname.startsWith('/rsvp/')) {
-    return <div className="cx" data-customer-app><Suspense fallback={<Loading />}><Routes><Route path="/rsvp/:token" element={<Rsvp />} /></Routes></Suspense></div>
+    return <div className="cx" data-customer-app><Suspense fallback={<Loading />}><Routes><Route path="/rsvp/circle/:join" element={<CircleWelcome />} /><Route path="/rsvp/:token" element={<Rsvp />} /></Routes></Suspense></div>
   }
   if (step === 'loading') return <div className="cx" data-customer-app><Loading /></div>
   if (step) return <PlanProvider><div className="cx" data-customer-app><Onboarding step={step} onDone={next} /></div></PlanProvider>

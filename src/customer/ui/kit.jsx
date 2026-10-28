@@ -84,9 +84,9 @@ export function TabBar() {
 }
 
 /* ── The search orb ─────────────────────────────────────────────────
- * Just search, and constant (Mohan, 2026-10-27): the magnifier alone,
- * still, always in full view. Marigold for someone who has not booked
- * yet (with the 10% first-booking tag), peacock teal once they have. */
+ * Just search, and constant (Mohan, 2026-10-27/28): the magnifier alone,
+ * still, always in full view, no tags. Marigold for someone who has not
+ * booked yet, peacock teal once they have. */
 function SearchOrb({ onClick }) {
   const { bookings } = usePlan()
   const back = (bookings?.length ?? 0) > 0
@@ -95,7 +95,6 @@ function SearchOrb({ onClick }) {
       <button type="button" onClick={onClick} aria-label="Search" data-orb={back ? 'back' : 'new'}
         className={'cx-press absolute -top-[42px] grid h-[60px] w-[60px] place-items-center rounded-full text-white ring-[5px] ring-white ' + (back ? 'cx-orb-back' : 'cx-orb-new')}>
         <Search size={25} strokeWidth={2.6} />
-        {!back && <span className="absolute -right-1.5 -top-1 rounded-full bg-white px-1.5 py-[1px] text-[9.5px] font-black text-[#E8430F] shadow-[0_2px_6px_rgba(0,0,0,.18)]">10%</span>}
       </button>
     </>
   )

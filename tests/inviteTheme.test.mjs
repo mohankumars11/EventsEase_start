@@ -30,6 +30,6 @@ test('a memorial is only ever offered the quiet designs', () => {
 
 test('every design id is unique, and there are well over a hundred', () => {
   assert.equal(new Set(TEMPLATES.map(t => t.id)).size, TEMPLATES.length)
-  assert.ok(TEMPLATES.length >= 150)
+  assert.ok(TEMPLATES.length >= 1000)
   assert.equal(parseTheme('royal~emerald|art').t.name, 'Royal Heritage · Emerald & gold')
 })

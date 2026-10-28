@@ -7,11 +7,13 @@
  * reads and writes only through rsvp_view / rsvp_submit (migration 191).
  */
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { CalendarPlus, Check, Loader2, MapPin, Minus, Navigation, PartyPopper, Plus, Shirt } from 'lucide-react'
 import { OCCASION } from '../data/occasions'
 import InviteCard from '../ui/InviteCard'
 import { MEALS, submitRsvp, viewRsvp } from '../lib/rsvp'
+import { saveTravel } from '../lib/guestCare'
+import { GuestCircles, StayCard, TravelForm } from '../ui/guestCareUI'
 
 const DAY = new Intl.DateTimeFormat('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
 const fmtDate = d => (d ? DAY.format(new Date(`${d}T00:00:00`)) : null)
@@ -19,6 +21,8 @@ const fmtTime = t => (t ? new Date(`2000-01-01T${t}`).toLocaleTimeString('en-IN'
 
 export default function Rsvp() {
   const { token } = useParams()
+  const [q] = useSearchParams()
+  const navigate = useNavigate()
   const [data, setData] = useState(undefined)
   const [err, setErr] = useState('')
   const [a, setA] = useState({ status: null, adults: 1, kids: 0, meal: null, note: '', functions: {}, name: '', phone: '' })
@@ -50,7 +54,9 @@ export default function Rsvp() {
   async function send() {
     setBusy(true); setErr('')
     try {
-      await submitRsvp(token, { ...a, kids: inv.allow_kids ? a.kids : 0, functions: data.functions.map(f => ({ id: f.id, attending: !!a.functions[f.id] })) })
+      const r = await submitRsvp(token, { ...a, kids: inv.allow_kids ? a.kids : 0, functions: data.functions.map(f => ({ id: f.id, attending: !!a.functions[f.id] })) })
+      /* Through the group link: move to their own personal link, so travel and circles are theirs. */
+      if (data.open && r?.token && r.token !== token) { navigate(`/rsvp/${r.token}`, { replace: true }); return }
       setDone(true)
     } catch (e) { setErr(e.message) } finally { setBusy(false) }
   }
@@ -147,6 +153,15 @@ export default function Rsvp() {
           </button>
           {inv.rsvp_by && <p className="text-center text-[12px] font-bold text-[var(--ink-3)]">Please reply by {fmtDate(inv.rsvp_by)}</p>}
         </section>
+      )}
+
+      {/* Guest care and style circles (migration 192) — shown once there is a personal link. */}
+      {g && (
+        <div className="mt-5 space-y-3">
+          <StayCard care={inv.care} />
+          {inv.care?.ask_travel && done && a.status !== 'declined' && <TravelForm initial={g.travel} hostName={inv.hosts} onSave={t => saveTravel(token, t)} />}
+          <GuestCircles token={token} inviteTitle={inv.title} focus={!!q.get('circle')} />
+        </div>
       )}
 
       <a href="https://sambramoh.vercel.app" className="mt-8 block rounded-[20px] bg-[var(--am-50)] p-4 text-center ring-1 ring-[var(--am-200)]">

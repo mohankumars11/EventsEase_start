@@ -22,7 +22,7 @@ import { partnersFor } from '../lib/market'
 import { answered, courseLabel, filterByNeeds, loadCuisines, loadDishes, needsFor } from '../lib/needs'
 import { plural, rupees } from '../lib/format'
 import { askOf, asksFor, priceRange, withQuotes } from '../lib/quote'
-import Buddy from '../ui/Buddy'
+import Buddy, { sambu } from '../ui/Buddy'
 import { ArtFill } from '../ui/art'
 
 export const NOUN = {
@@ -74,7 +74,19 @@ export default function Brief() {
     navigate(-1)
   }
   const noun = NOUN[tradeId] ?? t.label.toLowerCase()
+  const left = choose.filter(q => !(picks[q.key]?.length)).length
+  /* Every tap gets an answer: what they picked, and how close they are. */
+  const react = (q, prev = [], next = []) => {
+    const added = (Array.isArray(next) ? next : []).filter(x => !prev.includes(x))
+    const after = Math.max(0, left - (prev.length ? 0 : 1))
+    if (added.length) {
+      const o = q.options.find(x => x.id === added[0])
+      sambu(`${o?.label ?? 'Nice'} — lovely pick! ${after ? `${after} more question${after === 1 ? '' : 's'} and your` : 'Your'} exact matches are ready ⚡`)
+    } else sambu('Taken off — no problem, change it any time.')
+  }
+  const seeAll = () => { plan.setNeeds(key, picks); navigate(occ ? `/o/${occ.id}/match` : `/s/${tradeId}`) }
   const lines = [
+    `Hi, I’m Sambu 👋 You’re on ${t.label}. A few taps here and I’ll price every master for you — then you book instantly.`,
     can.hours && !picks.$hours ? `You’re on ${t.label} — how many hours do you need? One tap and I’ll show your exact price.` : null,
     can.guests && !picks.$guests && !guests ? 'How many guests are coming? I’ll work out the food bill for you.' : null,
     range ? `${plural(range.n, 'master')} can do it — from ${rupees(range.lo)}. Tap Done to see them and add one.` : null,
@@ -113,7 +125,7 @@ export default function Brief() {
             <p className="mt-0.5 text-[11.5px] font-semibold leading-snug text-[#8A5A1A]">Masters who can’t do it drop out. Add one and pay — no calls, no waiting for quotes.</p>
           </section>
         )}
-        <button type="button" onClick={() => setPicks(p => (p.$any ? keepQty(p) : { ...keepQty(p), $any: true }))} aria-pressed={!!picks.$any}
+        <button type="button" onClick={() => { setPicks(p => (p.$any ? keepQty(p) : { ...keepQty(p), $any: true })); sambu(picks.$any ? 'Okay — tell me what you love and I’ll narrow it down.' : 'No preference — perfect, I’ll show you every verified master 👍') }} aria-pressed={!!picks.$any}
           className={'cx-press mt-3 flex w-full items-center gap-2.5 rounded-[16px] px-3.5 py-3 text-left transition ' + (picks.$any ? 'bg-[#EEFAF2] shadow-[inset_0_0_0_2px_#16A34A]' : 'bg-white shadow-[inset_0_0_0_1px_#EDE5DA]')} data-any>
           <span className={'grid h-6 w-6 shrink-0 place-items-center rounded-full ' + (picks.$any ? 'bg-[#0C831F] text-white' : 'ring-[1.5px] ring-[#D9D0C4]')}>{picks.$any && <Check size={14} strokeWidth={3} />}</span>
           <span className="min-w-0 flex-1"><span className="block text-[14px] font-extrabold">No preference — any {NOUN[tradeId] ?? 'master'} is fine</span><span className="block text-[11.5px] font-semibold text-[var(--ink-3)]">We’ll show every verified master for this</span></span>
@@ -121,7 +133,7 @@ export default function Brief() {
       </section>
 
       <div className="space-y-3 px-3 pt-2">
-        {choose.map(q => <Question key={q.key} q={q} value={picks[q.key] ?? []} onChange={v => set(q.key, v)} occasion={occ}
+        {choose.map(q => <Question key={q.key} q={q} value={picks[q.key] ?? []} onChange={v => { react(q, picks[q.key] ?? [], v); set(q.key, v) }} occasion={occ}
           typed={picks[q.key + '__typed'] ?? []} onTyped={v => set(q.key + '__typed', v)} />)}
         {must.length > 0 && (
           <section className="rounded-[22px] bg-white p-3.5 shadow-[0_0_0_1px_#EFE7DD]" data-q="must">
@@ -129,7 +141,7 @@ export default function Brief() {
             <p className="text-[11.5px] font-semibold text-[var(--ink-3)]">Switch on only what you can’t do without.</p>
             <div className="mt-2 divide-y divide-[#F4EEE6]">
               {must.map(q => (
-                <button key={q.key} type="button" onClick={() => set(q.key, picks[q.key] === true ? undefined : true)} aria-pressed={picks[q.key] === true} className="flex w-full items-center gap-3 py-3 text-left">
+                <button key={q.key} type="button" onClick={() => { const on = picks[q.key] !== true; set(q.key, on ? true : undefined); sambu(on ? `${q.title.replace(/\?$/, '')} — must-have noted ✓` : 'Must-have switched off.') }} aria-pressed={picks[q.key] === true} className="flex w-full items-center gap-3 py-3 text-left">
                   <span className="min-w-0 flex-1 text-[13.5px] font-bold leading-snug text-[var(--ink)]">{q.title.replace(/\?$/, '')}</span>
                   <span className={'relative h-[26px] w-[44px] shrink-0 rounded-full transition-colors duration-200 ' + (picks[q.key] === true ? 'bg-[#0C831F]' : 'bg-[#E5E0EA]')}>
                     <span className={'absolute top-[3px] h-5 w-5 rounded-full bg-white shadow transition-all duration-200 ' + (picks[q.key] === true ? 'left-[21px]' : 'left-[3px]')} />
@@ -151,7 +163,7 @@ export default function Brief() {
         </div>
         {fit.list && !fit.exact && <p className="mt-1.5 text-center text-[11.5px] font-bold text-[#8A5A00]">No one does all of it yet — these come closest.</p>}
       </div>
-      <Buddy id={`brief-${tradeId}`} lines={lines} cheer={cheer} bottom={104} />
+      <Buddy id={`brief-${tradeId}`} lines={lines} cheer={cheer} bottom={104} skip={{ label: 'In a hurry? See all masters', onClick: seeAll }} />
     </main>
   )
 }

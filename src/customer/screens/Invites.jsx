@@ -10,7 +10,7 @@
  */
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { CalendarDays, Check, ChevronRight, Loader2, MapPin, Plus, Send, Trash2, X } from 'lucide-react'
+import { CalendarDays, Check, ChevronRight, Loader2, MailPlus, MapPin, Plus, Send, Trash2, X } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { OCCASION } from '../data/occasions'
 import { occasionArt } from '../data/art'
@@ -23,6 +23,7 @@ import LookPicker from '../ui/inviteLook'
 import { TEMPLATES, parseTheme, templatesFor, themeString } from '../data/inviteTemplates'
 import SignInSheet from './SignInSheet'
 
+const nextSat = () => { const d = new Date(); d.setDate(d.getDate() + ((6 - d.getDay() + 7) % 7 || 7)); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }
 const fmt = d => (d ? new Date(`${d}T00:00:00`).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' }) : 'Date to be set')
 const MESSAGES = {
   wedding: 'With the blessings of our families, we request the pleasure of your company as we begin our new journey together.',
@@ -42,12 +43,22 @@ export function InvitesList() {
   return (
     <main className="cx-enter cx-cream min-h-[100dvh] cx-bottom-pad-bar">
       <BackHeader title="Invitations & RSVP" sub="Invite, track who’s coming, count heads" />
-      <section className="mx-3 mt-1 overflow-hidden rounded-[22px] bg-gradient-to-br from-[#FBF7FF] to-[#FDF0F6] p-4 shadow-[0_0_0_1px_#EEE6FA]">
-        <p className="text-[20px] font-black leading-tight tracking-[-0.03em] text-[var(--ink)]">Send invites on WhatsApp.<br /><span className="text-[#DB2777]">Know exactly who’s coming.</span></p>
-        <p className="mt-1 text-[12.5px] font-semibold text-[var(--ink-3)]">Guests reply in one tap — no app needed. Headcount, food choices and functions, live.</p>
-        <Link to="/invites/new" className="cx-press cx-cta mt-3 inline-flex h-11 items-center gap-1.5 rounded-full px-4 text-[14px] font-extrabold" data-new-invite>
-          <Plus size={17} />Create an invitation<ChevronRight size={16} />
+      {/* The one thing this screen is for: a big, elegant button in the middle, under a fan of real designs. */}
+      <section className="relative mx-3 mt-1 overflow-hidden rounded-[28px] bg-gradient-to-b from-[#FBF7FF] via-[#FDF2F8] to-white px-5 pb-6 pt-5 text-center shadow-[0_0_0_1px_#F1E6FA]" data-invite-hero>
+        <div className="relative mx-auto h-[150px] w-[270px]" aria-hidden>
+          {[['royal', -13, -78, 'Our Wedding'], ['balloons', 0, 0, 'Riya Turns 1'], ['floral', 13, 78, 'Baby Shower']].map(([id, r, x, title], k) => (
+            <div key={id} className="absolute left-1/2 top-1 w-[98px] drop-shadow-[0_14px_20px_rgba(60,20,110,.28)]" style={{ transform: `translateX(calc(-50% + ${x}px)) rotate(${r}deg)`, zIndex: k === 1 ? 2 : 1 }}>
+              <InviteCard inv={{ title, event_date: nextSat() }} theme={id} size="mini" />
+            </div>
+          ))}
+        </div>
+        <h2 className="mt-3 text-[25px] font-black leading-[1.08] tracking-[-0.035em] text-[#1C1033]">Invite everyone.<br /><span className="bg-gradient-to-r from-[#7C3AED] to-[#DB2777] bg-clip-text text-transparent">Know who’s coming.</span></h2>
+        <p className="mx-auto mt-1.5 max-w-[32ch] text-[13px] font-semibold text-[var(--ink-3)]">{(Math.floor(TEMPLATES.length / 10) * 10).toLocaleString('en-IN')}+ designs · one-tap WhatsApp RSVP · guest pickups & stays · style circles</p>
+        <Link to="/invites/new" className="cx-invite-cta relative mx-auto mt-5 flex h-[68px] w-full max-w-[340px] items-center justify-center gap-3 overflow-hidden rounded-[22px] text-[18px] font-black tracking-[-0.02em] text-white" data-new-invite>
+          <span className="grid h-10 w-10 place-items-center rounded-[14px] bg-white/20 ring-1 ring-white/35"><MailPlus size={21} /></span>
+          Create an invitation<ChevronRight size={20} />
         </Link>
+        <p className="mt-2.5 text-[11.5px] font-bold text-[var(--ink-3)]">Free · takes about a minute · no app needed for guests</p>
       </section>
 
       {!user ? (

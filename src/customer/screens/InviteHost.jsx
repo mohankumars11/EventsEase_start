@@ -18,6 +18,8 @@ import { BackHeader, Sheet } from '../ui/kit'
 import InviteCard from '../ui/InviteCard'
 import { parseTheme } from '../data/inviteTemplates'
 import { guestsFromFile } from '../lib/guestImport'
+import { setVip, whenLabel, TRAVEL_MODES } from '../lib/guestCare'
+import { GuestCarePanel, HostCircles } from '../ui/hostCareUI'
 
 const FILTERS = [['all', 'All'], ['attending', 'Coming'], ['maybe', 'Maybe'], ['declined', 'Can’t come'], ['pending', 'Not replied'], ['unseen', 'Not seen']]
 const SIDES = ['Family', 'Friends', 'Bride’s side', 'Groom’s side', 'Work', 'Neighbours']
@@ -171,6 +173,16 @@ export default function InviteHost() {
         )}
       </section>
 
+      {/* Guest care and style circles (migration 192). */}
+      {'care' in inv ? (
+        <>
+          <GuestCarePanel inv={inv} reload={load} />
+          <HostCircles inv={inv} />
+        </>
+      ) : (
+        <p className="mx-3 mt-3 rounded-[16px] bg-[#F0FDFF] p-3 text-[12.5px] font-bold text-[#0C4A6E]" data-care-off>Guest care (arrivals, pickups, rooms, VIPs) and style circles switch on once migration 192 is applied.</p>
+      )}
+
       {/* Latest replies */}
       {recent.length > 0 && (
         <section className="mx-3 mt-3 rounded-[20px] bg-white p-3.5 shadow-[0_0_0_1px_#EEE6FA]" data-recent>
@@ -204,7 +216,7 @@ export default function InviteHost() {
         {shown.map((g, i) => (
           <li key={g.id} className={(i ? 'border-t border-[var(--line)] ' : '') + 'flex items-center gap-3 px-3 py-2.5'} data-guest={g.status}>
             <button type="button" onClick={() => setGuest(g)} className="min-w-0 flex-1 text-left">
-              <span className="flex items-center gap-1.5"><span className="truncate text-[14.5px] font-extrabold">{g.name}</span>{g.checked_in_at && <UserCheck size={14} className="shrink-0 text-[#0C831F]" />}</span>
+              <span className="flex items-center gap-1.5"><span className="truncate text-[14.5px] font-extrabold">{g.vip ? '👑 ' : ''}{g.name}</span>{g.travel?.pickup && <span title="Needs pickup">🚖</span>}{g.checked_in_at && <UserCheck size={14} className="shrink-0 text-[#0C831F]" />}</span>
               <span className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[11.5px] font-bold text-[var(--ink-3)]">
                 <span className={'rounded-full px-1.5 py-[1px] text-[10.5px] font-extrabold ' + STATUS[g.status].tone}>{STATUS[g.status].label}</span>
                 {g.status === 'attending' && <span>{g.adults + g.kids} {g.adults + g.kids === 1 ? 'person' : 'people'}</span>}
@@ -302,6 +314,19 @@ function GuestSheet({ g, inv, onClose, onChanged }) {
         <p><span className={'rounded-full px-2 py-0.5 text-[11.5px] font-extrabold ' + STATUS[g.status].tone}>{STATUS[g.status].label}</span>{g.status === 'attending' ? ` · ${g.adults} adults${g.kids ? `, ${g.kids} children` : ''}` : ''}{g.meal ? ` · ${MEALS.find(m => m[0] === g.meal)?.[1]}` : ''}</p>
         {g.note && <p className="rounded-[12px] bg-[#FAF8FD] p-3">“{g.note}”</p>}
         <p>{g.phone ?? 'No number'} · up to {g.party_limit} {g.party_limit === 1 ? 'person' : 'people'}{g.side ? ` · ${g.side}` : ''}</p>
+        {g.travel && (
+          <p className="rounded-[12px] bg-[#F0FDFF] p-3 text-[12.5px] text-[#0C4A6E]" data-guest-travel>
+            {TRAVEL_MODES.find(m => m[0] === g.travel.mode)?.[2]} {[g.travel.ref, g.travel.from && `from ${g.travel.from}`, g.travel.arrive_at && whenLabel(g.travel.arrive_at)].filter(Boolean).join(' · ')}
+            {(g.travel.pickup || g.travel.stay || g.travel.drop) && <><br />{[g.travel.pickup && '🚖 pickup', g.travel.drop && '↩️ drop', g.travel.stay && `🏨 ${g.travel.rooms || 1} room × ${g.travel.nights || 1} night`].filter(Boolean).join(' · ')}</>}
+            {g.travel.needs && <><br />“{g.travel.needs}”</>}
+          </p>
+        )}
+        {'vip' in g && (
+          <button type="button" onClick={async () => { await setVip(g.id, !g.vip); onChanged() }} aria-pressed={!!g.vip}
+            className={'cx-press flex h-11 w-full items-center justify-center gap-1.5 rounded-[13px] text-[13px] font-extrabold ' + (g.vip ? 'bg-[#FFF4D6] text-[#8A6100] ring-1 ring-[#F2D27A]' : 'bg-[#F4F1F8] text-[var(--am-ink)]')} data-vip>
+            {g.vip ? '👑 VIP guest — tap to remove' : '👑 Mark as VIP'}
+          </button>
+        )}
         <p className="text-[12px]">{g.sent_at ? `Sent ${new Date(g.sent_at).toLocaleDateString('en-IN')}` : 'Not sent yet'}{g.opened_at ? ' · seen' : ''}{g.responded_at ? ` · replied ${new Date(g.responded_at).toLocaleDateString('en-IN')}` : ''}</p>
         <div className="grid grid-cols-2 gap-2 pt-1">
           <button type="button" onClick={async () => { try { await navigator.clipboard.writeText(rsvpLink(g.token)); setCopied(true) } catch { /* off */ } }} className="cx-press h-11 rounded-[13px] bg-[#F4F1F8] text-[13px] font-extrabold text-[var(--am-ink)]">{copied ? 'Copied' : 'Copy their link'}</button>

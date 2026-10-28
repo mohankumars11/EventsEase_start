@@ -22,6 +22,7 @@ import { partnersFor, SORTS } from '../lib/market'
 import { filterByNeeds, loadCuisines, loadDishes, needsFor } from '../lib/needs'
 import { plural, rupees } from '../lib/format'
 import { askOf, asksFor, asLine, withQuotes } from '../lib/quote'
+import { sambu } from './Buddy'
 import { Empty, Sheet } from './kit'
 import { PartnerCard, PartnerCardSkeleton } from './cards'
 import { needsSummary } from './needs'
@@ -147,7 +148,7 @@ export function MastersPanel({ tradeId, occasionId = null, guests = null, onCoun
           <PartnerCard key={x.serviceId} partner={sort === 'best' ? x : { ...x, reason: null }}
             href={`/p/${x.serviceId}?t=${tradeId}${occasionId ? `&o=${occasionId}` : ''}`}
             added={line?.serviceId === x.serviceId}
-            onAdd={y => (line?.serviceId === y.serviceId ? plan.remove(line.key) : plan.add(asLine(y), occasionId))}
+            onAdd={y => { if (line?.serviceId === y.serviceId) { plan.remove(line.key); sambu(`${y.name} taken out — pick another any time.`) } else { plan.add(asLine(y), occasionId); sambu(`${y.name} is in ✓ ${y.quote ? `Your price is ${rupees(y.quote.paise)} — ` : ''}pay instantly at checkout ⚡`) } }}
             saved={plan.isSaved(x.serviceId)} onSave={y => plan.toggleSaved(y)}
             selectable={comparing} selected={picked.some(y => y.serviceId === x.serviceId)} onSelect={pick} />
         ))}

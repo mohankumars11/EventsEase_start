@@ -23,7 +23,7 @@ import { plural } from '../lib/format'
 import { ActionBar, BackHeader, Journey, Sheet } from '../ui/kit'
 import { ArtFill } from '../ui/art'
 import { needsSummary } from '../ui/needs'
-import Buddy from '../ui/Buddy'
+import Buddy, { sambu } from '../ui/Buddy'
 
 export default function Needs() {
   const { occasionId } = useParams()
@@ -117,7 +117,8 @@ export default function Needs() {
         )}
       </ActionBar>
 
-      <Buddy id={`needs-${o.id}`} lines={lines} action={next ? { label: `Tell us about ${TRADE[next].label}`, onClick: () => navigate(`/brief/${next}?o=${o.id}`) } : null} bottom={124} />
+      <Buddy id={`needs-${o.id}`} lines={lines} action={next ? { label: `Tell us about ${TRADE[next].label}`, onClick: () => navigate(`/brief/${next}?o=${o.id}`) } : null} bottom={124}
+        skip={left ? { label: 'In a hurry? See all masters', onClick: () => navigate(`/o/${o.id}/match`) } : null} />
 
       <Sheet open={!!removing} onClose={() => setRemoving(null)} title={removing ? `Remove ${TRADE[removing].label}?` : ''}>
         {removing && (
@@ -125,7 +126,7 @@ export default function Needs() {
             <p className="text-[13.5px] font-semibold text-[var(--ink-2)]">It comes off your plan. You can add it back from the plan screen any time.</p>
             <div className="mt-4 grid grid-cols-2 gap-2">
               <button type="button" onClick={() => setRemoving(null)} className="cx-press cx-btn h-12 rounded-[16px] text-[14px] font-extrabold">Keep it</button>
-              <button type="button" onClick={() => { plan.setPick(o.id, removing, 'skip'); setRemoving(null) }} className="cx-press h-12 rounded-[16px] bg-[#1C1033] text-[14px] font-extrabold text-white" data-confirm-remove>Remove</button>
+              <button type="button" onClick={() => { sambu(`${TRADE[removing].label} is off your plan — add it back any time.`); plan.setPick(o.id, removing, 'skip'); setRemoving(null) }} className="cx-press h-12 rounded-[16px] bg-[#1C1033] text-[14px] font-extrabold text-white" data-confirm-remove>Remove</button>
             </div>
           </div>
         )}

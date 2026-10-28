@@ -24,6 +24,7 @@ import { ArtFill } from '../ui/art'
 import { MastersPanel } from '../ui/masters'
 import { OfferStrip } from '../ui/offers'
 import { needsSummary } from '../ui/needs'
+import Buddy from '../ui/Buddy'
 
 export default function Match() {
   const { occasionId } = useParams()
@@ -129,6 +130,11 @@ export default function Match() {
         </div>
       </div>
       <PlanBar withTabs={false} />
+      <Buddy id={`match-${o.id}`} bottom={124} lines={[
+        'These are your masters, priced for what you asked. Tap Add on the one you like — that’s it ⚡',
+        'Comparing? Tap Compare and pick up to three side by side.',
+        'Still there? Add one master per service and pay for all of it in one go.',
+      ]} />
     </main>
   )
 }

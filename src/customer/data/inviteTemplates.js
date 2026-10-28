@@ -1,5 +1,5 @@
 /**
- * Invitation designs — 62, each in two more colourways (~180 in all). Each is drawn in code (gradients + SVG
+ * Invitation designs — 62 originals, in every palette and lettering: 1,000+ in all. Each is drawn in code (gradients + SVG
  * ornaments + the app's own fonts), so it is crisp at any size, weighs
  * nothing, and the guest's browser renders exactly what the host picked.
  *
@@ -175,7 +175,7 @@ function fitScore(t, occasion) {
   if (isSolemn(occasion)) return t.solemn ? 10 : t.id === 'minimal' || t.id === 'lotus-ivory' ? 4 : -100
   if (t.solemn) return -100
   const text = `${occasion.name} ${occasion.id.replace(/-/g, ' ')}`
-  return (t.kw?.test(text) ? 6 : 0) + (t.for.includes(occasion.category) ? 3 : 0) + (t.trending ? 1 : 0)
+  return (t.kw?.test(text) ? 6 : 0) + (t.for.includes(occasion.category) ? 3 : 0) + (t.trending ? 1 : 0) - (t.deep ? 2.5 : 0)
 }
 
 /** Designs for an occasion, best fit first (then the rest). Never shows a party design for a memorial. */
@@ -184,7 +184,7 @@ export function templatesFor(occasion) {
   return scored.sort((a, b) => b.s - a.s || a.i - b.i).map(x => x.t)
 }
 /** The ones genuinely made for this occasion (labelled "Made for this"). */
-export const recommendedFor = occasion => new Set(TEMPLATES.filter(t => fitScore(t, occasion) >= 6).map(t => t.id))
+export const recommendedFor = occasion => new Set(TEMPLATES.filter(t => !t.deep && fitScore(t, occasion) >= 6).map(t => t.id))
 
 /* ── Make it yours: a colour palette and a font over any design ──────
    Kept in the same theme text: "royal|art|live|p:emerald|f:regal".
@@ -209,6 +209,7 @@ export const PALETTES = [
 export const PALETTE = Object.fromEntries(PALETTES.map(p => [p.id, p]))
 export const FONTS = [['script', 'Script'], ['vibes', 'Calligraphy'], ['dance', 'Handwritten'], ['serif', 'Classic'], ['regal', 'Regal'], ['display', 'Bold'], ['sans', 'Modern']]
 const FONT_IDS = new Set(FONTS.map(f => f[0]))
+const FONT_NAME = Object.fromEntries(FONTS)
 
 /* A design dressed in the customer's palette and font. */
 function dress(t, pal, font) {
@@ -251,7 +252,24 @@ const COLOURWAYS = BASE.flatMap((t, i) => {
   const dark = lum(t.ink) > 0.6
   return [colourway(t, pick(dark ? DARK : LIGHT, i * 3, t), null), colourway(t, pick(dark ? LIGHT : DARK, i * 5 + 2, t), ALT_FONT[t.font] ?? null)]
 })
-export const TEMPLATES = [...BASE, ...COLOURWAYS]
+/* The full library (Mohan, 2026-10-28: "1,000 templates"): every design in
+   every palette it does not already wear, and in two more letterings. The
+   curated colourways above come first in every list; these follow. A
+   memorial's quiet designs only ever take the quiet palettes. */
+const QUIET = ['ivory', 'sky', 'lavender', 'mint']
+const FONT_IDS_ALL = ['script', 'vibes', 'dance', 'serif', 'regal', 'display', 'sans']
+const taken = new Set(COLOURWAYS.map(c => c.id))
+const LIBRARY = BASE.flatMap((t, i) => {
+  const pals = (t.solemn ? QUIET : PALETTES.map(p => p.id))
+    .filter(id => !taken.has(`${t.id}~${id}`) && !PALETTE[id].swatch.some(c => t.bg.toUpperCase().includes(c.toUpperCase())))
+  const fonts = t.solemn ? [] : FONT_IDS_ALL.filter(f => f !== t.font && f !== ALT_FONT[t.font])
+  const two = [fonts[i % fonts.length], fonts[(i + 3) % fonts.length]].filter((f, k, a) => f && a.indexOf(f) === k)
+  return [
+    ...pals.map(pal => ({ ...colourway(t, pal, null), deep: true })),
+    ...two.map(f => ({ ...dress(t, null, f), id: `${t.id}~f-${f}`, name: `${t.name} · ${FONT_NAME[f]} lettering`, vibe: `${t.vibe}, ${FONT_NAME[f].toLowerCase()} lettering`, variantOf: t.id, trending: false, deep: true })),
+  ]
+})
+export const TEMPLATES = [...BASE, ...COLOURWAYS, ...LIBRARY]
 export const TEMPLATE = Object.fromEntries(TEMPLATES.map(t => [t.id, t]))
 
 export function parseTheme(theme, occasion) {
