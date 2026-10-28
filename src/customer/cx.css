@@ -289,3 +289,9 @@
 .cx-talk { transform-box: fill-box; transform-origin: center; animation: cx-talk .3s ease-in-out infinite alternate; }
 @keyframes cx-talk { from { transform: scaleY(.35); } to { transform: scaleY(1); } }
 @media (prefers-reduced-motion: reduce) { .cx-blink, .cx-talk { animation: none; } }
+
+/* Blinkit's torn-paper edge, for the note under a checkout heading. */
+.cx-zigzag { position: relative; }
+.cx-zigzag::before, .cx-zigzag::after { content: ''; position: absolute; left: 0; right: 0; height: 6px; background-size: 12px 6px; background-repeat: repeat-x; }
+.cx-zigzag::before { top: -5px; background-image: linear-gradient(135deg, #F6F3FA 25%, transparent 25%), linear-gradient(225deg, #F6F3FA 25%, transparent 25%); }
+.cx-zigzag::after { bottom: -5px; background-image: linear-gradient(45deg, #F6F3FA 25%, transparent 25%), linear-gradient(315deg, #F6F3FA 25%, transparent 25%); }
