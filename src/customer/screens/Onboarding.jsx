@@ -41,7 +41,7 @@ export const onboardFlags = () => { try { return JSON.parse(localStorage.getItem
 const setFlag = patch => { try { localStorage.setItem(FLAG, JSON.stringify({ ...onboardFlags(), ...patch })) } catch { /* storage off */ } }
 
 export default function Onboarding({ step, onDone }) {
-  const steps = ['where', 'signin', 'rewards']
+  const steps = ['where', 'signin', 'alerts', 'rewards']
   const at = steps.indexOf(step)
   return (
     <main className="cx-enter flex min-h-[100dvh] flex-col bg-white" data-onboarding={step}>
@@ -286,7 +286,7 @@ function useSplashGone() {
   return gone
 }
 
-/* ── 3. Welcome scratch cards ─────────────────────────────────────── */
+/* ── 4. Welcome scratch cards ─────────────────────────────────────── */
 const REWARD_ART = {
   free_rsvp: { emoji: '💌', tone: 'radial-gradient(110% 80% at 50% 0%, rgba(192,38,211,.55) 0%, transparent 60%), linear-gradient(160deg, #1B0B33 0%, #3B1670 55%, #6B1D6E 100%)', ink: '#FFFFFF', glow: '#F9A8D4', kicker: 'Free RSVP', won: 'You’ve earned a FREE RSVP invitation!', big: 'FREE', unit: 'first invitation', line: 'Premium designs, live RSVP, guest care & style circles — on us for your first invitation.', cta: 'Use it in Invitations' },
   welcome_pct: { emoji: '🎉', tone: 'radial-gradient(110% 80% at 50% 0%, rgba(245,158,11,.5) 0%, transparent 58%), linear-gradient(160deg, #140828 0%, #2E0F5C 55%, #5B21A8 100%)', ink: '#FFFFFF', glow: '#FFC24B', kicker: 'Welcome offer', won: 'You’ve unlocked 25% off your first booking!', big: '25%', unit: 'OFF', line: welcomeFine, cta: 'Use on my first booking' },

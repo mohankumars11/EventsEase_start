@@ -102,14 +102,18 @@ function Root() {
   return <Home />
 }
 
-/* First run: location → sign in → notifications, before any screen of the
-   app (screens/Onboarding.jsx). A signed-out customer always lands on
-   sign-in again; location and the alerts ask happen once per device. */
+/* First run: location → sign in → notifications → the welcome scratch
+   cards (25% off + free RSVP), before any screen of the app
+   (screens/Onboarding.jsx). A signed-out customer always lands on sign-in
+   again; location, the alerts ask and the cards happen once per device.
+   The alerts ask had dropped out of this chain on 28 Oct; Mohan wants it
+   (2026-10-31). */
 function useOnboarding() {
   const { user, loading } = useAuth()
   const [, bump] = useState(0)
   if (loading) return { step: 'loading' }
-  const step = !savedWhere() ? 'where' : !user ? 'signin' : !onboardFlags().rewards ? 'rewards' : null
+  const f = onboardFlags()
+  const step = !savedWhere() ? 'where' : !user ? 'signin' : !f.alerts ? 'alerts' : !f.rewards ? 'rewards' : null
   return { step, next: () => bump(n => n + 1) }
 }
 
