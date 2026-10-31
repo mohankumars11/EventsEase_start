@@ -28,7 +28,7 @@ export default function Wallet() {
   const copy = async c => { if (await copyText(c)) { setCopied(c); setTimeout(() => setCopied(''), 1500) } }
 
   return (
-    <main className="cx-enter min-h-[100dvh] bg-[#FFF7EE] pb-[calc(env(safe-area-inset-bottom,0px)+40px)]" data-rewards-wallet>
+    <main className="cx-enter min-h-[100dvh] bg-white pb-[calc(env(safe-area-inset-bottom,0px)+40px)]" data-rewards-wallet>
       <BackHeader title="Rewards" sub="Vouchers, credit and gifts" />
       <section className="mx-3 overflow-hidden rounded-[26px] bg-gradient-to-br from-[#FFFFFF] via-[#F6F0FF] to-[#FFF1F8] p-5 text-[#1B0B33] shadow-[0_18px_36px_-26px_rgba(91,33,168,.7)] ring-1 ring-[#E9DDFB]">
         <p className="flex items-center gap-1.5 text-[12px] font-extrabold text-[#5B21A8]"><IndianRupee size={14} /><span className="cx-brand text-[12px]">Sambramo</span> credit</p>

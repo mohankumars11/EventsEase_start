@@ -53,7 +53,7 @@ export default function Spotlight({ title = 'In the spotlight', items }) {
   const cur = items[at] ?? items[0]
 
   return (
-    <section className="bg-[#FFF7EE] px-3 pb-1 pt-4" data-spotlight>
+    <section className="bg-white px-3 pb-1 pt-4" data-spotlight>
       <div className="relative overflow-hidden rounded-[28px] pb-5 pt-5 shadow-[0_26px_50px_-30px_rgba(28,16,51,.9),0_0_0_1px_rgba(124,58,237,.18)]"
         style={{ background: `radial-gradient(110% 65% at 0% 0%, rgba(124,58,237,.55) 0%, transparent 58%), radial-gradient(90% 55% at 100% 100%, rgba(219,39,119,.42) 0%, transparent 62%), radial-gradient(75% 45% at 50% 52%, ${hex(cur.tone)}38 0%, transparent 72%), linear-gradient(160deg, #1C0B36 0%, #120726 55%, #0A0416 100%)` }}>
         {/* A faint grid and a lit top edge: the "futuristic" stage. */}

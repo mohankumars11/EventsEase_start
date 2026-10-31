@@ -22,7 +22,7 @@ export const SUPPORT = { email: 'help@sambramo.com', whatsapp: '[support WhatsAp
 
 /* The cancellation ladder — the one table every screen quotes. */
 export const LADDER = [
-  { when: 'Before a master accepts', refund: 'Full refund', credit: null, note: 'Nothing is kept. Most requests are answered within minutes.' },
+  { when: 'Before a master accepts', refund: 'Nothing paid yet', credit: null, note: 'You pay only after a master accepts — withdraw a request free, any time.' },
   { when: 'Within 15 minutes of paying', refund: 'Full refund', credit: null, note: 'Only if the event is at least 72 hours away.' },
   { when: 'More than 15 days before the event', refund: '50% refund', credit: 'or 90% as Sambramo credit', note: '' },
   { when: '7 to 15 days before', refund: '25% refund', credit: 'or 50% as Sambramo credit', note: '' },
@@ -35,7 +35,7 @@ export const POLICIES = {
     title: 'Cancellation & refunds',
     short: 'Cancellation',
     summary: [
-      'Free cancellation until a master accepts your request.',
+      'Sending a request is free. You pay only after a master accepts it, and you can withdraw it any time before.',
       'After acceptance, what comes back depends on how far away your event is — choose Sambramo credit and more comes back.',
       'If a master cancels or does not turn up, you get everything back.',
       'Refunds reach your original payment method in 5–7 working days after approval; credit is instant.',

@@ -10,10 +10,10 @@ import { BadgePercent, ChevronRight, MailOpen, RotateCcw, ShieldCheck, Zap } fro
 
 export const OFFERS = [
   { icon: BadgePercent, big: '25% OFF', small: 'your first celebration', text: '25% off your first celebration', sub: 'Up to ₹2,500 · first booking · in your Rewards', cta: 'See my voucher', to: '/rewards', fg: '#B45309', bg: '#FFF4DA', grad: 'linear-gradient(120deg, #FF7A45 0%, #E23744 100%)' },
-  { icon: Zap, big: '0 WAIT', small: 'instant booking, no quotes', text: 'Instant booking — no waiting for quotes', sub: 'Pick a master, pay, done', cta: 'Book instantly', to: '/s', fg: '#6D28D9', bg: '#F3ECFF', grad: 'linear-gradient(120deg, #8B5CF6 0%, #4C1D95 100%)' },
+  { icon: Zap, big: 'PAY LATER', small: 'only after they accept', text: 'Pay only after your master accepts', sub: 'Send requests free — no calls, no haggling', cta: 'Find masters', to: '/s', fg: '#6D28D9', bg: '#F3ECFF', grad: 'linear-gradient(120deg, #8B5CF6 0%, #4C1D95 100%)' },
   { icon: MailOpen, big: 'FREE RSVP', small: 'WhatsApp invites & headcount', text: 'Free WhatsApp invites with RSVP', sub: 'Know exactly who’s coming', cta: 'Send invites', to: '/invites', fg: '#BE185D', bg: '#FDECF4', grad: 'linear-gradient(120deg, #EC4899 0%, #9D174D 100%)' },
   { icon: ShieldCheck, big: '100% SAFE', small: 'pay held till it’s done', text: 'Pay safely — held till your event is done', sub: 'Secured by Razorpay, released after delivery', cta: 'How it works', to: '/help', fg: '#0B6B3D', bg: '#E9F8EF', grad: 'linear-gradient(120deg, #22C55E 0%, #0B6B3D 100%)' },
-  { icon: RotateCcw, big: 'FULL REFUND', small: 'before a master accepts', text: 'Full refund before a master accepts', sub: 'Clear cancellation, all in one place', cta: 'See the policy', to: '/legal/cancellation', fg: '#1D4ED8', bg: '#EAF1FF', grad: 'linear-gradient(120deg, #3B82F6 0%, #1E3A8A 100%)' },
+  { icon: RotateCcw, big: 'FREE TO ASK', small: 'withdraw a request any time', text: 'Requests are free to send and withdraw', sub: 'Clear cancellation once you pay', cta: 'See the policy', to: '/legal/cancellation', fg: '#1D4ED8', bg: '#EAF1FF', grad: 'linear-gradient(120deg, #3B82F6 0%, #1E3A8A 100%)' },
 ]
 
 export function OfferStrip({ className = '' }) {

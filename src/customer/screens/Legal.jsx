@@ -18,7 +18,7 @@ export default function Legal() {
   const navigate = useNavigate()
   const id = POLICIES[doc] ? doc : 'cancellation'
   return (
-    <main className="cx-enter min-h-[100dvh] bg-[#FFF7EE] pb-[calc(env(safe-area-inset-bottom,0px)+40px)]" data-legal={id}>
+    <main className="cx-enter min-h-[100dvh] bg-white pb-[calc(env(safe-area-inset-bottom,0px)+40px)]" data-legal={id}>
       <BackHeader title="Policies" sub="Clear, fair, and always here" />
       <div className="cx-noscroll flex gap-1.5 overflow-x-auto px-3 pb-2">
         {POLICY_LIST.map(k => (

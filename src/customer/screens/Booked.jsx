@@ -15,7 +15,7 @@ import { ArtFill } from '../ui/art'
 import { useAuth } from '../../context/AuthContext'
 import { payLines } from '../../lib/payLines'
 import { supabase } from '../../lib/supabase'
-import { myBookings, acceptQuote, confirmPaid, LINE_STATE } from '../lib/bookings'
+import { myBookings, acceptQuote, confirmPaid, LINE_STATE, requestQueue, nudgeRequests, pendingVoucher, clearVoucher } from '../lib/bookings'
 import { dayLabel, plural, rupees } from '../lib/format'
 import SignInSheet from './SignInSheet'
 import { Sheet } from '../ui/kit'
@@ -47,6 +47,7 @@ export default function Booked({ tab = 'all' }) {
 
   const load = useCallback(async () => {
     if (!user) return
+    await nudgeRequests() // a lapsed request moves to the next master now, not at the minute's sweep
     try { setData(await myBookings(user.id)) } catch (e) { setData({ lines: [], quotes: [], error: e.message }) }
   }, [user])
   useEffect(() => { load() }, [load])
@@ -70,7 +71,13 @@ export default function Booked({ tab = 'all' }) {
 
   async function pay(lineIds, label) {
     setBusy(lineIds[0]); setMsg('')
-    const r = await payLines({ lineIds, part: 'advance', description: label })
+    /* The offer chosen at checkout comes with the payment that follows the
+       accept; the server re-checks it, and if it no longer applies the
+       customer pays without it rather than being stuck. */
+    const vid = pendingVoucher()
+    let r = await payLines({ lineIds, part: 'advance', description: label, voucherId: vid })
+    if (!r.ok && r.code === 'voucher') { clearVoucher(); r = await payLines({ lineIds, part: 'advance', description: label }) }
+    if (r.ok && vid) clearVoucher()
     const c = await confirmPaid(r)
     setBusy(null)
     setMsg(r.ok ? (c?.ok ? 'Paid and confirmed — your master has been told.' : 'Payment received — confirming with Razorpay.') : r.dismissed ? '' : r.error ?? 'Payment did not go through.')
@@ -113,7 +120,7 @@ export default function Booked({ tab = 'all' }) {
       {due.length > 0 && (
         <div className="rounded-[22px] bg-[#FFF8E6] p-3.5 ring-1 ring-[#F6DFA2]">
           <p className="flex items-center gap-1.5 text-[13.5px] font-extrabold text-[#7A4B00]"><Zap size={15} className="fill-[var(--gold)] text-[var(--gold)]" />{plural(due.length, 'master')} holding your date</p>
-          <p className="mt-0.5 text-[12px] font-semibold text-[#8A6420]">Pay to confirm. One payment covers them all.</p>
+          <p className="mt-0.5 text-[12px] font-semibold text-[#8A6420]">They accepted your request. Pay to confirm — one payment covers them all.</p>
           <button type="button" disabled={!!busy} onClick={() => pay(due.map(l => l.id), `Sambramo · ${plural(due.length, 'master')}`)}
             className="cx-press cx-cta mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-[16px] text-[14px] font-extrabold" data-pay-due>
             {busy && due.some(l => l.id === busy) ? <Loader2 size={16} className="animate-spin" /> : null}Pay {rupees(due.reduce((s, l) => s + l.advancePaise, 0))} to confirm
@@ -124,6 +131,7 @@ export default function Booked({ tab = 'all' }) {
       {[...due, ...live].map((l, k) => (
         <div key={l.id}>
           <BookingCard line={l} />
+          {l.status === 'dispatching' && <RequestTimer lineId={l.id} />}
           {['pending', 'dispatching', 'accepted', 'paid'].includes(l.status) && (
             <button type="button" onClick={() => setCancelFor(l)} className="ml-3 mt-1 text-[12px] font-extrabold text-[var(--ink-3)] underline-offset-2 hover:underline" data-cancel-open>Cancel booking</button>
           )}
@@ -204,6 +212,41 @@ function BookingCard({ line: l }) {
         <p className="cx-num mt-1 text-[13.5px] font-extrabold">{rupees(l.listPaise ?? l.quoted_amount_paise)}</p>
       </div>
     </Link>
+  )
+}
+
+/* A request in flight (migration 197): who has it, until when, and who is
+   asked next. Silent until 197 is pasted (the queue reads empty). */
+function RequestTimer({ lineId }) {
+  const [q, setQ] = useState(null)
+  const [, tick] = useState(0)
+  useEffect(() => {
+    let live = true
+    const read = () => requestQueue(lineId).then(x => live && setQ(x))
+    read()
+    const a = setInterval(read, 20000), b = setInterval(() => tick(n => n + 1), 1000)
+    return () => { live = false; clearInterval(a); clearInterval(b) }
+  }, [lineId])
+  if (!q?.length) return null
+  const now = q.find(x => x.status === 'asked')
+  const next = q.filter(x => x.status === 'waiting')
+  const left = now?.reply_by ? Math.max(0, new Date(now.reply_by).getTime() - Date.now()) : 0
+  const hh = Math.floor(left / 3600000), mm = Math.floor((left % 3600000) / 60000), ss = Math.floor((left % 60000) / 1000)
+  return (
+    <div className="mx-1 mt-1.5 rounded-[18px] bg-[#F4FBF7] p-3 ring-1 ring-[#CDEFDC]" data-request-timer>
+      {now ? (
+        <div className="flex items-center gap-2.5">
+          <span className="relative grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white text-[#0C831F] shadow-[inset_0_0_0_2px_#BFE6CC]"><Clock3 size={16} /><span className="absolute inset-0 animate-ping rounded-full ring-2 ring-[#16A34A]/30" /></span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-[13px] font-extrabold text-[#0B4F2A]">{now.name} has your request</span>
+            <span className="block text-[11.5px] font-bold text-[#3C7A5A]">Only they can see it · replies within <span className="cx-num">{hh ? `${hh}h ` : ''}{String(mm).padStart(2, '0')}m {String(ss).padStart(2, '0')}s</span></span>
+          </span>
+        </div>
+      ) : <p className="text-[12.5px] font-extrabold text-[#0B4F2A]">Finding the next master for you…</p>}
+      {next.length > 0 && (
+        <p className="mt-2 truncate text-[11.5px] font-bold text-[var(--ink-2)]">If they can’t: {next.map(x => `${x.name}${x.list_paise ? ` (${rupees(x.list_paise)})` : ''}`).join(', then ')}</p>
+      )}
+    </div>
   )
 }
 

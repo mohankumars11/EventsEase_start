@@ -26,7 +26,8 @@ import { Sheet } from '../ui/kit'
 import { iso, fromIso, timeLabel, countdown } from '../lib/format'
 
 const LONG = new Intl.DateTimeFormat('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })
-const MIN_H = 1, MAX_H = 16
+/* The slider covers a day; typing goes beyond it — a 3-day wedding is 72 hours (2026-10-31: no cap). */
+const MIN_H = 1, MAX_H = 16, MAX_TYPED = 240
 
 const toMin = t => (t ? Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5)) : 19 * 60)
 const toTime = m => `${String(Math.floor(m / 60) % 24).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`
@@ -59,11 +60,11 @@ export function useWhen({ date, time, hours }, open = true) {
   const minAllowed = isToday ? earliest : 0
   const bad = m < minAllowed || minAllowed >= 1440
   useEffect(() => { if (isToday && m < earliest && earliest < 1440) setM(earliest) }, [isToday]) // eslint-disable-line react-hooks/exhaustive-deps
-  const end = m + span * 60
+  const end = m + (span ?? 0) * 60
   return {
     d, setD, m, setM, span, setSpan, days, minAllowed, bad, end, chosen: fromIso(d),
     value: () => ({ date: d, time: toTime(m), hours: span }),
-    label: !d ? 'Choose a day' : bad ? 'No start times left today' : `${timeLabel(toTime(m))} – ${timeLabel(toTime(end % 1440))}`,
+    label: !d ? 'Choose a day' : bad ? 'No start times left today' : span ? `${timeLabel(toTime(m))} – ${timeLabel(toTime(end % 1440))}` : `Starts ${timeLabel(toTime(m))}`,
   }
 }
 
@@ -179,21 +180,31 @@ export function WhenBody({ w }) {
 
       {/* How long it lasts: asked as a question, set with − / + or the slider. */}
       <div className="mt-6 rounded-[24px] bg-white p-4 shadow-[0_0_0_1px_#EEE6FA,0_16px_32px_-26px_rgba(58,18,144,.7)]" data-duration>
-        <p className="text-[15.5px] font-extrabold tracking-[-0.02em]">How long will it last?</p>
-        <p className="mt-0.5 text-[12px] font-semibold text-[var(--ink-3)]">From the first guest to the last — masters are booked for this long.</p>
+        <p className="flex items-center justify-between text-[15.5px] font-extrabold tracking-[-0.02em]">How long will it last?<span className="rounded-full bg-[#F1EAFE] px-2 py-0.5 text-[10.5px] font-extrabold text-[var(--brand)]">Optional</span></p>
+        <p className="mt-0.5 text-[12px] font-semibold text-[var(--ink-3)]">Type any number of hours, or skip it — masters confirm the timing with you.</p>
         <div className="mt-4 flex items-center justify-between gap-3">
-          <button type="button" onClick={() => setSpan(h => Math.max(MIN_H, h - 1))} disabled={span <= MIN_H} aria-label="One hour less"
+          <button type="button" onClick={() => setSpan(h => Math.max(MIN_H, (h ?? 4) - 1))} disabled={!span || span <= MIN_H} aria-label="One hour less"
             className="cx-press cx-btn grid h-12 w-12 shrink-0 place-items-center rounded-full disabled:opacity-35"><Minus size={20} /></button>
           <div className="text-center" aria-live="polite">
-            <p className="cx-num text-[34px] font-extrabold leading-none tracking-[-0.04em]">{span}<span className="ml-1 text-[16px] font-extrabold tracking-normal text-[var(--ink-2)]">{span === 1 ? 'hour' : 'hours'}</span></p>
-            <p className="mt-1 text-[12px] font-bold text-[var(--brand)]">{timeLabel(toTime(m))} – {timeLabel(toTime((m + span * 60) % 1440))}{m + span * 60 >= 1440 ? ' (next day)' : ''}</p>
+            <label className="flex items-baseline justify-center gap-1">
+              <input inputMode="numeric" value={span ?? ''} placeholder="—" aria-label="Hours"
+                onChange={e => { const n = parseInt(e.target.value.replace(/\D/g, ''), 10); setSpan(Number.isFinite(n) ? Math.min(MAX_TYPED, Math.max(MIN_H, n)) : null) }}
+                className="cx-num w-[84px] border-b-2 border-dashed border-[#D9CCF5] bg-transparent text-center text-[34px] font-extrabold leading-none tracking-[-0.04em] outline-none focus:border-[var(--brand)]" data-hours-input />
+              <span className="text-[16px] font-extrabold text-[var(--ink-2)]">{span === 1 ? 'hour' : 'hours'}</span>
+            </label>
+            <p className="mt-1 text-[12px] font-bold text-[var(--brand)]">{span ? <>{timeLabel(toTime(m))} – {timeLabel(toTime((m + span * 60) % 1440))}{m + span * 60 >= 1440 ? ` (+${Math.floor((m + span * 60) / 1440)} day${Math.floor((m + span * 60) / 1440) > 1 ? 's' : ''})` : ''}</> : 'Not sure yet — that’s fine'}</p>
           </div>
-          <button type="button" onClick={() => setSpan(h => Math.min(MAX_H, h + 1))} disabled={span >= MAX_H} aria-label="One hour more"
+          <button type="button" onClick={() => setSpan(h => Math.min(MAX_TYPED, (h ?? 3) + 1))} disabled={span >= MAX_TYPED} aria-label="One hour more"
             className="cx-press cx-btn grid h-12 w-12 shrink-0 place-items-center rounded-full disabled:opacity-35"><Plus size={20} /></button>
         </div>
-        <input type="range" min={MIN_H} max={MAX_H} step={1} value={span} onChange={e => setSpan(Number(e.target.value))} aria-label="Hours"
-          className="cx-range mt-4 w-full" style={{ '--fill': `${((span - MIN_H) / (MAX_H - MIN_H)) * 100}%` }} />
-        <div className="mt-1 flex justify-between text-[10.5px] font-bold text-[var(--ink-3)]"><span>{MIN_H} hour</span><span>Half day</span><span>Full day · {MAX_H} h</span></div>
+        <input type="range" min={MIN_H} max={MAX_H} step={1} value={Math.min(span ?? 4, MAX_H)} onChange={e => setSpan(Number(e.target.value))} aria-label="Hours"
+          className="cx-range mt-4 w-full" style={{ '--fill': `${((Math.min(span ?? 4, MAX_H) - MIN_H) / (MAX_H - MIN_H)) * 100}%` }} />
+        <div className="mt-1 flex justify-between text-[10.5px] font-bold text-[var(--ink-3)]"><span>{MIN_H} hour</span><span>Half day</span><span>{MAX_H} h · type more</span></div>
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {[[null, 'Not sure yet'], [24, '1 day'], [48, '2 days'], [72, '3 days']].map(([v, t]) => (
+            <button key={t} type="button" onClick={() => setSpan(v)} aria-pressed={span === v} className={'cx-press rounded-full px-3 py-1.5 text-[12px] font-extrabold ' + (span === v ? 'bg-[var(--brand)] text-white' : 'bg-[#F4F0FB] text-[var(--ink-2)]')}>{t}</button>
+          ))}
+        </div>
       </div>
     </>
   )

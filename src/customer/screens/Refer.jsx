@@ -69,7 +69,7 @@ export default function Refer() {
   }
 
   return (
-    <main className="cx-enter min-h-[100dvh] bg-[#F5F2FA] pb-[calc(env(safe-area-inset-bottom,0px)+40px)]" data-refer-page>
+    <main className="cx-enter min-h-[100dvh] bg-white pb-[calc(env(safe-area-inset-bottom,0px)+40px)]" data-refer-page>
       <BackHeader title="Refer & earn" sub="Give 25% · get 25% + 5%" />
 
       <HoloTicket code={code} copied={copied === 'code'} onCopy={() => copy('code')} />

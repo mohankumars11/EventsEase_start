@@ -9,10 +9,15 @@
  * fit, not everyone), walks through the rest one tap at a time, and
  * "No preference" is a one-tap answer. Removing a service takes it out of
  * the plan.
+ *
+ * Two ways on, always (2026-10-31): "See all masters" with no answers at
+ * all, or "Find matched masters" with them. Nothing here promises a price —
+ * each master shows their own base rate and confirms the final amount when
+ * they accept your request.
  */
 import { useEffect, useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
-import { Check, ChevronRight, ListChecks, Target, X, Zap } from 'lucide-react'
+import { Check, ChevronRight, Send, Sparkles, Users, X } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { OCCASION } from '../data/occasions'
 import { TRADE } from '../data/trades'
@@ -24,6 +29,7 @@ import { ActionBar, BackHeader, Journey, Sheet } from '../ui/kit'
 import { ArtFill } from '../ui/art'
 import { needsSummary } from '../ui/needs'
 import Buddy, { sambu } from '../ui/Buddy'
+import InviteReady from '../ui/InviteReady'
 
 export default function Needs() {
   const { occasionId } = useParams()
@@ -44,25 +50,27 @@ export default function Needs() {
   const pct = asking.length ? Math.round((done / asking.length) * 100) : 100
   /* Sambu's lines: always about the next tap, and why it is worth it. */
   const lines = left ? [
-    done ? `Nice — ${done} done! You’re on ${TRADE[next].label} next. How many hours, what style? 20 seconds, I promise.` : `Hi, I’m Sambu! 👋 Tell me what you need from each service and I’ll work out your exact price — so you can pay instantly.`,
-    `Still there? Just ${plural(left, 'more service')} to go — then your masters and prices are ready ⚡`,
-    'No calls, no haggling, no waiting for quotes. Your answers ARE your price.',
-    left === 1 ? 'Almost there! 🎉 One more and you’re done.' : `Feeling stuck? Tap “No preference” inside — that’s a fine answer too.`,
-  ] : ['All done! 🎉 Your masters and their prices are ready — tap “Find my perfect masters”.']
+    done ? `Nice — ${done} done! ${TRADE[next].label} next. 20 seconds, I promise.` : `Hi, I’m Sambu! 👋 Tell me a little about each service and I’ll show you the masters who fit — or skip and see everyone.`,
+    `Just ${plural(left, 'more service')} to go — or tap “See all masters” whenever you like.`,
+    'Not sure yet? “No preference” is a perfectly good answer.',
+    left === 1 ? 'Almost there! 🎉 One more and you’re done.' : 'You can change any answer later — nothing is booked until a master accepts.',
+  ] : ['All done! 🎉 Tap “Find matched masters” to meet the ones who fit.']
+  const all = () => navigate(`/o/${o.id}/match?all=1`)
+  const matched = () => navigate(`/o/${o.id}/match`)
 
   return (
-    <main className="cx-enter cx-cream min-h-[100dvh] pb-[calc(env(safe-area-inset-bottom,0px)+150px)]">
+    <main className="cx-enter min-h-[100dvh] bg-white pb-[calc(env(safe-area-inset-bottom,0px)+150px)]">
       <BackHeader title="What you need" sub={o.name} />
       <Journey at={2} occasionId={o.id} />
 
-      {/* Why this matters — said once, plainly. */}
-      <section className="mx-3 mt-1 overflow-hidden rounded-[22px] bg-white p-4 shadow-[0_0_0_1px_#EFE7DD]" data-needs-intro>
-        <p className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#B45309]"><Zap size={13} className="fill-current" />Your answers are your price</p>
-        <h2 className="mt-1 text-[21px] font-black leading-[1.12] tracking-[-0.035em]">Tell us what you need — we price it for you.</h2>
-        <p className="mt-1 text-[12.5px] font-semibold leading-snug text-[var(--ink-3)]">How many hours, how many guests, what style: we turn it into each master’s exact price and show only the ones who can do it. Add one and pay instantly — no calls, no waiting for quotes.</p>
+      {/* Why this matters — said once, warmly, with no price promise. */}
+      <section className="mx-3 mt-1 overflow-hidden rounded-[22px] bg-gradient-to-br from-[#F6F0FF] to-[#EEF9F2] p-4 ring-1 ring-[#E6DCF7]" data-needs-intro>
+        <p className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[var(--brand)]"><Sparkles size={13} />Optional · about a minute</p>
+        <h2 className="mt-1 text-[21px] font-black leading-[1.12] tracking-[-0.035em]">Help us find the right masters for you</h2>
+        <p className="mt-1 text-[12.5px] font-semibold leading-snug text-[var(--ink-2)]">A few taps about each service and we show the masters who do exactly that. Or skip it and see everyone — you can always filter.</p>
         <div className="mt-3 grid grid-cols-3 gap-1.5 text-center">
-          {[[ListChecks, 'Tap a service'], [Target, 'Hours & style'], [Zap, 'Your exact price']].map(([I, t], k) => (
-            <span key={t} className="flex flex-col items-center gap-1 rounded-[14px] bg-[#FBF8F4] px-1 py-2">
+          {[[Sparkles, 'Tell us a little'], [Users, 'Meet your masters'], [Send, 'Send a request']].map(([I, t], k) => (
+            <span key={t} className="flex flex-col items-center gap-1 rounded-[14px] bg-white/80 px-1 py-2">
               <span className="grid h-7 w-7 place-items-center rounded-full bg-[#F3ECFF] text-[var(--brand)]"><I size={14} /></span>
               <span className="text-[10.5px] font-extrabold leading-tight text-[var(--ink-2)]">{k + 1}. {t}</span>
             </span>
@@ -72,7 +80,7 @@ export default function Needs() {
 
       {/* Progress */}
       <div className="mx-4 mt-4 flex items-center gap-3">
-        <div className="h-2 flex-1 overflow-hidden rounded-full bg-[#EFE7DD]"><div className="h-full rounded-full bg-gradient-to-r from-[#16A34A] to-[#0C831F] transition-all duration-500" style={{ width: `${pct}%` }} /></div>
+        <div className="h-2 flex-1 overflow-hidden rounded-full bg-[#EEEAF4]"><div className="h-full rounded-full bg-gradient-to-r from-[#16A34A] to-[#0C831F] transition-all duration-500" style={{ width: `${pct}%` }} /></div>
         <span className="shrink-0 text-[12px] font-extrabold text-[var(--ink-2)]">{done} of {asking.length} done</span>
       </div>
 
@@ -81,44 +89,41 @@ export default function Needs() {
           const sum = isDone(t) ? (needsSummary(t, plan.needsOf(o.id, t)) || 'Answered') : ''
           const first = t === next
           return (
-            <div key={t} className={'flex items-center gap-2 rounded-[20px] bg-white p-2.5 transition ' + (sum ? 'shadow-[0_0_0_1.5px_#BFE6CC]' : first ? 'shadow-[0_0_0_2px_#7C3AED,0_12px_24px_-18px_rgba(91,33,182,.8)]' : 'shadow-[0_0_0_1px_#EFE7DD]')} data-needs={t} data-done={!!sum}>
+            <div key={t} className={'flex items-center gap-2 rounded-[20px] bg-white p-2.5 transition ' + (sum ? 'shadow-[0_0_0_1.5px_#BFE6CC]' : first ? 'shadow-[0_0_0_2px_#7C3AED,0_12px_24px_-18px_rgba(91,33,182,.8)]' : 'shadow-[0_0_0_1px_#ECE7F3]')} data-needs={t} data-done={!!sum}>
               <button type="button" onClick={() => navigate(`/brief/${t}?o=${o.id}`)} className="cx-press flex min-w-0 flex-1 items-center gap-3 text-left">
                 <span className="relative shrink-0">
-                  <ArtFill art={serviceArt(t)} tone={sum ? '#E9F8EF' : '#FBEFE6'} className="h-14 w-14 rounded-[16px]" inset="10%" />
+                  <ArtFill art={serviceArt(t)} tone={sum ? '#E9F8EF' : '#F6F1FF'} className="h-14 w-14 rounded-[16px]" inset="10%" />
                   {sum && <span className="absolute -right-1 -top-1 grid h-5 w-5 place-items-center rounded-full bg-[#0C831F] text-white ring-2 ring-white"><Check size={12} strokeWidth={3.2} /></span>}
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-[15px] font-extrabold tracking-[-0.02em]">{TRADE[t].label}</span>
-                  <span className={'block truncate text-[12px] font-bold ' + (sum ? 'text-[#0B7A45]' : 'text-[var(--ink-3)]')}>{sum || 'Tap to choose what you want'}</span>
+                  <span className={'block truncate text-[12px] font-bold ' + (sum ? 'text-[#0B7A45]' : 'text-[var(--ink-3)]')}>{sum || 'Optional · tap to tell us'}</span>
                 </span>
                 <span className={'shrink-0 rounded-full px-3 py-1.5 text-[11.5px] font-extrabold ' + (sum ? 'bg-[#E9F8EF] text-[#0B6B3D]' : 'bg-[#4C1D95] text-white' + (first ? ' animate-pulse' : ''))}>{sum ? 'Edit' : 'Tell us'}</span>
               </button>
-              <button type="button" onClick={() => setRemoving(t)} aria-label={`Remove ${TRADE[t].label}`} className="cx-press grid h-8 w-8 shrink-0 place-items-center rounded-full text-[var(--ink-3)] hover:bg-[#F6F1EA]" data-remove-need={t}><X size={16} /></button>
+              <button type="button" onClick={() => setRemoving(t)} aria-label={`Remove ${TRADE[t].label}`} className="cx-press grid h-8 w-8 shrink-0 place-items-center rounded-full text-[var(--ink-3)] hover:bg-[#F4F1F8]" data-remove-need={t}><X size={16} /></button>
             </div>
           )
         })}
         {!asking.length && <p className="rounded-[18px] bg-white p-4 text-[13px] font-semibold text-[var(--ink-2)]">These services need nothing more from you — the masters are ready.</p>}
       </div>
 
-      <ActionBar note={left ? `Tip: tell us about ${plural(left, 'more service')} for exact matches — or go on and come back any time` : 'All set — we’ll show only the masters who fit'}>
-        {left ? (
-          <div className="flex gap-2">
-            <button type="button" onClick={() => navigate(`/brief/${next}?o=${o.id}&flow=1`)} className="cx-press cx-btn flex h-14 min-w-0 flex-1 items-center justify-center gap-1 rounded-[18px] px-3 text-[13.5px] font-extrabold" data-next-need>
-              <span className="truncate">Next: {TRADE[next].label}</span>
-            </button>
-            <button type="button" onClick={() => navigate(`/o/${o.id}/match`)} className="cx-press cx-cta flex h-14 flex-1 items-center justify-center gap-1.5 rounded-[18px] text-[14.5px] font-extrabold" data-find>
-              Find my masters<ChevronRight size={18} />
-            </button>
-          </div>
-        ) : (
-          <button type="button" onClick={() => navigate(`/o/${o.id}/match`)} className="cx-press flex h-14 w-full items-center justify-center gap-2 rounded-[18px] bg-[#0C831F] text-[15px] font-extrabold text-white shadow-[0_12px_24px_-12px_rgba(12,131,31,.9)]" data-find>
-            Find my perfect masters<ChevronRight size={18} />
+      {/* Answers in: the invitation made from them, one step before the masters. */}
+      {!left && <InviteReady occasion={o} where="needs" className="cx-pop mt-4" />}
+
+      <ActionBar note={left ? 'Answers are optional — filters are always there on the next screen' : 'All set — we’ll show the masters who fit first'}>
+        <div className="flex gap-2">
+          <button type="button" onClick={all} className="cx-press cx-btn flex h-14 min-w-0 flex-1 items-center justify-center gap-1 rounded-[18px] px-3 text-[13.5px] font-extrabold" data-find-all>
+            <Users size={16} className="shrink-0" /><span className="truncate">See all masters</span>
           </button>
-        )}
+          <button type="button" onClick={matched} className={'cx-press flex h-14 flex-1 items-center justify-center gap-1.5 rounded-[18px] text-[14px] font-extrabold ' + (done ? 'bg-[#0C831F] text-white shadow-[0_12px_24px_-12px_rgba(12,131,31,.9)]' : 'cx-cta')} data-find>
+            Find matched masters<ChevronRight size={18} className="shrink-0" />
+          </button>
+        </div>
       </ActionBar>
 
       <Buddy id={`needs-${o.id}`} lines={lines} action={next ? { label: `Tell us about ${TRADE[next].label}`, onClick: () => navigate(`/brief/${next}?o=${o.id}&flow=1`) } : null} bottom={124}
-        skip={left ? { label: 'In a hurry? See all masters', onClick: () => navigate(`/o/${o.id}/match`) } : null} />
+        skip={left ? { label: 'In a hurry? See all masters', onClick: all } : null} />
 
       <Sheet open={!!removing} onClose={() => setRemoving(null)} title={removing ? `Remove ${TRADE[removing].label}?` : ''}>
         {removing && (

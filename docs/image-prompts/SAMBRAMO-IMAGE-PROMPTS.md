@@ -572,3 +572,11 @@ Regenerate any image that has: text or letters, extra/odd fingers, a background 
 - svc-videography: A videographer filming with a gimbal camera
 - svc-warehouse_storage: A worker beside neatly stacked boxes on a shelf
 - svc-wedding_planning: A wedding planner holding a planner book and a flower bouquet
+
+## H. Home hero hooks (2026-10-31) — one picture per headline
+
+- hero-invite: A cheerful young Indian woman in a pink kurta holding up a smartphone that shows a glowing festive invitation card with three green RSVP ticks, small envelopes and hearts floating out of the phone, marigold garlands behind her
+- hero-price: A smiling Indian chef in a white chef's coat proudly presenting a printed menu card next to a steaming buffet of South Indian dishes in brass pots, warm festive lighting
+- hero-masters: A team of four smiling Indian event professionals standing together ready to work: a photographer with a camera, a chef in a white coat, a decorator holding a flower garland, and a DJ wearing headphones, in front of a decorated stage
+- hero-secure: A happy young Indian couple looking at a smartphone together; above the phone floats a large glowing purple shield with a white tick and a few gold coins, soft confetti around them
+- hero-weekend: Young Indian friends laughing and dancing at a rooftop party at dusk, fairy lights strung overhead, a DJ booth with neon glow, a city skyline behind them

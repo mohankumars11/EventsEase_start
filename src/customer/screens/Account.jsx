@@ -61,7 +61,7 @@ export default function Account() {
   ]
 
   return (
-    <main className="cx-enter min-h-[100dvh] bg-[#FFF7EE] cx-bottom-pad" data-account>
+    <main className="cx-enter min-h-[100dvh] bg-white cx-bottom-pad" data-account>
       <header className="cx-safe-top px-4 pt-2">
         <h1 className="text-[26px] font-black tracking-[-0.035em] text-[#1C1033]">Account</h1>
       </header>

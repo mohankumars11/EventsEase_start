@@ -42,7 +42,7 @@
  * section, and the preview opens the listing form at that section.
  * Customers never get it: the prop is only passed by the preview.
  */
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { BadgeCheck, CalendarClock, Camera, Check, ChevronLeft, ChevronRight, Clock3, CreditCard, Image as ImageIcon, Instagram, Languages, MapPin, Music2, Package, PlayCircle, ShieldCheck, Star, Users, X, Zap, BookOpen, Link2, ListChecks, Pencil } from 'lucide-react'
 import { rupees } from '../../../lib/tierPackages'
 import './storefront.css'
@@ -156,16 +156,18 @@ function Hero({ model, onOpen, onEdit }) {
 }
 
 /* ── Who they are, and the four numbers ──────────────────────────────── */
-function Identity({ model, avatarSlot, onEdit }) {
+function Identity({ model, avatarSlot, onEdit, nearby = null }) {
   /* One word per label: four of them share 358px, and a label that
      truncates ("STARTING…") is a fact nobody can read. */
+  /* Four coloured tiles, a number on each (2026-10-31: "coloured cards,
+     numbers") — the facts a customer compares, in one glance. */
   const stats = [
-    model.fromPaise ? { v: money(model.fromPaise), l: 'From' } : null,
-    model.years ? { v: `${model.years}+`, l: model.years === 1 ? 'Year' : 'Years' } : model.yearsBand ? { v: model.yearsBand, l: 'Years' } : null,
-    model.capacity ? { v: Number(model.capacity.value).toLocaleString('en-IN'), l: model.capacity.unit[0].toUpperCase() + model.capacity.unit.slice(1) }
-      : model.team ? { v: String(model.team), l: 'Team' } : null,
-    model.instant === true ? { v: 'Instant', l: 'Booking', icon: Zap }
-      : model.noticeDays != null ? { v: model.noticeDays === 0 ? 'Same day' : `${model.noticeDays} days`, l: 'Notice' } : null,
+    model.fromPaise ? { v: money(model.fromPaise), l: 'From', icon: CreditCard, tone: ['#F3ECFF', '#5B21A8'] } : null,
+    model.years ? { v: `${model.years}+`, l: model.years === 1 ? 'Year' : 'Years', icon: Star, tone: ['#FFF4DC', '#9A5B00'] } : model.yearsBand ? { v: model.yearsBand, l: 'Years', icon: Star, tone: ['#FFF4DC', '#9A5B00'] } : null,
+    model.capacity ? { v: Number(model.capacity.value).toLocaleString('en-IN'), l: model.capacity.unit[0].toUpperCase() + model.capacity.unit.slice(1), icon: Users, tone: ['#E9F8EF', '#0B6B3D'] }
+      : model.team ? { v: String(model.team), l: 'Team', icon: Users, tone: ['#E9F8EF', '#0B6B3D'] } : null,
+    model.instant === true ? { v: 'Fast', l: 'Accepts', icon: Zap, tone: ['#FDECF4', '#B0185E'] }
+      : model.noticeDays != null ? { v: model.noticeDays === 0 ? 'Same day' : `${model.noticeDays} days`, l: 'Notice', icon: CalendarClock, tone: ['#FDECF4', '#B0185E'] } : null,
   ].filter(Boolean)
   const initials = String(model.name).split(/\s+/).map(x => x[0]).join('').slice(0, 2).toUpperCase()
   return (
@@ -197,15 +199,23 @@ function Identity({ model, avatarSlot, onEdit }) {
       </div>
       {model.tagline && <p className="mt-3 line-clamp-2 text-[13px] leading-snug text-[#4E4669]">{model.tagline}</p>}
       {stats.length > 0 && (
-        <div className={'mt-3.5 grid divide-x divide-[#E6DCFA] rounded-[18px] bg-[#F7F3FF] py-2.5 ' + ['', 'grid-cols-1', 'grid-cols-2', 'grid-cols-3', 'grid-cols-4'][stats.length]} data-stat-strip>
+        <div className={'mt-3.5 grid gap-1.5 ' + ['', 'grid-cols-1', 'grid-cols-2', 'grid-cols-3', 'grid-cols-4'][stats.length]} data-stat-strip>
           {stats.map(s => (
-            <div key={s.l} className="min-w-0 px-1 text-center">
-              <p className={'flex items-center justify-center gap-1 truncate font-extrabold tabular-nums tracking-[-0.02em] text-[#2A1660] ' + (stats.length > 3 ? 'text-[14px]' : 'text-[15px]')}>
-                {s.icon ? <s.icon size={13} className="shrink-0 fill-[#F5B83D] text-[#F5B83D]" /> : null}{s.v}
-              </p>
-              <p className="mt-0.5 truncate text-[11px] font-bold uppercase tracking-[0.06em] text-[#8E87A6]">{s.l}</p>
+            <div key={s.l} className="min-w-0 rounded-[16px] px-1.5 py-2.5 text-center" style={{ background: s.tone[0] }}>
+              <s.icon size={14} className="mx-auto" style={{ color: s.tone[1] }} />
+              <p className={'mt-1 truncate font-black tabular-nums tracking-[-0.02em] ' + (stats.length > 3 ? 'text-[14px]' : 'text-[15.5px]')} style={{ color: s.tone[1] }}>{s.v}</p>
+              <p className="mt-0.5 truncate text-[10px] font-extrabold uppercase tracking-[0.08em] text-[#6E6787]">{s.l}</p>
             </div>
           ))}
+        </div>
+      )}
+      {nearby && (model.location || nearby.km != null) && (
+        <div className="mt-2 flex items-center gap-2.5 rounded-[16px] bg-gradient-to-r from-[#EAF6FF] to-[#F3ECFF] px-3 py-2.5" data-nearby>
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white text-[#2563EB] shadow-sm"><MapPin size={16} /></span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-[13px] font-extrabold text-[#1B1433]">{model.location ? `Based in ${model.location}` : 'Near you'}</span>
+            {nearby.km != null && <span className="block text-[11.5px] font-bold text-[#4E4669]"><span className="tabular-nums">{nearby.km}</span> km from {nearby.area ? nearby.area : 'your venue'}</span>}
+          </span>
         </div>
       )}
     </section>
@@ -238,11 +248,21 @@ function EditPill({ onClick, label = 'Edit' }) {
   )
 }
 
+const NUM = { about: 1, work: 2, offers: 3, pricing: 4, glance: 5, terms: 6, reviews: 7 }
+const Order = createContext(null)
 function Block({ id, title, aside, children, icon: Icon, onEdit }) {
+  /* Numbered in reading order — 01 About, 02 Work … — counting only the
+     sections this listing has, so the numbers never skip. */
+  const key = String(id ?? '').split('-').pop()
+  const order = useContext(Order)
+  const n = order?.includes(key) ? order.indexOf(key) + 1 : NUM[key] ?? 0
   return (
-    <section id={id} data-sb-section className="scroll-mt-16 px-3 pt-4">
+    <section id={id} data-sb-section className="scroll-mt-16 px-3 pt-5">
       <div className="mb-2.5 flex items-end justify-between gap-3 px-1">
-        <h3 className="flex min-w-0 items-center gap-2 text-[16px] font-extrabold tracking-[-0.01em]">{Icon ? <Icon size={17} className="shrink-0 text-[#7C3AED]" /> : null}<span className="min-w-0 truncate">{title}</span></h3>
+        <h3 className="flex min-w-0 items-center gap-2 text-[16px] font-extrabold tracking-[-0.01em]">
+          <span className="sb-num grid h-7 min-w-[28px] shrink-0 place-items-center rounded-[9px] bg-gradient-to-br from-[#5B21A8] to-[#9F67FF] px-1 text-[11px] font-black tabular-nums text-white" data-sb-num>{String(n).padStart(2, '0')}</span>
+          {Icon ? <Icon size={16} className="shrink-0 text-[#7C3AED]" /> : null}<span className="min-w-0 truncate">{title}</span>
+        </h3>
         {onEdit ? <EditPill onClick={onEdit} /> : aside ? <span className="shrink-0 text-[11.5px] font-semibold text-[#8E87A6]">{aside}</span> : null}
       </div>
       {children}
@@ -272,13 +292,13 @@ const LINK_ICON = { video: PlayCircle, gallery: ImageIcon, instagram: Instagram,
 
 function About({ model, id, onEdit }) {
   const [open, setOpen] = useState(false)
-  const long = model.bio.length > 220
+  const long = model.bio.length > 160
   return (
     <Block id={id} title={`About ${model.name}`} onEdit={onEdit && (() => onEdit('about'))}>
       <div className="rounded-[22px] bg-white p-4 ring-1 ring-[#EEE8F8]">
         {model.bio
           ? <>
-              <p className={'whitespace-pre-line text-[13.5px] leading-relaxed text-[#3F3858] ' + (!open && long ? 'line-clamp-4' : '')}>{model.bio}</p>
+              <p className={'whitespace-pre-line text-[13.5px] leading-relaxed text-[#3F3858] ' + (!open && long ? 'line-clamp-3' : '')}>{model.bio}</p>
               {long && <button type="button" onClick={() => setOpen(v => !v)} className="mt-1.5 text-[12.5px] font-extrabold text-[#5B21A8]">{open ? 'Show less' : 'Read more'}</button>}
             </>
           : <p className="text-[13px] text-[#8E87A6]">Their introduction appears here.</p>}
@@ -343,12 +363,20 @@ function Work({ model, id, onOpen, onEdit }) {
   )
 }
 
-function PackageCard({ p, solo, selected, onPick }) {
+const PKG_TONE = [['#F3ECFF', '#5B21A8', '#9F67FF'], ['#FDECF4', '#B0185E', '#F472B6'], ['#FFF4DC', '#9A5B00', '#F5B83D'], ['#E9F8EF', '#0B6B3D', '#34D399']]
+function PackageCard({ p, solo, selected, onPick, index = 0, icon: Logo = Package }) {
+  const [tint, ink, glow] = PKG_TONE[index % PKG_TONE.length]
   return (
-    <div className={'sb-package relative flex shrink-0 snap-center flex-col rounded-[24px] bg-white p-4 ring-1 ' +
-      (solo ? 'w-full ' : 'w-[78%] max-w-[300px] ') + (selected ? 'ring-2 ring-[#7C3AED]' : p.popular ? 'ring-[#C4A7FF] sb-package-glow' : 'ring-[#EEE8F8]')}>
-      {p.popular && <span className="absolute -top-2.5 left-4 rounded-full bg-gradient-to-r from-[#5B21A8] to-[#8B5CF6] px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-[0.08em] text-white">Most popular</span>}
-      <p className="text-[12px] font-extrabold uppercase tracking-[0.12em] text-[#7C3AED]">{p.name}</p>
+    <div className={'sb-package relative flex shrink-0 snap-center flex-col overflow-hidden rounded-[24px] bg-white p-4 ring-1 ' +
+      (solo ? 'w-full ' : 'w-[78%] max-w-[300px] ') + (selected ? 'ring-2 ring-[#7C3AED]' : p.popular ? 'ring-[#C4A7FF] sb-package-glow' : 'ring-[#EEE8F8]')} data-package-card>
+      <span className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full opacity-60" style={{ background: tint }} />
+      <div className="relative flex items-center gap-2.5">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[13px] text-white shadow-[0_8px_16px_-10px_rgba(28,16,51,.7)]" style={{ background: `linear-gradient(135deg, ${ink}, ${glow})` }}><Logo size={19} /></span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[10.5px] font-extrabold uppercase tracking-[0.14em] tabular-nums" style={{ color: ink }}>Package {String(index + 1).padStart(2, '0')}{p.popular ? ' · Most popular' : ''}</span>
+          <span className="block truncate text-[14.5px] font-extrabold text-[#1B1433]">{p.name}</span>
+        </span>
+      </div>
       <p className="mt-1.5 text-[25px] font-extrabold leading-none tracking-[-0.03em] text-[#1B1433]">{money(p.price) ?? <span className="text-[17px]">Price on request</span>}</p>
       <div className="mt-2 flex flex-wrap gap-1.5 text-[11.5px] font-bold text-[#6E6787]">
         {p.unit && money(p.price) && <span>{p.unit}</span>}
@@ -356,10 +384,10 @@ function PackageCard({ p, solo, selected, onPick }) {
         {p.guests ? <span className="flex items-center gap-1"><Users size={12} />{p.guests[0] ?? 0}{p.guests[1] ? '–' + p.guests[1] : '+'} guests</span> : null}
       </div>
       <ul className="mt-3 flex-1 space-y-1.5">
-        {(p.inclusions.length ? p.inclusions.slice(0, 5) : [p.description || 'Details as listed']).map((x, i) => (
+        {(p.inclusions.length ? p.inclusions.slice(0, 4) : [p.description || 'Details as listed']).map((x, i) => (
           <li key={i} className="flex items-start gap-2 text-[12.5px] font-semibold leading-snug text-[#3F3858]"><Check size={14} strokeWidth={3} className="mt-0.5 shrink-0 text-[#16A34A]" /><span className="line-clamp-2">{x}</span></li>
         ))}
-        {p.inclusions.length > 5 && <li className="pl-6 text-[12px] font-bold text-[#8E87A6]">+{p.inclusions.length - 5} more included</li>}
+        {p.inclusions.length > 4 && <li className="pl-6 text-[12px] font-bold text-[#8E87A6]">+{p.inclusions.length - 4} more included</li>}
       </ul>
       {onPick && (
         <button type="button" onClick={() => onPick(p.raw)} className={'mt-3.5 flex h-11 items-center justify-center gap-1.5 rounded-full text-[13px] font-extrabold ' +
@@ -389,14 +417,14 @@ function MenuCard({ m, solo }) {
   )
 }
 
-function Offers({ model, id, onPick, selectedId, onEdit }) {
+function Offers({ model, id, onPick, selectedId, onEdit, tradeIcon = null }) {
   if (!model.packages.length && !model.menus.length) return null
   return (
     <Block id={id} title={model.menus.length ? 'Menus & packages' : 'Packages'} icon={Package} onEdit={onEdit && (() => onEdit('offers'))}
       aside={model.packages.length > 1 ? 'Swipe to compare' : null}>
       <div className="-mx-3 flex snap-x snap-mandatory gap-3 overflow-x-auto px-3 pb-2 pt-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {model.menus.map(m => <MenuCard key={m.name} m={m} solo={model.menus.length + model.packages.length === 1} />)}
-        {model.packages.map(p => <PackageCard key={p.id} p={p} solo={model.menus.length + model.packages.length === 1}
+        {model.packages.map((p, k) => <PackageCard key={p.id} p={p} index={k} icon={tradeIcon ?? Package} solo={model.menus.length + model.packages.length === 1}
           selected={selectedId != null && String(selectedId) === String(p.tier ?? p.id)} onPick={onPick} />)}
       </div>
     </Block>
@@ -488,13 +516,15 @@ function Glance({ model, id, onEdit }) {
   )
 }
 
-function Terms({ model, id, onEdit }) {
+function Terms({ model, id, onEdit, customer = null }) {
   const t = model.terms
   const tiles = [
-    model.instant != null && { icon: Zap, k: 'Booking', v: model.instant ? 'Instant Book & Pay' : 'Request & confirm', d: model.instant ? 'Book and pay in one step' : 'Availability confirmed before you pay' },
-    t.advancePct && { icon: CreditCard, k: 'Advance', v: `${t.advancePct}% at booking`, d: 'Paid when you book' },
+    customer ? { icon: Zap, k: 'Booking', v: 'Request, then pay', d: 'They accept your request; you pay only then' }
+      : model.instant != null && { icon: Zap, k: 'Booking', v: model.instant ? 'Instant Book & Pay' : 'Request & confirm', d: model.instant ? 'Book and pay in one step' : 'Availability confirmed before you pay' },
+    t.advancePct && { icon: CreditCard, k: 'Advance', v: `${t.advancePct}% advance`, d: customer ? 'Paid after they accept' : 'Paid when you book' },
     model.noticeDays != null && { icon: CalendarClock, k: 'Notice', v: model.noticeDays === 0 ? 'Same day' : `${plural(model.noticeDays, 'day')} ahead`, d: 'Earliest you can book' },
-    t.cancellation && { icon: ShieldCheck, k: 'Cancellation', v: t.cancellation.title, d: t.cancellation.body },
+    customer?.cancellation ? { icon: ShieldCheck, k: 'Cancellation', v: customer.cancellation.title, d: customer.cancellation.body }
+      : t.cancellation && { icon: ShieldCheck, k: 'Cancellation', v: t.cancellation.title, d: t.cancellation.body },
   ].filter(Boolean)
   if (!tiles.length && !t.travel && !t.charges.length) return null
   return (
@@ -539,7 +569,7 @@ function Reviews({ model, id }) {
 function Trust({ verified }) {
   const items = [
     [ShieldCheck, 'Clear pricing', 'Rates shown upfront'],
-    [CreditCard, 'Secure checkout', 'Total confirmed before payment'],
+    [CreditCard, 'Secure checkout', 'Pay after they accept'],
     [BadgeCheck, verified ? 'Verified partner' : 'Reviewed listing', verified ? 'Verification complete' : 'Checked by Sambramo before it goes live'],
   ]
   return (
@@ -563,6 +593,9 @@ export default function Storefront({
   /* The live preview during onboarding: every amount is the partner's own
      rate, and this says so once, at the top. */
   rateNote = false,
+  /* The customer app: the master's icon for package cards, how far they
+     are, and Sambramo's booking flow and policy in place of the listing's. */
+  tradeIcon = null, nearby = null, customerTerms = null,
 }) {
   const edit = onEditSection || null
   const show = key => !focus || focus.includes(key)
@@ -597,6 +630,7 @@ export default function Storefront({
   }
 
   return (
+    <Order.Provider value={sections.map(s => s.key)}>
     <article ref={ref} className="sb-store w-full bg-[#FBF9FF] pb-4 text-[#1B1433]" data-storefront>
       {rateNote && (
         <p className="mx-3 mt-3 flex items-center gap-2 rounded-2xl bg-[#F1EAFF] px-3 py-2 text-[12px] font-bold leading-snug text-[#4B1D96]" data-rate-note>
@@ -605,14 +639,14 @@ export default function Storefront({
         </p>
       )}
       {show('profile') && <Hero model={model} onOpen={setViewer} onEdit={edit} />}
-      {show('profile') && <Identity model={model} avatarSlot={avatarSlot} onEdit={edit} />}
+      {show('profile') && <Identity model={model} avatarSlot={avatarSlot} onEdit={edit} nearby={nearby} />}
       {!focus && <SectionNav sections={sections} active={active} onGo={go} />}
       {show('about') && <About model={model} id={prefix + '-about'} onEdit={edit} />}
       {show('work') && <Work model={model} id={prefix + '-work'} onOpen={setViewer} onEdit={edit} />}
-      {show('offers') && <Offers model={model} id={prefix + '-offers'} onPick={onPick} selectedId={selectedId} onEdit={edit} />}
+      {show('offers') && <Offers model={model} id={prefix + '-offers'} onPick={onPick} selectedId={selectedId} onEdit={edit} tradeIcon={tradeIcon} />}
       {show('pricing') && <Pricing model={model} id={prefix + '-pricing'} onEdit={edit} />}
       {show('glance') && <Glance model={model} id={prefix + '-glance'} onEdit={edit} />}
-      {show('terms') && <Terms model={model} id={prefix + '-terms'} onEdit={edit} />}
+      {show('terms') && <Terms model={model} id={prefix + '-terms'} onEdit={edit} customer={customerTerms} />}
       {!focus && <Trust verified={model.verified} />}
       {!focus && <Reviews model={model} id={prefix + '-reviews'} />}
       {showBookingCtaPreview && (
@@ -625,5 +659,6 @@ export default function Storefront({
       )}
       {viewer != null && <MediaViewer media={model.media} index={viewer} onIndex={setViewer} onClose={() => setViewer(null)} />}
     </article>
+    </Order.Provider>
   )
 }

@@ -3,10 +3,15 @@
  * chips, two columns of masters, compare. Shared by the single-service
  * page (Trade) and the celebration's sidebar screen (Match).
  *
- * The filters are the customer's, not ours: distance is a slider from
- * 1 km, the price ceiling is a slider across the prices actually on the
+ * The filters are the customer's, not ours: price runs from 0 with typed
+ * min/max and quick "Under ₹X" chips drawn from the prices actually on the
  * list, rating is Any / 4+ / 4.5+, and instant is a switch. Nothing is a
  * hard-coded band.
+ *
+ * Prices are each master's own published base rate — ₹200 per plate, ₹9,000
+ * per event — and never move as answers change (Mohan, 2026-10-31: no
+ * total "without even looking the caterer's menu"). The master confirms the
+ * final amount when they accept the request.
  */
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
@@ -14,23 +19,35 @@ import { companions } from '../data/crossSell'
 import { NOUN } from '../screens/Brief'
 import { serviceArt } from '../data/art'
 import { ArtFill } from './art'
-import { ArrowUpDown, Check, ChevronDown, ChevronRight, Clock, IndianRupee, MapPin, Scale, SlidersHorizontal, Users, X, Zap } from 'lucide-react'
+import { ArrowUpDown, Check, ChevronDown, ChevronRight, IndianRupee, Scale, SlidersHorizontal, X, Zap } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { TRADE } from '../data/trades'
 import { usePlan } from '../state/PlanContext'
 import { partnersFor, SORTS } from '../lib/market'
 import { filterByNeeds, loadCuisines, loadDishes, needsFor } from '../lib/needs'
 import { plural, rupees } from '../lib/format'
-import { askOf, asksFor, asLine, withQuotes } from '../lib/quote'
+import { asLine } from '../lib/quote'
 import { sambu } from './Buddy'
 import { Empty, Sheet } from './kit'
 import { PartnerCard, PartnerCardSkeleton } from './cards'
 import { needsSummary } from './needs'
 import CompareSheet from '../screens/CompareSheet'
 
-const NONE = { instant: false, km: null, rating: null, maxRupees: null }
+const NONE = { instant: false, km: null, rating: null, minRupees: null, maxRupees: null }
 
-export function MastersPanel({ tradeId, occasionId = null, guests = null, onCount, onCompanion, cols = 2 }) {
+/* "Under ₹X" chips from the list's own prices: round numbers near its
+   quarter, half and three-quarters — ₹200 / ₹500 / ₹1,000 for plates,
+   ₹10,000 / ₹25,000 for a photographer's day. */
+/* Up to a round step half a magnitude wide: 574 → 600, 780 → 800, 18,500 → 20,000. */
+const niceUp = x => { const step = 10 ** Math.floor(Math.log10(Math.max(1, x))) / 2; return Math.ceil(x / step) * step }
+export function quickCaps(prices) {
+  const v = [...prices].sort((a, b) => a - b)
+  if (v.length < 2) return []
+  const at = q => v[Math.min(v.length - 1, Math.floor(q * v.length))]
+  return [...new Set([0.25, 0.5, 0.75].map(q => niceUp(at(q))))].filter(c => c > v[0] && c < v[v.length - 1])
+}
+
+export function MastersPanel({ tradeId, occasionId = null, guests = null, onCount, onCompanion, cols = 2, everyone: allAtFirst = false }) {
   const plan = usePlan()
   const navigate = useNavigate()
   const t = TRADE[tradeId]
@@ -41,6 +58,7 @@ export function MastersPanel({ tradeId, occasionId = null, guests = null, onCoun
   const [comparing, setComparing] = useState(false)
   const [picked, setPicked] = useState([])
   const [compareOpen, setCompareOpen] = useState(false)
+  const [everyone, setEveryone] = useState(!!allAtFirst) // all masters, or only the ones who fit the answers
   const wants = plan.needsOf(occasionId, tradeId)
 
   useEffect(() => {
@@ -51,19 +69,19 @@ export function MastersPanel({ tradeId, occasionId = null, guests = null, onCoun
     return () => { live = false }
   }, [tradeId])
 
-  const fit0 = useMemo(() => filterByNeeds(all, tradeId, wants, guests), [all, tradeId, wants, guests])
-  /* Hours and guests turn every master's rate into YOUR price; masters who
-     cannot do what was asked (too many hours for them) drop out. */
-  const can = useMemo(() => asksFor(tradeId, all), [tradeId, all])
-  const fit = useMemo(() => ({ ...fit0, list: withQuotes(fit0.list, askOf(wants, { guests })) }), [fit0, wants, guests])
-  const priceOf = p => p.quote?.paise ?? p.fromPaise
-  const setAsk = (k, v) => plan.setNeeds(`${occasionId ?? 'solo'}:${tradeId}`, { ...wants, [k]: v })
-  const prices = useMemo(() => (fit.list ?? []).map(p => p.quote?.paise ?? p.fromPaise).filter(Boolean).map(p => Math.ceil(p / 100)), [fit.list])
-  const lo = prices.length ? Math.min(...prices) : 0, hi = prices.length ? Math.max(...prices) : 0
+  const curated = useMemo(() => filterByNeeds(all, tradeId, wants, guests), [all, tradeId, wants, guests])
+  const fit = everyone ? { list: all, exact: true, asked: false, total: all?.length ?? 0 } : curated
+  /* The base rate, as the master published it — never a computed total. */
+  const rupeesOf = p => (p.fromPaise ? Math.ceil(p.fromPaise / 100) : null)
+  const prices = useMemo(() => (fit.list ?? []).map(rupeesOf).filter(Boolean), [fit.list])
+  const caps = useMemo(() => quickCaps(prices), [prices])
+  const units = [...new Set((fit.list ?? []).filter(p => p.fromPaise).map(p => (p.fromKind === 'package' ? 'package' : p.fromUnit)))]
   const list = useMemo(() => {
     if (!fit.list) return null
     const out = fit.list.filter(p => (!f.instant || p.instant) && (f.km == null || (p.distanceKm ?? 999) <= f.km)
-      && (f.rating == null || (p.rating ?? 0) >= f.rating) && (f.maxRupees == null || (priceOf(p) && priceOf(p) / 100 <= f.maxRupees)))
+      && (f.rating == null || (p.rating ?? 0) >= f.rating)
+      && (f.minRupees == null || (rupeesOf(p) ?? 0) >= f.minRupees)
+      && (f.maxRupees == null || (rupeesOf(p) != null && rupeesOf(p) <= f.maxRupees)))
     return SORTS[sort].fn(out)
   }, [fit.list, f, sort])
   useEffect(() => { onCount?.(list?.length ?? null) }, [list?.length]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -71,55 +89,45 @@ export function MastersPanel({ tradeId, occasionId = null, guests = null, onCoun
   const line = plan.lineFor(occasionId, tradeId)
   const said = needsSummary(tradeId, wants)
   const asks = needsFor(tradeId).length > 0
-  const nF = [f.instant, f.km != null, f.rating != null, f.maxRupees != null].filter(Boolean).length
-  const pick = x => setPicked(s => (s.some(y => y.serviceId === x.serviceId) ? s.filter(y => y.serviceId !== x.serviceId) : s.length >= 3 ? s : [...s, x]))
+  const nF = [f.instant, f.km != null, f.rating != null, f.minRupees != null || f.maxRupees != null].filter(Boolean).length
+  // As many as the customer likes — the table scrolls sideways.
+  const pick = x => setPicked(s => (s.some(y => y.serviceId === x.serviceId) ? s.filter(y => y.serviceId !== x.serviceId) : [...s, x]))
+  const priceChip = f.maxRupees != null ? `${f.minRupees ? `${rupees(f.minRupees * 100)}–` : 'Under '}${rupees(f.maxRupees * 100)}` : f.minRupees != null ? `From ${rupees(f.minRupees * 100)}` : 'Price'
   const brief = `/brief/${tradeId}${occasionId ? `?o=${occasionId}` : ''}`
 
   return (
     <div className="min-w-0" data-masters={tradeId}>
+      {/* Curated or everyone — always the customer's choice (2026-10-31). */}
+      {said && (
+        <div className="mx-3 mb-2.5 grid grid-cols-2 gap-1 rounded-[14px] bg-[#F4F1F8] p-1" role="tablist" data-scope>
+          {[[false, `Matched to you${curated.list ? ` · ${curated.list.length}` : ''}`], [true, `All masters${all ? ` · ${all.length}` : ''}`]].map(([v, l]) => (
+            <button key={String(v)} type="button" role="tab" aria-selected={everyone === v} onClick={() => setEveryone(v)} data-scope-all={v}
+              className={'h-9 rounded-[11px] text-[12.5px] font-extrabold transition ' + (everyone === v ? 'bg-white text-[var(--ink)] shadow-[0_1px_3px_rgba(28,16,51,.14)]' : 'text-[var(--ink-3)]')}>{l}</button>
+          ))}
+        </div>
+      )}
       {asks && (
         <Link to={brief} className="cx-press mx-3 mb-2.5 mt-1 flex items-center gap-2.5 rounded-[16px] bg-[#F1FBF5] px-3 py-2.5 ring-1 ring-[#CDEFDC]" data-needs-bar>
           <SlidersHorizontal size={16} className="shrink-0 text-[#0C831F]" />
           <span className="min-w-0 flex-1">
-            <span className="block text-[13px] font-extrabold text-[#0B6B3D]">{said ? (fit.exact ? `${plural(fit.list?.length ?? 0, 'master')} do exactly this` : 'Closest to what you asked') : `What do you need from your ${NOUN[tradeId] ?? t.label.toLowerCase()}?`}</span>
-            <span className="block truncate text-[11.5px] font-bold text-[#3C7A5A]">{said || 'Tell us — we show only the masters who do it'}</span>
+            <span className="block text-[13px] font-extrabold text-[#0B6B3D]">{said ? (everyone ? 'Your answers' : fit.exact ? `${plural(fit.list?.length ?? 0, 'master')} do exactly this` : 'Closest to what you asked') : `Want only the masters who fit?`}</span>
+            <span className="block truncate text-[11.5px] font-bold text-[#3C7A5A]">{said || `Tell us what you need from your ${NOUN[tradeId] ?? t.label.toLowerCase()} — optional`}</span>
           </span>
           <ChevronRight size={17} className="shrink-0 text-[#0C831F]" />
         </Link>
       )}
 
-      {(can.hours || can.guests) && (
-        <div className="mx-3 mb-2.5 rounded-[16px] bg-gradient-to-r from-[#FFF8EA] to-[#FFF1DC] px-3 py-2.5 ring-1 ring-[#FFD9A0]" data-ask-bar>
-          <p className="flex items-center gap-1.5 text-[12.5px] font-extrabold text-[#7A3E00]">
-            {can.hours ? <Clock size={14} /> : <Users size={14} />}
-            {can.hours ? (wants.$hours ? `Prices below are for ${wants.$hours} hours` : 'How many hours? See your exact price') : (askOf(wants, { guests }).guests ? `Prices below are for ${askOf(wants, { guests }).guests.toLocaleString('en-IN')} guests` : 'How many guests? See your exact price')}
-          </p>
-          <div className="cx-noscroll -mx-1 mt-1.5 flex gap-1.5 overflow-x-auto px-1">
-            {(can.hours ? [2, 3, 4, 5, 6, 8, 10, 12] : [50, 100, 150, 200, 300, 500]).map(n => {
-              const on = can.hours ? wants.$hours === n : askOf(wants, { guests }).guests === n
-              return (
-                <button key={n} type="button" onClick={() => setAsk(can.hours ? '$hours' : '$guests', n)} aria-pressed={on} data-ask={n}
-                  className={'cx-press shrink-0 rounded-full px-3 py-1.5 text-[12.5px] font-extrabold transition ' + (on ? 'bg-[#1C1033] text-white' : 'bg-white text-[#5A3B12] shadow-[inset_0_0_0_1px_#F4D9AE]')}>
-                  {n}{can.hours ? ' h' : ''}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
       <div className="cx-noscroll flex gap-2 overflow-x-auto px-3 pb-3">
         <FChip on={nF > 0} onClick={() => setSheet('filters')} icon={SlidersHorizontal}>Filters{nF ? ` · ${nF}` : ''}</FChip>
+        <FChip on={comparing} onClick={() => { setComparing(c => !c); setPicked([]) }} icon={comparing ? X : Scale} plain data-compare-toggle>{comparing ? 'Done' : 'Compare'}</FChip>
+        <FChip on={f.minRupees != null || f.maxRupees != null} onClick={() => setSheet('filters')} icon={IndianRupee}>{priceChip}</FChip>
         <FChip on={sort !== 'best'} onClick={() => setSheet('sort')} icon={ArrowUpDown}>{sort === 'best' ? 'Sort' : SORTS[sort].label}</FChip>
-        <FChip on={f.km != null} onClick={() => setSheet('filters')} icon={MapPin}>{f.km != null ? `Within ${f.km} km` : 'Distance'}</FChip>
-        <FChip on={f.maxRupees != null} onClick={() => setSheet('filters')} icon={IndianRupee}>{f.maxRupees != null ? `Up to ${rupees(f.maxRupees * 100)}` : 'Price'}</FChip>
         <FChip on={f.instant} onClick={() => setF(x => ({ ...x, instant: !x.instant }))} icon={Zap} plain>Instant</FChip>
-        <FChip on={comparing} onClick={() => { setComparing(c => !c); setPicked([]) }} icon={comparing ? X : Scale} plain>{comparing ? 'Done' : 'Compare'}</FChip>
       </div>
       <div className="cx-noscroll mx-3 mb-2.5 flex gap-3 overflow-x-auto text-[11.5px] font-extrabold text-[#0B6B3D]" data-hooks>
-        {['Ready to book', 'Instant payment', '25% off first booking', 'Free cancellation before acceptance'].map(h => <span key={h} className="flex shrink-0 items-center gap-1"><Check size={12} strokeWidth={3.2} />{h}</span>)}
+        {['Send a request free', 'Pay only after they accept', '25% off your first booking'].map(h => <span key={h} className="flex shrink-0 items-center gap-1"><Check size={12} strokeWidth={3.2} />{h}</span>)}
       </div>
-      {comparing && <p className="mx-3 mb-2.5 rounded-[14px] bg-[var(--brand-tint)] px-3 py-2 text-[12px] font-bold text-[var(--brand-deep)]">Tap <b>Compare</b> on up to three masters.</p>}
+      {comparing && <p className="mx-3 mb-2.5 rounded-[14px] bg-[var(--brand-tint)] px-3 py-2 text-[12px] font-bold text-[var(--brand-deep)]">Tap <b>Compare</b> on as many masters as you like{picked.length ? ` · ${picked.length} picked` : ''}.</p>}
 
       {/* Once one is in the cart: what people add next, in a tap. */}
       {line && (() => {
@@ -148,7 +156,7 @@ export function MastersPanel({ tradeId, occasionId = null, guests = null, onCoun
           <PartnerCard key={x.serviceId} compact={cols === 3} partner={sort === 'best' ? x : { ...x, reason: null }}
             href={`/p/${x.serviceId}?t=${tradeId}${occasionId ? `&o=${occasionId}` : ''}`}
             added={line?.serviceId === x.serviceId}
-            onAdd={y => { if (line?.serviceId === y.serviceId) { plan.remove(line.key); sambu(`${y.name} taken out — pick another any time.`) } else { plan.add(asLine(y), occasionId); sambu(`${y.name} is in ✓ ${y.quote ? `Your price is ${rupees(y.quote.paise)} — ` : ''}pay instantly at checkout ⚡`) } }}
+            onAdd={y => { if (line?.serviceId === y.serviceId) { plan.remove(line.key); sambu(`${y.name} taken out — pick another any time.`) } else { plan.add(asLine(y), occasionId); sambu(`${y.name} is in ✓ Send your request at checkout — you pay only after they accept.`) } }}
             saved={plan.isSaved(x.serviceId)} onSave={y => plan.toggleSaved(y)}
             selectable={comparing} selected={picked.some(y => y.serviceId === x.serviceId)} onSelect={pick} />
         ))}
@@ -174,8 +182,8 @@ export function MastersPanel({ tradeId, occasionId = null, guests = null, onCoun
           <button type="button" onClick={() => setSheet(null)} className="cx-press flex h-[52px] flex-1 items-center justify-center rounded-[16px] bg-[#0C831F] text-[15px] font-extrabold text-white" data-filters-done>Show {plural(list?.length ?? 0, 'master')}</button>
         </div>}>
         <div className="space-y-5 pb-3">
+          <PriceFilter f={f} setF={setF} caps={caps} unit={units.length === 1 ? units[0] : null} />
           <Slider label="Distance" value={f.km} empty="Any distance" fmt={v => `Within ${v} km`} min={1} max={50} step={1} onChange={v => setF(x => ({ ...x, km: v }))} />
-          {hi > lo && <Slider label="Starting price" value={f.maxRupees} empty="Any price" fmt={v => `Up to ${rupees(v * 100)}`} min={lo} max={hi} step={Math.max(1, Math.round((hi - lo) / 40))} onChange={v => setF(x => ({ ...x, maxRupees: v }))} />}
           <div>
             <p className="text-[14px] font-extrabold">Rating</p>
             <div className="mt-2 grid grid-cols-3 gap-1.5">
@@ -186,12 +194,43 @@ export function MastersPanel({ tradeId, occasionId = null, guests = null, onCoun
             </div>
           </div>
           <button type="button" onClick={() => setF(x => ({ ...x, instant: !x.instant }))} aria-pressed={f.instant} className="flex w-full items-center gap-3 text-left">
-            <span className="min-w-0 flex-1"><span className="block text-[14px] font-extrabold">Books instantly</span><span className="block text-[12px] font-semibold text-[var(--ink-3)]">Confirmed the moment you pay</span></span>
+            <span className="min-w-0 flex-1"><span className="block text-[14px] font-extrabold">Books instantly</span><span className="block text-[12px] font-semibold text-[var(--ink-3)]">Accept requests within minutes</span></span>
             <span className={'relative h-[26px] w-[44px] shrink-0 rounded-full transition-colors ' + (f.instant ? 'bg-[#0C831F]' : 'bg-[#E5E0EA]')}><span className={'absolute top-[3px] h-5 w-5 rounded-full bg-white shadow transition-all ' + (f.instant ? 'left-[21px]' : 'left-[3px]')} /></span>
           </button>
         </div>
       </Sheet>
       <CompareSheet open={compareOpen} onClose={() => setCompareOpen(false)} tradeId={tradeId} partners={picked} occasionId={occasionId} />
+    </div>
+  )
+}
+
+/* Price from ₹0: quick chips, or type your own range. */
+function PriceFilter({ f, setF, caps, unit }) {
+  const num = v => { const d = String(v).replace(/\D/g, '').slice(0, 9); return d ? Number(d) : null }
+  const any = f.minRupees == null && f.maxRupees == null
+  return (
+    <div data-price-filter>
+      <div className="flex items-baseline justify-between">
+        <p className="text-[14px] font-extrabold">Price{unit ? <span className="font-bold text-[var(--ink-3)]"> · {unit === 'package' ? 'per package' : unit}</span> : null}</p>
+        {!any && <button type="button" onClick={() => setF(x => ({ ...x, minRupees: null, maxRupees: null }))} className="text-[12.5px] font-extrabold text-[#0C831F]">Clear ✕</button>}
+      </div>
+      <div className="cx-noscroll -mx-1 mt-2 flex gap-1.5 overflow-x-auto px-1">
+        {[[null, 'Any price'], ...caps.map(c => [c, `Under ${rupees(c * 100)}`])].map(([c, l]) => {
+          const on = c == null ? any : f.minRupees == null && f.maxRupees === c
+          return <button key={l} type="button" onClick={() => setF(x => ({ ...x, minRupees: null, maxRupees: c }))} aria-pressed={on} data-cap={c ?? 'any'}
+            className={'cx-press h-9 shrink-0 rounded-full px-3.5 text-[12.5px] font-extrabold transition ' + (on ? 'bg-[#1C1033] text-white' : 'bg-[#F7F5FA] text-[var(--ink-2)]')}>{l}</button>
+        })}
+      </div>
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        {[['minRupees', 'Min', '0'], ['maxRupees', 'Max', 'Any']].map(([k, l, ph]) => (
+          <label key={k} className="flex h-12 items-center gap-1.5 rounded-[14px] bg-white px-3 shadow-[inset_0_0_0_1.5px_#E3DEEA] focus-within:shadow-[inset_0_0_0_2px_#0C831F]">
+            <span className="text-[11px] font-extrabold uppercase tracking-[0.08em] text-[var(--ink-3)]">{l}</span>
+            <span className="text-[14px] font-extrabold text-[var(--ink-2)]">₹</span>
+            <input inputMode="numeric" value={f[k] ?? ''} placeholder={ph} onChange={e => { const v = num(e.target.value); setF(x => ({ ...x, [k]: v })) }} aria-label={`${l} price in rupees`} data-price-input={k}
+              className="cx-num min-w-0 flex-1 bg-transparent text-[15px] font-extrabold outline-none placeholder:text-[var(--ink-3)]" />
+          </label>
+        ))}
+      </div>
     </div>
   )
 }
@@ -211,9 +250,9 @@ function Slider({ label, value, empty, fmt, min, max, step, onChange }) {
   )
 }
 
-function FChip({ on, onClick, icon: Icon, plain = false, children }) {
+function FChip({ on, onClick, icon: Icon, plain = false, children, ...rest }) {
   return (
-    <button type="button" onClick={onClick} aria-pressed={on}
+    <button type="button" onClick={onClick} aria-pressed={on} {...rest}
       className={'cx-press flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[12px] px-3 text-[12.5px] font-bold transition ' + (on ? 'bg-[#E9F8EF] text-[#0C831F] shadow-[inset_0_0_0_1.5px_#0C831F]' : 'bg-white text-[var(--ink)] shadow-[inset_0_0_0_1px_#E3DEEA]')}>
       <Icon size={14} />{children}{!plain && <ChevronDown size={14} className="opacity-60" />}
     </button>

@@ -26,6 +26,11 @@
  *   QUOTE         → a quote request to this partner, pre-filled with every
  *                   line the engine could price; the rest are flagged.
  *   NOT_ELIGIBLE  → the reasons, in plain English.
+ *   REQUEST       → (`mode: 'request'`, migration 197) the same priced
+ *                   line, but as an EXCLUSIVE request to this master with
+ *                   a reply-by time, plus up to three priced backups. A
+ *                   decline or lapse hops to the next backup by itself;
+ *                   the customer pays only once a master accepts.
  * `preview: true` resolves without writing anything (no login needed).
  * Every non-preview decision is logged to sambramo_booking_decisions.
  */
@@ -130,6 +135,71 @@ function offerSummary(offer, resolution, fee) {
   return parts.join(' ')
 }
 
+/* The line the database writes, from one resolution — the first master's
+   and every backup's are built the same way, so a hop is like-for-like. */
+function lineFrom(resolution, { requestId, serviceId, name, trade, note, fee, r, list, listAdv, margin, city }) {
+  const quoted = resolution.customer_paise
+  const partner = resolution.take_home_paise
+  return {
+    request_id: requestId,
+    service_id: serviceId, service_name: name, trade,
+    customer_note: note,
+    quoted_amount_paise: quoted, platform_fee_rate: fee,
+    platform_fee_paise: quoted - partner, partner_amount_paise: partner,
+    price_basis: { kind: 'partner_published', version: VERSION, listing_version_id: resolution.listing_version_id },
+    pricing_state: 'INSTANT_BOOK', pricing_version: VERSION, policy_version: VERSION,
+    // Immutable: the rule, package, lines, fee and terms this price came from.
+    pricing_snapshot: { ...resolution, request: r, captured_at: new Date().toISOString(),
+      // What the customer pays (api/_lib/listPrice.js); quoted/share/fee above stay the partner's terms.
+      list_paise: list, list_advance_paise: listAdv, margin_pct: margin, list_city: city },
+    // What this booking holds (staff, vehicle, stock, space, capacity) — re-checked under the partner lock.
+    reservations: resolution.reservations ?? [],
+  }
+}
+
+/**
+ * The backups, each priced for the same request BEFORE anything is sent,
+ * so a hop never changes the price behind the customer's back. Masters
+ * the customer chose keep their order; the ones Sambramo picked are
+ * rotated — fewest jobs won in the last 30 days first — so the same
+ * master does not win every time and a newer one gets a fair turn.
+ * Only masters the engine can book instantly for this exact request.
+ */
+async function priceBackups(db, raw, { r, first, vendorId, requestId, note, city, tradeCode }) {
+  const asked = (Array.isArray(raw) ? raw : []).map(b => (typeof b === 'string' ? { serviceId: b } : b))
+    /* Each backup carries its OWN request — its menu, package or item —
+       with the event, place and guests the server checks against the first. */
+    .map(b => ({ serviceId: clean(b?.serviceId, 60), chosenBy: b?.chosenBy === 'sambramo' ? 'sambramo' : 'customer',
+      request: b?.request && typeof b.request === 'object' ? { ...b.request, event_date: r.event_date, start_time: r.start_time, lat: r.lat, lng: r.lng, guests: r.guests } : r }))
+    .filter(b => b.serviceId && b.serviceId !== first)
+  const seen = new Set()
+  const out = []
+  for (const b of asked.slice(0, 6)) {
+    if (seen.has(b.serviceId)) continue
+    seen.add(b.serviceId)
+    const { data: res, error } = await db.rpc('resolve_booking', { p_vendor_service_id: b.serviceId, p_req: b.request })
+    // Same trade only: a backup photographer is not a backup caterer.
+    if (error || res?.path !== 'INSTANT' || !res.vendor_id || res.vendor_id === vendorId || (tradeCode && res.trade_code && res.trade_code !== tradeCode)) continue
+    const code = res.trade_code ?? 'E16'
+    const margin = marginPct(code, city)
+    const list = toListAt(res.customer_paise, margin)
+    const listAdv = Number(res.advance_paise) > 0 ? Math.min(list, toListAt(res.advance_paise, margin)) : null
+    const { data: svc } = await db.from('vendor_services').select('name').eq('id', b.serviceId).maybeSingle()
+    out.push({ ...lineFrom(res, { requestId, serviceId: b.serviceId, name: svc?.name ?? res.trade_name, trade: res.trade_name, note,
+      fee: Number(res.platform_fee_rate) || PLATFORM_FEE_RATE, r: b.request, list, listAdv, margin, city }), vendor_id: res.vendor_id, chosen_by: b.chosenBy })
+  }
+  const auto = out.filter(b => b.chosen_by === 'sambramo')
+  if (auto.length > 1) {
+    const since = new Date(Date.now() - 30 * 86400000).toISOString()
+    const { data: wins } = await db.from('dispatch_offers').select('vendor_id').eq('status', 'ACCEPTED').gte('accepted_at', since)
+      .in('vendor_id', auto.map(b => b.vendor_id)).then(x => x, () => ({ data: [] }))
+    const n = {}
+    for (const w of wins ?? []) n[w.vendor_id] = (n[w.vendor_id] ?? 0) + 1
+    auto.sort((a, b) => (n[a.vendor_id] ?? 0) - (n[b.vendor_id] ?? 0))
+  }
+  return [...out.filter(b => b.chosen_by === 'customer'), ...auto].slice(0, 3)
+}
+
 export default async function handler(req, res) {
   if (cors(req, res)) return
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
@@ -216,25 +286,37 @@ export default async function handler(req, res) {
 
   /* ── INSTANT ───────────────────────────────────────────────────────── */
   if (resolution.path === 'INSTANT' && !offer) {
-    const quoted = resolution.customer_paise
     const partner = resolution.take_home_paise
+    const first = lineFrom(resolution, { requestId: booking.request_id, serviceId: vendorServiceId, name: svc?.name ?? TRADE, trade: TRADE,
+      note: clean(body.note, 1000), fee: FEE, r, list: LIST, listAdv: LIST_ADV, margin: MARGIN, city: CITY })
+
+    /* ── REQUEST (197): ask this master alone; queue the backups ─────── */
+    if (body.mode === 'request') {
+      const backups = await priceBackups(db, body.backups, { r, first: vendorServiceId, vendorId: resolution.vendor_id, requestId: booking.request_id,
+        note: clean(body.note, 1000), city: CITY, tradeCode: TRADE_CODE })
+      const { data: asked, error: aErr } = await db.rpc('request_partner_line', {
+        p_line: first, p_vendor_id: resolution.vendor_id, p_partner_paise: partner, p_backups: backups, p_spec_mode: 'standard',
+      })
+      const missing = aErr && (aErr.code === 'PGRST202' || /request_partner_line|sambramo_request_queue/.test(aErr.message ?? ''))
+      if (aErr && !missing) return res.status(500).json({ error: aErr.message })
+      if (!missing) {
+        if (!asked?.ok) {
+          await log({})
+          return res.status(409).json({ ...out, path: 'NOT_ELIGIBLE', reasons: [asked?.reason], reasons_text: [asked?.reason === 'resource_full' ? 'What you asked for was just booked by someone else.' : 'This master is not free on that date any more.'] })
+        }
+        await log({ booking_line_id: asked.line_id })
+        const by = new Date(asked.reply_by).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata' })
+        await notifyPartners(db, { vendorIds: [resolution.vendor_id], lineId: asked.line_id, url: '/dashboard/vendor',
+          title: `New request: ${svc?.name ?? TRADE} — only you have it`,
+          body: `${dayText(r.event_date)}${r.start_time ? ` · ${r.start_time}` : ''}${venue.area ? ` · ${clean(venue.area, 60)}` : ''}. Accept by ${by}; the customer pays once you accept.` }).catch(() => {})
+        await db.from('sambramo_request_queue').update({ notified_at: new Date().toISOString() }).eq('line_id', asked.line_id).eq('position', 0).then(() => {}, () => {})
+        return res.status(200).json({ ...out, path: 'REQUEST', lineId: asked.line_id, bookingRequestId: booking.request_id, replyBy: asked.reply_by, backups: asked.backups ?? 0 })
+      }
+      /* 197 not pasted yet: the master holds the date at once, as before. */
+    }
+
     const { data: booked, error } = await db.rpc('book_partner_line', {
-      p_line: {
-        request_id: booking.request_id,
-        service_id: vendorServiceId, service_name: svc?.name ?? TRADE, trade: TRADE,
-        customer_note: clean(body.note, 1000),
-        quoted_amount_paise: quoted, platform_fee_rate: FEE,
-        platform_fee_paise: quoted - partner, partner_amount_paise: partner,
-        price_basis: { kind: 'partner_published', version: VERSION, listing_version_id: resolution.listing_version_id },
-        pricing_state: 'INSTANT_BOOK', pricing_version: VERSION, policy_version: VERSION,
-        // Immutable: the rule, package, lines, fee and terms this price came from.
-        pricing_snapshot: { ...resolution, request: r, captured_at: new Date().toISOString(),
-          // What the customer pays (api/_lib/listPrice.js); quoted/share/fee above stay the partner's terms.
-          list_paise: LIST, list_advance_paise: LIST_ADV, margin_pct: MARGIN, list_city: CITY },
-        // What this booking holds (staff, vehicle, stock, space, capacity) — re-checked under the partner lock.
-        reservations: resolution.reservations ?? [],
-      },
-      p_vendor_id: resolution.vendor_id, p_partner_paise: partner, p_spec_mode: 'standard',
+      p_line: first, p_vendor_id: resolution.vendor_id, p_partner_paise: partner, p_spec_mode: 'standard',
     })
     if (error) return res.status(500).json({ error: error.message })
     if (!booked?.ok) {

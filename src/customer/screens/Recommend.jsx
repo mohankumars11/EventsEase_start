@@ -16,7 +16,7 @@
  */
 import { useEffect, useMemo, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
-import { BookmarkPlus, CalendarDays, Check, ChevronRight, CircleHelp, MailOpen, MapPin, MoreHorizontal, Pencil, Plus, Search, Sparkles, Undo2, Users, X } from 'lucide-react'
+import { BookmarkPlus, CalendarDays, Check, ChevronRight, MailOpen, MapPin, MoreHorizontal, Pencil, Plus, Search, Sparkles, Undo2, Users, X } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { OCCASION } from '../data/occasions'
 import { TRADE } from '../data/trades'
@@ -29,6 +29,7 @@ import { AddOnCard, ArtFill } from '../ui/art'
 import { SettingUp } from '../ui/needs'
 import { PAIRS } from '../data/crossSell'
 import { VENUE_KINDS } from './Occasion'
+import { PHASE_TEXT, WHEN, INCLUDES } from '../data/serviceTiming'
 
 const BADGE = { CORE: ['Essential', 'bg-[#FFF1D6] text-[#8A5300]'], CONDITIONAL: ['For your event', 'bg-[var(--am-100)] text-[var(--am-ink)]'], OPTIONAL: ['Add-on', 'bg-[#E9F7F0] text-[#0B7A45]'], NOT_DEFAULT: ['Added', 'bg-[#EEF2F6] text-[#475569]'] }
 
@@ -42,6 +43,7 @@ export default function Recommend() {
   const [menu, setMenu] = useState(null)
   const [findOpen, setFindOpen] = useState(false)
   const [saved, setSaved] = useState(null)
+  const [confirm, setConfirm] = useState(null) // a service the customer is about to remove
   const ev = plan.event
   const picks = plan.picks[occasionId] ?? {}
   const valid = !!(o && ev.occasionId === o.id && ev.date)
@@ -79,8 +81,8 @@ export default function Recommend() {
       <Journey at={1} occasionId={o.id} />
 
       <section className="px-4 pt-1">
-        <h2 className="text-[24px] font-extrabold leading-[1.08] tracking-[-0.035em]">Your {o.name}, end to end</h2>
-        <p className="mt-1.5 text-[13px] font-semibold leading-snug text-[var(--ink-3)]">{plural(needed.length, 'service')} recommended, from set-up to clean-up. Remove anything you don’t need.</p>
+        <h2 className="text-[24px] font-extrabold leading-[1.08] tracking-[-0.035em]">Everything your {o.name} needs</h2>
+        <p className="mt-1.5 text-[13px] font-semibold leading-snug text-[var(--ink-3)]">{plural(needed.length, 'service')}, in the order they happen. Each one is added — switch off anything you’ve already sorted.</p>
         <div className="cx-noscroll -mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-1">
           <Fact icon={CalendarDays} onClick={() => navigate(`/o/${o.id}?step=when`)}>{dayLabel(ev.date)}{ev.time ? ` · ${timeLabel(ev.time)}` : ''}</Fact>
           <Fact icon={Users} onClick={() => navigate(`/o/${o.id}?step=guests`)} empty={!ev.guests}>{ev.guests ? `${ev.guests.toLocaleString('en-IN')} ${o.people.toLowerCase()}` : 'Guests?'}</Fact>
@@ -89,25 +91,19 @@ export default function Recommend() {
         </div>
       </section>
 
-      {result.followUps.length > 0 && (
-        <button type="button" onClick={() => navigate(`/o/${o.id}?step=about`)} className="cx-press mx-3 mt-4 flex w-[calc(100%-24px)] items-center gap-3 rounded-[18px] bg-[#FFF8E6] p-3 text-left ring-1 ring-[#F6DFA2]" data-followups>
-          <CircleHelp size={20} className="shrink-0 text-[#B45309]" />
-          <span className="min-w-0 flex-1">
-            <span className="block text-[13.5px] font-extrabold text-[#7A4B00]">{plural(result.followUps.length, 'quick question')} to sharpen this plan</span>
-            <span className="block truncate text-[12px] font-semibold text-[#8A6420]">{result.followUps.map(q => q.text).join(' · ')}</span>
-          </span>
-          <ChevronRight size={17} className="shrink-0 text-[#B45309]" />
-        </button>
-      )}
+      {/* No "N quick questions to sharpen this plan" (Mohan, 2026-10-31: stop
+          asking many questions) — the plan is built from the plain essentials;
+          Event details above changes them. */}
 
       {result.phases.map(p => (
         <section key={p.id} className="mt-6" data-phase={p.key}>
-          <div className="flex items-baseline gap-2 px-4 pb-2">
-            <span className="cx-num grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[var(--brand)] text-[11px] font-extrabold text-white">{p.id}</span>
-            <h3 className="text-[16.5px] font-extrabold tracking-[-0.025em]">{p.title}</h3>
+          {/* Plain words, and when it happens (2026-10-31) — not "Plan & budget". */}
+          <div className="flex items-end justify-between gap-2 px-4 pb-2">
+            <h3 className="text-[17px] font-black tracking-[-0.025em]">{(PHASE_TEXT[p.key] ?? [p.title])[0]}</h3>
+            {PHASE_TEXT[p.key]?.[1] && <span className="shrink-0 rounded-full bg-[#F1EAFE] px-2.5 py-1 text-[11px] font-extrabold text-[var(--brand)]">{PHASE_TEXT[p.key][1]}</span>}
           </div>
           <ul className="mx-3 overflow-hidden rounded-[20px] bg-white shadow-[0_0_0_1px_var(--line)]">
-            {p.tradeIds.map((t, i) => <Row key={t} r={row(t)} first={!i} onMenu={() => setMenu(t)} onRemove={() => pick(t, 'skip')} />)}
+            {p.tradeIds.map((t, i) => <Row key={t} r={row(t)} why={o.why?.[t] ?? TRADE[t].why} first={!i} onMenu={() => setMenu(t)} onRemove={() => setConfirm(t)} />)}
           </ul>
         </section>
       ))}
@@ -171,8 +167,26 @@ export default function Recommend() {
             <p className="text-[12.5px] font-semibold text-[var(--ink-2)]">{row(menu)?.reason}</p>
             <MenuItem icon={Check} onClick={() => pick(menu, 'have')}>I’ve already arranged this</MenuItem>
             <MenuItem icon={BookmarkPlus} onClick={() => pick(menu, 'later')}>Save for later</MenuItem>
-            <MenuItem icon={X} onClick={() => pick(menu, 'skip')}>Remove from my plan</MenuItem>
+            <MenuItem icon={X} onClick={() => { setMenu(null); setConfirm(menu) }}>Remove from my plan</MenuItem>
             <MenuItem icon={ChevronRight} onClick={() => { setMenu(null); navigate(`/s/${menu}?o=${o.id}`) }}>See masters for this</MenuItem>
+          </div>
+        )}
+      </Sheet>
+      {/* Removing asks once, and makes the case for keeping it. */}
+      <Sheet open={!!confirm} onClose={() => setConfirm(null)} title={confirm ? `Remove ${TRADE[confirm].label}?` : ''}
+        footer={confirm ? (
+          <div className="grid gap-2">
+            <button type="button" onClick={() => setConfirm(null)} className="cx-press cx-cta h-12 w-full rounded-[16px] text-[14.5px] font-extrabold" data-keep>Keep {TRADE[confirm].label.toLowerCase()}</button>
+            <button type="button" onClick={() => { pick(confirm, 'have'); setConfirm(null) }} className="h-11 w-full rounded-[16px] bg-[#F4F1F8] text-[13.5px] font-extrabold text-[var(--ink-2)]">I’ve already arranged it</button>
+            <button type="button" onClick={() => { pick(confirm, 'skip'); setConfirm(null) }} className="h-10 w-full text-[13px] font-bold text-[#B42318]" data-remove-anyway>Remove anyway</button>
+          </div>
+        ) : null}>
+        {confirm && (
+          <div className="flex items-start gap-3 pb-2">
+            <ArtFill art={serviceArt(confirm)} tone="#F6F1FF" className="h-14 w-14 shrink-0 rounded-[14px]" inset="10%" />
+            <p className="text-[13.5px] font-semibold leading-relaxed text-[var(--ink-2)]">
+              <b className="text-[var(--ink)]">{o.why?.[confirm] ?? TRADE[confirm].why}.</b> Most {o.name.toLowerCase()} plans include it{WHEN[confirm] ? ` — ${WHEN[confirm].toLowerCase()}` : ''}. Without it, you would have to arrange it yourself.
+            </p>
           </div>
         )}
       </Sheet>
@@ -181,23 +195,34 @@ export default function Recommend() {
   )
 }
 
-function Row({ r, first, onMenu, onRemove }) {
+function Row({ r, why, first, onMenu, onRemove }) {
   const t = TRADE[r.tradeId]
   const [label, cls] = BADGE[r.addedByCustomer && r.status !== 'CORE' ? 'NOT_DEFAULT' : r.status]
+  const inc = INCLUDES[r.tradeId]
   return (
-    <li className={(first ? '' : 'border-t border-[var(--line)] ') + 'flex items-center gap-3 p-3'} data-need={r.tradeId} data-status={r.status}>
-      <ArtFill art={serviceArt(r.tradeId)} tone="#F6F1FF" className="h-[52px] w-[52px] shrink-0 rounded-[14px]" inset="12%" />
-      <button type="button" onClick={onMenu} className="min-w-0 flex-1 text-left">
-        <span className="flex items-center gap-1.5">
-          <span className="truncate text-[14.5px] font-extrabold tracking-[-0.015em]">{t.label}</span>
-          <span className={'shrink-0 rounded-full px-1.5 py-[2px] text-[9.5px] font-extrabold uppercase tracking-[0.05em] ' + cls}>{label}</span>
-        </span>
-        <span className="mt-0.5 line-clamp-2 block text-[12px] font-semibold leading-snug text-[var(--ink-2)]">{r.reason}</span>
-      </button>
-      <div className="flex shrink-0 items-center gap-1">
-        <button type="button" onClick={onMenu} aria-label="More options" className="cx-press grid h-8 w-8 place-items-center rounded-full text-[var(--ink-3)]"><MoreHorizontal size={18} /></button>
-        <button type="button" onClick={onRemove} aria-label={`Remove ${t.label}`} className="cx-press grid h-8 w-8 place-items-center rounded-full bg-[var(--brand)] text-white" data-remove><Check size={15} strokeWidth={3} /></button>
+    <li className={(first ? '' : 'border-t border-[var(--line)] ') + 'p-3'} data-need={r.tradeId} data-status={r.status}>
+      <div className="flex items-start gap-3">
+        <ArtFill art={serviceArt(r.tradeId)} tone="#F6F1FF" className="h-[56px] w-[56px] shrink-0 rounded-[14px]" inset="10%" />
+        <button type="button" onClick={onMenu} className="min-w-0 flex-1 text-left">
+          <span className="flex items-center gap-1.5">
+            <span className="truncate text-[15px] font-extrabold tracking-[-0.015em]">{t.label}</span>
+            <span className={'shrink-0 rounded-full px-1.5 py-[2px] text-[9.5px] font-extrabold uppercase tracking-[0.05em] ' + cls}>{label}</span>
+          </span>
+          <span className="mt-0.5 line-clamp-2 block text-[12.5px] font-semibold leading-snug text-[var(--ink-2)]">{why}</span>
+          {WHEN[r.tradeId] && <span className="mt-1 flex items-center gap-1 text-[11.5px] font-extrabold text-[#0B7A45]"><CalendarDays size={12} className="shrink-0" />{WHEN[r.tradeId]}</span>}
+        </button>
+        {/* Added, as a switch: on means it is in your plan (2026-10-31). */}
+        <button type="button" role="switch" aria-checked="true" onClick={onRemove} aria-label={`${t.label} is added — tap to remove`} className="cx-press flex shrink-0 flex-col items-center gap-0.5 pt-1" data-remove>
+          <span className="relative h-[26px] w-[46px] rounded-full bg-[var(--brand)] shadow-[inset_0_0_0_1px_rgba(0,0,0,.05)]"><span className="absolute right-[3px] top-[3px] grid h-5 w-5 place-items-center rounded-full bg-white shadow"><Check size={12} strokeWidth={3.4} className="text-[var(--brand)]" /></span></span>
+          <span className="text-[10px] font-extrabold text-[var(--brand)]">Added</span>
+        </button>
       </div>
+      {inc && (
+        <div className="mt-2 flex flex-wrap gap-1.5 pl-[68px]" data-includes>
+          <span className="text-[10.5px] font-extrabold uppercase tracking-[0.08em] text-[var(--ink-3)]">Includes</span>
+          {inc.map(x => <span key={x} className="rounded-full bg-[#F6F2FC] px-2 py-0.5 text-[11px] font-bold text-[#4A3B5E]">{x}</span>)}
+        </div>
+      )}
     </li>
   )
 }

@@ -48,7 +48,7 @@ const nice = v => (v ? new Date(`${v}T00:00:00`).toLocaleDateString('en-IN', { w
    the welcome voucher, and during launch every other one is free too, so
    nothing is ever charged here — there is no invitation payment flow yet. */
 export const RSVP_PRICE = 299
-const RSVP_INCLUDES = ['1,000+ designs, live animation', 'One-tap WhatsApp RSVP for every guest', 'Live headcount, food & function counts', 'Guest care — travel, pickups, rooms', 'Style circles with outfit chat']
+const RSVP_INCLUDES = ['Explore our live designs — animated, ready in a tap', 'One-tap WhatsApp RSVP for every guest', 'Live headcount, food & function counts', 'Guest care — travel, pickups, rooms', 'Style circles with outfit chat']
 const RAIL = { event: 'Occasion', design: 'Design', title: 'Name', hosts: 'Hosts', when: 'When', where: 'Where', message: 'Note', functions: 'Functions', rsvp: 'RSVP', review: 'Review', guests: 'Guests', send: 'Send' }
 const PHASE = { event: 'Your occasion', design: 'The design', title: 'The card', hosts: 'The card', when: 'When', where: 'Where', message: 'A personal note', functions: 'Functions', rsvp: 'RSVP', review: 'Review', guests: 'Guests', send: 'Send' }
 
@@ -56,9 +56,9 @@ const PHASE = { event: 'Your occasion', design: 'The design', title: 'The card',
    dressed for an occasion it was made for. */
 const SHOWCASE = TEMPLATES.filter(t => t.trending).map(t => ({ t, o: OCCASIONS.find(o => t.kw?.test(o.name)) ?? null }))
 
-function blank(o, first, ev = {}) {
+function blank(o, first, ev = {}, place = null) {
   return { occasion_id: o?.id ?? null, title: o ? titleFor(o, first) : '', hosts_line: '', message: notesFor(o)[0], event_date: ev.date ?? '', start_time: ev.time ?? '',
-    venue_name: '', venue_address: '', map_url: '', dress_code: '', rsvp_by: '', ask_meal: true, allow_kids: true, open_enabled: false, cover_key: o?.id ?? null,
+    venue_name: place?.area ?? '', venue_address: place?.address ?? '', map_url: '', dress_code: '', rsvp_by: '', ask_meal: true, allow_kids: true, open_enabled: false, cover_key: o?.id ?? null,
     theme: themeString((templatesFor(o)[0] ?? TEMPLATES[0]).id, { art: true, live: true }) }
 }
 
@@ -70,10 +70,12 @@ export default function InviteNew() {
   const fullName = (profile?.full_name ?? user?.user_metadata?.full_name ?? '').trim()
   const first = fullName.split(/\s+/)[0] || ''
   const pre = OCCASION[q.get('o') ?? ''] ?? null
-  const [inv, setInv] = useState(() => blank(pre, first, pre && plan.event.occasionId === pre.id ? plan.event : {}))
+  const ours = pre && plan.event.occasionId === pre.id
+  const [inv, setInv] = useState(() => blank(pre, first, ours ? plan.event : {}, ours ? plan.place : null))
   /* Functions start empty: the functions step asks, rather than ticking five for a one-day party. */
   const [fns, setFns] = useState([])
-  const [at, setAt] = useState(pre ? 'design' : 'event')
+  /* ?step=review: the invitation already made from the plan (ui/InviteReady) opens ready to send. */
+  const [at, setAt] = useState(pre ? (['design', 'review'].includes(q.get('step')) ? q.get('step') : 'design') : 'event')
   const [invId, setInvId] = useState(null)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')

@@ -190,8 +190,8 @@
 .cx-card2 img { transition: transform .5s cubic-bezier(.2, .8, .2, 1); }
 .cx-card2:active img { transform: scale(1.05); }
 /* Card pages sit on a warm cream, like the reference. */
-.cx-cream { background: #FFF8F2; }
-.cx-cream header.cx-safe-top { background: #FFF8F2; }
+.cx-cream { background: #FFFFFF; } /* screens are pure white (2026-10-31) */
+.cx-cream header.cx-safe-top { background: #FFFFFF; }
 
 /* "Live" invitation cards: a slow twinkle, still when motion is reduced. */
 @keyframes cx-twinkle { 0%, 100% { opacity: 0; transform: rotate(45deg) scale(.4); } 50% { opacity: .95; transform: rotate(45deg) scale(1); } }
@@ -319,3 +319,8 @@
 @keyframes cx-twinkle { 0%, 100% { opacity: 0; transform: scale(.3) rotate(0deg); } 45% { opacity: 1; transform: scale(1) rotate(25deg); } 70% { opacity: .5; transform: scale(.75) rotate(40deg); } }
 .cx-twinkle { opacity: 0; animation: cx-twinkle 2.4s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { .cx-twinkle { animation: none; opacity: .7; transform: none; } }
+
+/* The home hero's picture eases in, slowly — transform only. */
+@keyframes cx-kenburns { from { transform: scale(1.07) translateX(2%); opacity: .6; } to { transform: scale(1) translateX(0); opacity: 1; } }
+.cx-kenburns { animation: cx-kenburns 1.6s cubic-bezier(.2,.7,.2,1) both; }
+@media (prefers-reduced-motion: reduce) { .cx-kenburns { animation: none; } }

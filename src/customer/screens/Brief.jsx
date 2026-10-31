@@ -20,8 +20,8 @@ import { serviceArt } from '../data/art'
 import { usePlan, needsFor as planNeeds } from '../state/PlanContext'
 import { partnersFor } from '../lib/market'
 import { answered, courseLabel, filterByNeeds, loadCuisines, loadDishes, needsFor } from '../lib/needs'
-import { plural, rupees } from '../lib/format'
-import { askOf, asksFor, priceRange, withQuotes } from '../lib/quote'
+import { plural } from '../lib/format'
+import { asksFor } from '../lib/quote'
 import Buddy, { sambu } from '../ui/Buddy'
 import { ESSENTIAL, NEVER, exampleSlug, explain } from '../data/essentials'
 import { artFor } from '../data/art'
@@ -60,8 +60,9 @@ export default function Brief() {
   const fit = useMemo(() => filterByNeeds(all, tradeId, picks, guests), [all, tradeId, picks, guests])
   /* The answers that make the price: hours and guests, priced per master. */
   const can = useMemo(() => asksFor(tradeId, all), [tradeId, all])
-  const shown = useMemo(() => withQuotes(fit.list, askOf(picks, { guests })), [fit.list, picks, guests])
-  const range = priceRange(shown)
+  /* No computed totals here (Mohan, 2026-10-31): hours and guests travel
+     with the request, and each master confirms the price when they accept. */
+  const shown = fit.list
   const [cheer, setCheer] = useState(null)
   if (!t) return null
   /* Only what decides the match is asked up front (data/essentials.js);
@@ -74,7 +75,7 @@ export default function Brief() {
   const must = []
   const n = answered(picks)
   const set = (k, v) => setPicks(p => { const { $any, ...rest } = p; return { ...rest, [k]: v } })
-  const setQty = (k, v) => { setPicks(p => ({ ...p, [k]: v })); setCheer(k === '$hours' ? `${v} hours — great choice! Prices updated ⚡` : `${v.toLocaleString('en-IN')} guests — got it! Food bill worked out.`) }
+  const setQty = (k, v) => { setPicks(p => ({ ...p, [k]: v })); setCheer(k === '$hours' ? `${v} hours — noted for your request ✓` : `${v.toLocaleString('en-IN')} guests — noted for your request ✓`) }
   const keepQty = p => Object.fromEntries(Object.entries({ $hours: p.$hours, $guests: p.$guests }).filter(([, v]) => v))
   /* One service after another (Mohan: "one by one, quickly"): opened from the
      Needs screen's Next, Done goes straight to the next unanswered service,
@@ -105,12 +106,12 @@ export default function Brief() {
   }
   const seeAll = () => { plan.setNeeds(key, picks); navigate(occ ? `/o/${occ.id}/match` : `/s/${tradeId}`) }
   const lines = [
-    `Hi, I’m Sambu 👋 You’re on ${t.label}. A few taps here and I’ll price every master for you — then you book instantly.`,
-    can.hours && !picks.$hours ? `You’re on ${t.label} — how many hours do you need? One tap and I’ll show your exact price.` : null,
-    can.guests && !picks.$guests && !guests ? 'How many guests are coming? I’ll work out the food bill for you.' : null,
-    range ? `${plural(range.n, 'master')} can do it — from ${rupees(range.lo)}. Tap Done to see them and add one.` : null,
+    `Hi, I’m Sambu 👋 You’re on ${t.label}. A few taps and I’ll show you the masters who do exactly that.`,
+    can.hours && !picks.$hours ? `How many hours do you need your ${t.label.toLowerCase()}? Your master sees it with your request.` : null,
+    can.guests && !picks.$guests && !guests ? 'How many guests are coming? It goes with your request.' : null,
+    shown?.length ? `${plural(shown.length, 'master')} can do it. Tap Done to see them.` : null,
     'Not sure what to pick? “No preference” is a perfectly good answer 🙂',
-    'Still there? A couple more taps and you can pay instantly — no calls, no waiting ⚡',
+    'All optional — you can see every master and filter any time.',
   ].filter(Boolean)
 
   return (
@@ -135,13 +136,10 @@ export default function Brief() {
         <p className="mt-1 text-[13px] font-semibold text-[var(--ink-3)]">Whatever you tap, we match to what each master listed — you’ll see only the ones who do exactly that{fit.total ? `, out of ${fit.total}` : ''}.</p>
         {(can.hours || can.guests) && (
           <section className="cx-pop mt-3 rounded-[22px] bg-gradient-to-br from-[#FFF8EA] to-[#FFEFD6] p-3.5 shadow-[0_0_0_1.5px_#FFD9A0]" data-instant-price>
-            <p className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#B45309]"><Zap size={13} className="fill-current" />Your instant price</p>
+            <p className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#B45309]"><Zap size={13} className="fill-current" />For your request · optional</p>
             {can.hours && <Qty label={`How many hours do you need your ${noun}?`} unit="hours" options={[2, 3, 4, 5, 6, 8, 10, 12]} value={picks.$hours ?? null} step={1} min={1} max={24} onChange={v => setQty('$hours', v)} />}
             {can.guests && <Qty label="How many guests?" unit="guests" options={[25, 50, 100, 150, 200, 300, 500]} value={picks.$guests ?? guests ?? null} step={10} min={10} max={5000} onChange={v => setQty('$guests', v)} />}
-            <p className="mt-3 text-[13.5px] font-extrabold text-[#7A3E00]" data-price-range>
-              {range ? <>{plural(range.n, 'master')} · <span className="text-[#0C831F]">{range.text}</span>{picks.$hours ? ` for ${picks.$hours} h` : ''}</> : 'Tap a number — every master’s price updates instantly.'}
-            </p>
-            <p className="mt-0.5 text-[11.5px] font-semibold leading-snug text-[#8A5A1A]">Masters who can’t do it drop out. Add one and pay — no calls, no waiting for quotes.</p>
+            <p className="mt-3 text-[11.5px] font-semibold leading-snug text-[#8A5A1A]">Your master sees this with your request, checks their menu and day, and confirms the price when they accept. You pay only then.</p>
           </section>
         )}
         <button type="button" onClick={() => { setPicks(p => (p.$any ? keepQty(p) : { ...keepQty(p), $any: true })); sambu(picks.$any ? 'Okay — tell me what you love and I’ll narrow it down.' : 'No preference — perfect, I’ll show you every verified master 👍') }} aria-pressed={!!picks.$any}
@@ -189,7 +187,7 @@ export default function Brief() {
         <div className="mx-auto flex max-w-[540px] gap-2">
           <button type="button" onClick={() => setPicks({})} disabled={!n} className="cx-press flex h-14 shrink-0 items-center gap-1.5 rounded-[18px] bg-[#F6F1EA] px-4 text-[13.5px] font-extrabold text-[var(--ink-2)] disabled:opacity-40" data-clear><RotateCcw size={16} />Clear</button>
           <button type="button" onClick={done} className="cx-press flex h-14 flex-1 items-center justify-center gap-2 rounded-[18px] bg-[#0C831F] text-[15.5px] font-extrabold text-white shadow-[0_12px_24px_-12px_rgba(12,131,31,.9)] disabled:bg-[#CFE9D7] disabled:shadow-none" data-show-masters>
-            {!n ? `Show all ${shown?.length ?? ''} masters`.replace('  ', ' ') : !shown ? 'Finding masters…' : range ? `Done · ${plural(range.n, 'master')} from ${rupees(range.lo)}` : picks.$any ? `Done · all ${shown.length} masters` : fit.exact ? `Done · ${plural(shown.length, 'master')} match` : `Done · ${shown.length} closest`}
+            {!n ? `Show all ${shown?.length ?? ''} masters`.replace('  ', ' ') : !shown ? 'Finding masters…' : picks.$any ? `Done · all ${shown.length} masters` : fit.exact ? `Done · ${plural(shown.length, 'master')} match` : `Done · ${shown.length} closest`}
           </button>
         </div>
         {fit.list && !fit.exact && <p className="mt-1.5 text-center text-[11.5px] font-bold text-[#8A5A00]">No one does all of it yet — these come closest.</p>}

@@ -59,13 +59,13 @@ export const TRADE = Object.fromEntries(TRADES.map(x => [x.id, x]))
 
 /** How the Services shelf is grouped. Order is the order on screen. */
 export const TRADE_GROUPS = [
-  { id: 'food', label: 'Food & drinks' },
-  { id: 'space', label: 'Venue & décor' },
-  { id: 'media', label: 'Photo & film' },
-  { id: 'stage', label: 'Music & stage' },
-  { id: 'rituals', label: 'Beauty & rituals' },
-  { id: 'plan', label: 'Planning' },
-  { id: 'guests', label: 'Guests & safety' },
-  { id: 'gifts', label: 'Gifts & print' },
-  { id: 'move', label: 'Power, transport & rentals' },
+  { id: 'food', label: 'Food & dining', chip: 'Food' },
+  { id: 'space', label: 'Venue & décor', chip: 'Venue & décor' },
+  { id: 'media', label: 'Moments · photo & film', chip: 'Moments' },
+  { id: 'stage', label: 'Music & stage', chip: 'Music' },
+  { id: 'rituals', label: 'Beauty & rituals', chip: 'Beauty' },
+  { id: 'plan', label: 'Planning', chip: 'Planning' },
+  { id: 'guests', label: 'Guests & safety', chip: 'Guests' },
+  { id: 'gifts', label: 'Gifts & print', chip: 'Gifts' },
+  { id: 'move', label: 'Power, transport & rentals', chip: 'Transport' },
 ].map(g => ({ ...g, trades: TRADES.filter(x => x.group === g.id) }))

@@ -20,15 +20,15 @@
  * check. Cashfree is not shown: no payment in this app goes through it.
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { tilesFor, tileUrl, DEFAULT_TILES } from '../../lib/slippyMap'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowRight, BadgeCheck, CalendarCheck2, CalendarClock, ChevronDown, ChevronRight, Gift, Headset, IndianRupee, Loader2, LocateFixed, MailOpen, MapPin, Mic, Music2, PartyPopper, RotateCcw, Search, ShieldCheck, Users, UtensilsCrossed, Zap } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { BENGALURU_AREAS } from '../../data/bengaluruAreas'
 import { CATEGORIES, OCCASION, OCCASIONS } from '../data/occasions'
-import { TRADES } from '../data/trades'
-import { FAMILIES } from '../data/families'
+import { TRADES, TRADE_GROUPS } from '../data/trades'
 import { artFor, categoryArt, hdArtFor, occasionArt, serviceArt } from '../data/art'
-import { Card, CategoryCard, FamilyCard, Rotator, ServiceCard } from '../ui/art'
+import { Card, CategoryCard, Rotator, ServiceCard } from '../ui/art'
 import { Sheet } from '../ui/kit'
 import { OfferDeck } from '../ui/offers'
 import Spotlight from '../ui/Spotlight'
@@ -36,7 +36,7 @@ import LocationSheet from '../ui/LocationSheet'
 import { locate, saveWhere, savedWhere } from '../lib/where'
 import { listen, canListen } from '../lib/voice'
 
-const CREAM = '#FFF7EE'
+const CREAM = '#FFFFFF' // screen ground: pure white (2026-10-31); cards keep their own tones
 const POPULAR_OCC = ['birthday-party', 'wedding-reception', 'haldi-ceremony', 'housewarming-ceremony', 'naming-ceremony', 'wedding-anniversary', 'baby-shower', 'engagement-ceremony', 'corporate-annual-day', 'mehendi-ceremony']
 const POPULAR_SVC = ['photography', 'catering_food', 'decoration_floral', 'cake_desserts', 'bridal_makeup_hair', 'dj_music', 'mehendi_artist', 'priest_rituals']
 
@@ -63,7 +63,7 @@ const SPOT_OCC = [
 ]
 const SPOT_SVC = [
   ['photography', 'Most booked', 'Every ritual, every relative — priced by the hour'],
-  ['catering_food', 'Instant price', 'Your menu, priced per plate for your guests'],
+  ['catering_food', 'Per-plate prices', 'See each caterer’s menu and price per plate'],
   ['decoration_floral', '🔥 Trending', 'Stage, entrance and flowers, set up and removed'],
   ['cake_desserts', 'Order now', 'The cake, and a dessert table if you want one'],
   ['bridal_makeup_hair', 'Wedding season', 'Bridal and family looks, draping included'],
@@ -101,7 +101,6 @@ export default function Home() {
   const days = Math.round((sat - new Date().setHours(0, 0, 0, 0)) / 864e5)
   const satLabel = sat.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })
   const cats = filter === 'all' ? CATEGORIES : CATEGORIES.filter(c => c.id === filter)
-  const fams = filter === 'all' ? FAMILIES : FAMILIES.filter(f => f.id === filter)
   const toGrid = () => requestAnimationFrame(() => grid.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
   const voice = async () => { const said = await listen().catch(() => null); navigate(said ? `/search?q=${encodeURIComponent(said)}` : '/search') }
 
@@ -109,7 +108,7 @@ export default function Home() {
     <main className="cx-enter bg-white pb-[calc(env(safe-area-inset-bottom,0px)+130px)]">
       {/* ── The cream top, edge to edge ─────────────────────────────── */}
       <section style={{ background: CREAM }}>
-        <header className="cx-safe-top flex items-center justify-between gap-2 px-4 pb-2.5">
+        <header className="cx-safe-top flex items-center justify-between gap-2 px-4 pb-0.5">
           <button type="button" onClick={() => setWhereOpen(true)} className="flex min-w-0 items-center gap-2 py-1 text-left" data-where>
             <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#EFE6FF]"><MapPin size={16} className="fill-[var(--brand)] text-[#EFE6FF]" strokeWidth={1.6} /></span>
             <span className="min-w-0">
@@ -124,10 +123,7 @@ export default function Home() {
               {/* The outer line keeps flashing in the envelope's own pink, so a first-time customer asks "what is this?" */}
               <span aria-hidden className="cx-flash-ring pointer-events-none absolute -inset-[3px] rounded-full" />
               <MailOpen size={19} />
-              {!invitesSeen && <span className="absolute -right-1 -top-1 rounded-full bg-[#DB2777] px-1.5 py-[1px] text-[8.5px] font-black tracking-[0.04em] text-white ring-2 ring-[#FFF7EE]">NEW</span>}
-            </Link>
-            <Link to="/me" aria-label="Your profile" className="cx-press relative grid h-10 w-10 place-items-center overflow-hidden rounded-full bg-gradient-to-br from-[#A57BFF] to-[#6D35E0] text-[15px] font-extrabold text-white ring-2 ring-white" data-avatar>
-              {photo ? <img src={photo} alt="" className="absolute inset-0 h-full w-full object-cover" referrerPolicy="no-referrer" /> : initial}
+              {!invitesSeen && <span className="absolute -right-1 -top-1 rounded-full bg-[#DB2777] px-1.5 py-[1px] text-[8.5px] font-black tracking-[0.04em] text-white ring-2 ring-white">NEW</span>}
             </Link>
           </div>
         </header>
@@ -138,21 +134,21 @@ export default function Home() {
           the block tightens: the search slims, the doors flatten, and the
           picture tiles morph into one-line pills — Zepto / Swiggy style —
           so the pinned part never eats the screen. */}
-      <div className={'sticky z-[115] transition-[background-color,box-shadow] duration-300 ' + (compact ? 'bg-white shadow-[0_12px_26px_-20px_rgba(20,15,31,.55)]' : 'bg-[#FFF7EE]')}
+      <div className={'sticky z-[115] transition-[background-color,box-shadow] duration-300 ' + (compact ? 'bg-white shadow-[0_12px_26px_-20px_rgba(20,15,31,.55)]' : 'bg-white')}
         style={{ top: 'env(safe-area-inset-top, 0px)' }} data-sticky-head={compact ? 'compact' : 'full'}>
-        <div className={'px-4 transition-[padding] duration-300 ' + (compact ? 'pb-1.5 pt-1.5' : 'pb-2 pt-2')}>
+        <div className={'px-4 transition-[padding] duration-300 ' + (compact ? 'pb-1.5 pt-1.5' : 'pb-2 pt-1')}>
           {/* Search: real names cycle; the mic listens where the phone can. */}
-          <div className={'flex items-center gap-3 rounded-[14px] bg-white pl-3.5 pr-1 shadow-[0_0_0_1px_#EDE6DC,0_8px_20px_-12px_rgba(20,15,31,.3)] transition-[height] duration-300 ' + (compact ? 'h-[44px]' : 'h-[50px]')} data-sticky-search>
+          <div className={'flex items-center gap-3 rounded-[14px] bg-white pl-3.5 pr-1 shadow-[0_0_0_1px_#ECE7F3,0_8px_20px_-12px_rgba(58,18,144,.22)] transition-[height] duration-300 ' + (compact ? 'h-[44px]' : 'h-[50px]')} data-sticky-search>
             <button type="button" onClick={() => navigate('/search')} className="flex min-w-0 flex-1 items-center gap-3 text-left" data-search>
               <Search size={20} className="shrink-0 text-[var(--ink)]" />
-              <span className="flex min-w-0 flex-1 items-center gap-1 text-[15px] font-medium text-[#8E889C]">Search<Rotator items={hints.map(h => <span>“{h}”</span>)} every={1900} /></span>
+              <span className="flex min-w-0 flex-1 items-center gap-1 text-[15px] font-medium text-[#8E889C]">Search<Rotator items={hints.map((h, k) => <span className="font-extrabold" style={{ color: HINT_INK[k % HINT_INK.length] }}>“{h}”</span>)} every={1900} /></span>
             </button>
             {canListen() && <><span className="h-6 w-px shrink-0 bg-[#E7E2EE]" /><button type="button" onClick={voice} aria-label="Search by voice" className="cx-press grid h-10 w-10 shrink-0 place-items-center rounded-full text-[var(--ink)]" data-mic><Mic size={20} /></button></>}
           </div>
         </div>
 
         {/* One bar, two sides — the same shape as the search box, a little shorter. */}
-        <div className={'relative mx-4 grid grid-cols-2 rounded-[14px] bg-white p-1 shadow-[0_0_0_1px_#EDE6DC,0_8px_20px_-14px_rgba(20,15,31,.3)] transition-[height] duration-300 ' + (compact ? 'h-[38px]' : 'h-[44px]')} role="tablist" data-door-bar>
+        <div className={'relative mx-4 grid grid-cols-2 rounded-[14px] bg-white p-1 shadow-[0_0_0_1px_#ECE7F3,0_8px_20px_-14px_rgba(58,18,144,.22)] transition-[height] duration-300 ' + (compact ? 'h-[38px]' : 'h-[44px]')} role="tablist" data-door-bar>
           <span aria-hidden className={'absolute bottom-1 left-1 top-1 w-[calc(50%-4px)] rounded-[11px] bg-gradient-to-r from-[#0C831F] to-[#16A34A] shadow-[0_6px_14px_-8px_rgba(12,131,31,.9)] transition-transform duration-300 ease-out ' + (celebrate ? 'translate-x-0' : 'translate-x-full')} />
           {[['occasions', 'Celebrations'], ['services', 'Book a Service']].map(([id, t]) => (
             <button key={id} type="button" role="tab" aria-selected={door === id} onClick={() => choose(id)} data-door={t}
@@ -163,7 +159,7 @@ export default function Home() {
         {/* Icon row: filters the grid below. Pinned, it keeps exactly the shape it has at rest. */}
         <div className="cx-noscroll flex gap-1 overflow-x-auto px-3 pb-1 pt-2.5" key={door}>
           <IconChip on={filter === 'all'} onClick={() => setFilter('all')} label="All" all />
-          {(celebrate ? CATEGORIES.map(c => ({ id: c.id, label: c.short, src: categoryArt(c).src })) : FAMILIES.map(f => ({ id: f.id, label: f.label, src: serviceArt(f.trades[0]).src })))
+          {(celebrate ? CATEGORIES.map(c => ({ id: c.id, label: CHIP[c.id] ?? c.short, src: categoryArt(c).src })) : TRADE_GROUPS.map(g => ({ id: g.id, label: g.chip ?? g.label, src: serviceArt(g.trades[0].id).src })))
             .map(x => <IconChip key={x.id} on={filter === x.id} onClick={() => { setFilter(x.id); toGrid() }} label={x.label} src={x.src} />)}
         </div>
       </div>
@@ -172,11 +168,6 @@ export default function Home() {
         {/* The hero comes after the controls, and nothing is laid over its picture. */}
         <Hero key={door} door={door} />
       </section>
-
-      {/* ── In the spotlight: one big card, the next ones peeking in ─── */}
-      <Spotlight key={door} items={celebrate
-        ? SPOT_OCC.map(([id, badge, hook]) => OCCASION[id] && occasionArt(OCCASION[id]).kind === 'art' && { id, to: `/o/${id}`, title: OCCASION[id].name, badge, hook, art: hdArtFor(`occ-${id}`), tone: OCCASION[id].tone }).filter(Boolean)
-        : SPOT_SVC.map(([id, badge, hook]) => TRADES.some(t => t.id === id) && serviceArt(id).kind === 'art' && { id, to: `/s/${id}`, title: TRADES.find(t => t.id === id).label, badge, hook, art: hdArtFor(`svc-${id}`), tone: '#E9DDFB' }).filter(Boolean)} />
 
       {/* ── Weekend: the next Saturday, and what people book for it ──── */}
       {celebrate && (
@@ -200,6 +191,11 @@ export default function Home() {
         </section>
       )}
 
+      {/* ── In the spotlight: one big card, the next ones peeking in ─── */}
+      <Spotlight key={door} items={celebrate
+        ? SPOT_OCC.map(([id, badge, hook]) => OCCASION[id] && occasionArt(OCCASION[id]).kind === 'art' && { id, to: `/o/${id}`, title: OCCASION[id].name, badge, hook, art: hdArtFor(`occ-${id}`), tone: OCCASION[id].tone }).filter(Boolean)
+        : SPOT_SVC.map(([id, badge, hook]) => TRADES.some(t => t.id === id) && serviceArt(id).kind === 'art' && { id, to: `/s/${id}`, title: TRADES.find(t => t.id === id).label, badge, hook, art: hdArtFor(`svc-${id}`), tone: '#E9DDFB' }).filter(Boolean)} />
+
       {/* ── The grid, on cream ───────────────────────────────────────── */}
       <section ref={grid} style={{ background: CREAM }} className="mt-3 scroll-mt-16 py-4">
         <div className="flex items-end justify-between gap-3 px-4 pb-3">
@@ -209,9 +205,35 @@ export default function Home() {
           </div>
           <Link to={celebrate ? '/explore#celebrations' : '/s'} className="cx-press flex shrink-0 items-center gap-0.5 rounded-full bg-white px-3 py-2 text-[12.5px] font-extrabold text-[var(--brand)] shadow-[0_0_0_1px_#E9DDFB]" data-view-all>View all<ChevronRight size={15} /></Link>
         </div>
-        <div className="grid grid-cols-3 gap-2 px-3">
-          {celebrate ? cats.map((c, i) => <CategoryCard key={c.id} category={c} index={i} />) : fams.map((f, i) => <FamilyCard key={f.id} family={f} index={i} />)}
-        </div>
+        {filter === 'all' ? (
+          celebrate ? (
+            <div className="grid grid-cols-3 gap-2 px-3">{cats.map((c, i) => <CategoryCard key={c.id} category={c} index={i} />)}</div>
+          ) : (
+            /* Every service its own card, three a row, under a plain heading
+               (Mohan, 2026-10-31: no Catering card that is also drinks). */
+            <div className="space-y-5" data-service-groups>
+              {TRADE_GROUPS.map(g => (
+                <div key={g.id} data-service-group={g.id}>
+                  <h3 className="px-4 pb-2.5 text-[15.5px] font-black tracking-[-0.025em] text-[#2E1A4F]">{g.label}</h3>
+                  <div className="grid grid-cols-3 gap-2 px-3">{g.trades.map(t => <ServiceCard key={t.id} tradeId={t.id} />)}</div>
+                </div>
+              ))}
+            </div>
+          )
+        ) : (
+          /* One tap on a category shows what you can book in it, here and now:
+             the first six, and View all for the rest (Mohan, 2026-10-31). */
+          <div data-cat-open={filter}>
+            <div className="grid grid-cols-3 gap-2 px-3">
+              {celebrate
+                ? OCCASIONS.filter(o => o.category === filter).sort((x, y) => (y.featured ? 1 : 0) - (x.featured ? 1 : 0)).slice(0, 6).map(o => <Card key={o.id} to={`/o/${o.id}`} art={occasionArt(o)} tone={o.tone} title={o.name}>{null}</Card>)
+                : (TRADE_GROUPS.find(g => g.id === filter)?.trades ?? []).map(t => <ServiceCard key={t.id} tradeId={t.id} />)}
+            </div>
+            <Link to={celebrate ? `/c/${filter}` : '/s'} className="cx-press mx-3 mt-3 flex h-11 items-center justify-center gap-1 rounded-[14px] bg-[#F4EEFF] text-[13.5px] font-extrabold text-[var(--brand)]" data-cat-view-all>
+              View all {celebrate ? `${OCCASIONS.filter(o => o.category === filter).length} ${CHIP[filter] ?? ''}` : ''}<ChevronRight size={16} />
+            </Link>
+          </div>
+        )}
       </section>
 
       {/* ── Offers for you: a moving deck of real cards ─────────────── */}
@@ -259,35 +281,36 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Invites and refunds: two light cards, one column ───────── */}
-      <div className="mx-3 mt-1 space-y-2">
-        <Link to="/invites" className="cx-press flex items-center gap-3 rounded-[18px] bg-white p-3 shadow-[0_0_0_1px_#EEE6FA]" data-home-invites>
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[12px] bg-[#FDECF4] text-[#DB2777]"><MailOpen size={20} /></span>
-          <span className="min-w-0 flex-1">
-            <span className="flex items-center gap-1.5 text-[14px] font-extrabold text-[var(--ink)]">Invite guests on WhatsApp<span className="rounded-full bg-[#E9F8EF] px-1.5 py-[1px] text-[9.5px] font-extrabold uppercase text-[#0B6B3D]">Free</span></span>
-            <span className="block truncate text-[11.5px] font-semibold text-[var(--ink-3)]">One-tap RSVP · live headcount · food choices</span>
-          </span>
-          <ChevronRight size={17} className="shrink-0 text-[var(--brand)]" />
+      {/* ── Invites and refunds: two picture cards side by side (2026-10-31) ── */}
+      <div className="mx-3 mt-2 grid grid-cols-2 gap-2.5" data-home-hooks>
+        <Link to="/invites" className="cx-press relative flex min-h-[176px] flex-col overflow-hidden rounded-[22px] bg-gradient-to-br from-[#FFE4F1] via-[#FDF0F7] to-[#F3E8FF] p-3.5" data-home-invites>
+          <span className="w-fit rounded-full bg-[#DB2777] px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.08em] text-white">Free</span>
+          <span className="mt-2 block text-[16px] font-black leading-[1.1] tracking-[-0.02em] text-[#5B1240]">Invite guests on WhatsApp</span>
+          <span className="mt-1 block text-[11.5px] font-bold leading-snug text-[#8A2B5E]">Live RSVP · headcount · food choices</span>
+          <img src={artFor('svc-invitation_printing')} alt="" className="pointer-events-none absolute -bottom-3 -right-3 h-[92px] w-[92px] object-contain mix-blend-multiply" loading="lazy" />
+          <span className="mt-auto flex w-fit items-center gap-1 rounded-full bg-white/80 px-2.5 py-1 text-[11.5px] font-extrabold text-[#DB2777]">Create<ChevronRight size={14} /></span>
         </Link>
-        <Link to="/legal/cancellation" className="cx-press flex items-center gap-3 rounded-[18px] bg-white p-3 shadow-[0_0_0_1px_#EEE6FA]" data-refunds>
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[12px] bg-[#E9F8EF] text-[#0C831F]"><RotateCcw size={19} /></span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-[14px] font-extrabold text-[var(--ink)]">Refunds & cancellation, made clear</span>
-            <span className="block truncate text-[11.5px] font-semibold text-[var(--ink-3)]">Free cancellation until a master accepts · see how refunds work</span>
-          </span>
-          <ChevronRight size={17} className="shrink-0 text-[var(--brand)]" />
+        <Link to="/legal/cancellation" className="cx-press relative flex min-h-[176px] flex-col overflow-hidden rounded-[22px] bg-gradient-to-br from-[#E2F7EA] via-[#F1FBF5] to-[#E7F6EF] p-3.5" data-refunds>
+          <span className="w-fit rounded-full bg-[#0C831F] px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.08em] text-white">Clear</span>
+          <span className="mt-2 block text-[16px] font-black leading-[1.1] tracking-[-0.02em] text-[#064E3B]">Refunds & cancellation</span>
+          <span className="mt-1 block text-[11.5px] font-bold leading-snug text-[#047857]">Pay only after your master accepts</span>
+          <span aria-hidden className="pointer-events-none absolute -bottom-4 -right-4 grid h-[96px] w-[96px] place-items-center rounded-full bg-[#0C831F]/10"><RotateCcw size={44} className="text-[#0C831F]/70" /></span>
+          <span className="mt-auto flex w-fit items-center gap-1 rounded-full bg-white/80 px-2.5 py-1 text-[11.5px] font-extrabold text-[#0C831F]">See how<ChevronRight size={14} /></span>
         </Link>
       </div>
 
-      {/* ── Four promises ────────────────────────────────────────────── */}
-      <section className="mx-3 mt-2 grid grid-cols-4 overflow-hidden rounded-[18px] bg-white shadow-[0_0_0_1px_#EEE6FA]">
-        {PROMISES.map(([I, t, d, c, bg], k) => (
-          <div key={t} className={'flex flex-col items-center px-1 py-3 text-center ' + (k ? 'border-l border-[#F1ECF8]' : '')}>
-            <span className="grid h-10 w-10 place-items-center rounded-[14px]" style={{ background: bg, color: c }}><I size={20} strokeWidth={2.3} /></span>
-            <p className="mt-1.5 text-[11px] font-extrabold leading-tight" style={{ color: c }}>{t}</p>
-            <p className="mt-0.5 text-[9.5px] font-semibold leading-tight text-[var(--ink-3)]">{d}</p>
-          </div>
-        ))}
+      {/* ── Promises: the real streets, not the words "GPS navigation" ── */}
+      <section className="mx-3 mt-2.5 overflow-hidden rounded-[22px] bg-white shadow-[0_0_0_1px_#EEE6FA]" data-promises>
+        <VenueMap where={where} />
+        <div className="grid grid-cols-3">
+          {PROMISES.filter(p => p[1] !== 'GPS Navigation').map(([I, t, d, c, bg], k) => (
+            <div key={t} className={'flex flex-col items-center px-1 py-3 text-center ' + (k ? 'border-l border-[#F1ECF8]' : '')}>
+              <span className="grid h-10 w-10 place-items-center rounded-[14px]" style={{ background: bg, color: c }}><I size={20} strokeWidth={2.3} /></span>
+              <p className="mt-1.5 text-[11px] font-extrabold leading-tight" style={{ color: c }}>{t}</p>
+              <p className="mt-0.5 text-[9.5px] font-semibold leading-tight text-[var(--ink-3)]">{d}</p>
+            </div>
+          ))}
+        </div>
       </section>
 
       {/* ── The offer, edge to edge ──────────────────────────────────── */}
@@ -338,33 +361,33 @@ function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.fl
 const SCENES = {
   occasions: [
     { lines: ['Book Your', 'Celebration', 'in Minutes'], ask: ['Booked your party yet?', '25% off your first booking'],
-      card: { icon: CalendarCheck2, tone: '#7C3AED', title: 'Birthday Party', sub: '6 masters lined up', meter: 1, to: '/o/birthday-party' } },
+      card: { icon: CalendarCheck2, tone: '#7C3AED', title: 'Birthday Party', sub: '6 masters lined up', meter: 1, to: '/o/birthday-party' }, art: ['hero-family'] },
     { lines: ['Invite', 'Everyone in', 'One Tap'], ask: ['Who’s coming? Know it live', 'Free WhatsApp RSVP'],
-      card: { icon: MailOpen, tone: '#DB2777', title: 'WhatsApp invites', sub: 'Live RSVP headcount', to: '/invites' } },
+      card: { icon: MailOpen, tone: '#DB2777', title: 'WhatsApp invites', sub: 'Live RSVP headcount', to: '/invites' }, art: ['hero-invite', 'svc-invitation_printing'] },
     { lines: ['No Waiting', 'for Quotes.', 'Prices Upfront'], ask: ['Seen the price before you book?', 'No “we’ll call you back”'],
-      card: { icon: IndianRupee, tone: '#B45309', title: '₹815 / plate', sub: 'Catering · price shown upfront', to: '/s/catering_food' } },
+      card: { icon: IndianRupee, tone: '#B45309', title: '₹815 / plate', sub: 'Catering · price shown upfront', to: '/s/catering_food' }, art: ['hero-price', 'svc-catering_food'] },
     { lines: ['No Chasing', 'for Replies.', 'Masters Ready'], ask: ['Tried instant booking?', 'Ready on your date'],
-      card: { icon: Zap, tone: '#0C831F', title: 'Accepted', sub: 'Photographer · 0 min wait', to: '/s/photography' } },
-    { lines: ['Confirmed', 'the Moment', 'You Pay'], ask: ['Your money stays safe', 'Full refund before acceptance'],
-      card: { icon: ShieldCheck, tone: '#0C831F', title: 'Payment secured', sub: 'Booking confirmed', razorpay: true, to: '/legal/cancellation' } },
+      card: { icon: Zap, tone: '#0C831F', title: 'Accepted', sub: 'Your photographer said yes', to: '/s/photography' }, art: ['hero-masters', 'svc-decoration_floral'] },
+    { lines: ['Pay Only', 'After They', 'Accept'], ask: ['Your money stays safe', 'Requests are free to send'],
+      card: { icon: ShieldCheck, tone: '#0C831F', title: 'Payment secured', sub: 'Paid after acceptance', razorpay: true, to: '/legal/cancellation' }, art: ['hero-secure', 'svc-wedding_planning'] },
     { lines: ['Plan a', 'Surprise', 'Birthday'], ask: ['They’ll never see it coming', 'Cake, décor & a photographer'],
-      card: { icon: PartyPopper, tone: '#DB2777', title: 'Surprise Birthday', sub: 'Ready in 4 taps', to: '/o/surprise-birthday-party' } },
+      card: { icon: PartyPopper, tone: '#DB2777', title: 'Surprise Birthday', sub: 'Ready in 4 taps', to: '/o/surprise-birthday-party' }, art: ['occ-surprise-birthday-party'] },
     { lines: ['Weekend', 'Party?', 'Sorted.'], ask: ['This Saturday, all set', 'DJ, food & lights in one go'],
-      card: { icon: Music2, tone: '#7C3AED', title: 'Rooftop party', sub: 'Book it for this Saturday', to: '/o/rooftop-party' } },
+      card: { icon: Music2, tone: '#7C3AED', title: 'Rooftop party', sub: 'Book it for this Saturday', to: '/o/rooftop-party' }, art: ['hero-weekend', 'occ-friends-get-together'] },
     { lines: ['Private', 'Dining,', 'Booked'], ask: ['A table that’s all yours', 'Chef, décor & music'],
-      card: { icon: UtensilsCrossed, tone: '#B45309', title: 'Private dinner', sub: 'For 2 to 50 guests', to: '/o/private-dinner-party' } },
+      card: { icon: UtensilsCrossed, tone: '#B45309', title: 'Private dinner', sub: 'For 2 to 50 guests', to: '/o/private-dinner-party' }, art: ['occ-private-dinner-party'] },
   ],
   services: [
     { lines: ['Book the', 'Right Service', 'in Minutes'], ask: ['Need a photographer today?', '25% off your first booking'],
-      card: { icon: CalendarCheck2, tone: '#7C3AED', title: '11 photographers', sub: 'Near you · instant', to: '/s/photography' } },
+      card: { icon: CalendarCheck2, tone: '#7C3AED', title: '11 photographers', sub: 'Near you · instant', to: '/s/photography' }, art: ['svc-photography'] },
     { lines: ['Invite', 'Everyone in', 'One Tap'], ask: ['Who’s coming? Know it live', 'Free WhatsApp RSVP'],
-      card: { icon: MailOpen, tone: '#DB2777', title: 'WhatsApp invites', sub: 'Live RSVP headcount', to: '/invites' } },
-    { lines: ['No Enquiries.', 'No Waiting.', 'Just Book'], ask: ['Seen the price before you book?', 'Pick, pay, done'],
-      card: { icon: IndianRupee, tone: '#B45309', title: '₹4,348', sub: 'Photography · price upfront', to: '/s/photography' } },
+      card: { icon: MailOpen, tone: '#DB2777', title: 'WhatsApp invites', sub: 'Live RSVP headcount', to: '/invites' }, art: ['hero-invite', 'svc-invitation_printing'] },
+    { lines: ['No Enquiries.', 'No Waiting.', 'Just Book'], ask: ['Seen the price before you book?', 'Pick, request, pay'],
+      card: { icon: IndianRupee, tone: '#B45309', title: '₹4,348', sub: 'Photography · price upfront', to: '/s/photography' }, art: ['svc-dj_music'] },
     { lines: ['Masters Are', 'Ready for', 'Your Date'], ask: ['Tried instant booking?', 'Verified before they go live'],
-      card: { icon: BadgeCheck, tone: '#0C831F', title: 'Verified master', sub: 'ID and work checked', to: '/s' } },
-    { lines: ['Confirmed', 'the Moment', 'You Pay'], ask: ['Your money stays safe', 'Full refund before acceptance'],
-      card: { icon: ShieldCheck, tone: '#0C831F', title: 'Payment secured', sub: 'Master confirmed', razorpay: true, to: '/legal/cancellation' } },
+      card: { icon: BadgeCheck, tone: '#0C831F', title: 'Verified master', sub: 'ID and work checked', to: '/s' }, art: ['hero-masters', 'svc-bridal_makeup_hair'] },
+    { lines: ['Pay Only', 'After They', 'Accept'], ask: ['Your money stays safe', 'Requests are free to send'],
+      card: { icon: ShieldCheck, tone: '#0C831F', title: 'Payment secured', sub: 'Paid after acceptance', razorpay: true, to: '/legal/cancellation' }, art: ['hero-secure', 'svc-wedding_planning'] },
   ],
 }
 /* The four promises as marks a customer has seen on real apps: a bolt for
@@ -409,7 +432,7 @@ function Mark({ kind }) {
     </svg>
   )
 }
-const FEATURES = [['instant', 'Instant booking'], ['verified', 'Verified masters'], ['safe', 'Safe payment'], ['refunds', 'Easy refunds']]
+const FEATURES = [['instant', 'Pay after accept'], ['verified', 'Verified masters'], ['safe', 'Safe payment'], ['refunds', 'Easy refunds']]
 
 function Hero({ door }) {
   const scenes = SCENES[door] ?? SCENES.occasions
@@ -441,7 +464,7 @@ function Hero({ door }) {
           </div>
         </Link>
         <Link to={C.to ?? (door === 'services' ? '/s' : '/explore#celebrations')} aria-label={C.title} className="absolute bottom-0 right-0 top-0 w-[50%]">
-          <img src={artFor('hero-booking') ?? artFor('hero-family')} alt="" className="absolute inset-0 h-full w-full object-cover object-[60%_30%] mix-blend-multiply [mask-image:linear-gradient(90deg,transparent_0%,#000_20%)]" />
+          <img key={`img${door}${i}`} src={(s.art ?? []).map(artFor).find(Boolean) ?? artFor('hero-family')} alt="" className="cx-kenburns absolute inset-0 h-full w-full object-cover object-[60%_30%] mix-blend-multiply [mask-image:linear-gradient(90deg,transparent_0%,#000_20%)]" />
         </Link>
       </div>
       {/* The live card and the offer sit BELOW the picture, never on it. */}
@@ -498,15 +521,39 @@ function useCompact() {
 }
 
 function IconChip({ on, onClick, label, src, all = false }) {
+  /* A plain picture on white — no box behind it — and the name on ONE line
+     (Mohan, 2026-10-31). The chosen one is marked by its colour and a bar. */
   return (
-    <button type="button" onClick={onClick} aria-pressed={on} className="cx-press flex w-[66px] shrink-0 flex-col items-center gap-1 pb-1" data-chip={label}>
-      <span className={'relative grid h-[54px] w-[54px] place-items-center overflow-hidden rounded-[16px] transition ' + (on ? 'bg-gradient-to-br from-[#8B5CF6] to-[#6D28D9] shadow-[0_8px_18px_-8px_rgba(109,40,217,.9)]' : 'bg-white shadow-[0_0_0_1px_#EFE7DD]')}>
-        {all ? <span className="grid grid-cols-2 gap-[3px]">{[0, 1, 2, 3].map(i => <span key={i} className={'h-[9px] w-[9px] rounded-[3px] ' + (on ? 'bg-white' : 'bg-[var(--brand)]')} />)}</span>
-          : <img src={src} alt="" className={'h-full w-full object-cover object-[50%_20%] ' + (on ? 'opacity-90' : 'mix-blend-multiply')} loading="lazy" />}
+    <button type="button" onClick={onClick} aria-pressed={on} className="cx-press flex min-w-[58px] shrink-0 flex-col items-center gap-1 px-1 pb-1" data-chip={label}>
+      <span className="relative grid h-[46px] w-[46px] place-items-center">
+        {all ? <span className={'grid h-[40px] w-[40px] place-items-center rounded-[13px] ' + (on ? 'bg-[var(--brand)]' : 'bg-[#F1EAFE]')}><span className="grid grid-cols-2 gap-[3px]">{[0, 1, 2, 3].map(i => <span key={i} className={'h-[8px] w-[8px] rounded-[3px] ' + (on ? 'bg-white' : 'bg-[var(--brand)]')} />)}</span></span>
+          : <img src={src} alt="" className={'h-full w-full object-contain transition-transform duration-200 ' + (on ? 'scale-110' : '')} loading="lazy" />}
       </span>
-      <span className={'line-clamp-2 text-center text-[10.5px] font-bold leading-tight ' + (on ? 'text-[var(--brand)]' : 'text-[var(--ink-2)]')}>{label}</span>
-      {on && <span className="h-[3px] w-6 rounded-full bg-[var(--brand)]" />}
+      <span className={'whitespace-nowrap text-center text-[11.5px] leading-tight tracking-[-0.01em] ' + (on ? 'font-black text-[var(--brand)]' : 'font-bold text-[#2E1A4F]')}>{label}</span>
+      <span className={'h-[3px] w-6 rounded-full ' + (on ? 'bg-[var(--brand)]' : 'bg-transparent')} />
     </button>
+  )
+}
+
+/* One line each (2026-10-31): the short names the icon row shows. */
+const CHIP = { life: 'Celebrations', wedding: 'Indian Weddings', festivals: 'Festivals', school: 'School', college: 'College', corporate: 'Corporate', nightlife: 'Nightlife', public: 'Shows', sport: 'Sports', food: 'Dining', retail: 'Fashion', property: 'Property', community: 'Community' }
+/* The search hints, each in its own colour — brand, rose, green, saffron, teal, magenta. */
+const HINT_INK = ['#7C3AED', '#DB2777', '#0C831F', '#EA580C', '#0F766E', '#C026D3']
+
+/* The streets around the customer's venue — real OpenStreetMap tiles. */
+function VenueMap({ where }) {
+  const centre = where?.lat && where?.lng ? { lat: Number(where.lat), lng: Number(where.lng) } : { lat: 12.9716, lng: 77.5946 }
+  const W = 360, H = 132, zoom = 15
+  const tiles = tilesFor({ centre, zoom, width: W, height: H })
+  return (
+    <div className="relative h-[132px] overflow-hidden bg-[#EEF0F2]" data-venue-map>
+      <div className="absolute left-1/2 top-0 h-[132px] w-[360px] -translate-x-1/2">
+        {tiles.map(t => <img key={t.key} src={tileUrl(DEFAULT_TILES, t)} alt="" className="absolute h-[256px] w-[256px] max-w-none" style={{ left: t.left, top: t.top }} loading="lazy" draggable={false} />)}
+      </div>
+      <span className="absolute left-1/2 top-1/2 grid h-9 w-9 -translate-x-1/2 -translate-y-full place-items-center rounded-full bg-[#7C3AED] text-white shadow-[0_6px_14px_-4px_rgba(91,33,168,.8)] ring-4 ring-white"><MapPin size={17} /></span>
+      <span className="absolute bottom-2 left-2 flex items-center gap-1.5 rounded-full bg-white/95 px-2.5 py-1 text-[11.5px] font-extrabold text-[#3B1670] shadow">Masters navigate straight to {where?.area ?? 'your venue'}</span>
+      <span className="absolute bottom-1 right-1.5 text-[8.5px] font-semibold text-[#5F5675]">© OpenStreetMap</span>
+    </div>
   )
 }
 

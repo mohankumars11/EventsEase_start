@@ -93,6 +93,16 @@ export const previewLine = (line, event, place) =>
 export const bookLine = (line, event, place, { note, venue } = {}) =>
   call({ vendorServiceId: line.serviceId, request: requestFor(line, event, place), note, venue }, true)
 
+/**
+ * Send a master the request (migration 197): theirs alone until the
+ * reply-by time; they accept, then the customer pays. Each backup goes with
+ * its OWN request (its menu, package or item) and is asked, in order, only
+ * if the one before declines or lets it lapse.
+ */
+export const requestLine = (line, event, place, { note, venue, backups = [] } = {}) =>
+  call({ vendorServiceId: line.serviceId, request: requestFor(line, event, place), note, venue, mode: 'request',
+    backups: backups.map(b => ({ serviceId: b.serviceId, chosenBy: b.chosenBy ?? 'sambramo', request: requestFor(b, event, place) })) }, true)
+
 /** Ask a partner for a price: always a quote request, carrying the customer's offer. */
 export const sendOffer = (line, event, place, offer, { note, venue } = {}) =>
   call({ vendorServiceId: line.serviceId, request: requestFor(line, event, place), note, venue, negotiate: offer }, true)

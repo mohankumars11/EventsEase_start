@@ -26,10 +26,17 @@
  * full under ₹25,000 or within 7 days of the event; otherwise the advance
  * (never under the trade's floor) or the whole amount, the customer's
  * choice. Everything sits in escrow until the event is delivered.
+ *
+ * Request first, then pay (Mohan, 2026-10-31; migration 197): "Send
+ * requests" asks each master — one at a time, theirs alone, with a
+ * reply-by time. Each line shows, priced, the backups we ask next if they
+ * cannot; the customer can drop any. Payment opens from My Bookings once a
+ * master accepts. Until 197 is pasted the server answers the old way (the
+ * master holds the date at once) and this screen charges as before.
  */
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, BadgeCheck, BadgePercent, CalendarDays, Check, CheckCircle2, ChevronRight, Clock3, CreditCard, Gift, HandCoins, Loader2, Lock, MailOpen, MapPin, PartyPopper, Phone, ReceiptText, Share2, ShieldCheck, Sparkles, Ticket, Users, Zap } from 'lucide-react'
+import { Send, ArrowLeft, BadgeCheck, BadgePercent, CalendarDays, Check, CheckCircle2, ChevronRight, Clock3, CreditCard, Gift, HandCoins, Loader2, Lock, MailOpen, MapPin, PartyPopper, Phone, ReceiptText, Share2, ShieldCheck, Sparkles, Ticket, Users, Zap } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { payLines } from '../../lib/payLines'
@@ -47,16 +54,19 @@ import { shareOut } from '../lib/share'
 import { TRADE } from '../data/trades'
 import { OCCASION } from '../data/occasions'
 import { plural, rupees, whenLabel } from '../lib/format'
-import { previewLine, bookLine } from '../lib/booking'
-import { partnersFor } from '../lib/market'
+import { previewLine, requestLine } from '../lib/booking'
+import { partnersFor, rank } from '../lib/market'
+import { asLine } from '../lib/quote'
+import { rememberVoucher } from '../lib/bookings'
 import { confirmPaid } from '../lib/bookings'
 import { Photo, Sheet, Journey } from '../ui/kit'
 import SignInSheet from './SignInSheet'
+import InviteReady from '../ui/InviteReady'
 import WhenSheet from './WhenSheet'
 import PlaceSheet from './PlaceSheet'
 import { needsSummary } from '../ui/needs'
 import { linkBookings } from '../lib/eventPlans'
-import { loadCuisines } from '../lib/needs'
+import { filterByNeeds, loadCuisines } from '../lib/needs'
 import { supabase as sb } from '../../lib/supabase'
 
 export default function Checkout() {
@@ -122,6 +132,37 @@ export default function Checkout() {
     return () => { live = false }
   }, [sig]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  /* Backups: once a line is priced, the next two masters who fit — each
+     priced by the engine for THIS request, never more than a quarter above
+     the first choice — so a hop never surprises anybody. */
+  const [backups, setBackups] = useState({})
+  const [useBackups, setUseBackups] = useState(true)
+  const priced = lines.map(l => `${l.key}:${quotes[l.key]?.path ?? ''}:${quotes[l.key]?.customer_paise ?? ''}`).join('|')
+  useEffect(() => {
+    if (!ready) return
+    let live = true
+    ;(async () => {
+      for (const l of lines) {
+        const q = quotes[l.key]
+        if (q?.path !== 'INSTANT' || backups[l.key]) continue
+        const all = await partnersFor(l.tradeId).catch(() => [])
+        const fit = filterByNeeds(all, l.tradeId, plan.needsOf(l.occasionId, l.tradeId), eventFor(l).guests).list ?? all
+        const pool = rank(fit).filter(p => p.serviceId !== l.serviceId && p.fromRef).slice(0, 5)
+        const out = []
+        for (const p of pool) {
+          if (out.length >= 2) break
+          const cand = { ...l, ...asLine(p), key: l.key, occasionId: l.occasionId, qty: null }
+          const r = await previewLine(cand, eventFor(l), place).catch(() => null)
+          if (r?.path === 'INSTANT' && Number(r.customer_paise) <= Number(q.customer_paise) * 1.25) out.push({ ...cand, chosenBy: 'sambramo', customer_paise: r.customer_paise })
+        }
+        if (!live) return
+        setBackups(b => ({ ...b, [l.key]: out }))
+      }
+    })()
+    return () => { live = false }
+  }, [priced]) // eslint-disable-line react-hooks/exhaustive-deps
+  const dropBackup = (key, serviceId) => setBackups(b => ({ ...b, [key]: (b[key] ?? []).filter(x => x.serviceId !== serviceId) }))
+
   const res = lines.map(l => ({ line: l, q: quotes[l.key] ?? null }))
   const instant = res.filter(r => r.q?.path === 'INSTANT')
   const quoteLines = res.filter(r => r.q?.path === 'QUOTE')
@@ -167,22 +208,30 @@ export default function Checkout() {
         const wants = needsSummary(r.line.tradeId, plan.needsOf(r.line.occasionId, r.line.tradeId))
         const who = other.name.trim() ? `On-site contact: ${other.name.trim()}${other.phone.trim() ? ` (${other.phone.trim()})` : ''}` : (place?.for?.name ? `Booked for ${place.for.name}${place.for.phone ? ` (${place.for.phone})` : ''}` : null)
         const said = [wants && `Needs: ${wants}`, ...tips.map(t => TIP_TEXT[t]), who, gstin && `GSTIN: ${gstin}`, note.trim()].filter(Boolean).join(' | ')
-        const b = await bookLine(r.line, eventFor(r.line), place, { note: said || undefined, venue })
+        const b = await requestLine(r.line, eventFor(r.line), place, { note: said || undefined, venue, backups: useBackups ? backups[r.line.key] ?? [] : [] })
         results.push({ key: r.line.key, tradeId: r.line.tradeId, serviceId: r.line.serviceId, name: r.line.name, cover: r.line.cover, occasionId: r.line.occasionId,
           path: b.path, lineId: b.lineId ?? null, quoteRequestId: b.quoteRequestId ?? null, bookingRequestId: b.bookingRequestId ?? null,
-          amountPaise: b.customer_paise ?? null, reasons: b.reasons_text ?? [], at: Date.now() })
+          amountPaise: b.customer_paise ?? null, reasons: b.reasons_text ?? [], replyBy: b.replyBy ?? null, backups: b.backups ?? 0, at: Date.now() })
       } catch (e) {
         results.push({ key: r.line.key, name: r.line.name, path: 'ERROR', reasons: [e.message] })
       }
     }
     plan.recordBookings(results)
     linkBookings(user?.id, results).catch(() => {}) // the saved 360° plan learns what was booked
-    const lineIds = results.filter(r => r.lineId).map(r => r.lineId)
+    const requested = results.filter(r => r.path === 'REQUEST')
+    const lineIds = results.filter(r => r.lineId && r.path !== 'REQUEST').map(r => r.lineId)
     const sent = results.filter(r => r.quoteRequestId).length
     const failed = results.filter(r => !r.lineId && !r.quoteRequestId)
-    /* Ask for alerts once something is in flight — quotes and confirmations arrive later. */
+    /* The offer the customer chose travels to the payment that comes after
+       an accept (Booked.jsx); the server re-checks it then. */
+    if (requested.length && saving > 0 && picked?.id) rememberVoucher(picked.id)
+    /* Ask for alerts once something is in flight — accepts and quotes arrive later. */
     if (profile?.id) enableAlerts({ profileId: profile.id, app: 'customer' }).catch(() => {})
-    if (!lineIds.length) { setOutcome({ paid: 0, sent, failed }); setPhase(sent ? 'done' : 'error'); return }
+    if (!lineIds.length) {
+      const by = requested.map(r => r.replyBy).filter(Boolean).sort()[0] ?? null
+      setOutcome({ paid: 0, sent, requested: requested.length, replyBy: by, failed })
+      setPhase(sent || requested.length ? 'done' : 'error'); return
+    }
     setPhase('paying')
     await charge({ lineIds, sent, failed, voucherId: saving > 0 ? picked?.id : null })
   }
@@ -218,14 +267,14 @@ export default function Checkout() {
   const dueBy = balanceDueOn(ev.date)
   const forWhom = place?.for ?? savedWhere()?.for ?? null
   const floorPct = Math.round(Math.max(...sched.map(x => advanceFloor(x.trade)), PAY_RULES.minAdvance) * 100)
-  const steps = [['Plan', true], ['Masters', lines.length > 0], ['Details', ready && phoneOk], ['Pay', phase === 'done']]
+  const steps = [['Plan', true], ['Masters', lines.length > 0], ['Details', ready && phoneOk], ['Request', phase === 'done'], ['Pay', phase === 'done' && !!outcome?.paid]]
   async function shareCheckout() {
     const text = `${occ ? `${occ.name} on Sambramo` : 'My Sambramo plan'}${ev.date ? ` · ${whenLabel(ev.date, ev.time)}` : ''}\n${lines.map(l => `• ${TRADE[l.tradeId]?.label}: ${l.name}`).join('\n')}${total ? `\nTotal ${rupees(grand)}` : ''}`
     await shareOut({ title: 'Our celebration plan', text })
   }
 
   return (
-    <main className="cx-enter min-h-[100dvh] bg-[#F5F2FA] pb-[calc(env(safe-area-inset-bottom,0px)+178px)]" data-checkout>
+    <main className="cx-enter min-h-[100dvh] bg-white pb-[calc(env(safe-area-inset-bottom,0px)+178px)]" data-checkout>
       <header className="cx-safe-top sticky top-0 z-[120] bg-white px-3 pb-2 shadow-[0_6px_14px_-12px_rgba(27,11,51,.45)]">
         <div className="flex items-center gap-2">
           <button type="button" onClick={() => navigate(-1)} aria-label="Back" className="cx-press grid h-11 w-11 place-items-center rounded-full shadow-[0_0_0_1px_#ECE6F4]"><ArrowLeft size={20} /></button>
@@ -252,7 +301,7 @@ export default function Checkout() {
           <span className="grid h-12 w-12 shrink-0 place-items-center rounded-[16px] bg-gradient-to-br from-[#7C3AED] to-[#C026D3] text-white shadow-[0_10px_18px_-10px_rgba(124,58,237,.9)]"><PartyPopper size={22} /></span>
           <span className="min-w-0 flex-1">
             <span className="block truncate text-[18px] font-black tracking-[-0.02em]">{occ ? occ.name : 'Your celebration'}</span>
-            <span className="block truncate text-[12.5px] font-semibold text-[var(--ink-3)]">{plural(lines.length, 'master')} · {instant.length && !quoteLines.length ? 'confirmed the moment you pay' : 'prices checked live'}</span>
+            <span className="block truncate text-[12.5px] font-semibold text-[var(--ink-3)]">{plural(lines.length, 'master')} · they accept, then you pay</span>
           </span>
         </div>
         <div className="grid grid-cols-2 gap-px bg-[#F1EDF7]">
@@ -279,10 +328,22 @@ export default function Checkout() {
                 <p className="truncate text-[11.5px] font-bold">
                   {!ready ? <span className="text-[var(--ink-3)]">Price confirmed when the date is set</span>
                     : !q || q.loading ? <span className="text-[var(--ink-3)]">Checking…</span>
-                      : q.path === 'INSTANT' ? <span className="text-[#0B7A4B]"><Zap size={11} className="mr-0.5 inline fill-[#F5B301] text-[#F5B301]" />Free on your date · confirms instantly</span>
+                      : q.path === 'INSTANT' ? <span className="text-[#0B7A4B]"><Zap size={11} className="mr-0.5 inline fill-[#F5B301] text-[#F5B301]" />Free on your date · ready for your request</span>
                         : q.path === 'QUOTE' ? <span className="text-[#B45309]"><Clock3 size={11} className="mr-0.5 inline" />Master sends a price</span>
                           : <span className="text-[#C8112A]">{q.reasons_text?.[0] ?? 'Not available'}</span>}
                 </p>
+                {q?.path === 'INSTANT' && useBackups && backups[l.key]?.length > 0 && (
+                  <div className="mt-1.5 rounded-[12px] bg-[#F7F4FB] px-2.5 py-1.5" data-backups={l.tradeId}>
+                    <p className="text-[10px] font-extrabold uppercase tracking-[0.08em] text-[var(--ink-3)]">If they can’t, we ask next</p>
+                    {backups[l.key].map((b, k) => (
+                      <p key={b.serviceId} className="mt-0.5 flex items-center gap-1.5 text-[12px] font-bold" data-backup={b.serviceId}>
+                        <span className="cx-num shrink-0 text-[var(--ink-3)]">{k + 2}.</span><span className="min-w-0 truncate">{b.name}</span>
+                        <span className="cx-num ml-auto shrink-0">{rupees(b.customer_paise)}</span>
+                        <button type="button" onClick={() => dropBackup(l.key, b.serviceId)} aria-label={`Don’t ask ${b.name}`} className="grid h-5 w-5 shrink-0 place-items-center rounded-full text-[var(--ink-3)] hover:bg-white">×</button>
+                      </p>
+                    ))}
+                  </div>
+                )}
                 <button type="button" onClick={() => { plan.toggleSaved({ ...l, reviews: null, distanceKm: null }); plan.remove(l.key) }} className="mt-0.5 text-[11.5px] font-bold text-[var(--ink-3)] underline-offset-2 hover:underline">Move to saved</button>
               </div>
               <div className="flex shrink-0 flex-col items-end gap-1.5">
@@ -301,7 +362,16 @@ export default function Checkout() {
             </li>
           ))}
         </ul>
+        {/* One master at a time — theirs alone — and the backups, if they can't. */}
+        {instant.length > 0 && (
+          <button type="button" onClick={() => setUseBackups(v => !v)} role="switch" aria-checked={useBackups} className="flex w-full items-center gap-3 border-t border-[#F3F0F7] px-4 py-3 text-left" data-backups-toggle>
+            <span className="min-w-0 flex-1"><span className="block text-[13.5px] font-extrabold">Ask a backup if they can’t</span><span className="block text-[11.5px] font-semibold text-[var(--ink-3)]">Each request goes to one master at a time — only they see it. No reply in time? We ask the next one, at the price shown.</span></span>
+            <span className={'relative h-[26px] w-[44px] shrink-0 rounded-full transition-colors ' + (useBackups ? 'bg-[#0C831F]' : 'bg-[#E5E0EA]')}><span className={'absolute top-[3px] h-5 w-5 rounded-full bg-white shadow transition-all ' + (useBackups ? 'left-[21px]' : 'left-[3px]')} /></span>
+          </button>
+        )}
       </section>
+
+      {occ && <InviteReady occasion={occ} where="checkout" className="mt-3" />}
 
       {/* Often booked together */}
       {deals.length > 0 && (
@@ -364,11 +434,11 @@ export default function Checkout() {
         <Card title="Payment schedule">
           {splittable ? (
             <div className="grid grid-cols-2 gap-2" role="radiogroup" data-schedule>
-              <Plan on={!full} onClick={() => setFull(false)} title={`Pay advance`} sub={`At least ${floorPct}% · confirms now`} amount={advNow} foot={grand - advNow > 0 ? `${rupees(grand - advNow)} by ${dueBy ? dueBy.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : 'the event'}` : null} />
+              <Plan on={!full} onClick={() => setFull(false)} title={`Pay advance`} sub={`At least ${floorPct}% · after they accept`} amount={advNow} foot={grand - advNow > 0 ? `${rupees(grand - advNow)} by ${dueBy ? dueBy.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : 'the event'}` : null} />
               <Plan on={full} onClick={() => setFull(true)} title="Pay in full" sub="Nothing more to pay" amount={fullNow} badge="Recommended" />
             </div>
           ) : (
-            <p className="flex items-start gap-2 rounded-[14px] bg-[#F7F4FB] px-3 py-2.5 text-[12.5px] font-semibold text-[var(--ink-2)]"><Lock size={15} className="mt-0.5 shrink-0 text-[#5B21A8]" />Paid in full today — bookings under {rupees(PAY_RULES.fullBelowPaise)}, and anything within {PAY_RULES.fullWithinDays} days of the event, are confirmed with one payment.</p>
+            <p className="flex items-start gap-2 rounded-[14px] bg-[#F7F4FB] px-3 py-2.5 text-[12.5px] font-semibold text-[var(--ink-2)]"><Lock size={15} className="mt-0.5 shrink-0 text-[#5B21A8]" />Paid in full once they accept — bookings under {rupees(PAY_RULES.fullBelowPaise)}, and anything within {PAY_RULES.fullWithinDays} days of the event, are confirmed with one payment.</p>
           )}
         </Card>
       )}
@@ -381,7 +451,7 @@ export default function Checkout() {
         <div className="mt-2 flex items-center justify-between border-t border-dashed border-[#E6DFF0] pt-3">
           <span className="text-[16px] font-black">Grand total</span><span className="cx-num text-[17px] font-black">{total ? rupees(grand) : '—'}</span>
         </div>
-        {instant.length > 0 && <div className="mt-1 flex items-center justify-between text-[13px] font-bold text-[var(--ink-2)]"><span>Pay now</span><span className="cx-num">{rupees(dueNow)}</span></div>}
+        {instant.length > 0 && <div className="mt-1 flex items-center justify-between text-[13px] font-bold text-[var(--ink-2)]"><span>Pay once they accept</span><span className="cx-num">{rupees(dueNow)}</span></div>}
         {balance > 0 && <div className="flex items-center justify-between text-[13px] font-bold text-[var(--ink-3)]"><span>Balance by {dueBy ? dueBy.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : 'the event'}</span><span className="cx-num">{rupees(balance)}</span></div>}
         {saving > 0 && <p className="mt-3 flex items-center gap-2 rounded-[14px] bg-gradient-to-r from-[#FFF4D6] to-[#FFE9F3] px-3 py-2.5 text-[13px] font-black text-[#7A3E00]" data-you-save>🎉 You save {rupees(saving)} on this booking</p>}
         <p className="mt-2 text-[11.5px] font-semibold text-[var(--ink-3)]">The price you see is final — nothing is added at the end.</p>
@@ -427,7 +497,7 @@ export default function Checkout() {
       <details className="group mx-3 mt-3 rounded-[20px] bg-white shadow-[0_0_0_1px_#EEE8F6]" data-checkout-policy>
         <summary className="flex cursor-pointer list-none items-center gap-3 p-4">
           <ShieldCheck size={18} className="shrink-0 text-[#5B21A8]" />
-          <span className="min-w-0 flex-1"><span className="block text-[14.5px] font-extrabold">Cancellation policy</span><span className="block truncate text-[12px] font-semibold text-[var(--ink-3)]">Full refund until a master accepts</span></span>
+          <span className="min-w-0 flex-1"><span className="block text-[14.5px] font-extrabold">Cancellation policy</span><span className="block truncate text-[12px] font-semibold text-[var(--ink-3)]">Nothing to pay until a master accepts</span></span>
           <ChevronRight size={18} className="shrink-0 text-[var(--ink-3)] transition group-open:rotate-90" />
         </summary>
         <div className="border-t border-[#F3F0F7] px-4 pb-4 pt-3">
@@ -439,7 +509,7 @@ export default function Checkout() {
           <Link to="/legal/cancellation" className="mt-2 inline-flex items-center text-[12.5px] font-extrabold text-[#5B21A8]">View the full policy<ChevronRight size={14} /></Link>
         </div>
       </details>
-      <p className="mx-4 mt-2 text-[11px] font-semibold text-[var(--ink-3)]">If a master cancels, you get everything back. By paying you agree to our <Link to="/legal/terms" className="font-extrabold text-[#5B21A8]">terms</Link>.</p>
+      <p className="mx-4 mt-2 text-[11px] font-semibold text-[var(--ink-3)]">If a master cancels, you get everything back. By sending requests you agree to our <Link to="/legal/terms" className="font-extrabold text-[#5B21A8]">terms</Link>.</p>
 
       {/* Give back — the slot for a real NGO partner */}
       <section className="mx-3 mt-3 flex items-center gap-3 rounded-[24px] bg-gradient-to-r from-[#ECFDF5] to-[#FDF4FF] p-4">
@@ -470,16 +540,16 @@ export default function Checkout() {
         </button>
         <div className="flex items-center gap-3 px-4 pt-2.5">
           <span className="min-w-0 flex-1">
-            <span className="flex items-baseline gap-1.5"><span className="cx-num text-[21px] font-black tracking-[-0.02em]">{instant.length ? rupees(dueNow) : '₹0'}</span>{saving > 0 && <s className="cx-num text-[12px] font-bold text-[var(--ink-3)]">{rupees(sum(billAt(full, null), 'charge'))}</s>}</span>
-            <span className="block truncate text-[11px] font-extrabold text-[var(--ink-3)]">{instant.length ? (balance ? `Advance · ${rupees(balance)} later` : saving ? `You save ${rupees(saving)}` : 'Total · nothing more to pay') : 'Nothing to pay now'}</span>
+            <span className="flex items-baseline gap-1.5"><span className="cx-num text-[21px] font-black tracking-[-0.02em]">₹0 now</span></span>
+            <span className="block truncate text-[11px] font-extrabold text-[var(--ink-3)]">{instant.length ? `${rupees(dueNow)} once they accept${saving ? ` · save ${rupees(saving)}` : ''}` : 'Free to send'}</span>
           </span>
           <button type="button" disabled={!canPay} onClick={pay} className="cx-press cx-cta cx-pay flex h-[56px] min-w-[56%] items-center justify-center gap-2 rounded-[18px] px-5 text-[16px] font-extrabold disabled:opacity-60" data-pay>
-            {phase === 'booking' || phase === 'paying' ? <><Loader2 size={18} className="animate-spin" />{phase === 'booking' ? 'Booking…' : 'Opening payment…'}</>
-              : <><Lock size={17} />{!user ? 'Sign in to pay' : instant.length ? 'Pay securely' : 'Send requests'}<ChevronRight size={18} /></>}
+            {phase === 'booking' || phase === 'paying' ? <><Loader2 size={18} className="animate-spin" />{phase === 'booking' ? 'Sending…' : 'Opening payment…'}</>
+              : <><Send size={17} />{!user ? 'Sign in to send' : `Send ${plural(instant.length + quoteLines.length || lines.length, 'request')}`}<ChevronRight size={18} /></>}
           </button>
         </div>
         <p className="flex items-center justify-center gap-1.5 px-4 pt-1.5 text-[10.5px] font-bold text-[var(--ink-3)]">
-          {!ready ? 'Add the date, time and venue to pay' : <><ShieldCheck size={12} className="text-[#0B7A4B]" />Secured by Razorpay · UPI · Cards · Netbanking · Wallets</>}
+          {!ready ? 'Add the date, time and venue to send' : <><ShieldCheck size={12} className="text-[#0B7A4B]" />Only that master sees your request · pay by Razorpay after they accept</>}
         </p>
       </div>
 
@@ -509,12 +579,13 @@ export default function Checkout() {
         </div>}>
         <p className="pb-2 text-[14px] font-semibold leading-relaxed text-[var(--ink-2)]">{outcome?.error ?? 'This offer can’t be used on this booking.'} Your masters are holding the date.</p>
       </Sheet>
-      <Sheet open={['done', 'unpaid', 'error'].includes(phase)} onClose={() => navigate('/plans')} title={phase === 'done' ? 'You are booked' : phase === 'unpaid' ? 'Booked — payment pending' : 'Something went wrong'}>
+      <Sheet open={['done', 'unpaid', 'error'].includes(phase)} onClose={() => navigate('/plans')} title={phase === 'done' ? (outcome?.paid ? 'You are booked' : outcome?.requested ? 'Requests sent' : 'Sent') : phase === 'unpaid' ? 'Booked — payment pending' : 'Something went wrong'}>
         <div className="pb-4">
           {phase === 'done' && <Journey flow={occ ? 'celebration' : 'service'} at={9} className="-mx-4 mb-2" />}
           {phase === 'done' && <CheckCircle2 size={44} className="text-[var(--ok)]" />}
           <p className="mt-3 text-[14px] font-semibold leading-relaxed text-[var(--ink-2)]">
             {phase === 'done' && (outcome?.paid ? (outcome.confirmed ? `${plural(outcome.paid, 'master')} confirmed. They have been told and will call you before the day.` : `${plural(outcome.paid, 'master')} confirmed once Razorpay reports the payment — usually seconds.`) : '')}
+            {phase === 'done' && outcome?.requested ? `${plural(outcome.requested, 'master')} ${outcome.requested === 1 ? 'has' : 'have'} your request${outcome.replyBy ? ` — the first reply is due by ${new Date(outcome.replyBy).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })}` : ''}. We’ll tell you the moment one accepts; then you pay to confirm. If one can’t, we ask your backup by itself.` : ''}
             {phase === 'done' && outcome?.sent ? ` ${plural(outcome.sent, 'quote request')} sent; you will be notified when they reply.` : ''}
             {phase === 'unpaid' && 'Your masters are holding the date. Finish the payment from Plans to confirm them.'}
             {phase === 'error' && (outcome?.error ?? outcome?.failed?.[0]?.reasons?.[0] ?? 'Nothing was booked. Please try again.')}
@@ -523,7 +594,7 @@ export default function Checkout() {
           {phase === 'done' && occ && (
             <button type="button" onClick={() => navigate(`/invites/new?o=${occ.id}`)} className="cx-press mt-5 flex w-full items-center gap-3 rounded-[16px] bg-[#FDF0F6] p-3 text-left ring-1 ring-[#F5D0E4]" data-done-invite>
               <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[12px] bg-white text-[#DB2777]"><MailOpen size={19} /></span>
-              <span className="min-w-0 flex-1"><span className="block text-[14px] font-extrabold text-[var(--ink)]">Next: invite your guests</span><span className="block text-[11.5px] font-semibold text-[var(--ink-3)]">Your first invitation is free — see who’s coming</span></span>
+              <span className="min-w-0 flex-1"><span className="block text-[14px] font-extrabold text-[var(--ink)]">Your invitation is ready — share it</span><span className="block text-[11.5px] font-semibold text-[var(--ink-3)]">Made from your event details · change the design any time</span></span>
             </button>
           )}
           <button type="button" onClick={() => navigate('/plans')} className={'cx-press cx-cta h-12 w-full rounded-[16px] text-[14px] font-extrabold ' + (phase === 'done' && occ ? 'mt-2' : 'mt-5')} data-see-plans>See my plans</button>
@@ -581,9 +652,9 @@ function EscrowLive({ pay, date, masters }) {
   }, [])
   const day = date ? new Date(`${date}T00:00:00`).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : 'your date'
   const steps = [
-    [CreditCard, pay ? `You pay ${rupees(pay)}` : 'You pay', 'UPI, card or netbanking — through Razorpay', 'Now'],
+    [Send, `${masters > 1 ? 'Your masters accept' : 'Your master accepts'}`, 'Only they see your request until they reply', 'First'],
+    [CreditCard, pay ? `You pay ${rupees(pay)}` : 'You pay', 'UPI, card or netbanking — through Razorpay', 'Once accepted'],
     [Lock, 'Held securely in escrow', 'Sambramo holds it. No master can touch it yet.', 'Instantly'],
-    [BadgeCheck, `${masters > 1 ? 'Your masters are' : 'Your master is'} confirmed`, 'Told at once — they call you before the day', 'In seconds'],
     [PartyPopper, 'Your event happens', 'You celebrate; we stay on call', day],
     [HandCoins, 'Released to your masters', 'Only after the event is delivered', 'After the event'],
   ]

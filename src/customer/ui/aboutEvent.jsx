@@ -14,9 +14,9 @@ import { recommend } from '../lib/recommend360'
 import { VENUE_FACILITIES } from '../data/rules360'
 
 const Q = {
-  setting: { title: 'Indoors or outdoors?', kind: 'single', options: [['indoor', 'Indoors'], ['outdoor', 'Outdoors'], ['mixed', 'Both']] },
-  formats: { title: 'What’s on the programme?', sub: 'Pick everything that will happen', kind: 'multi', options: [['ceremony', 'A ceremony'], ['rituals', 'Rituals / pooja'], ['meal', 'A meal'], ['speeches', 'Speeches'], ['stage', 'Stage programme'], ['performance', 'Performances'], ['dancing', 'Dancing'], ['concert', 'Concert'], ['workshop', 'Talks / workshop'], ['procession', 'Procession'], ['sports', 'Sports'], ['livestream', 'Livestream']] },
-  food: { title: 'Serving food?', kind: 'single', options: [['meal', 'A full meal'], ['snacks', 'Snacks'], ['none', 'No food']] },
+  setting: { title: 'Inside or outside?', kind: 'single', options: [['indoor', 'Indoors'], ['outdoor', 'Outdoors'], ['mixed', 'Both']] },
+  formats: { title: 'What will happen at your event?', sub: 'Tap everything that applies — we suggest the right people for it', kind: 'multi', options: [['ceremony', 'A ceremony'], ['rituals', 'Rituals / pooja'], ['meal', 'A meal'], ['speeches', 'Speeches'], ['stage', 'Stage programme'], ['performance', 'Performances'], ['dancing', 'Dancing'], ['concert', 'Concert'], ['workshop', 'Talks / workshop'], ['procession', 'Procession'], ['sports', 'Sports'], ['livestream', 'Livestream']] },
+  food: { title: 'Will you serve food?', kind: 'single', options: [['meal', 'A full meal'], ['snacks', 'Snacks'], ['none', 'No food']] },
   drinks: { title: 'A drinks counter?', kind: 'single', options: [['soft', 'Juices & mocktails'], ['alcohol', 'Bar (licensed)'], ['none', 'No']] },
   media: { title: 'Photos and video?', kind: 'single', options: [['both', 'Photos & video'], ['photo', 'Photos only'], ['video', 'Video only'], ['none', 'Neither']] },
   travel: { title: 'Where are guests coming from?', kind: 'single', options: [['local', 'Same city'], ['outstation', 'Some from out of town'], ['destination', 'Everyone travels']] },
@@ -32,19 +32,13 @@ export function aboutQuestions(occasion, ctx) {
   const r = recommend(occasion.id, ctx)
   const waiting = new Set(r.followUps.map(f => f.field))
   const virtual = ctx.venueType === 'virtual' || occasion.where === 'online'
-  const out = []
-  if (ctx.venueBooked) out.push('venueProvides')
-  if (!virtual && !['home', 'campus'].includes(ctx.venueType)) out.push('setting')
-  out.push('formats')
+  /* Three plain questions, no more (Mohan, 2026-10-31: "do not make a customer
+     answer multiple questions … use very easy English"). Everything else the
+     plan needs comes from sensible defaults, and the customer can still add
+     or remove any service on the next screen. */
+  const out = ['formats']
   if (!virtual) out.push('food')
-  if (!virtual && occasion.category !== 'school') out.push('drinks')
-  out.push('media')
-  if (!virtual && waiting.has('travel')) out.push('travel')
-  if (!virtual && (waiting.has('public') || ['public', 'community', 'nightlife', 'sport', 'festivals'].includes(occasion.category))) out.push('public')
-  if (!virtual && ['life', 'school', 'festivals', 'special', 'themed'].includes(occasion.category)) out.push('children')
-  if (!virtual) out.push('accessibility')
-  if (ctx.media && ctx.media !== 'none') out.push('privacy')
-  out.push('budget')
+  if (!virtual && !['home', 'campus'].includes(ctx.venueType)) out.push('setting')
   return out
 }
 

@@ -13,8 +13,8 @@ import { authHeaders } from '../../lib/payLines'
 import { lineList, lineAdvance, toListAt, marginPct } from '../../../api/_lib/listPrice.js'
 
 export const LINE_STATE = {
-  dispatching: { label: 'Finding your partner', tone: 'wait' },
-  accepted: { label: 'Holding your date · pay to confirm', tone: 'act' },
+  dispatching: { label: 'Request sent · waiting for them to accept', tone: 'wait' },
+  accepted: { label: 'Accepted · pay to confirm', tone: 'act' },
   paid: { label: 'Confirmed', tone: 'ok' },
   in_progress: { label: 'Happening now', tone: 'ok' },
   delivered: { label: 'Delivered', tone: 'ok' },
@@ -22,6 +22,23 @@ export const LINE_STATE = {
   cancelled: { label: 'Cancelled', tone: 'off' },
   expired: { label: 'Expired', tone: 'off' },
 }
+
+/* The offer chosen at checkout, kept for the payment that follows an
+   accept. The server re-checks it then; this only remembers the choice. */
+const VKEY = 'sbm.cx.voucher.pending'
+export function rememberVoucher(id) { try { localStorage.setItem(VKEY, JSON.stringify({ id, at: Date.now() })) } catch { /* private mode */ } }
+export function pendingVoucher() {
+  try { const v = JSON.parse(localStorage.getItem(VKEY) ?? 'null'); return v && Date.now() - v.at < 14 * 86400000 ? v.id : null } catch { return null }
+}
+export function clearVoucher() { try { localStorage.removeItem(VKEY) } catch { /* private mode */ } }
+
+/** Who has the request now, who is next, until when (migration 197). Empty until it is pasted. */
+export async function requestQueue(lineId) {
+  const { data, error } = await supabase.rpc('my_request_queue', { p_line_id: lineId })
+  return error ? [] : data ?? []
+}
+/** Lapsed requests move on now rather than at the next minute's sweep. */
+export const nudgeRequests = () => supabase.rpc('sweep_request_timeouts').then(() => {}, () => {})
 
 export async function myBookings(userId) {
   if (!userId) return { lines: [], quotes: [] }

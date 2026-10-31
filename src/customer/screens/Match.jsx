@@ -37,7 +37,9 @@ export default function Match() {
   const ev = o && plan.event.occasionId === o.id ? plan.event : { venue: 'need' }
   const { needed, rows } = o ? needsFor(o, plan.picks[o.id] ?? {}, ev) : { needed: [], rows: [] }
   const sel = needed.includes(params.get('t')) ? params.get('t') : needed[0]
-  const choose = t => setParams({ t }, { replace: true })
+  // ?all=1: "See all masters" — everyone, before any answers (2026-10-31).
+  const everyone = params.get('all') === '1'
+  const choose = t => setParams(everyone ? { t, all: '1' } : { t }, { replace: true })
   useEffect(() => { window.scrollTo({ top: 0 }) }, [sel])
   if (!o) return <Navigate to="/" replace />
 
@@ -65,7 +67,7 @@ export default function Match() {
 
   return (
     <main className="cx-enter pb-[calc(env(safe-area-inset-bottom,0px)+110px)]">
-      <BackHeader title={`Masters for ${o.name}`} sub={facts || 'Add a date and guest count for exact prices'} />
+      <BackHeader title={`Masters for ${o.name}`} sub={facts || 'Pick one master for each service'} />
       <Journey at={3} occasionId={o.id} />
 
       <div className="mx-3 mb-2.5 flex items-center gap-3 rounded-[18px] bg-[var(--brand-tint)] px-3 py-2.5">
@@ -142,7 +144,7 @@ export default function Match() {
                   <Trash2 size={14} />Remove
                 </button>
               </div>
-              <MastersPanel key={sel} cols={3} tradeId={sel} occasionId={o.id} guests={ev.guests ?? null}
+              <MastersPanel key={sel} cols={3} tradeId={sel} occasionId={o.id} guests={ev.guests ?? null} everyone={everyone}
                 onCompanion={t => { if (!needed.includes(t)) plan.setPick(o.id, t, 'need'); choose(t) }} />
             </>
           ) : (
@@ -152,9 +154,9 @@ export default function Match() {
       </div>
       <PlanBar withTabs={false} />
       <Buddy id={`match-${o.id}`} bottom={124} lines={[
-        'These are your masters, priced for what you asked. Tap Add on the one you like — that’s it ⚡',
-        'Comparing? Tap Compare and pick up to three side by side.',
-        'Still there? Add one master per service and pay for all of it in one go.',
+        'Each price is the master’s own starting rate. Tap Add on the one you like ⚡',
+        'Comparing? Tap Compare and pick as many as you like — the table scrolls sideways.',
+        'Add one master per service, then send them all your request at once. You pay only after they accept.',
       ]} />
     </main>
   )

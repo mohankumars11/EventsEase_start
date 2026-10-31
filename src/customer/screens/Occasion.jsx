@@ -150,7 +150,7 @@ export default function Occasion() {
       )}
       {step === 'about' && (
         <section className="cx-enter px-5 pt-6" key="about">
-          <Question title="Tell us a little more" sub="Optional — each answer makes your plan sharper. Skip anything." />
+          <Question title="Quick question" sub="Optional — tap what fits, or skip. You can add or remove any service next." />
           <div className="mt-5">
             <AboutEvent occasion={o} ctx={contextFor(o, {}, { ...(mine ? plan.event : {}), context: about })} onChange={c => setAbout(onlyAbout(c))} />
           </div>

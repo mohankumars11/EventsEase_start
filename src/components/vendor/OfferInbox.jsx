@@ -69,6 +69,8 @@ function useSeconds(iso) {
   return n
 }
 const left = iso => Math.max(0, Math.ceil((new Date(iso).getTime() - Date.now()) / 1000))
+/* A request (migration 197) can have hours to answer: 1h 52m, 4m 09s, 12s. */
+const clock = s => (s >= 3600 ? `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m` : s >= 60 ? `${Math.floor(s / 60)}m ${String(s % 60).padStart(2, '0')}s` : OFFER_CARD.urgent(s))
 
 function Breakdown({ share, hasPan }) {
   /* ── The share, not the quote ──────────────────────────────────────
@@ -105,25 +107,26 @@ function Breakdown({ share, hasPan }) {
   )
 }
 
-function OfferCard({ offer, onAnswer, busy, hasPan }) {
+function OfferCard({ offer, onAnswer, busy, hasPan, exclusive = false }) {
   const secs = useSeconds(offer.expires_at)
   const [open, setOpen] = useState(false)
   const spec = offer.service_id ? setupSpec('decor', 'standard') : null
   const net = partnerDeductions(offer.partner_amount_paise, { hasPan }).netPaise
 
-  const urgent = secs <= 15
+  // A request is this master's alone until the reply-by time; urgent in its last five minutes.
+  const urgent = exclusive ? secs <= 300 : secs <= 15
 
   return (
     <li className="rounded-[22px] bg-white p-4 shadow-[0_1px_3px_rgba(0,0,0,0.06)] ring-1 ring-ink/[0.06]">
       <div className="flex items-center justify-between">
-        <span className="type-overline text-saffron-700">New job</span>
+        <span className="type-overline text-saffron-700">{exclusive ? 'Request · only you have it' : 'New job'}</span>
         <span
           className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-extrabold tabular-nums ${
             urgent ? 'bg-rose-100 text-rose-700' : 'bg-ink/[0.05] text-ink-soft'
           }`}
         >
           <Clock size={11} />
-          {OFFER_CARD.urgent(secs)}
+          {clock(secs)}
         </span>
       </div>
 
@@ -229,6 +232,7 @@ export default function OfferInbox({ vendorId, onOpenCalendar = null }) {
   const [hasPan, setHasPan] = useState(false)
   const [busy, setBusy] = useState(false)
   const [flash, setFlash] = useState(null)
+  const [exclusive, setExclusive] = useState(() => new Set())
   const poll = useRef(null)
 
   const read = useCallback(async () => {
@@ -241,6 +245,11 @@ export default function OfferInbox({ vendorId, onOpenCalendar = null }) {
       .gt('expires_at', new Date().toISOString())
       .order('expires_at')
     setOffers(data ?? [])
+    /* Which of these are exclusive requests (197), and move lapsed ones on.
+       Both fail quietly until 197 is pasted. */
+    supabase.rpc('sweep_request_timeouts').then(() => {}, () => {})
+    const { data: mine } = await supabase.rpc('my_request_offers').then(x => x, () => ({ data: null }))
+    setExclusive(new Set((Array.isArray(mine) ? mine : []).map(x => x.offer_id)))
   }, [vendorId])
 
   useEffect(() => {
@@ -343,7 +352,7 @@ export default function OfferInbox({ vendorId, onOpenCalendar = null }) {
       ) : (
         <ul className="space-y-3">
           {offers.map(o => (
-            <OfferCard key={o.offer_id} offer={o} onAnswer={answer} busy={busy} hasPan={hasPan} />
+            <OfferCard key={o.offer_id} offer={o} onAnswer={answer} busy={busy} hasPan={hasPan} exclusive={exclusive.has(o.offer_id)} />
           ))}
         </ul>
       )}
