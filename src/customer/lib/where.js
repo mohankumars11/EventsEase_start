@@ -75,6 +75,10 @@ export async function locate() {
 export function savedWhere() {
   try { return JSON.parse(localStorage.getItem(KEY) ?? 'null') } catch { return null }
 }
+/* Forget the saved place, so first run asks again (see useOnboarding). */
+export function forgetWhere() {
+  try { localStorage.removeItem(KEY) } catch { /* storage off */ }
+}
 export function saveWhere(place) {
   try { localStorage.setItem(KEY, JSON.stringify({ ...place, at: Date.now() })) } catch { /* storage off */ }
 }

@@ -37,6 +37,7 @@ import Twinkle from '../ui/Twinkle'
 import ScratchCard from '../ui/ScratchCard'
 
 const FLAG = 'sbm.cx.onboard.v1'
+export const forgetOnboarding = () => { try { localStorage.removeItem(FLAG) } catch { /* storage off */ } }
 export const onboardFlags = () => { try { return JSON.parse(localStorage.getItem(FLAG) ?? '{}') } catch { return {} } }
 const setFlag = patch => { try { localStorage.setItem(FLAG, JSON.stringify({ ...onboardFlags(), ...patch })) } catch { /* storage off */ } }
 

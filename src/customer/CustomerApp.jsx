@@ -20,8 +20,8 @@ import { useAuth } from '../context/AuthContext'
 import { PlanProvider } from './state/PlanContext'
 import { PlanBar, TabBar } from './ui/kit'
 import Home from './screens/Home'
-import Onboarding, { onboardFlags } from './screens/Onboarding'
-import { savedWhere } from './lib/where'
+import Onboarding, { forgetOnboarding, onboardFlags } from './screens/Onboarding'
+import { forgetWhere, savedWhere } from './lib/where'
 import { loadRules } from './lib/eventPlans'
 import { setActiveRules } from './lib/recommend360'
 import { flushConsent } from './lib/rewards'
@@ -111,6 +111,17 @@ function Root() {
 function useOnboarding() {
   const { user, loading } = useAuth()
   const [, bump] = useState(0)
+  /* A fresh install whose storage came back from somewhere else — Android's
+     backup restored it on reinstall, so the location and welcome screens
+     were skipped and the phone never showed its precise / approximate
+     prompt (Mohan, 2026-10-31). On the phone, a saved place this install
+     never asked permission for is not trusted: first run starts again. */
+  useEffect(() => {
+    if (!window.Capacitor?.isNativePlatform?.() || !savedWhere()) return
+    import('@capacitor/geolocation').then(({ Geolocation }) => Geolocation.checkPermissions())
+      .then(p => { if (p?.location === 'prompt' && p?.coarseLocation === 'prompt') { forgetWhere(); forgetOnboarding(); bump(n => n + 1) } })
+      .catch(() => {})
+  }, [])
   if (loading) return { step: 'loading' }
   const f = onboardFlags()
   const step = !savedWhere() ? 'where' : !user ? 'signin' : !f.alerts ? 'alerts' : !f.rewards ? 'rewards' : null
