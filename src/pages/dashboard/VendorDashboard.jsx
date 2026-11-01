@@ -97,6 +97,7 @@ export default function VendorDashboard() {
      later drive a tab badge without a second query. */
   const [unreadAlerts, setUnreadAlerts] = useState(0)
   const [howItWorksOpen, setHowItWorksOpen] = useState(false)
+  const [reviewListingRequested, setReviewListingRequested] = useState(false)
 
   const account = useVendorAccount()
   const {
@@ -322,7 +323,10 @@ export default function VendorDashboard() {
        Earnings is the only tab with a desktop layout: a two-column
        dashboard needs more than 1024px to be worth having, and every
        other tab is a phone column by design. */
-    <div className={`${tab === 'earnings' ? 'lg:max-w-6xl' : ''} max-w-5xl mx-auto px-4 pt-4 sm:px-6 sm:pt-5`}>
+    <div
+      className={`${tab === 'earnings' ? 'lg:max-w-6xl' : ''} max-w-5xl mx-auto px-4 sm:px-6`}
+      style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 16px)' }}
+    >
 
       {/* Above the header, above the tabs, above everything.
           A master opens this app because something is happening or to
@@ -409,7 +413,7 @@ export default function VendorDashboard() {
           neither -- there has never been a pill. One review card, in
           the column, is the whole of it. */}
       {tab === 'offers' && (
-        <div className="-mx-4 -mt-4 mb-0 sm:-mx-6">
+        <div className="mb-0">
           <JobsHeader
             businessName={businessName}
             /* The PERSON, for the greeting. The h1 below it carries the
@@ -509,8 +513,14 @@ export default function VendorDashboard() {
              that opens an empty screen. */
           listingCount={services?.length ?? 0}
           listingNames={(services ?? [])
-            .map(l => l.title || l.category).filter(Boolean).join(' · ') || null}
-          onOpenListing={() => openAccount('services')}
+            .filter(l => ['under_review', 'in_review', 'pending_review', 'submitted', 'submitted_for_review']
+              .includes(String(l.review_status ?? l.approval_status ?? '').toLowerCase().replace(/[ -]+/g, '_')))
+            .map(l => l.title || l.name || l.category).filter(Boolean).join(' · ')
+            || 'Open the submitted listing details'}
+          onOpenListing={() => {
+            setReviewListingRequested(true)
+            setTab('pricing')
+          }}
           onHowItWorks={() => setHowItWorksOpen(true)}
         />
       )}
@@ -779,13 +789,15 @@ export default function VendorDashboard() {
         )}
 
         {tab === 'pricing' && (
-          <div className="space-y-5">
+          <div className="space-y-0">
             {/* Anchor & MC (any trade with a pricing profile) gets the
                 Pricing Control Center over its published listing version;
                 every other trade keeps SambramoPricingStudio. */}
             <PricingTab
               vendor={vendor}
               services={services}
+              openReviewListing={reviewListingRequested}
+              onReviewListingHandled={() => setReviewListingRequested(false)}
               onOpenListings={() => setTab('list')}
               onEditListing={s => navigate('/dashboard/vendor?tab=list&edit=' + encodeURIComponent(s.id))}
               onOpenPayout={() => (import.meta.env.VITE_FF_PAYOUT_FULLSCREEN === 'false'

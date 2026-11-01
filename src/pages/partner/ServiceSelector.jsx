@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'motion/react'
 import { ArrowLeft, ArrowRight, Check, Loader2, Search, X, ShieldCheck, Landmark, Sparkles, ChevronRight, RotateCcw } from 'lucide-react'
 import SambramoTradePictogram from '../../components/vendor/SambramoTradePictogram'
+import TradeServiceArtwork from '../../components/vendor/TradeServiceArtwork'
 import { scanForTrade } from '../../components/vendor/TradeGrid'
 import { Sheet } from '../../components/vendor/anchor/ui'
 import { usePayoutStatus } from '../../components/vendor/anchor/stages/PayoutReviewStages'
@@ -50,6 +51,17 @@ const STATUS = {
   draft: { label: 'Draft', cls: 'bg-plum-50 text-plum-700 ring-plum-200' },
 }
 const TONE = { good: 'bg-forest-50 text-forest-700', wait: 'bg-amber-50 text-amber-800', act: 'bg-rose-50 text-rose-700' }
+
+// Only these six final-row trade images need a constrained, centered frame.
+// Keep the correction scoped so the other 28 trade cards remain unchanged.
+const CENTERED_TRADE_ART = new Set([
+  'Trousseau & Gift Packing',
+  'Valet Parking',
+  'Venue',
+  'Videography',
+  'Warehouse / Storage',
+  'Wedding Planning',
+])
 
 /** Trades matching a query: the trade's own name, or a service inside it. */
 export function matchTrades(q) {
@@ -221,7 +233,11 @@ export default function ServiceSelector() {
                     on ? 'bg-plum-700 text-white' : 'bg-white text-transparent ring-1 ring-ink/15'}`}>
                     <Check size={14} strokeWidth={3} />
                   </span>
-                  <SambramoTradePictogram trade={c.name} size="md" showSparkle={false} title={false} />
+                  {CENTERED_TRADE_ART.has(c.name) ? (
+                    <TradeServiceArtwork trade={c.name} />
+                  ) : (
+                    <SambramoTradePictogram trade={c.name} size="md" showSparkle={false} title={false} />
+                  )}
                   <span className="mt-2 block pr-1 text-[13px] font-extrabold leading-tight text-ink">{c.name}</span>
                   {have ? (
                     <span className={`mt-1.5 rounded-full px-2 py-0.5 text-[10px] font-extrabold ring-1 ${STATUS[have.state].cls}`}>{STATUS[have.state].label}</span>

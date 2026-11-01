@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Images, Loader2, Trash2, Check, Clock, AlertCircle, Plus } from 'lucide-react'
+import { Images, Loader2, Trash2, Check, Clock, AlertCircle, Plus, Music2 } from 'lucide-react'
 import Fold from './Fold'
 import WorkUpload, { workItemsBad } from './WorkUpload'
 import { fails, focusFirstInvalid } from '../partner/FieldCheck'
@@ -70,6 +70,7 @@ export default function WorkLibrary({ vendor }) {
 
   const photos = rows.filter(r => r.kind === 'photo' || r.kind === 'document')
   const videos = rows.filter(r => r.kind === 'video')
+  const audioSamples = rows.filter(r => r.kind === 'audio')
   const words  = rows.filter(r => r.kind === 'testimonial')
   const waiting = rows.filter(r => r.review_status === 'under_review').length
 
@@ -81,6 +82,7 @@ export default function WorkLibrary({ vendor }) {
       : [
           photos.length && `${photos.length} photo${photos.length === 1 ? '' : 's'}`,
           videos.length && `${videos.length} video${videos.length === 1 ? '' : 's'}`,
+          audioSamples.length && `${audioSamples.length} audio sample${audioSamples.length === 1 ? '' : 's'}`,
           words.length && `${words.length} quote${words.length === 1 ? '' : 's'}`,
           waiting && `${waiting} waiting`,
         ].filter(Boolean).join(' · ')
@@ -150,6 +152,11 @@ export default function WorkLibrary({ vendor }) {
                     ) : urls[r.storage_path] ? (
                       r.kind === 'video' ? (
                         <video src={urls[r.storage_path]} className="h-full w-full object-cover" muted />
+                      ) : r.kind === 'audio' ? (
+                        <div className="flex h-full flex-col items-center justify-center gap-2 bg-gradient-to-br from-plum-50 to-violet-100 p-1.5 text-plum-700">
+                          <Music2 size={22} />
+                          <audio src={urls[r.storage_path]} controls preload="none" aria-label={r.caption || 'Partner audio sample'} className="w-full max-w-full" />
+                        </div>
                       ) : (
                         <img src={urls[r.storage_path]} alt={r.caption ?? ''} className="h-full w-full object-cover" />
                       )
