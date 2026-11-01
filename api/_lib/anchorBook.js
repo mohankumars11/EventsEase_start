@@ -9,7 +9,12 @@
  *   POST /api/anchor?op=book
  *   { vendorServiceId, request: { tier?, event_date, start_time, hours, days?, guests,
  *     languages[], event_category, addons[], lat, lng }, venue: { address, area, city },
- *     note?, preview?, negotiate? }
+ *     note?, preview?, negotiate?, quote? }
+ *
+ * `quote: true` always sends a QUOTE request, with no customer offer —
+ * whole-event planning (LiveMatch "One planner") is bespoke: a planner's
+ * listed package is a wedding's, so the planner replies with their fee
+ * for THIS event, and that reply is what the customer accepts and pays.
  *
  * `negotiate: { offer_paise, reasons[], message }` always sends the request
  * to the partner as a QUOTE — even when the listing would book instantly —
@@ -285,7 +290,7 @@ export default async function handler(req, res) {
   if (bErr || !booking?.ok) return res.status(500).json({ error: bErr?.message ?? booking?.detail ?? 'Could not create the booking.' })
 
   /* ── INSTANT ───────────────────────────────────────────────────────── */
-  if (resolution.path === 'INSTANT' && !offer) {
+  if (resolution.path === 'INSTANT' && !offer && body.quote !== true) {
     const partner = resolution.take_home_paise
     const first = lineFrom(resolution, { requestId: booking.request_id, serviceId: vendorServiceId, name: svc?.name ?? TRADE, trade: TRADE,
       note: clean(body.note, 1000), fee: FEE, r, list: LIST, listAdv: LIST_ADV, margin: MARGIN, city: CITY })

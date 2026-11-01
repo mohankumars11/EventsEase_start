@@ -324,3 +324,16 @@
 @keyframes cx-kenburns { from { transform: scale(1.07) translateX(2%); opacity: .6; } to { transform: scale(1) translateX(0); opacity: 1; } }
 .cx-kenburns { animation: cx-kenburns 1.6s cubic-bezier(.2,.7,.2,1) both; }
 @media (prefers-reduced-motion: reduce) { .cx-kenburns { animation: none; } }
+
+/* Live matching (LiveMatch.jsx): a radar sweeping for masters near the event. */
+.cx-radar-sweep {
+  position: absolute; inset: 0; border-radius: 9999px; pointer-events: none;
+  background: conic-gradient(from 0deg, rgba(124, 58, 237, 0) 0turn, rgba(124, 58, 237, 0) .72turn, rgba(124, 58, 237, .10) .86turn, rgba(124, 58, 237, .38) 1turn);
+  animation: cx-spin 2.4s linear infinite;
+}
+.cx-radar-ping { position: absolute; inset: 0; border-radius: 9999px; border: 1.5px solid rgba(124, 58, 237, .35); animation: cx-ping 2.4s cubic-bezier(0, 0, .2, 1) infinite; }
+@keyframes cx-ping { 0% { transform: scale(.3); opacity: .9; } 100% { transform: scale(1); opacity: 0; } }
+.cx-blip { animation: cx-blip .5s cubic-bezier(.2, 1.5, .4, 1) both; }
+@keyframes cx-blip { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.cx-scan { background: linear-gradient(90deg, #F4F0FA 0%, #ECE4FA 40%, #F4F0FA 80%); background-size: 220% 100%; animation: cx-shimmer 1.2s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .cx-radar-sweep, .cx-radar-ping, .cx-scan { animation: none; } }

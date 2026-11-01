@@ -223,7 +223,7 @@ function Qty({ label, unit, options, value, step, min, max, onChange }) {
 }
 
 /* One question: tiles for a few options, a chip cloud for many, a search for dishes. */
-function Question({ q, value, onChange, occasion, typed, onTyped }) {
+export function Question({ q, value, onChange, occasion, typed, onTyped }) {
   const [open, setOpen] = useState(false)
   const toggle = id => onChange(q.kind === 'single' ? (value[0] === id ? [] : [id]) : value.includes(id) ? value.filter(x => x !== id) : [...value, id])
   if (q.kind === 'dishes') return <Dishes q={q} value={value} onChange={onChange} occasion={occasion} typed={typed} onTyped={onTyped} />

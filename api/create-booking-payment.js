@@ -61,7 +61,10 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
   if (!url || !serviceKey) return res.status(500).json({ error: 'Supabase not configured' })
 
-  const { customerId: bodyCustomerId, lineIds, part: partRaw, voucherId, full } = req.body ?? {}
+  // `token`: block the date with 10% (listPrice.canToken) — the server
+  // decides the amount, the phone only says which way the customer chose.
+  // `preview`: say what each line owes for this part, open no order.
+  const { customerId: bodyCustomerId, lineIds, part: partRaw, voucherId, full, token, preview } = req.body ?? {}
   // 'advance' (default) pays what a line needs to be confirmed; 'balance'
   // pays what is still owed on a confirmed (paid) line.
   const part = partRaw === 'balance' ? 'balance' : 'advance'
@@ -137,7 +140,7 @@ export default async function handler(req, res) {
        less what escrow already holds — so a saving is never charged back. */
   let payable = []
   if (part === 'advance') {
-    payable = mine.filter(l => l.status === 'accepted').map(l => ({ ...l, due: payNow({ list: lineList(l), advance: lineAdvance(l), eventDate: l.booking_requests?.event_date, trade: l.pricing_snapshot?.trade_code ?? l.pricing_snapshot?.trade_id ?? null }, { full: full === true }) }))
+    payable = mine.filter(l => l.status === 'accepted').map(l => ({ ...l, due: payNow({ list: lineList(l), advance: lineAdvance(l), eventDate: l.booking_requests?.event_date, trade: l.pricing_snapshot?.trade_code ?? l.pricing_snapshot?.trade_id ?? null }, { full: full === true, token: token === true }) }))
   } else {
     const paidLines = mine.filter(l => l.status === 'paid')
     if (paidLines.length) {
@@ -150,6 +153,10 @@ export default async function handler(req, res) {
       payable = paidLines.map(l => ({ ...l, due: lineList(l) - (saved[l.id] ?? 0) - (held[l.id] ?? 0) })).filter(l => l.due > 0)
     }
   }
+
+  /* What is still owed, for My Bookings to show ("₹18,000 left") — read
+     only, before any voucher or order. Same arithmetic as the payment. */
+  if (preview === true) return res.status(200).json({ lines: payable.map(l => ({ id: l.id, due: l.due })) })
 
   if (!payable.length) {
     return res.status(400).json({

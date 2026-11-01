@@ -45,12 +45,14 @@ function screen(factory, pick = m => m.default) {
 }
 const Search = screen(() => import('./screens/Search'))
 const Trade = screen(() => import('./screens/Trade'))
-const Occasion = screen(() => import('./screens/Occasion'))
+/* One screen for the event and its plan, then live matching (2026-11-01).
+   Occasion.jsx and Recommend.jsx stay for their exports; their routes moved here. */
+const EventFlow = screen(() => import('./screens/EventFlow'))
+const LiveMatch = screen(() => import('./screens/LiveMatch'))
 const Services = screen(() => import('./screens/Small'), m => m.Services)
 const Plans = screen(() => import('./screens/Plans'))
 const Account = screen(() => import('./screens/Account'))
 const Category = screen(() => import('./screens/Category'))
-const Recommend = screen(() => import('./screens/Recommend'))
 const Needs = screen(() => import('./screens/Needs'))
 const Brief = screen(() => import('./screens/Brief'))
 const Match = screen(() => import('./screens/Match'))
@@ -149,8 +151,9 @@ export default function CustomerApp() {
             <Route path="/" element={<Root />} />
             <Route path="/search" element={<Search />} />
             <Route path="/c/:categoryId" element={<Category />} />
-            <Route path="/o/:occasionId" element={<Occasion />} />
-            <Route path="/o/:occasionId/plan" element={<Recommend />} />
+            <Route path="/o/:occasionId" element={<EventFlow />} />
+            <Route path="/o/:occasionId/plan" element={<EventFlow />} />
+            <Route path="/o/:occasionId/live" element={<LiveMatch />} />
             <Route path="/o/:occasionId/needs" element={<Needs />} />
             <Route path="/brief/:tradeId" element={<Brief />} />
             <Route path="/o/:occasionId/match" element={<Match />} />

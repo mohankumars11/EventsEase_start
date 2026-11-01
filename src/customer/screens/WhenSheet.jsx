@@ -90,7 +90,7 @@ export default function WhenSheet({ open, onClose, date, time, hours, onPick }) 
 const WEEK = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 const MONTH_YEAR = new Intl.DateTimeFormat('en-IN', { month: 'long', year: 'numeric' })
 
-function MonthCalendar({ value, onPick, first, last }) {
+export function MonthCalendar({ value, onPick, first, last }) {
   const start = value ? fromIso(value) : first
   const [view, setView] = useState(() => new Date(start.getFullYear(), start.getMonth(), 1))
   const y = view.getFullYear(), mo = view.getMonth()

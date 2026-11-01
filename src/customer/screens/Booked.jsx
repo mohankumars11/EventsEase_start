@@ -13,7 +13,8 @@ import { TRADE, TRADES } from '../data/trades'
 import { serviceArt } from '../data/art'
 import { ArtFill } from '../ui/art'
 import { useAuth } from '../../context/AuthContext'
-import { payLines } from '../../lib/payLines'
+import { owedOn, payLines } from '../../lib/payLines'
+import { balanceDueOn, payNow } from '../../../api/_lib/listPrice.js'
 import { supabase } from '../../lib/supabase'
 import { myBookings, acceptQuote, confirmPaid, LINE_STATE, requestQueue, nudgeRequests, pendingVoucher, clearVoucher } from '../lib/bookings'
 import { dayLabel, plural, rupees } from '../lib/format'
@@ -36,6 +37,8 @@ const IN_TAB = {
   cancelled: s => ['cancelled', 'expired'].includes(s),
 }
 const REBOOKABLE = new Set(['paid', 'in_progress', 'delivered', 'settled'])
+/* balanceDueOn() is midnight IST; its calendar day is read in IST, not UTC. */
+const istIso = d => (d ? new Date(d.getTime() + 19800000).toISOString().slice(0, 10) : null)
 
 export default function Booked({ tab = 'all' }) {
   const { user } = useAuth()
@@ -44,6 +47,10 @@ export default function Booked({ tab = 'all' }) {
   const [msg, setMsg] = useState('')
   const [signIn, setSignIn] = useState(false)
   const [cancelFor, setCancelFor] = useState(null)
+  /* How to pay once masters accept (2026-11-01): block the date with a
+     token (10%, listPrice.canToken), the advance, or everything. */
+  const [how, setHow] = useState(null)
+  const [owed, setOwed] = useState({})
 
   const load = useCallback(async () => {
     if (!user) return
@@ -51,6 +58,9 @@ export default function Booked({ tab = 'all' }) {
     try { setData(await myBookings(user.id)) } catch (e) { setData({ lines: [], quotes: [], error: e.message }) }
   }, [user])
   useEffect(() => { load() }, [load])
+  /* What paid lines still owe, as the server computes it (no order opened). */
+  const paidKey = (data?.lines ?? []).filter(l => l.status === 'paid').map(l => l.id).join(',')
+  useEffect(() => { if (paidKey) owedOn(paidKey.split(',')).then(setOwed).catch(() => {}) }, [paidKey])
   /* Live: Supabase realtime on the three tables a reply or a payment
      touches (RLS decides which events reach this customer), plus a quiet
      15-second re-read while the screen is visible, for any table that is
@@ -69,19 +79,28 @@ export default function Booked({ tab = 'all' }) {
     return () => { supabase.removeChannel(ch); clearInterval(tick); document.removeEventListener('visibilitychange', v) }
   }, [load, user])
 
-  async function pay(lineIds, label) {
+  async function pay(lineIds, label, way = 'advance') {
     setBusy(lineIds[0]); setMsg('')
     /* The offer chosen at checkout comes with the payment that follows the
        accept; the server re-checks it, and if it no longer applies the
        customer pays without it rather than being stuck. */
     const vid = pendingVoucher()
-    let r = await payLines({ lineIds, part: 'advance', description: label, voucherId: vid })
-    if (!r.ok && r.code === 'voucher') { clearVoucher(); r = await payLines({ lineIds, part: 'advance', description: label }) }
+    const mode = { token: way === 'token', full: way === 'full' }
+    let r = await payLines({ lineIds, part: 'advance', description: label, voucherId: vid, ...mode })
+    if (!r.ok && r.code === 'voucher') { clearVoucher(); r = await payLines({ lineIds, part: 'advance', description: label, ...mode }) }
     if (r.ok && vid) clearVoucher()
     const c = await confirmPaid(r)
     setBusy(null)
     setMsg(r.ok ? (c?.ok ? 'Paid and confirmed — your master has been told.' : 'Payment received — confirming with Razorpay.') : r.dismissed ? '' : r.error ?? 'Payment did not go through.')
     setTimeout(load, 1200)
+  }
+  async function payRest(lineIds, label) {
+    setBusy(lineIds[0]); setMsg('')
+    const r = await payLines({ lineIds, part: 'balance', description: label })
+    const c = await confirmPaid(r)
+    setBusy(null)
+    setMsg(r.ok ? (c?.ok ? 'Paid in full — nothing more is due.' : 'Payment received — confirming with Razorpay.') : r.dismissed ? '' : r.error ?? 'Payment did not go through.')
+    setTimeout(() => { load(); setOwed({}) }, 1200)
   }
   async function accept(q) {
     setBusy(q.response.id); setMsg('')
@@ -109,6 +128,15 @@ export default function Booked({ tab = 'all' }) {
   const waiting = tab === 'all' || tab === 'upcoming' ? data.quotes.filter(q => ['VENDOR_QUOTE', 'QUOTE_ACTION_REQUIRED'].includes(q.state)) : []
   const closed = tab === 'all' || tab === 'cancelled' ? data.quotes.filter(q => !['VENDOR_QUOTE', 'QUOTE_ACTION_REQUIRED'].includes(q.state)) : []
   const empty = !shown.length && !waiting.length && !closed.length
+  /* The three ways to pay what accepted masters need, summed across them —
+     the same payNow() the server charges with. */
+  const facts = l => ({ list: l.listPaise, advance: l.advancePaise, eventDate: l.request?.date, trade: l.pricing_snapshot?.trade_code ?? l.pricing_snapshot?.trade_id ?? null })
+  const sumBy = opt => due.reduce((s, l) => s + payNow(facts(l), opt), 0)
+  const ways = [['token', 'Block the date', sumBy({ token: true })], ['advance', 'Advance', sumBy({})], ['full', 'Pay in full', sumBy({ full: true })]]
+    .filter(([k, , v], i, a) => k === 'full' || v < a[i + 1][2])
+  const way = ways.some(w => w[0] === how) ? how : ways[0]?.[0]
+  const left = shown.filter(l => l.status === 'paid' && owed[l.id] > 0)
+  const leftBy = left.map(l => balanceDueOn(l.request?.date)).filter(Boolean).sort((a, b) => a - b)[0] ?? null
   const again = tab === 'cancelled' ? null : data.lines.find(l => REBOOKABLE.has(l.status))
 
   return (
@@ -120,10 +148,33 @@ export default function Booked({ tab = 'all' }) {
       {due.length > 0 && (
         <div className="rounded-[22px] bg-[#FFF8E6] p-3.5 ring-1 ring-[#F6DFA2]">
           <p className="flex items-center gap-1.5 text-[13.5px] font-extrabold text-[#7A4B00]"><Zap size={15} className="fill-[var(--gold)] text-[var(--gold)]" />{plural(due.length, 'master')} holding your date</p>
-          <p className="mt-0.5 text-[12px] font-semibold text-[#8A6420]">They accepted your request. Pay to confirm — one payment covers them all.</p>
-          <button type="button" disabled={!!busy} onClick={() => pay(due.map(l => l.id), `Sambramo · ${plural(due.length, 'master')}`)}
+          <p className="mt-0.5 text-[12px] font-semibold text-[#8A6420]">They accepted. One payment confirms them all.</p>
+          {ways.length > 1 && (
+            <div className="mt-3 grid gap-2" style={{ gridTemplateColumns: `repeat(${ways.length}, minmax(0, 1fr))` }} data-pay-ways>
+              {ways.map(([k, label, v]) => (
+                <button key={k} type="button" onClick={() => setHow(k)} aria-pressed={way === k} data-pay-way={k}
+                  className={'rounded-[14px] px-2 py-2 text-center transition-colors ' + (way === k ? 'bg-[#1C1033] text-white' : 'bg-white text-[var(--ink)] shadow-[0_0_0_1px_#F1DFA8]')}>
+                  <span className="cx-num block text-[15px] font-black">{rupees(v)}</span>
+                  <span className={'block text-[10.5px] font-extrabold ' + (way === k ? 'text-white/75' : 'text-[#8A6420]')}>{label}</span>
+                </button>
+              ))}
+            </div>
+          )}
+          {way === 'token' && <p className="mt-2 text-[11.5px] font-bold text-[#8A6420]" data-token-note>Your date is blocked now. Pay the rest any time before {dayLabel(istIso(balanceDueOn(due[0]?.request?.date)))}.</p>}
+          <button type="button" disabled={!!busy} onClick={() => pay(due.map(l => l.id), `Sambramo · ${plural(due.length, 'master')}`, way)}
             className="cx-press cx-cta mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-[16px] text-[14px] font-extrabold" data-pay-due>
-            {busy && due.some(l => l.id === busy) ? <Loader2 size={16} className="animate-spin" /> : null}Pay {rupees(due.reduce((s, l) => s + l.advancePaise, 0))} to confirm
+            {busy && due.some(l => l.id === busy) ? <Loader2 size={16} className="animate-spin" /> : null}Pay {rupees(ways.find(w => w[0] === way)?.[2] ?? 0)}{way === 'token' ? ' · block my date' : ' to confirm'}
+          </button>
+        </div>
+      )}
+
+      {left.length > 0 && (
+        <div className="rounded-[22px] bg-[#F4EEFF] p-3.5 ring-1 ring-[#E2D5FA]" data-balance>
+          <p className="flex items-center gap-1.5 text-[13.5px] font-extrabold text-[#3B1670]"><HandCoins size={15} />{rupees(left.reduce((s, l) => s + owed[l.id], 0))} left to pay</p>
+          <p className="mt-0.5 text-[12px] font-semibold text-[#5B4A6E]">{plural(left.length, 'master')} confirmed{leftBy ? ` · due by ${dayLabel(istIso(leftBy))}` : ''}. Held safely until your event.</p>
+          <button type="button" disabled={!!busy} onClick={() => payRest(left.map(l => l.id), `Sambramo · balance`)}
+            className="cx-press cx-cta mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-[16px] text-[14px] font-extrabold" data-pay-balance>
+            {busy && left.some(l => l.id === busy) ? <Loader2 size={16} className="animate-spin" /> : null}Pay {rupees(left.reduce((s, l) => s + owed[l.id], 0))}
           </button>
         </div>
       )}

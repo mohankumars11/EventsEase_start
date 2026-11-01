@@ -14,7 +14,7 @@
 // forgotten regeneration is a broken build rather than a price that is
 // quietly out of date.
 //
-// inputs: 0f1d60e7364a1980
+// inputs: 4b98e067255fd2b1
 // src/data/servicePricing.js
 var SIZE_BANDS = [
   { upTo: 30, factor: 0.45 },
@@ -4261,10 +4261,15 @@ var REVIEW = {
   ]
 };
 var TAX = {
-  tcsRate: 0.01,
+  /* Rates as notified (re-checked 2026-11-01): TCS halved from 1% to 0.5%
+     from 10 Jul 2024 (CBIC Notification 15/2024-CT; 0.25% CGST + 0.25% SGST
+     intra-state, 0.5% IGST inter-state). TDS cut from 1% to 0.1% from
+     1 Oct 2024 (Finance (No. 2) Act 2024); from 1 Apr 2026 the
+     Income-tax Act 2025 carries 194-O as s.393(1) — same rate. */
+  tcsRate: 5e-3,
   // GST s.52
-  tdsRate: 0.01,
-  // IT 194-O
+  tdsRate: 1e-3,
+  // IT 194-O → ITA 2025 s.393(1)
   /**
    * Below this annual gross, an individual/HUF partner with a PAN on
    * file is exempt from 194-O. Re-check the figure at each budget.

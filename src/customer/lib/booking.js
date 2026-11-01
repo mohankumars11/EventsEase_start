@@ -103,6 +103,13 @@ export const requestLine = (line, event, place, { note, venue, backups = [] } = 
   call({ vendorServiceId: line.serviceId, request: requestFor(line, event, place), note, venue, mode: 'request',
     backups: backups.map(b => ({ serviceId: b.serviceId, chosenBy: b.chosenBy ?? 'sambramo', request: requestFor(b, event, place) })) }, true)
 
+/**
+ * Ask for their fee: a quote request with no offer (whole-event planning —
+ * a planner's listed package is a wedding's, so they price THIS event).
+ */
+export const quoteLine = (line, event, place, { note, venue } = {}) =>
+  call({ vendorServiceId: line.serviceId, request: requestFor(line, event, place), note, venue, quote: true }, true)
+
 /** Ask a partner for a price: always a quote request, carrying the customer's offer. */
 export const sendOffer = (line, event, place, offer, { note, venue } = {}) =>
   call({ vendorServiceId: line.serviceId, request: requestFor(line, event, place), note, venue, negotiate: offer }, true)

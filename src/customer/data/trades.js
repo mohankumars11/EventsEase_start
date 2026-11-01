@@ -36,7 +36,7 @@ export const TRADES = [
   t('mehendi_artist', 'Mehendi', 'Bridal and guest mehendi', Hand, 'rituals'),
   t('priest_rituals', 'Priest & rituals', 'Pooja, homa and rites, done your family’s way', Flame, 'rituals'),
   t('trousseau_gift_packing', 'Trousseau packing', 'Saree trays and seer platters, beautifully packed', PackageOpen, 'rituals'),
-  t('wedding_planning', 'Wedding planner', 'One person who runs every vendor for you', ClipboardList, 'plan'),
+  t('wedding_planning', 'Event planner', 'One person who runs your whole event — any occasion', ClipboardList, 'plan'), // every event, not only weddings (2026-11-01)
   t('end_to_end_event_logistics', 'Event logistics', 'Trucks, crew and set-up for big events', HeartHandshake, 'plan'),
   t('guest_services', 'Hosts & ushers', 'Welcome desk, ushers and hostesses', HandHeart, 'guests'),
   t('passenger_transport', 'Guest transport', 'Cars, Tempo Travellers and coaches', Bus, 'guests'),

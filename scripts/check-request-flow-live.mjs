@@ -41,8 +41,10 @@ const sweep = await me.rpc('sweep_request_timeouts')
 say(!sweep.error && Number.isInteger(sweep.data), `customer nudges the sweep → ${sweep.error ? sweep.error.code : sweep.data}`)
 const offers = await me.rpc('my_request_offers')
 say(!offers.error && Array.isArray(offers.data), `my_request_offers → ${offers.error ? offers.error.code : `${offers.data.length} offers`}`)
+/* A fresh client: `anon` above holds the customer's session since verifyOtp. */
+const nobody = createClient(url, process.env.VITE_SUPABASE_ANON_KEY, { auth: { persistSession: false } })
 for (const f of ['sweep_request_timeouts', 'my_request_offers']) {
-  const r = await anon.rpc(f)
+  const r = await nobody.rpc(f)
   say(!!r.error, `anon ${f} → ${r.error ? `refused (${r.error.code})` : 'RAN'}`)
 }
 

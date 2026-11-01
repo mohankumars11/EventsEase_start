@@ -137,7 +137,7 @@ export const BOOKING_KINDS = ['welcome_pct', 'referral_pct']
    the event. Every rupee is held in escrow until the event is delivered,
    then the partner's share and Sambramo's margin are released. The server
    (create-booking-payment) and the checkout both decide with payNow(). */
-export const PAY_RULES = { fullBelowPaise: 2500000, fullWithinDays: 7, minAdvance: 0.2, balanceDaysBefore: 7 }
+export const PAY_RULES = { fullBelowPaise: 2500000, fullWithinDays: 7, minAdvance: 0.2, balanceDaysBefore: 7, tokenPct: 0.1, tokenMinPaise: 50000 }
 const istDay = d => new Date(`${String(d).slice(0, 10)}T00:00:00+05:30`)
 export const daysUntil = (date, today = new Date()) => (date ? Math.floor((istDay(date) - today) / 864e5) : Infinity)
 /** Can this line be paid as an advance + balance at all? */
@@ -157,8 +157,24 @@ const FLOOR_OF = Object.fromEntries(Object.entries(ADVANCE_FLOOR).flatMap(([pct,
 /** The minimum advance for a trade, as a fraction of the price (labour, equipment, vehicles: 20%). */
 export const advanceFloor = trade => Math.max(PAY_RULES.minAdvance, FLOOR_OF[codeFor(trade)] ?? 0)
 
+/* ── Block the date with a token (Mohan, 2026-11-01) ───────────────────
+   "Many customers will not pay a big amount instantly." Once a master
+   accepts, the customer may block the date with 10% of that master's
+   price (at least ₹500) and pay the rest any time up to 7 days before the
+   event (balanceDueOn) — when escrow then holds everything, so a
+   caterer's groceries are covered before the day exactly as with an
+   advance (the materials advance is paid out of escrow). Not offered when
+   the event is 7 days away or less, for trades that take everything up
+   front (printing, priests), or on a line too small to split (< ₹1,000). */
+export function canToken(list, eventDate, trade = null, today = new Date()) {
+  return advanceFloor(trade) < 1 && daysUntil(eventDate, today) > PAY_RULES.fullWithinDays && list >= PAY_RULES.tokenMinPaise * 2
+}
+/** The token for a line: 10%, rounded up to ₹10, never under ₹500. */
+export const tokenFor = list => Math.min(list, Math.max(PAY_RULES.tokenMinPaise, Math.ceil((list * PAY_RULES.tokenPct) / 1000) * 1000))
+
 /** What a line is charged now. `advance` ≥ list (or none) means the partner takes it in full. */
-export function payNow({ list, advance, eventDate, trade = null }, { full = false, today = new Date() } = {}) {
+export function payNow({ list, advance, eventDate, trade = null }, { full = false, token = false, today = new Date() } = {}) {
+  if (token && !full && canToken(list, eventDate, trade, today)) return tokenFor(list)
   const floor = advanceFloor(trade)
   if (full || floor >= 1 || !canSplit(list, eventDate, today) || !(advance > 0) || advance >= list) return list
   return Math.min(list, Math.max(advance, Math.ceil((list * floor) / 100) * 100))
