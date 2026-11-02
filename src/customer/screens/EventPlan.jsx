@@ -24,8 +24,8 @@ import { OCCASION } from '../data/occasions'
 import { serviceArt } from '../data/art'
 import { copyFor, introFor } from '../data/requirementCopy'
 import { photoFor } from '../data/requirementPhotos.generated'
-import { ACTION, TAG, themesFor, CAKES, COLOURS, FONTS, FOOD_WAYS, byOrder, OPS } from '../data/visualCatalogue'
-import { CUISINES, COURSES, MEALS, SERVE, mealFor, menuCards, courseDishes, dishName, dishCount } from '../lib/sambramoMenu'
+import { themesFor, CAKES, DECOR_THEMES, ACTION, TAG, COLOURS, FONTS, FOOD_WAYS, foodNeeds, COOK_TEAM, INGREDIENTS, DRINKS, DECOR_ELEMENTS, CAKE_OPTIONS, PHOTO_HOURS, PHOTO_EXTRAS, ENTERTAINERS, designFamilies, byOrder, OPS } from '../data/visualCatalogue'
+import { SERVE } from '../lib/sambramoMenu'
 import { usePlan, needsFor } from '../state/PlanContext'
 import { savedWhere } from '../lib/where'
 import { partnersFor } from '../lib/market'
@@ -257,27 +257,6 @@ function Section({ title, sub = null, children }) {
   )
 }
 
-/* Photo tiles to pick one from — themes, cake designs. */
-function PhotoPick({ items, value, onPick }) {
-  return (
-    <div className="grid grid-cols-3 gap-2">
-      {items.map(x => {
-        const sel = value === x.id
-        return (
-          <button key={x.id} type="button" onClick={() => onPick(sel ? null : x.id)} aria-pressed={sel} data-pick={x.id}
-            className={'cx-press overflow-hidden rounded-[14px] bg-white text-left ' + (sel ? 'shadow-[0_0_0_2.5px_#7C3AED]' : 'shadow-[0_0_0_1px_#ECE6F4]')}>
-            <span className="relative block aspect-square bg-[#F3EEF9]">
-              {x.photo && <Photo src={x.photo.url} alt={x.photo.alt} className="absolute inset-0 h-full w-full object-cover" />}
-              {sel && <span className="absolute right-1.5 top-1.5 grid h-6 w-6 place-items-center rounded-full bg-[#7C3AED] text-white"><Check size={13} strokeWidth={3.2} /></span>}
-            </span>
-            <span className="block truncate px-1.5 py-1.5 text-[11.5px] font-extrabold">{x.label}</span>
-          </button>
-        )
-      })}
-    </div>
-  )
-}
-
 /* Single-pick chips. */
 function Chips({ items, value, onPick, data }) {
   return (
@@ -289,71 +268,6 @@ function Chips({ items, value, onPick, data }) {
         </button>
       ))}
     </div>
-  )
-}
-
-/* A Sambramo menu, laid out like a restaurant's printed menu — no price. */
-function MenuCard({ m, on, onPick }) {
-  const veg = m.vegOnly
-  return (
-    <article className={'w-[262px] shrink-0 rounded-[18px] bg-[#FFFCF7] p-3.5 ' + (on ? 'shadow-[0_0_0_2.5px_#7C3AED]' : 'shadow-[0_0_0_1px_#EFE4D2]')} data-menu={m.tier}>
-      <p className="text-center text-[9.5px] font-extrabold uppercase tracking-[0.2em] text-[#A07C3C]">Sambramo menu</p>
-      <h4 className="mt-0.5 text-center font-['Playfair_Display',serif] text-[18px] font-bold leading-tight">{m.name}</h4>
-      <p className="mt-1 flex items-center justify-center gap-1.5 text-[11px] font-bold text-[#8A6420]"><Mark kind={veg ? 'veg' : 'non_veg'} />{veg ? 'Vegetarian' : 'Veg + non-veg'} · {dishCount(m.dishes)} dishes</p>
-      <div className="mt-2.5 space-y-2 border-t border-dashed border-[#E9DCC6] pt-2.5">
-        {COURSES.filter(c => m.dishes[c.id]?.length).map(c => (
-          <div key={c.id}>
-            <p className="text-center text-[9.5px] font-extrabold uppercase tracking-[0.14em] text-[#A07C3C]">{c.label}</p>
-            <p className="text-center text-[12px] font-semibold leading-snug text-[#3D2E1C]">{m.dishes[c.id].map(id => dishName(m.cuisine, c.id, id)).join(' · ')}</p>
-          </div>
-        ))}
-      </div>
-      <button type="button" onClick={onPick} aria-pressed={on} data-menu-pick={m.tier}
-        className={'cx-press mt-3 flex h-10 w-full items-center justify-center gap-1.5 rounded-full text-[13px] font-extrabold ' + (on ? 'bg-[#7C3AED] text-white' : 'bg-[#F4EEFF] text-[#4C1D95]')}>
-        {on ? <><Check size={14} strokeWidth={3.2} />This menu</> : 'Choose this menu'}
-      </button>
-    </article>
-  )
-}
-
-/* The chosen menu, editable dish by dish: swap within the course, remove, add. */
-function MenuEditor({ menu, onChange }) {
-  const [adding, setAdding] = useState(null)
-  const setCourse = (cid, list) => onChange({ ...menu, dishes: { ...menu.dishes, [cid]: list } })
-  return (
-    <div className="mt-3 rounded-[18px] bg-white p-3 shadow-[0_0_0_1px_#ECE6F4]" data-menu-editor>
-      <p className="text-[13.5px] font-extrabold">Make it yours</p>
-      {COURSES.filter(c => (menu.dishes[c.id]?.length ?? 0) > 0 || adding === c.id).map(c => {
-        const list = menu.dishes[c.id] ?? []
-        const pool = courseDishes(menu.cuisine, c.id, menu.vegOnly).filter(d => !list.includes(d.id))
-        return (
-          <div key={c.id} className="mt-2.5">
-            <p className="text-[10.5px] font-extrabold uppercase tracking-[0.12em] text-[var(--ink-3)]">{c.label}</p>
-            {list.map((id, i) => (
-              <div key={id} className="mt-1 flex items-center gap-2 rounded-[12px] bg-[#FAF8FD] px-2.5 py-1.5" data-dish={id}>
-                <span className="min-w-0 flex-1 truncate text-[13px] font-semibold">{dishName(menu.cuisine, c.id, id)}</span>
-                {pool.length > 0 && <button type="button" onClick={() => setCourse(c.id, list.map((x, j) => (j === i ? pool[0].id : x)))} className="shrink-0 text-[11.5px] font-extrabold text-[var(--brand)]" data-swap-dish>Swap</button>}
-                <button type="button" onClick={() => setCourse(c.id, list.filter(x => x !== id))} aria-label="Remove dish" className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-white text-[var(--ink-3)]"><X size={12} /></button>
-              </div>
-            ))}
-            {adding === c.id ? (
-              <div className="mt-1.5 flex flex-wrap gap-1.5">
-                {pool.slice(0, 12).map(d => <button key={d.id} type="button" onClick={() => { setCourse(c.id, [...list, d.id]); setAdding(null) }} className="rounded-full bg-[#F4EEFF] px-2.5 py-1 text-[11.5px] font-bold text-[#3B1670]">+ {d.name}</button>)}
-              </div>
-            ) : pool.length > 0 && <button type="button" onClick={() => setAdding(c.id)} className="mt-1 text-[11.5px] font-extrabold text-[var(--brand)]" data-add-dish={c.id}>+ Add a dish</button>}
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
-function Mark({ kind }) {
-  const c = kind === 'veg' ? '#0C831F' : '#A0381B'
-  return (
-    <span className="grid h-[13px] w-[13px] shrink-0 place-items-center rounded-[3px] border-[1.5px] bg-white" style={{ borderColor: c }}>
-      {kind === 'veg' ? <span className="h-[5px] w-[5px] rounded-full" style={{ background: c }} /> : <span className="h-[5px] w-[6px]" style={{ background: c, clipPath: 'polygon(50% 0, 100% 100%, 0 100%)' }} />}
-    </span>
   )
 }
 
@@ -406,57 +320,48 @@ function ChooseSheet({ o, t, plan, place, on, why, video, onVideo, ensure, onClo
 
           {t === 'catering_food' && (
             <>
-              <Section title="Who cooks?">
-                <div className="grid grid-cols-2 gap-2" data-food-ways>
-                  {FOOD_WAYS.map(w => {
-                    const sel = cur.$way === w.id
-                    return (
-                      <button key={w.id} type="button" aria-pressed={sel} data-way={w.id} onClick={() => set({ $way: sel ? null : w.id, prep_location: sel ? [] : w.needs.prep_location ?? [] })}
-                        className={'cx-press rounded-[16px] p-3 text-left ' + (sel ? 'bg-[#F1E9FF] shadow-[inset_0_0_0_2px_#7C3AED]' : 'bg-white shadow-[inset_0_0_0_1.5px_#ECE6F4]')}>
-                        <span className="block text-[13px] font-extrabold leading-tight">{w.label}</span>
-                        <span className="mt-0.5 block text-[11px] font-semibold leading-snug text-[var(--ink-3)]">{w.line}</span>
-                      </button>
-                    )
-                  })}
-                </div>
+              <Section title="How should the food be arranged?" sub="Pick one or more">
+                <PhotoMulti items={FOOD_WAYS} value={cur.$ways ?? []} data="food-ways"
+                  onChange={ways => { const n = foodNeeds(ways); set({ $ways: ways, prep_location: n.prep_location, services: n.services, service_styles: [...new Set([...n.service_styles, ...(SERVE.find(x => x.id === cur.$serve)?.styles ?? [])])] }) }} />
               </Section>
-              <Section title="Which meal?">
-                <Chips items={MEALS.map(([id, label]) => ({ id, label }))} value={cur.$meal ?? mealFor(plan.event.time)} onPick={v => set({ $meal: v })} data="meal" />
+              {(cur.$ways ?? []).includes('cook') && (
+                <Section title="Cooking at your place">
+                  <OneChips items={COOK_TEAM} value={cur.$cookTeam ?? null} onPick={v => set({ $cookTeam: v })} data="cook-team" />
+                  <div className="mt-2"><OneChips items={INGREDIENTS} value={cur.$ingredients ?? null} onPick={v => set({ $ingredients: v })} data="ingredients" /></div>
+                </Section>
+              )}
+              {(cur.$ways ?? []).includes('custom') && (
+                <input value={cur.$customWay ?? ''} onChange={e => set({ $customWay: e.target.value.slice(0, 80) })} placeholder="How would you like the food arranged?"
+                  className="h-12 w-full rounded-[14px] bg-white px-3.5 text-[14px] font-semibold shadow-[inset_0_0_0_1.5px_#E9E3F2] outline-none focus:shadow-[inset_0_0_0_2px_#7C3AED]" data-custom-way />
+              )}
+              <StudioEntry o={o} cur={cur} onClose={onClose} />
+              <Section title="Drinks">
+                <ManyChips items={DRINKS} value={cur.$drinks ?? []} onChange={v => set({ $drinks: v })} data="drinks" />
               </Section>
-              <Section title="How is it served?">
-                <Chips items={SERVE} value={cur.$serve ?? null} onPick={v => { const s = SERVE.find(x => x.id === v); set({ $serve: v, service_styles: s ? s.styles : [] }) }} data="serve" />
-              </Section>
-              {ask(q('$diet'))}
-              <Section title="Cuisine">
-                <div className="cx-noscroll -mx-5 flex gap-2 overflow-x-auto px-5 pb-1" data-cuisines>
-                  {CUISINES.map(cu => {
-                    const sel = (cur.$cuisineMenu ?? 'karnataka') === cu.id
-                    return (
-                      <button key={cu.id} type="button" aria-pressed={sel} data-cuisine={cu.id} onClick={() => set({ $cuisineMenu: cu.id, $menu: null })}
-                        className={'cx-press flex w-[92px] shrink-0 flex-col items-center gap-1 rounded-[16px] px-1.5 py-2.5 text-center ' + (sel ? 'bg-[#F1E9FF] shadow-[inset_0_0_0_2px_#7C3AED]' : 'bg-white shadow-[inset_0_0_0_1.5px_#ECE6F4]')}>
-                        <span className="text-[24px] leading-none">{cu.emoji}</span>
-                        <span className="line-clamp-2 text-[11px] font-extrabold leading-tight">{cu.name}</span>
-                      </button>
-                    )
-                  })}
-                </div>
-              </Section>
-              <Section title="Your menu" sub="Made by Sambramo for your event — swap any dish. Caterers reply with their price for exactly this menu.">
-                <div className="cx-noscroll -mx-5 flex items-start gap-2.5 overflow-x-auto px-5 pb-1" data-menus>
-                  {menuCards(cur.$cuisineMenu ?? 'karnataka', cur.$diet?.[0] ?? null).map(m => {
-                    const sel = cur.$menu?.tier === m.tier && cur.$menu?.cuisine === m.cuisine
-                    return <MenuCard key={m.tier} m={sel ? cur.$menu : m} on={sel} onPick={() => set({ $menu: sel ? null : m })} />
-                  })}
-                </div>
-                {cur.$menu?.dishes && <MenuEditor menu={cur.$menu} onChange={menu => set({ $menu: menu })} />}
-              </Section>
+              <button type="button" role="switch" aria-checked={!!cur.$staff} onClick={() => set({ $staff: !cur.$staff })} data-staff-toggle
+                className="cx-press flex w-full items-center justify-between rounded-[16px] bg-white p-3 text-left shadow-[inset_0_0_0_1.5px_#ECE6F4]">
+                <span><span className="block text-[14px] font-extrabold">Serving staff</span><span className="block text-[11.5px] font-semibold text-[var(--ink-3)]">People to serve and clear</span></span>
+                <span className={'relative h-[26px] w-[46px] shrink-0 rounded-full transition-colors ' + (cur.$staff ? 'bg-[#7C3AED]' : 'bg-[#E4DDF0]')}><span className={'absolute top-[3px] h-5 w-5 rounded-full bg-white shadow transition-all ' + (cur.$staff ? 'right-[3px]' : 'left-[3px]')} /></span>
+              </button>
             </>
           )}
 
           {t === 'decoration_floral' && (
             <>
-              <Section title="Pick a theme" sub="Real photographs — your master gets the one you pick">
-                <PhotoPick items={themesFor(o)} value={cur.$theme ?? null} onPick={v => set({ $theme: v })} />
+              {/* Hand-picked photographs only. A stock-search décor wall was
+                  tried and measured on 2 Nov: for a first birthday it filled
+                  with neon signs, tarot cards and lounges — real designs come
+                  from decorators' own work, with their reply. */}
+              <Section title="Pick a theme" sub="Inspiration photographs — your decorator recreates the look">
+                <PhotoMulti items={themesFor(o).filter(x => x.photo)} value={cur.$themePicks ?? (cur.$theme ? [cur.$theme] : [])} data="themes"
+                  onChange={v => set({ $themePicks: v.slice(-2), $theme: v[v.length - 1] ?? null })} />
+              </Section>
+              <Section title="Or name the theme" sub="Pick up to 3">
+                <ThemeWords families={designFamilies(o)} value={cur.$themes ?? []} onChange={v => set({ $themes: v })} />
+              </Section>
+              <p className="-mt-2 text-[11.5px] font-semibold text-[var(--ink-3)]" data-decor-portfolio-note>Decorators send photos of their own work when they reply. Have a look in mind? Add your photo below.</p>
+              <Section title="What should it include?">
+                <ManyChips items={DECOR_ELEMENTS} value={cur.$elements ?? []} onChange={v => set({ $elements: v })} data="elements" />
               </Section>
               <Section title="Colours">
                 <div className="flex flex-wrap gap-2" data-colours>
@@ -490,8 +395,16 @@ function ChooseSheet({ o, t, plan, place, on, why, video, onVideo, ensure, onClo
 
           {t === 'cake_desserts' && (
             <>
-              <Section title="Pick a design" sub="Real photographs — the baker gets the one you pick">
-                <PhotoPick items={CAKES} value={cur.$cake ?? null} onPick={v => set({ $cake: v })} />
+              <Section title="Pick a style" sub="Inspiration photographs — your baker makes it their way">
+                <PhotoMulti items={CAKES.filter(x => x.photo)} value={cur.$cake ? [cur.$cake] : []} data="cakes"
+                  onChange={v => set({ $cake: v[v.length - 1] ?? null })} />
+              </Section>
+              <Section title="Size and style">
+                <OneChips items={CAKE_OPTIONS.weight} value={cur.$weight ?? null} onPick={v => set({ $weight: v })} data="weight" />
+                <div className="mt-2"><OneChips items={CAKE_OPTIONS.tiers} value={cur.$tiers ?? null} onPick={v => set({ $tiers: v })} data="tiers" /></div>
+                <div className="mt-2"><OneChips items={CAKE_OPTIONS.shape} value={cur.$shape ?? null} onPick={v => set({ $shape: v })} data="shape" /></div>
+                <div className="mt-2"><OneChips items={CAKE_OPTIONS.egg} value={cur.$egg ?? null} onPick={v => set({ $egg: v })} data="egg" /></div>
+                <div className="mt-2"><OneChips items={CAKE_OPTIONS.delivery} value={cur.$delivery ?? null} onPick={v => set({ $delivery: v })} data="delivery" /></div>
               </Section>
               {rest.slice(0, 2).map(ask)}
               <Section title="Words on the cake" sub="Optional">
@@ -504,6 +417,8 @@ function ChooseSheet({ o, t, plan, place, on, why, video, onVideo, ensure, onClo
           {t === 'photography' && (
             <>
               {rest.slice(0, 2).map(ask)}
+              <Section title="How long should they stay?"><OneChips items={PHOTO_HOURS} value={cur.$hours ?? null} onPick={v => set({ $hours: v })} data="photo-hours" /></Section>
+              <Section title="Extras"><ManyChips items={PHOTO_EXTRAS} value={cur.$extras ?? []} onChange={v => set({ $extras: v })} data="photo-extras" /></Section>
               <button type="button" role="switch" aria-checked={video} onClick={() => { onVideo(!video); ensure() }} data-video-toggle
                 className="cx-press flex w-full items-center gap-3 rounded-[16px] bg-white p-3 text-left shadow-[inset_0_0_0_1.5px_#ECE6F4]">
                 <Thumb o={o} t="videography" className="h-12 w-12 shrink-0 rounded-[12px]" />
@@ -513,6 +428,12 @@ function ChooseSheet({ o, t, plan, place, on, why, video, onVideo, ensure, onClo
             </>
           )}
 
+          {t === 'live_entertainment' && (
+            <Section title="Who should entertain?" sub="Pick one or more">
+              <PhotoMulti items={ENTERTAINERS} value={(cur.$entertainers ?? []).map(l => ENTERTAINERS.find(e => e.label === l)?.id).filter(Boolean)} data="entertainers"
+                onChange={ids => set({ $entertainers: ids.map(id => ENTERTAINERS.find(e => e.id === id).label) })} />
+            </Section>
+          )}
           {!['catering_food', 'decoration_floral', 'cake_desserts', 'photography'].includes(t) && rest.slice(0, 3).map(ask)}
           <RefPhotos refs={cur.$refs ?? []} onChange={refs => set({ $refs: refs })} />
         </div>
@@ -522,6 +443,35 @@ function ChooseSheet({ o, t, plan, place, on, why, video, onVideo, ensure, onClo
 }
 
 /* "Other" as a picture: the customer's own photo of what they want (199). */
+/*
+ * The menu now lives in the Menu Studio (/o/:id/menu): cuisine, Sambramo's
+ * curated menus, swaps, diet and how it is served. Here, just the way in —
+ * and what was chosen, once it was.
+ */
+function StudioEntry({ o, cur, onClose }) {
+  const navigate = useNavigate()
+  const st = cur.$studio
+  const n = st ? st.sections.reduce((t, s) => t + s.items.length, 0) : 0
+  const open = () => { onClose(); navigate(`/o/${o.id}/menu${st ? '?s=edit' : ''}`) }
+  return (
+    <button type="button" onClick={open} data-studio-entry={st ? 'chosen' : 'new'}
+      className="cx-press flex w-full items-center gap-3 overflow-hidden rounded-[20px] bg-gradient-to-br from-[#2A124F] to-[#5B21B6] p-4 text-left text-white">
+      <span className="min-w-0 flex-1">
+        <span className="block text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#F4D99A]">{st ? 'Your menu' : 'Menu Studio'}</span>
+        <span className="mt-0.5 block truncate text-[17px] font-extrabold">{st ? st.name : 'Create your menu'}</span>
+        <span className="block text-[12px] font-semibold text-white/75">{st ? `${n} dishes · tap to change` : 'Pick a cuisine, choose a Sambramo menu, swap any dish'}</span>
+      </span>
+      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/15"><Pencil size={16} /></span>
+    </button>
+  )
+}
+
+/* Theme names for this kind of occasion — words the decorator works from. */
+function ThemeWords({ families = [], value = [], onChange }) {
+  const themes = [...new Set(families.flatMap(f => DECOR_THEMES[f] ?? []))]
+  return <ManyChips items={themes} value={value} onChange={v => onChange(v.slice(-3))} data="theme-words" />
+}
+
 function RefPhotos({ refs, onChange }) {
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
@@ -554,3 +504,56 @@ function RefPhotos({ refs, onChange }) {
     </section>
   )
 }
+
+/* Pick one of a few words. */
+function OneChips({ items, value, onPick, data }) {
+  return (
+    <div className="flex flex-wrap gap-2" data-chips={data}>
+      {items.map(x => (
+        <button key={x} type="button" onClick={() => onPick(value === x ? null : x)} aria-pressed={value === x} data-chip={x}
+          className={'cx-press rounded-full px-3.5 py-2 text-[12.5px] font-bold ' + (value === x ? 'bg-[#1C1033] text-white' : 'bg-white text-[var(--ink-2)] shadow-[inset_0_0_0_1.5px_#ECE6F4]')}>{x}</button>
+      ))}
+    </div>
+  )
+}
+
+/* Pick any of a few words. */
+function ManyChips({ items, value = [], onChange, data }) {
+  return (
+    <div className="flex flex-wrap gap-2" data-chips={data}>
+      {items.map(x => {
+        const on = value.includes(x)
+        return (
+          <button key={x} type="button" onClick={() => onChange(on ? value.filter(v => v !== x) : [...value, x])} aria-pressed={on} data-chip={x}
+            className={'cx-press flex items-center gap-1 rounded-full px-3.5 py-2 text-[12.5px] font-bold ' + (on ? 'bg-[#F1E9FF] text-[#4C1D95] shadow-[inset_0_0_0_1.5px_#7C3AED]' : 'bg-white text-[var(--ink-2)] shadow-[inset_0_0_0_1.5px_#ECE6F4]')}>
+            {on && <Check size={13} strokeWidth={3} />}{x}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+/* Photo tiles, pick any — how the food is arranged, who entertains. */
+function PhotoMulti({ items, value = [], onChange, data }) {
+  return (
+    <div className="grid grid-cols-3 gap-2" data-photo-multi={data}>
+      {items.map(x => {
+        const on = value.includes(x.id)
+        return (
+          <button key={x.id} type="button" onClick={() => onChange(on ? value.filter(v => v !== x.id) : [...value, x.id])} aria-pressed={on} data-pick={x.id}
+            className={'cx-press overflow-hidden rounded-[14px] bg-white text-left ' + (on ? 'shadow-[0_0_0_2.5px_#7C3AED]' : 'shadow-[0_0_0_1px_#ECE6F4]')}>
+            <span className="relative block aspect-[4/3] bg-[#F3EEF9]">
+              {x.photo && <Photo src={x.photo.url} alt={x.photo.alt} className="absolute inset-0 h-full w-full object-cover" />}
+              {on && <span className="absolute right-1.5 top-1.5 grid h-6 w-6 place-items-center rounded-full bg-[#7C3AED] text-white"><Check size={13} strokeWidth={3.2} /></span>}
+            </span>
+            <span className="block truncate px-1.5 pt-1.5 text-[12px] font-extrabold">{x.label}</span>
+            {x.line && <span className="block truncate px-1.5 pb-1.5 text-[10px] font-semibold text-[var(--ink-3)]">{x.line}</span>}
+            {!x.line && <span className="block pb-1.5" />}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+

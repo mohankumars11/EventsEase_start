@@ -126,6 +126,30 @@ const explain = r => REASON_TEXT[r]
 
 const clean = (v, n = 500) => String(v ?? '').trim().slice(0, n) || null
 
+/* The customer's menu from the Menu Studio, as the partner will price it:
+   a structured snapshot (sections → dishes), never one text blob, bounded
+   so a request row stays small. Anything else in it is dropped. */
+const DIETS = ['veg', 'non_veg', 'egg']
+export function menuSnapshot(m) {
+  if (!m || typeof m !== 'object' || !Array.isArray(m.sections)) return null
+  const sections = m.sections.slice(0, 14).map(s => ({
+    id: clean(s?.id, 20), name: clean(s?.name, 40),
+    dishes: (Array.isArray(s?.dishes) ? s.dishes : []).slice(0, 40).map(d => ({
+      id: clean(d?.id, 60), n: clean(d?.n, 80), d: DIETS.includes(d?.d) ? d.d : null,
+      c: d?.c === 'added' || d?.c === 'swapped' || d?.c === 'typed' ? d.c : null, r: clean(d?.r, 80),
+    })).filter(d => d.n),
+  })).filter(s => s.id && s.dishes.length)
+  if (!sections.length) return null
+  return {
+    menuId: /^[0-9a-f-]{36}$/i.test(String(m.menuId ?? '')) ? m.menuId : null, version: Number(m.version) || null,
+    templateId: clean(m.templateId, 60), name: clean(m.name, 120), cuisine: clean(m.cuisine, 60), diet: clean(m.diet, 12),
+    meal: clean(m.meal, 12), serve: clean(m.serve, 40), guests: Math.max(0, Math.min(100000, Number(m.guests) || 0)) || null,
+    allergies: clean(m.allergies, 300), instructions: clean(m.instructions, 1000), flags: (Array.isArray(m.flags) ? m.flags : []).slice(0, 20).map(f => clean(f, 120)).filter(Boolean),
+    refs: (Array.isArray(m.refs) ? m.refs : []).filter(u => /^https:\/\//.test(String(u))).slice(0, 5).map(u => String(u).slice(0, 500)),
+    sections,
+  }
+}
+
 const inr = p => `₹${Math.round(Number(p) / 100).toLocaleString('en-IN')}`
 const dayText = d => (d ? new Date(`${d}T00:00:00`).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' }) : 'Date to confirm')
 /* What the partner reads first: the offer, what it means for them, why. */
@@ -285,7 +309,7 @@ export default async function handler(req, res) {
     p_address_text: clean(venue.address), p_area_label: clean(venue.area, 160), p_city: clean(venue.city, 120),
     p_policy_version: VERSION,
     p_time_note: clean(`${r.start_time ?? ''}${r.hours ? ` · ${r.hours}h` : ''}${Number(r.days) > 1 ? ` × ${r.days} days` : ''}${r.end_date ? ` → ${r.end_date}` : ''}`, 80),
-    p_notes: clean(body.note, 1000),
+    p_notes: clean(body.note, 2000),
   })
   if (bErr || !booking?.ok) return res.status(500).json({ error: bErr?.message ?? booking?.detail ?? 'Could not create the booking.' })
 
@@ -293,12 +317,12 @@ export default async function handler(req, res) {
   if (resolution.path === 'INSTANT' && !offer && body.quote !== true) {
     const partner = resolution.take_home_paise
     const first = lineFrom(resolution, { requestId: booking.request_id, serviceId: vendorServiceId, name: svc?.name ?? TRADE, trade: TRADE,
-      note: clean(body.note, 1000), fee: FEE, r, list: LIST, listAdv: LIST_ADV, margin: MARGIN, city: CITY })
+      note: clean(body.note, 2000), fee: FEE, r, list: LIST, listAdv: LIST_ADV, margin: MARGIN, city: CITY })
 
     /* ── REQUEST (197): ask this master alone; queue the backups ─────── */
     if (body.mode === 'request') {
       const backups = await priceBackups(db, body.backups, { r, first: vendorServiceId, vendorId: resolution.vendor_id, requestId: booking.request_id,
-        note: clean(body.note, 1000), city: CITY, tradeCode: TRADE_CODE })
+        note: clean(body.note, 2000), city: CITY, tradeCode: TRADE_CODE })
       const { data: asked, error: aErr } = await db.rpc('request_partner_line', {
         p_line: first, p_vendor_id: resolution.vendor_id, p_partner_paise: partner, p_backups: backups, p_spec_mode: 'standard',
       })
@@ -349,7 +373,7 @@ export default async function handler(req, res) {
     event_date: r.event_date, start_time: clean(r.start_time, 20), end_time: null,
     service_location: { city: clean(venue.city, 120), area: clean(venue.area, 160), address: clean(venue.address), lat, lng,
       distance_m: resolution.distance_km != null ? Math.round(resolution.distance_km * 1000) : null },
-    canonical_demand: { ...r, tradeId: TRADE_CODE, tradeName: TRADE, note: clean(body.note, 1000),
+    canonical_demand: { ...r, tradeId: TRADE_CODE, tradeName: TRADE, note: clean(body.note, 2000), menu: menuSnapshot(body.menu),
       summary: offer ? offerSummary(offer, resolution, FEE) : (out.reasons_text ?? []).join(' '), reasons: resolution.reasons, engine: VERSION,
       advance_pct: resolution.advance_pct ?? null,
       // The margin this request was made at — the partner's quote is shown and booked at it.

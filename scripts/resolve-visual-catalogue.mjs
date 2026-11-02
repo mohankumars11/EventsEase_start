@@ -54,6 +54,22 @@ const Q = {
   'cake:fondant': 'fondant theme cake kids',
   'cake:minimal': 'minimal white cake',
   'cake:tiered': 'three tier celebration cake',
+  'food:caterer': 'indian catering buffet event',
+  'food:cook': 'chef cooking indian food kitchen',
+  'food:live': 'live cooking station event',
+  'food:counters': 'food counter stall event',
+  'food:packed': 'packed meal boxes',
+  'food:custom': 'indian food spread',
+  'food:drinks': 'mocktails welcome drinks',
+  'ent:magician': 'magician show kids',
+  'ent:mascot': 'mascot costume party kids',
+  'ent:puppet': 'puppet show',
+  'ent:games': 'kids party games',
+  'ent:singer': 'live singer performance',
+  'ent:dj': 'dj party lights',
+  'ent:anchor': 'event host microphone stage',
+  'ent:band': 'live band music performance',
+  'ent:dance': 'dance performance stage',
 }
 /* After review: key → candidate index when the first is wrong. */
 const PICK = {
@@ -61,6 +77,7 @@ const PICK = {
   'theme:haldi': 4, 'theme:pastelwedding': 1, 'theme:royal': 2, 'theme:whitefloral': 1, 'theme:brandstage': 2, 'theme:ledstage': 1,
   'theme:awards': 4, 'theme:lounge': 4, 'theme:minimalcorp': 1, 'theme:fairylights': 4, 'theme:rustic': 5,
   'cake:teddy': 3, 'cake:number': 6, 'cake:floral': 1, 'cake:fondant': 2, 'cake:minimal': 8, 'cake:tiered': 1,
+  'food:caterer': 1, 'food:cook': 1, 'food:custom': 1, 'ent:magician': 1, 'ent:mascot': 1, 'ent:puppet': 1, 'ent:singer': 3, 'ent:dj': 2, 'ent:anchor': 3, 'ent:band': 1,
 }
 
 const WRITE_ONLY = process.argv.includes('--write')

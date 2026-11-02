@@ -50,13 +50,54 @@ export const FONTS = [
   ['calligraphy', 'Calligraphy', "'Pinyon Script', cursive"], ['bold', 'Modern bold', 'inherit'],
 ].map(([id, label, family]) => ({ id, label, family }))
 
-/* Who cooks — the catering partners' own onboarding answer (prep_location),
-   so the match only reaches partners who work that way. How it is served
-   lives in lib/sambramoMenu.SERVE (their service_styles answer). */
+/* How the food is arranged (spec §6) — pick one or more. Each maps to the
+   catering partners' own onboarding answers (data/trades/catering_food.js:
+   prep_location, service_styles, services), so the match only reaches
+   partners who said they do it. Restaurants are not offered until
+   restaurant partners exist (no impossible options). */
+const F = id => VISUALS[`food:${id}`] ?? null
 export const FOOD_WAYS = [
-  { id: 'caterer', label: 'A caterer cooks & serves', line: 'Cooked in their kitchen, served at your event', needs: {} },
-  { id: 'cook', label: 'A cook at your place', line: 'Cooks fresh at your venue', needs: { prep_location: ["At the customer's venue", 'At both locations'] } },
+  { id: 'caterer', label: 'Caterer', line: 'Cooked in their kitchen, served at yours', photo: F('caterer'), needs: {} },
+  { id: 'cook', label: 'Cook or chef', line: 'Cooks fresh at your place', photo: F('cook'), needs: { prep_location: ["At the customer's venue", 'At both locations'] } },
+  { id: 'live', label: 'Live cooking', line: 'Cooked in front of guests', photo: F('live'), needs: { service_styles: ['Live cooking'] } },
+  { id: 'counters', label: 'Live counters', line: 'Dosa, chaat, BBQ stations', photo: F('counters'), needs: { service_styles: ['Food counters'] } },
+  { id: 'packed', label: 'Packed meals', line: 'Boxed meals, delivered', photo: F('packed'), needs: { services: ['Packed meals', 'Institutional or bulk catering'] } },
+  { id: 'custom', label: 'Something else', line: 'Tell us how', photo: F('custom'), needs: {} },
 ]
+/* The partner-facet answers several ways add up to — any of them within a question. */
+export function foodNeeds(ways = []) {
+  const out = { prep_location: [], service_styles: [], services: [] }
+  for (const w of FOOD_WAYS.filter(x => ways.includes(x.id))) for (const [k, v] of Object.entries(w.needs)) out[k] = [...new Set([...out[k], ...v])]
+  return out
+}
+export const COOK_TEAM = ['One cook', 'A cooking team', 'Chef + assistants']
+export const INGREDIENTS = ['I’ll buy the ingredients', 'They bring everything']
+export const DRINKS = ['Welcome drinks', 'Juices & mocktails', 'Tea & coffee', 'Soft drinks', 'Water bottles']
+export const DECOR_ELEMENTS = ['Backdrop', 'Balloon arch', 'Cake table', 'Entrance', 'Stage', 'Flowers', 'Welcome board', 'Ceiling décor', 'Photo booth', 'Set-up & take-down']
+export const CAKE_OPTIONS = {
+  weight: ['0.5 kg', '1 kg', '2 kg', '3 kg', '5 kg+'], tiers: ['1 tier', '2 tiers', '3 tiers'], shape: ['Round', 'Square', 'Heart', 'Number', 'Custom'],
+  egg: ['With egg', 'Eggless'], delivery: ['Deliver to venue', 'I’ll pick it up'],
+}
+export const PHOTO_HOURS = ['2 hours', '4 hours', '6 hours', 'Full day']
+export const PHOTO_EXTRAS = ['Printed album', 'Reels', 'Drone', 'Photo booth', 'Instant prints', 'Same-day edit', 'Cake-smash shoot']
+const E = (id, label) => ({ id, label, photo: VISUALS[`ent:${id}`] ?? null })
+export const ENTERTAINERS = [E('magician', 'Magician'), E('mascot', 'Mascot'), E('puppet', 'Puppet show'), E('games', 'Kids’ games'), E('singer', 'Live singer'),
+  E('dj', 'DJ'), E('anchor', 'Anchor'), E('band', 'Live band'), E('dance', 'Dancers')]
+
+/* Which décor theme families an occasion offers (DECOR_THEMES above). */
+/* Décor themes by kind of occasion — names the decorator works from.
+   (A stock-photo wall per theme was built and withdrawn on 2 Nov: search
+   results for these themes were mostly not décor — see sambramo memory.) */
+export const DECOR_THEMES = {"kids": ["Teddy bear", "Jungle safari", "Princess", "Pastel rainbow", "Space", "Unicorn", "Mermaid & sea", "Dinosaur", "Superhero", "Cars & racing", "Butterfly garden", "Balloon garland"], "traditional": ["Marigold", "Rangoli", "Diyas & lamps", "Pooja mandap", "Jasmine & roses", "Brass & lamps", "Lotus", "Temple style", "Festive entrance", "Pastel ceremony", "Warm lights", "Kolam"], "baby": ["Flower cradle", "Teddy & soft toys", "Pastel balloons", "Moon & stars", "Floral nursery", "Name backdrop"], "wedding": ["Floral stage", "Wedding mandap", "Haldi", "Mehendi", "Sangeet", "Reception stage", "Royal gold", "Pastel garden", "White florals", "Entrance arch", "Table centrepieces", "Car décor"], "corporate": ["Branded stage", "LED wall", "Conference stage", "Launch reveal", "Awards night", "Exhibition booth", "Registration desk", "Ribbon cutting", "Lounge", "Gala dinner", "Branded balloons", "Minimal stage"], "party": ["Fairy lights", "Boho", "Rustic", "Balloon arch", "Cocktail party", "Anniversary", "Candlelight", "Garden party", "Retro", "Glitter & gold", "Bachelorette"]}
+
+export function designFamilies(o) {
+  if (o?.template === 'babyRite') return ['baby', 'traditional']
+  if (KIDS.has(o?.template)) return ['kids', 'party']
+  if (TRADITIONAL.has(o?.template) || o?.category === 'festivals') return ['traditional']
+  if (o?.category === 'wedding') return ['wedding', 'traditional']
+  if (['corporate', 'industry', 'retail', 'property'].includes(o?.category)) return ['corporate']
+  return ['party']
+}
 
 export const ACTION = {
   catering_food: 'Choose food', cake_desserts: 'Choose cake', decoration_floral: 'Choose décor', photography: 'Choose photos',

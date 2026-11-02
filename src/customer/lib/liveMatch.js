@@ -78,6 +78,22 @@ export async function matchTrade(tradeId, { occasionId, event, place, needs = {}
 }
 
 /**
+ * Every master who can take this service for this event, best first —
+ * capability, area and the customer's needs (diet, service style, where
+ * the food is cooked) — without pricing anyone. The Menu Studio sends its
+ * menu to the top of this list; the server re-checks each one's calendar
+ * as the request lands (anchorBook), so a busy master never receives it.
+ */
+export async function poolFor(tradeId, { event, place, needs = {}, seed = '' } = {}) {
+  const at = place?.lat ? { lat: place.lat, lng: place.lng } : {}
+  const all = await partnersFor(tradeId, at).catch(() => [])
+  const f = filterByNeeds(all, tradeId, needs, event?.guests)
+  /* exact: false — nobody meets everything; these are the closest, and
+     `missing` says what they lack, so the screen can say so first. */
+  return { near: all.length, exact: f.exact, missing: [...new Set((f.list ?? []).flatMap(p => p.missing ?? []))], pool: fair(rank(f.list ?? all), `${seed}|${tradeId}`) }
+}
+
+/**
  * Price one named master for the same request (the Swap sheet). Null when
  * they cannot take it.
  */

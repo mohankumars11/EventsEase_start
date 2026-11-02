@@ -39,6 +39,13 @@ export default async function handler(req, res) {
   if (!['VENDOR_QUOTE', 'QUOTE_ACTION_REQUIRED'].includes(request.state)) return res.status(409).json({ error: 'Quote request is already resolved' })
   if (!request.booking_request_id) return res.status(409).json({ error: 'Quote request has no booking container' })
 
+  /* A partner who changed the customer's menu is not booked until the
+     customer has seen and approved exactly those changes — never silently. */
+  const menuChanges = Array.isArray(response.partner_components?.menu?.changes) ? response.partner_components.menu.changes : []
+  if (menuChanges.length && req.body?.approveChanges !== true) {
+    return res.status(409).json({ error: 'This partner changed your menu. Review the changes and approve them to accept.', needsApproval: true, changes: menuChanges })
+  }
+
   // Calendar is the final eligibility gate for a quote as well as an instant book.
   // A partner can become unavailable in the minutes between receiving a quote and
   // the customer accepting it. Re-run the same matcher used for dispatch so a
@@ -186,6 +193,15 @@ export default async function handler(req, res) {
     const line = { id: booked.line_id }
 
     await db.from('sambramo_quote_responses').update({ status: 'ACCEPTED' }).eq('id', response.id)
+    /* The customer's approval of the final menu (migration 200 — until it is
+       pasted these writes fail quietly; the booking itself is unaffected). */
+    const menu = demand.menu
+    if (menu) {
+      await db.from('sambramo_menu_approvals').insert({ customer_id: authn.user.id, quote_request_id: request.id, response_id: response.id,
+        menu_id: menu.menuId ?? null, changes: menuChanges })
+      if (menu.menuId) await db.from('sambramo_customer_menus').update({ status: 'approved', approved_response_id: response.id, updated_at: now })
+        .eq('id', menu.menuId).eq('customer_id', authn.user.id)
+    }
     const { data: groupRequests } = request.quote_group_id
       ? await db.from('sambramo_quote_requests').select('id').eq('quote_group_id', request.quote_group_id)
       : { data: [] }

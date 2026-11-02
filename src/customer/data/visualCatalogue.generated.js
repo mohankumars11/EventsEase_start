@@ -364,5 +364,181 @@ export const VISUALS = {
   "source": "pexels",
   "licence": "Pexels License",
   "kind": "inspiration"
+ },
+ "food:caterer": {
+  "id": 37976941,
+  "url": "https://images.pexels.com/photos/37976941/pexels-photo-37976941.jpeg?auto=compress&cs=tinysrgb&fit=crop&w=700&h=525",
+  "alt": "A vibrant display of gourmet appetizers in cups at a wedding reception.",
+  "credit": "Photo by Jonathan Borba on Pexels",
+  "page": "https://www.pexels.com/photo/elegant-wedding-reception-food-display-37976941/",
+  "tone": "#7F4829",
+  "source": "pexels",
+  "licence": "Pexels License",
+  "kind": "inspiration"
+ },
+ "food:cook": {
+  "id": 39025942,
+  "url": "https://images.pexels.com/photos/39025942/pexels-photo-39025942.jpeg?auto=compress&cs=tinysrgb&fit=crop&w=700&h=525",
+  "alt": "Chef skillfully preparing traditional Indian street food chaat with various toppings and sauces.",
+  "credit": "Photo by Diana Teronpi on Pexels",
+  "page": "https://www.pexels.com/photo/chef-preparing-indian-street-food-chaat-39025942/",
+  "tone": "#514837",
+  "source": "pexels",
+  "licence": "Pexels License",
+  "kind": "inspiration"
+ },
+ "food:live": {
+  "id": 8250733,
+  "url": "https://images.pexels.com/photos/8250733/pexels-photo-8250733.jpeg?auto=compress&cs=tinysrgb&fit=crop&w=700&h=525",
+  "alt": "Chef frying food in an outdoor kitchen setting, showcasing hand and utensil focus.",
+  "credit": "Photo by Julia Filirovska on Pexels",
+  "page": "https://www.pexels.com/photo/person-preparing-piece-of-meat-8250733/",
+  "tone": "#8C837E",
+  "source": "pexels",
+  "licence": "Pexels License",
+  "kind": "inspiration"
+ },
+ "food:counters": {
+  "id": 39639916,
+  "url": "https://images.pexels.com/photos/39639916/pexels-photo-39639916.jpeg?auto=compress&cs=tinysrgb&fit=crop&w=700&h=525",
+  "alt": "Image of a food stall with cooking pots, showcasing outdoor cooking setup at a market.",
+  "credit": "Photo by Stefan Vibes on Pexels",
+  "page": "https://www.pexels.com/photo/outdoor-food-stall-with-cooking-pots-and-people-39639916/",
+  "tone": "#887972",
+  "source": "pexels",
+  "licence": "Pexels License",
+  "kind": "inspiration"
+ },
+ "food:packed": {
+  "id": 6995260,
+  "url": "https://images.pexels.com/photos/6995260/pexels-photo-6995260.jpeg?auto=compress&cs=tinysrgb&fit=crop&w=700&h=525",
+  "alt": "Preparing various lunch boxes with vegetables, beans, and hummus for meal distribution.",
+  "credit": "Photo by Julia M Cameron on Pexels",
+  "page": "https://www.pexels.com/photo/people-packing-food-6995260/",
+  "tone": "#8D806E",
+  "source": "pexels",
+  "licence": "Pexels License",
+  "kind": "inspiration"
+ },
+ "food:custom": {
+  "id": 9792458,
+  "url": "https://images.pexels.com/photos/9792458/pexels-photo-9792458.jpeg?auto=compress&cs=tinysrgb&fit=crop&w=700&h=525",
+  "alt": "Delicious Indian food spread featuring vibrant tandoori chicken and aromatic curries.",
+  "credit": "Photo by Alberta Studios on Pexels",
+  "page": "https://www.pexels.com/photo/flat-lay-of-indian-cuisine-9792458/",
+  "tone": "#6B584A",
+  "source": "pexels",
+  "licence": "Pexels License",
+  "kind": "inspiration"
+ },
+ "food:drinks": {
+  "id": 34278808,
+  "url": "https://images.pexels.com/photos/34278808/pexels-photo-34278808.jpeg?auto=compress&cs=tinysrgb&fit=crop&w=700&h=525",
+  "alt": "Vibrant selection of signature mocktails on display at a sophisticated indoor event.",
+  "credit": "Photo by Justin Agyarko on Pexels",
+  "page": "https://www.pexels.com/photo/colorful-mocktail-display-at-elegant-event-34278808/",
+  "tone": "#927965",
+  "source": "pexels",
+  "licence": "Pexels License",
+  "kind": "inspiration"
+ },
+ "ent:magician": {
+  "id": 12963701,
+  "url": "https://images.pexels.com/photos/12963701/pexels-photo-12963701.jpeg?auto=compress&cs=tinysrgb&fit=crop&w=700&h=525",
+  "alt": "A captivating magician performing a card trick with an assistant on stage, engaging the audience.",
+  "credit": "Photo by Nipin Niravath on Pexels",
+  "page": "https://www.pexels.com/photo/a-man-in-black-shirt-doing-magic-12963701/",
+  "tone": "#3F3734",
+  "source": "pexels",
+  "licence": "Pexels License",
+  "kind": "inspiration"
+ },
+ "ent:mascot": {
+  "id": 33239430,
+  "url": "https://images.pexels.com/photos/33239430/pexels-photo-33239430.jpeg?auto=compress&cs=tinysrgb&fit=crop&w=700&h=525",
+  "alt": "A child posing with rabbit mascots by a beach, under palm trees on a sunny day.",
+  "credit": "Photo by Gabdu Jomart on Pexels",
+  "page": "https://www.pexels.com/photo/boy-enjoying-beach-vacation-with-bunny-characters-33239430/",
+  "tone": "#A09B97",
+  "source": "pexels",
+  "licence": "Pexels License",
+  "kind": "inspiration"
+ },
+ "ent:puppet": {
+  "id": 7356561,
+  "url": "https://images.pexels.com/photos/7356561/pexels-photo-7356561.jpeg?auto=compress&cs=tinysrgb&fit=crop&w=700&h=525",
+  "alt": "Bright puppet theater setup with two animal puppets performing on stage.",
+  "credit": "Photo by Vlada Karpovich on Pexels",
+  "page": "https://www.pexels.com/photo/close-up-shot-of-a-puppet-show-7356561/",
+  "tone": "#A29E9B",
+  "source": "pexels",
+  "licence": "Pexels License",
+  "kind": "inspiration"
+ },
+ "ent:games": {
+  "id": 27788073,
+  "url": "https://images.pexels.com/photos/27788073/pexels-photo-27788073.jpeg?auto=compress&cs=tinysrgb&fit=crop&w=700&h=525",
+  "alt": "Kids playing a fun balloon game in a vibrant outdoor birthday party setting.",
+  "credit": "Photo by Hannah Barata on Pexels",
+  "page": "https://www.pexels.com/photo/a-child-is-playing-with-a-red-balloon-27788073/",
+  "tone": "#A89D87",
+  "source": "pexels",
+  "licence": "Pexels License",
+  "kind": "inspiration"
+ },
+ "ent:singer": {
+  "id": 7715788,
+  "url": "https://images.pexels.com/photos/7715788/pexels-photo-7715788.jpeg?auto=compress&cs=tinysrgb&fit=crop&w=700&h=525",
+  "alt": "A vibrant female singer passionately performing under a spotlight on stage.",
+  "credit": "Photo by Alena Darmel on Pexels",
+  "page": "https://www.pexels.com/photo/a-woman-in-black-shirt-standing-in-front-of-the-microphone-with-bright-spotlight-7715788/",
+  "tone": "#282C2F",
+  "source": "pexels",
+  "licence": "Pexels License",
+  "kind": "inspiration"
+ },
+ "ent:dj": {
+  "id": 33539320,
+  "url": "https://images.pexels.com/photos/33539320/pexels-photo-33539320.jpeg?auto=compress&cs=tinysrgb&fit=crop&w=700&h=525",
+  "alt": "DJ performing with colorful disco lights creating a lively atmosphere at a night party.",
+  "credit": "Photo by Alexander  Camargo on Pexels",
+  "page": "https://www.pexels.com/photo/vibrant-dj-performance-at-night-party-33539320/",
+  "tone": "#301E74",
+  "source": "pexels",
+  "licence": "Pexels License",
+  "kind": "inspiration"
+ },
+ "ent:anchor": {
+  "id": 11030627,
+  "url": "https://images.pexels.com/photos/11030627/pexels-photo-11030627.jpeg?auto=compress&cs=tinysrgb&fit=crop&w=700&h=525",
+  "alt": "A man speaking into a microphone during a formal dinner gathering indoors with elegant decor.",
+  "credit": "Photo by Misho chachanidze on Pexels",
+  "page": "https://www.pexels.com/photo/man-in-gray-sweater-holding-a-microphone-11030627/",
+  "tone": "#917E82",
+  "source": "pexels",
+  "licence": "Pexels License",
+  "kind": "inspiration"
+ },
+ "ent:band": {
+  "id": 3984830,
+  "url": "https://images.pexels.com/photos/3984830/pexels-photo-3984830.jpeg?auto=compress&cs=tinysrgb&fit=crop&w=700&h=525",
+  "alt": "A lively jazz band playing different instruments on stage, creating a vibrant musical atmosphere.",
+  "credit": "Photo by Gustavo Fring on Pexels",
+  "page": "https://www.pexels.com/photo/man-in-black-suit-playing-saxophone-3984830/",
+  "tone": "#9E958F",
+  "source": "pexels",
+  "licence": "Pexels License",
+  "kind": "inspiration"
+ },
+ "ent:dance": {
+  "id": 12327992,
+  "url": "https://images.pexels.com/photos/12327992/pexels-photo-12327992.jpeg?auto=compress&cs=tinysrgb&fit=crop&w=700&h=525",
+  "alt": "Vibrant folk dance performance by three young male performers on stage.",
+  "credit": "Photo by Андрей on Pexels",
+  "page": "https://www.pexels.com/photo/photograph-of-boys-dancing-on-a-stage-12327992/",
+  "tone": "#3E3548",
+  "source": "pexels",
+  "licence": "Pexels License",
+  "kind": "inspiration"
  }
 }

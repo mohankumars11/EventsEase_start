@@ -27,6 +27,7 @@ export const NAV = [
       { id: 'revenue', label: 'Payments & revenue', emoji: '₹', description: 'Booked, collected, owed and paid kept apart, each naming the table and column it came from.' },
       { id: 'orders', label: 'Bookings & orders', emoji: '◫', description: 'Every booking line, its lifecycle timestamps and the money recorded against it.' },
       { id: 'food-catalogue', label: 'Food catalogue review', emoji: '◍', description: 'The shared dish catalogue every caterer picks from — approve, rename or hide a dish. 1,764 were waiting with nowhere to review them.' },
+      { id: 'menu-catalogue', label: 'Menu catalogue', emoji: '❦', description: 'Sambramo’s own menus customers choose from — cuisines, menus, dishes by section, photos and which occasions they suit.' },
       { id: 'media', label: 'Media library', emoji: '▧', description: 'Portfolio work, compliance documents and listing photos, with the review decision on each.' },
       { id: 'live-ops', label: 'Live operations', emoji: '◉', description: 'Operational work, partner availability and active service signals.' },
       { id: 'story-uploads', label: 'Partner story uploads', emoji: '▶', description: 'Photos, reels and videos for the four guide stories a partner sees on the Jobs tab.' },

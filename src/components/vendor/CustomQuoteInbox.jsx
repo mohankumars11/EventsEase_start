@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import BriefNote from './BriefNote'
+import { MenuBrief, MenuQuoteSheet } from './MenuQuote'
 import { Camera, CheckCircle2, Clock3, MapPin, Send, X } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { apiFetch } from '../../lib/api'
@@ -57,7 +58,8 @@ export default function CustomQuoteInbox({ vendorId }) {
       {requests.length > 0 && requests.map(r => (
         <QuoteCard key={r.id} request={r} onRespond={() => setOpen(r)} />
       ))}
-      {open && (/^(anchor|trades)-engine/.test(String(open.canonical_demand?.engine ?? ''))
+      {open && open.canonical_demand?.menu && <MenuQuoteSheet request={open} busy={busy} onClose={() => setOpen(null)} onSubmit={submit} />}
+      {open && !open.canonical_demand?.menu && (/^(anchor|trades)-engine/.test(String(open.canonical_demand?.engine ?? ''))
         ? <DirectedQuoteSheet request={open} busy={busy} onClose={() => setOpen(null)} onSubmit={submit} />
         : <QuoteSheet request={open} busy={busy} onClose={() => setOpen(null)} onSubmit={submit} />)}
     </section>
@@ -82,10 +84,10 @@ function QuoteCard({ request, onRespond }) {
       </p>
       <p className="mt-1 flex items-center gap-1 text-[11.5px] text-ink-mute"><MapPin size={12} /> {loc.area ?? loc.city ?? 'Location shared in request'}</p>
       {request.reference_photo_url && <p className="mt-2 flex items-center gap-1 text-[11px] font-bold text-ink-mute"><Camera size={12} /> Reference attached</p>}
-      {demand.note && <BriefNote text={demand.note} className="mt-3" />}
+      {demand.menu ? <MenuBrief menu={demand.menu} compact /> : demand.note && <BriefNote text={demand.note} className="mt-3" />}
       {scope && <div className="mt-3 rounded-2xl bg-surface p-3 text-[11.5px] leading-relaxed text-ink-soft"><strong>Scope:</strong> {scope}</div>}
       <button type="button" onClick={onRespond} className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-saffron-400 py-3 text-[13px] font-extrabold text-plum-950">
-        <Send size={14} /> Respond with quote
+        <Send size={14} /> {demand.menu ? 'Price this menu' : 'Respond with quote'}
       </button>
     </article>
   )

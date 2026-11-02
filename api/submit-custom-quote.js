@@ -132,9 +132,31 @@ export default async function handler(req, res) {
   }
   const customerAmountPaise = Math.max(partnerAmountPaise + 100, Math.round(partnerAmountPaise / (1 - feeRate)))
   const platformFeePaise = customerAmountPaise - partnerAmountPaise
+  /* A reply to a Menu Studio menu (canonical_demand.menu): whether the
+     partner quotes it as asked or with changes, their per-plate price and
+     minimum, how long the quote holds, and every dish they would change.
+     A quote that changes the menu cannot be accepted until the customer
+     approves those changes (accept-custom-quote). */
+  const reply = body.menuReply && typeof body.menuReply === 'object' && request.canonical_demand?.menu ? body.menuReply : null
+  const changes = reply && Array.isArray(reply.changes) ? reply.changes.slice(0, 40).map(c => ({
+    action: ['swap', 'remove', 'add', 'note'].includes(c?.action) ? c.action : 'note',
+    section_id: String(c?.section_id ?? '').slice(0, 20) || null,
+    from_dish_id: String(c?.from_dish_id ?? '').slice(0, 60) || null, from_name: String(c?.from_name ?? '').trim().slice(0, 80) || null,
+    to_dish_id: String(c?.to_dish_id ?? '').slice(0, 60) || null, to_name: String(c?.to_name ?? '').trim().slice(0, 80) || null,
+    note: String(c?.note ?? '').trim().slice(0, 300) || null,
+  })).filter(c => c.from_name || c.to_name || c.note) : []
+  const menuReply = reply ? {
+    kind: changes.length ? 'with_changes' : 'as_asked',
+    perPlatePaise: Math.max(0, Math.round(Number(reply.perPlatePaise) || 0)) || null,
+    minGuests: Math.max(0, Math.min(100000, Math.round(Number(reply.minGuests) || 0))) || null,
+    validDays: Math.max(1, Math.min(14, Math.round(Number(reply.validDays) || 2))),
+    changes,
+  } : null
   // A directed quote is for a planned event: give the customer two days, not minutes.
-  const acceptMinutes = directed ? 48 * 60 : CUSTOMER_ACCEPT_MINUTES
-  const validUntil = new Date(Date.now() + acceptMinutes * 60 * 1000).toISOString()
+  const acceptMinutes = menuReply ? menuReply.validDays * 24 * 60 : directed ? 48 * 60 : CUSTOMER_ACCEPT_MINUTES
+  /* Never valid past the event itself. */
+  const eventEnd = request.event_date ? new Date(`${request.event_date}T23:59:59+05:30`).getTime() : Infinity
+  const validUntil = new Date(Math.min(Date.now() + acceptMinutes * 60 * 1000, eventEnd)).toISOString()
 
   const { data, error } = await db
     .from('sambramo_quote_responses')
@@ -142,7 +164,7 @@ export default async function handler(req, res) {
       quote_request_id: quoteRequestId,
       vendor_id: vendor.id,
       partner_amount_paise: partnerAmountPaise,
-      partner_components: lines ? { lines } : (body.partnerComponents && typeof body.partnerComponents === 'object' ? body.partnerComponents : {}),
+      partner_components: { ...(lines ? { lines } : (body.partnerComponents && typeof body.partnerComponents === 'object' ? body.partnerComponents : {})), ...(menuReply ? { menu: menuReply } : {}) },
       inclusions: list(body.inclusions),
       exclusions: list(body.exclusions),
       quote_valid_until: validUntil,
@@ -164,11 +186,14 @@ export default async function handler(req, res) {
       .eq('quote_request_id', quoteRequestId).order('quote_version', { ascending: false }).limit(1)
     const version = (prev?.[0]?.quote_version ?? 0) + 1
     await db.from('sambramo_quote_line_items').insert(lines.map(l => ({ ...l, quote_request_id: quoteRequestId, vendor_id: vendor.id, quote_version: version })))
+    /* The proposed changes, one row each (migration 200; until it is pasted
+       they live only in partner_components.menu, which the app reads). */
+    if (changes.length) await db.from('sambramo_quote_menu_changes').insert(changes.map(c => ({ ...c, quote_request_id: quoteRequestId, vendor_id: vendor.id, quote_version: version })))
   }
 
   /* After the write: the customer hears about the quote while it is still open. */
   await notifyCustomer(db, { customerId: request.customer_id, url: '/plans',
-    title: `${vendor.business_name ?? 'Your partner'} sent you a quote`,
+    title: `${vendor.business_name ?? 'Your partner'} sent you a quote${menuReply?.kind === 'with_changes' ? ' with menu changes' : ''}`,
     body: `₹${Math.round(Number(data.customer_amount_paise) / 100).toLocaleString('en-IN')} for ${request.service_name ?? 'your request'} · tap to accept` })
 
   return res.status(200).json({

@@ -47,7 +47,7 @@ export async function myBookings(userId) {
       .select('id, occasion_name, event_date, time_note, area_label, city, created_at, booking_lines(id, service_id, service_name, trade, status, quoted_amount_paise, pricing_snapshot, paid_at, accepted_at)')
       .eq('customer_id', userId).order('created_at', { ascending: false }).limit(40),
     supabase.from('sambramo_quote_requests')
-      .select('id, service_name, vendor_service_id, trade_id, state, event_date, start_time, expires_at, created_at, canonical_demand, sambramo_quote_responses(id, status, customer_amount_paise, quote_valid_until, notes)')
+      .select('id, service_name, vendor_service_id, trade_id, state, event_date, start_time, expires_at, created_at, canonical_demand, sambramo_quote_responses(id, status, customer_amount_paise, quote_valid_until, notes, partner_components, inclusions, exclusions)')
       .eq('customer_id', userId).order('created_at', { ascending: false }).limit(40),
   ])
   /* What vouchers took off (193). Best effort: before 193 there is none. */
@@ -77,8 +77,8 @@ export async function myBookings(userId) {
 }
 
 /** Accept a partner's quote: the server books it (an accepted line) and returns what to pay. */
-export async function acceptQuote(quoteResponseId) {
-  const r = await fetch(apiUrl('/api/accept-custom-quote'), { method: 'POST', headers: await authHeaders(), body: JSON.stringify({ quoteResponseId }) })
+export async function acceptQuote(quoteResponseId, { approveChanges = false } = {}) {
+  const r = await fetch(apiUrl('/api/accept-custom-quote'), { method: 'POST', headers: await authHeaders(), body: JSON.stringify({ quoteResponseId, approveChanges }) })
   const j = await r.json().catch(() => ({}))
   if (!r.ok) throw new Error(j.error ?? 'Could not accept the quote.')
   return j

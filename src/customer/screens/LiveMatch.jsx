@@ -47,6 +47,7 @@ import { ActionBar, BackHeader, Photo, Sheet } from '../ui/kit'
 import EventJourney from '../ui/EventJourney'
 import { copyFor } from '../data/requirementCopy'
 import { briefFor } from '../lib/brief'
+import { loadCatalogue, snapshotFor } from '../lib/menuStudio'
 import { ArtFill } from '../ui/art'
 import SignInSheet from './SignInSheet'
 import InviteReady from '../ui/InviteReady'
@@ -158,12 +159,17 @@ export default function LiveMatch() {
           : [wants && `Needs: ${wants}`, also, where]).filter(Boolean).join(' · ') || undefined
         /* A planner prices THIS event (their listed package is a wedding's):
            the brief goes as a request for their fee, not a booking at it. */
+        /* Catering built in the Menu Studio goes as the structured menu too. */
+        const st = t === 'catering_food' ? plan.needsOf(o.id, t).$studio : null
+        const nd = st ? plan.needsOf(o.id, t) : null
+        const menu = st ? snapshotFor(await loadCatalogue({ live: false }), st, { diet: nd.$studioDiet ?? nd.$diet?.[0] ?? 'veg', meal: nd.$meal, serve: nd.$serve,
+          guests: Number(nd.$guests) || Number(ev.guests) || null, allergies: nd.$allergies, instructions: nd.$instructions, refs: nd.$refs ?? [], menuId: st.menuId ?? null }) : null
         if (!planner && compare > 1) {
           /* Compare: the brief goes to the best N as price requests. */
           const others = (r.pool ?? []).filter(p => p.serviceId !== line.serviceId).slice(0, compare - 1).map(p => lineOf(asLine(p), o.id))
           const group = crypto.randomUUID() // accepting one closes the rest
           /* Four at a time: ten requests take seconds, not half a minute. */
-          const sentNow = await some([line, ...others].map(l => () => quoteLine(l, ev, place, { note, venue, group }).catch(e => ({ path: 'ERROR', reasons_text: [e.message] }))), 4)
+          const sentNow = await some([line, ...others].map(l => () => quoteLine(l, ev, place, { note, venue, group, menu }).catch(e => ({ path: 'ERROR', reasons_text: [e.message] }))), 4)
           ;[line, ...others].forEach((l, k) => {
             const b = sentNow[k]
             results.push({ key: `${l.key}:${l.serviceId}`, tradeId: t, serviceId: l.serviceId, name: l.name, cover: l.cover, occasionId: o.id,
@@ -171,7 +177,7 @@ export default function LiveMatch() {
           })
           continue
         }
-        const b = planner ? await quoteLine(line, ev, place, { note, venue }) : await requestLine(line, ev, place, { note, venue, backups: r.backups ?? [] })
+        const b = planner ? await quoteLine(line, ev, place, { note, venue, menu }) : await requestLine(line, ev, place, { note, venue, backups: r.backups ?? [] })
         results.push({ key: line.key, tradeId: t, serviceId: line.serviceId, name: line.name, cover: line.cover, occasionId: o.id,
           path: b.path, lineId: b.lineId ?? null, quoteRequestId: b.quoteRequestId ?? null, bookingRequestId: b.bookingRequestId ?? null,
           amountPaise: b.customer_paise ?? null, reasons: b.reasons_text ?? [], replyBy: b.replyBy ?? null, backups: b.backups ?? 0, at: Date.now() })
