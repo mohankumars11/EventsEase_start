@@ -196,6 +196,12 @@ export default async function handler(req, res) {
         .eq('status', 'SUBMITTED')
         .in('quote_request_id', ids)
         .neq('id', response.id)
+      /* The masters not chosen stop seeing it as open: their requests close
+         (UNAVAILABLE), so nobody prices a job that is already taken. */
+      await db.from('sambramo_quote_requests')
+        .update({ state: 'UNAVAILABLE', updated_at: new Date().toISOString() })
+        .in('id', ids.filter(x => x !== request.id))
+        .in('state', ['VENDOR_QUOTE', 'QUOTE_ACTION_REQUIRED'])
     }
 
     return res.status(200).json({ ok: true, lineId: line.id, bookingRequestId: request.booking_request_id, quoteResponseId: response.id, amountPaise: LIST })

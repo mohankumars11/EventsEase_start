@@ -18,7 +18,6 @@ import { Photo } from './kit'
 import { photoFor } from '../data/photos.generated'
 import { TRADE } from '../data/trades'
 import { occasionLine } from '../data/occasions'
-import { rupees } from '../lib/format'
 
 const photoOf = o => photoFor(o.id) ?? photoFor(`cat:${o.category}`)
 
@@ -78,7 +77,6 @@ const initials = name => String(name).split(/\s+/).filter(Boolean).map(w => w[0]
 export function PartnerCard({ partner, added = false, onAdd, saved = false, onSave, selectable = false, selected = false, onSelect, className = '', href, compact = false }) {
   const p = partner
   const link = href ?? `/p/${p.serviceId}?t=${p.tradeId}`
-  const unit = p.fromKind === 'package' ? (p.fromLabel ? `${p.fromLabel} package` : 'package') : (p.fromUnit ?? 'onwards')
   return (
     <div className={'relative ' + className} data-partner={p.serviceId}>
       <Link to={link} className="cx-press block" aria-label={p.name}>
@@ -109,20 +107,9 @@ export function PartnerCard({ partner, added = false, onAdd, saved = false, onSa
             <span className="text-[var(--ink-3)]">·</span>
             <span className="truncate">{p.distanceKm != null ? `${p.distanceKm} km` : p.area}</span>
           </p>
-          {p.quote ? (
-            <>
-              <p className="mt-1 flex items-baseline gap-1 overflow-hidden whitespace-nowrap" data-quote>
-                <span className={'cx-num font-extrabold tracking-[-0.02em] ' + (compact ? 'text-[13.5px]' : 'text-[15.5px]')}>{rupees(p.quote.paise)}</span>
-                <span className="truncate text-[11px] font-extrabold text-[#0B7A45]">your price</span>
-              </p>
-              <p className="truncate text-[10.5px] font-bold text-[var(--ink-3)]">{p.quote.note}</p>
-            </>
-          ) : p.fromPaise ? (
-            <p className="mt-1 flex items-baseline gap-1 overflow-hidden whitespace-nowrap">
-              <span className={'cx-num font-extrabold tracking-[-0.02em] ' + (compact ? 'text-[13.5px]' : 'text-[15.5px]')}>{rupees(p.fromPaise)}</span>
-              <span className="truncate text-[11px] font-bold text-[var(--ink-3)]">{unit}</span>
-            </p>
-          ) : <p className="mt-1 text-[12.5px] font-bold text-[var(--ink-3)]">Price on request</p>}
+          {/* No price before a master accepts (Mohan, 2026-11-02) — their own
+              rate still ranks and matches them, behind the scenes. */}
+          <p className="mt-1 truncate text-[11.5px] font-bold text-[#0B6B3D]">{p.instant ? 'Accepts fast' : 'Replies with a price'}</p>
         </div>
       </Link>
 

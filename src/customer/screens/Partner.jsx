@@ -23,7 +23,6 @@ import { OCCASION } from '../data/occasions'
 import { usePlan } from '../state/PlanContext'
 import { partnerDetail, partnersFor } from '../lib/market'
 import { toList } from '../../../api/_lib/listPrice.js'
-import { rupees } from '../lib/format'
 import { ActionBar, BackHeader, Empty } from '../ui/kit'
 
 /* Every price on the storefront in the customer's terms — partner price +
@@ -77,7 +76,7 @@ export default function Partner() {
           reviewCount={detail.profile?.review_count ?? 0} verified
           packages={(shown.packages ?? []).map(k => ({ ...k, inclusions: (k.inclusions ?? []).map(id => shown.addons?.find(a => a.addon_id === id)?.label ?? id) }))} />
       ) : (
-        <TradeListingCard listing={{ ...shown, rating: shown.rating, review_count: detail.profile?.review_count }} tradeName={t?.name} media={detail.media}
+        <TradeListingCard hidePrices listing={{ ...shown, rating: shown.rating, review_count: detail.profile?.review_count }} tradeName={t?.name} media={detail.media}
           tradeIcon={t?.icon ?? null} nearby={nearby} customerTerms={SAMBRAMO_TERMS} />
       ))}
 
@@ -98,7 +97,7 @@ export default function Partner() {
                 {summary?.instant && <Zap size={17} className="shrink-0 fill-[var(--gold)] text-[var(--gold)]" />}
                 <span className="flex flex-col items-start leading-tight">
                   <span>Add to plan</span>
-                  {summary?.fromPaise ? <span className="cx-num text-[11.5px] font-bold opacity-85">from {rupees(summary.fromPaise)}{summary.fromKind === 'package' ? '' : ` ${summary.fromUnit}`}</span> : null}
+                  <span className="text-[11.5px] font-bold opacity-85">price when they accept</span>
                 </span>
               </button>
             )}

@@ -14,11 +14,11 @@ import Storefront from './storefront/Storefront'
 import StoreAvatar from './storefront/StoreAvatar'
 import { modelFromTradeListing } from './storefront/storefrontModel'
 
-export default function TradeListingCard({ listing, tradeName, onPick, showBookingCtaPreview = false, media = [], avatarSlot = null, selectedId = null, onEditSection = null, tradeIcon = null, nearby = null, customerTerms = null }) {
+export default function TradeListingCard({ listing, tradeName, onPick, showBookingCtaPreview = false, media = [], avatarSlot = null, selectedId = null, onEditSection = null, tradeIcon = null, nearby = null, customerTerms = null, hidePrices = false }) {
   const model = useMemo(() => (listing ? modelFromTradeListing(listing, { tradeName, media }) : null), [listing, tradeName, media])
   if (!model) return null
   return (
-    <Storefront
+    <Storefront hidePrices={hidePrices}
       model={model}
       avatarSlot={avatarSlot || <StoreAvatar src={model.avatarUrl} name={model.name} />}
       onPick={onPick}

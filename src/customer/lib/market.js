@@ -173,7 +173,7 @@ export function rank(partners, { budgetPaise = null } = {}) {
   out[0].reason = 'Best match'
   tag(() => [...out].filter(p => p.distanceKm != null).sort((a, b) => a.distanceKm - b.distanceKm)[0], 'Closest')
   tag(() => [...out].filter(p => p.rating).sort((a, b) => b.rating - a.rating || (b.reviews ?? 0) - (a.reviews ?? 0))[0], 'Top rated')
-  tag(() => [...out].filter(price).sort((a, b) => price(a) - price(b))[0], 'Best price')
+  tag(() => [...out].filter(price).sort((a, b) => price(a) - price(b))[0], 'Great value')
   return out
 }
 
@@ -181,7 +181,6 @@ export const SORTS = {
   best: { label: 'Best match', fn: list => rank(list) },
   near: { label: 'Nearest', fn: list => [...list].sort((a, b) => (a.distanceKm ?? 99) - (b.distanceKm ?? 99)) },
   rated: { label: 'Top rated', fn: list => [...list].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0)) },
-  price: { label: 'Price: low to high', fn: list => [...list].sort((a, b) => (a.quote?.paise ?? a.fromPaise ?? 9e15) - (b.quote?.paise ?? b.fromPaise ?? 9e15)) },
 }
 
 /**

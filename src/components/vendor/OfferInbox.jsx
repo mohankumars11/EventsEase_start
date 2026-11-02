@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import BriefNote from './BriefNote'
 import PartnerEmptyState from '../partner/PartnerEmptyState'
 import { apiUrl } from '../../lib/api'
 import { Camera, Check, Clock, MapPin, X, Inbox } from 'lucide-react'
@@ -149,11 +150,7 @@ function OfferCard({ offer, onAnswer, busy, hasPan, exclusive = false }) {
         {offer.distance_m != null && <> · {(offer.distance_m / 1000).toFixed(1)} km away</>}
       </p>
 
-      {offer.customer_note && (
-        <p className="mt-2 rounded-[14px] bg-surface-sunk/[0.05] p-2.5 text-[12.5px] leading-snug text-ink-soft">
-          “{offer.customer_note}”
-        </p>
-      )}
+      {offer.customer_note && <BriefNote text={offer.customer_note} className="mt-2" />}
 
       {offer.reference_photo_url && (
         <p className="mt-2 flex items-center gap-1.5 text-[11.5px] font-bold text-ink-mute">

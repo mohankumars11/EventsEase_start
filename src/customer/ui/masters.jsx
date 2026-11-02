@@ -92,7 +92,6 @@ export function MastersPanel({ tradeId, occasionId = null, guests = null, onCoun
   const nF = [f.instant, f.km != null, f.rating != null, f.minRupees != null || f.maxRupees != null].filter(Boolean).length
   // As many as the customer likes — the table scrolls sideways.
   const pick = x => setPicked(s => (s.some(y => y.serviceId === x.serviceId) ? s.filter(y => y.serviceId !== x.serviceId) : [...s, x]))
-  const priceChip = f.maxRupees != null ? `${f.minRupees ? `${rupees(f.minRupees * 100)}–` : 'Under '}${rupees(f.maxRupees * 100)}` : f.minRupees != null ? `From ${rupees(f.minRupees * 100)}` : 'Price'
   const brief = `/brief/${tradeId}${occasionId ? `?o=${occasionId}` : ''}`
 
   return (
@@ -120,7 +119,7 @@ export function MastersPanel({ tradeId, occasionId = null, guests = null, onCoun
       <div className="cx-noscroll flex gap-2 overflow-x-auto px-3 pb-3">
         <FChip on={nF > 0} onClick={() => setSheet('filters')} icon={SlidersHorizontal}>Filters{nF ? ` · ${nF}` : ''}</FChip>
         <FChip on={comparing} onClick={() => { setComparing(c => !c); setPicked([]) }} icon={comparing ? X : Scale} plain data-compare-toggle>{comparing ? 'Done' : 'Compare'}</FChip>
-        <FChip on={f.minRupees != null || f.maxRupees != null} onClick={() => setSheet('filters')} icon={IndianRupee}>{priceChip}</FChip>
+        {/* No price filter: no price shows before a master accepts (2026-11-02). */}
         <FChip on={sort !== 'best'} onClick={() => setSheet('sort')} icon={ArrowUpDown}>{sort === 'best' ? 'Sort' : SORTS[sort].label}</FChip>
         <FChip on={f.instant} onClick={() => setF(x => ({ ...x, instant: !x.instant }))} icon={Zap} plain>Instant</FChip>
       </div>
@@ -182,7 +181,6 @@ export function MastersPanel({ tradeId, occasionId = null, guests = null, onCoun
           <button type="button" onClick={() => setSheet(null)} className="cx-press flex h-[52px] flex-1 items-center justify-center rounded-[16px] bg-[#0C831F] text-[15px] font-extrabold text-white" data-filters-done>Show {plural(list?.length ?? 0, 'master')}</button>
         </div>}>
         <div className="space-y-5 pb-3">
-          <PriceFilter f={f} setF={setF} caps={caps} unit={units.length === 1 ? units[0] : null} />
           <Slider label="Distance" value={f.km} empty="Any distance" fmt={v => `Within ${v} km`} min={1} max={50} step={1} onChange={v => setF(x => ({ ...x, km: v }))} />
           <div>
             <p className="text-[14px] font-extrabold">Rating</p>

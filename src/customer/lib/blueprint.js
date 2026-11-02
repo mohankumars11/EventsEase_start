@@ -48,6 +48,9 @@ export function blueprint(o, picks = {}, event = {}) {
   for (const t of o.extra) status[t] = 'OPTIONAL'
   for (const t of o.often) status[t] = 'RECOMMENDED'
   for (const t of o.must) status[t] = 'ESSENTIAL'
+  /* Personal celebrations are remembered in photographs (Mohan, 2026-11-02):
+     photos are an essential there; video rides on the same card. */
+  if (['life', 'wedding'].includes(o.category) && status.photography) status.photography = 'ESSENTIAL'
   if (needVenue) { status.venue = 'ESSENTIAL'; reason.venue = 'You asked us to find the place' }
   if (o.where !== 'ask' || (event.venueChoice && event.venueChoice !== 'need')) delete status.venue
   if (small) for (const t of HEAVY) if (status[t]) { status[t] = 'NOT_RECOMMENDED'; reason[t] = home ? 'Not needed at home' : 'Not needed for a small event' }

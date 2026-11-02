@@ -50,6 +50,7 @@ const Trade = screen(() => import('./screens/Trade'))
 const EventFlow = screen(() => import('./screens/EventFlow'))
 const LiveMatch = screen(() => import('./screens/LiveMatch'))
 const EventPlan = screen(() => import('./screens/EventPlan'))
+const EventBoard = screen(() => import('./screens/EventBoard'))
 const Services = screen(() => import('./screens/Small'), m => m.Services)
 const Plans = screen(() => import('./screens/Plans'))
 const Account = screen(() => import('./screens/Account'))
@@ -155,6 +156,7 @@ export default function CustomerApp() {
             <Route path="/o/:occasionId" element={<EventFlow />} />
             <Route path="/o/:occasionId/plan" element={<EventPlan />} />
             <Route path="/o/:occasionId/live" element={<LiveMatch />} />
+            <Route path="/o/:occasionId/board" element={<EventBoard />} />
             <Route path="/o/:occasionId/needs" element={<Needs />} />
             <Route path="/brief/:tradeId" element={<Brief />} />
             <Route path="/o/:occasionId/match" element={<Match />} />

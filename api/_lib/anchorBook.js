@@ -338,7 +338,12 @@ export default async function handler(req, res) {
 
   /* ── QUOTE ─────────────────────────────────────────────────────────── */
   const hours = Number(resolution.quote_hours) || 4
+  /* Compare (LiveMatch "Compare & negotiate"): the same brief to several
+     masters shares one group, so accepting one closes the others
+     (accept-custom-quote). A uuid from the phone, checked here. */
+  const group = /^[0-9a-f-]{36}$/i.test(String(body.quoteGroup ?? '')) ? body.quoteGroup : null
   const { data: q, error: qErr } = await db.from('sambramo_quote_requests').insert({
+    quote_group_id: group,
     customer_id: customerId, vendor_id: resolution.vendor_id ?? svc?.vendor_id, vendor_service_id: vendorServiceId,
     trade_id: TRADE_CODE, offering_id: vendorServiceId, service_name: svc?.name ?? TRADE,
     event_date: r.event_date, start_time: clean(r.start_time, 20), end_time: null,

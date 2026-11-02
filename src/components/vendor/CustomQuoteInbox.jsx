@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import BriefNote from './BriefNote'
 import { Camera, CheckCircle2, Clock3, MapPin, Send, X } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { apiFetch } from '../../lib/api'
@@ -67,7 +68,8 @@ function QuoteCard({ request, onRespond }) {
   const seconds = request.expires_at ? secondsLeft(request.expires_at) : null
   const demand = request.canonical_demand ?? {}
   const loc = request.service_location ?? {}
-  const scope = demand.summary ?? demand.note ?? demand.scope ?? 'Open the request to review the structured requirement.'
+  /* The customer's own brief first (menu, theme, references); the engine's summary only when there is none. */
+  const scope = demand.summary || demand.scope || (demand.note ? null : 'Open the request to review the structured requirement.')
   return (
     <article className="rounded-[24px] bg-white p-4 shadow-[var(--shadow-1)] ring-1 ring-hairline/10">
       <div className="flex items-center justify-between gap-3">
@@ -80,7 +82,8 @@ function QuoteCard({ request, onRespond }) {
       </p>
       <p className="mt-1 flex items-center gap-1 text-[11.5px] text-ink-mute"><MapPin size={12} /> {loc.area ?? loc.city ?? 'Location shared in request'}</p>
       {request.reference_photo_url && <p className="mt-2 flex items-center gap-1 text-[11px] font-bold text-ink-mute"><Camera size={12} /> Reference attached</p>}
-      <div className="mt-3 rounded-2xl bg-surface p-3 text-[11.5px] leading-relaxed text-ink-soft"><strong>Scope:</strong> {scope}</div>
+      {demand.note && <BriefNote text={demand.note} className="mt-3" />}
+      {scope && <div className="mt-3 rounded-2xl bg-surface p-3 text-[11.5px] leading-relaxed text-ink-soft"><strong>Scope:</strong> {scope}</div>}
       <button type="button" onClick={onRespond} className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-saffron-400 py-3 text-[13px] font-extrabold text-plum-950">
         <Send size={14} /> Respond with quote
       </button>
@@ -127,12 +130,13 @@ function DirectedQuoteSheet({ request, busy, onClose, onSubmit }) {
         <button onClick={onClose} aria-label="Close" className="flex h-10 w-10 items-center justify-center rounded-full"><X size={19} /></button>
       </div>
       <div className="mx-auto max-w-lg px-4 pb-8 pt-4">
+        {d.note && <BriefNote text={d.note} className="mb-3" />}
         {!lines ? <p className="py-10 text-center text-[13px] text-ink/50">Loading…</p> : (
           <QuoteEditor expiresAt={request.expires_at} advancePct={Number(d.advance_pct) || 30}
             request={{
               title: `${request.service_name}${d.days > 1 ? ` · ${d.days} days` : ''}`,
               dates: request.event_date, venue: request.service_location?.city || request.service_location?.area || '—',
-              guests: d.guests ?? '—', languages: (d.languages ?? []).join(', ') || '—', reason: d.summary || 'Outside your standard packages',
+              guests: d.guests ?? '—', languages: (d.languages ?? []).join(', ') || '—', reason: d.summary || (d.note ? 'The customer’s brief is above — price exactly that' : 'Outside your standard packages'),
             }}
             lines={withTemplate(lines, configFor(d.tradeName ?? request.trade_id)?.quoteTemplate)}
             onReject={async () => {

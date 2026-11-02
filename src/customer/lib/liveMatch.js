@@ -54,6 +54,14 @@ export async function matchTrade(tradeId, { occasionId, event, place, needs = {}
   const ask = { hours: Number(needs.$hours) || Number(event.hours) || null, guests: Number(needs.$guests) || Number(event.guests) || null, diets: needs.$diet ?? [] }
   const quoted = withQuotes(fit, ask) ?? fit
   const pool = fair(rank(quoted).filter(p => (p.fromRef || p.quote) && !skip.includes(p.serviceId)), `${seed}|${tradeId}`)
+  /* A menu card the customer chose (lib/menus) is that caterer's own menu:
+     ask them first, for exactly that menu; the rest stay as backups. */
+  const menu = needs.$menu
+  if (menu?.serviceId && !skip.includes(menu.serviceId)) {
+    const i = pool.findIndex(p => p.serviceId === menu.serviceId)
+    const p = i >= 0 ? pool.splice(i, 1)[0] : all.find(x => x.serviceId === menu.serviceId)
+    if (p) pool.unshift({ ...p, quote: null, fromRef: { type: 'menu', key: menu.key, minQty: menu.minGuests ?? 1 }, fromKind: 'plate', fromUnit: 'per plate', fromLabel: menu.name, askGuests: Number(event.guests) || null })
+  }
 
   let first = null, asked = null
   const backups = []

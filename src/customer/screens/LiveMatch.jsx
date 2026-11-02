@@ -36,7 +36,8 @@ import { usePlan, needsFor } from '../state/PlanContext'
 import { savedWhere } from '../lib/where'
 import { dayLabel, plural, timeLabel } from '../lib/format'
 import { quoteLine, requestLine } from '../lib/booking'
-import { matchTrade, priceOne, some } from '../lib/liveMatch'
+import { matchTrade, priceOne, some, lineOf } from '../lib/liveMatch'
+import { asLine } from '../lib/quote'
 import { loadCuisines } from '../lib/needs'
 import { myVouchers, bookingVouchers } from '../lib/rewards'
 import { confirmPaid, rememberVoucher } from '../lib/bookings'
@@ -45,6 +46,7 @@ import { needsSummary } from '../ui/needs'
 import { ActionBar, BackHeader, Photo, Sheet } from '../ui/kit'
 import EventJourney from '../ui/EventJourney'
 import { copyFor } from '../data/requirementCopy'
+import { briefFor } from '../lib/brief'
 import { ArtFill } from '../ui/art'
 import SignInSheet from './SignInSheet'
 import InviteReady from '../ui/InviteReady'
@@ -131,7 +133,13 @@ export default function LiveMatch() {
   const venue = { address: place?.address || `${place?.area ?? ''}, Bengaluru`, area: place?.area ?? null, city: 'Bengaluru' }
   const guestsText = ev.guests ? `${ev.guests.toLocaleString('en-IN')} ${o.people.toLowerCase()}` : null
 
-  async function send() {
+  /* send(): the best match per service, theirs alone (197). send(true):
+     "Compare & negotiate" — the brief goes as a price request to every
+     master who fits (up to ten a service); the board shows their prices
+     live and the customer accepts one (Mohan, 2026-11-02: optional, a
+     button at the end). */
+  async function send(all = false) {
+    const compare = all === true ? 10 : 1
     if (!user) { setSignIn(true); return }
     setPhase('sending')
     const tel = `+91${phone.replace(/\D/g, '').slice(-10)}`
@@ -140,7 +148,7 @@ export default function LiveMatch() {
     for (const { t, r } of landed) {
       const line = r.match.line
       try {
-        const wants = needsSummary(t, plan.needsOf(o.id, t))
+        const wants = briefFor(o, t, plan.needsOf(o.id, t))
         const food = needsSummary('catering_food', plan.needsOf(o.id, 'catering_food'))
         /* "Something else" the customer typed on the plan travels with every request. */
         const also = (ev.custom ?? []).length ? `Also: ${ev.custom.join(', ')}` : null
@@ -150,6 +158,19 @@ export default function LiveMatch() {
           : [wants && `Needs: ${wants}`, also, where]).filter(Boolean).join(' · ') || undefined
         /* A planner prices THIS event (their listed package is a wedding's):
            the brief goes as a request for their fee, not a booking at it. */
+        if (!planner && compare > 1) {
+          /* Compare: the brief goes to the best N as price requests. */
+          const others = (r.pool ?? []).filter(p => p.serviceId !== line.serviceId).slice(0, compare - 1).map(p => lineOf(asLine(p), o.id))
+          const group = crypto.randomUUID() // accepting one closes the rest
+          /* Four at a time: ten requests take seconds, not half a minute. */
+          const sentNow = await some([line, ...others].map(l => () => quoteLine(l, ev, place, { note, venue, group }).catch(e => ({ path: 'ERROR', reasons_text: [e.message] }))), 4)
+          ;[line, ...others].forEach((l, k) => {
+            const b = sentNow[k]
+            results.push({ key: `${l.key}:${l.serviceId}`, tradeId: t, serviceId: l.serviceId, name: l.name, cover: l.cover, occasionId: o.id,
+              path: b.path, lineId: null, quoteRequestId: b.quoteRequestId ?? null, bookingRequestId: b.bookingRequestId ?? null, reasons: b.reasons_text ?? [], at: Date.now() })
+          })
+          continue
+        }
         const b = planner ? await quoteLine(line, ev, place, { note, venue }) : await requestLine(line, ev, place, { note, venue, backups: r.backups ?? [] })
         results.push({ key: line.key, tradeId: t, serviceId: line.serviceId, name: line.name, cover: line.cover, occasionId: o.id,
           path: b.path, lineId: b.lineId ?? null, quoteRequestId: b.quoteRequestId ?? null, bookingRequestId: b.bookingRequestId ?? null,
@@ -165,7 +186,11 @@ export default function LiveMatch() {
     const held = results.filter(x => x.lineId && x.path !== 'REQUEST')
     if (requested.length && voucher?.id) rememberVoucher(voucher.id)
     setSent({ results, requested, held, replyBy: requested.map(x => x.replyBy).filter(Boolean).sort()[0] ?? null })
-    if (!held.length) { setPhase(requested.length || results.some(x => x.quoteRequestId) ? 'sent' : 'error'); return }
+    if (!held.length) {
+      const ok = requested.length || results.some(x => x.quoteRequestId)
+      if (ok && compare > 1 && !planner) { navigate(`/o/${o.id}/board`); return }
+      setPhase(ok ? 'sent' : 'error'); return
+    }
     await pay(held.map(x => x.lineId))
   }
 
@@ -244,7 +269,7 @@ export default function LiveMatch() {
             )}
           </section>
 
-          {phase !== 'matching' && landed.length > 0 && (
+          {phase !== 'matching' && landed.length > 0 && (<>
             <motion.section initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={spring} className="mx-4 mt-4 rounded-[22px] bg-[#FAF8FD] p-3.5 shadow-[inset_0_0_0_1px_#EEE9F5]" data-contact>
               <label className="flex items-center gap-2.5">
                 <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white text-[var(--brand)] shadow-[0_0_0_1px_#ECE6F4]"><Phone size={17} /></span>
@@ -255,7 +280,7 @@ export default function LiveMatch() {
               </label>
               <p className="mt-2 flex items-center gap-1.5 pl-1 text-[11.5px] font-bold text-[var(--ink-3)]"><Lock size={12} />{planner ? 'Your planner sees' : 'Masters see'} your number only after you pay</p>
             </motion.section>
-          )}
+          </>)}
         </>
       )}
 
@@ -291,11 +316,16 @@ export default function LiveMatch() {
               </div>
               {voucher && <p className="mb-2 flex items-center gap-1.5 rounded-[12px] bg-[#FFF6E0] px-3 py-1.5 text-[12px] font-extrabold text-[#8A5300]" data-offer><BadgePercent size={14} />{voucher.kind === 'welcome_pct' ? '25% off' : 'Your offer'} applies when you pay</p>}
               {phase === 'error' && <p className="mb-2 rounded-[12px] bg-[#FFF1F0] px-3 py-1.5 text-[12px] font-bold text-[#B42318]" data-send-error>{sent?.results?.flatMap(x => x.reasons ?? [])[0] ?? 'Could not send — try again.'}</p>}
-              <button type="button" disabled={!canSend} onClick={!phoneOk ? askPhone : phase === 'unpaid' ? () => pay(sent.held.map(x => x.lineId)) : send} className="cx-press cx-cta flex h-[58px] w-full items-center justify-center gap-2.5 rounded-[20px] text-[16px] font-extrabold" data-send>
+              <button type="button" disabled={!canSend} onClick={!phoneOk ? askPhone : phase === 'unpaid' ? () => pay(sent.held.map(x => x.lineId)) : () => send(false)} className="cx-press cx-cta flex h-[58px] w-full items-center justify-center gap-2.5 rounded-[20px] text-[16px] font-extrabold" data-send>
                 {phase === 'sending' || phase === 'paying' ? <><Loader2 size={18} className="animate-spin" />{phase === 'paying' ? 'Opening payment…' : 'Sending…'}</>
                   : phase === 'unpaid' ? <>Pay now<ChevronRight size={18} /></>
                     : !phoneOk ? <><Phone size={17} />Add your mobile number</> : requestLive === false ? <>Book · pay advance<ChevronRight size={18} /></> : <><Send size={18} />{planner ? 'Send to planner' : `Send ${plural(landed.length, 'request')}`}</>}
               </button>
+              {!planner && ['ready', 'error'].includes(phase) && (
+                <button type="button" onClick={phoneOk ? () => send(true) : askPhone} className="cx-press mt-2 flex h-11 w-full items-center justify-center gap-1.5 rounded-[16px] text-[13.5px] font-extrabold text-[var(--brand)] shadow-[inset_0_0_0_1.5px_#E3D5FA]" data-compare-all>
+                  Compare &amp; negotiate with every master
+                </button>
+              )}
             </>
           ) : (
             <Link to={`/o/${o.id}/match?all=1`} className="cx-press cx-cta flex h-[58px] w-full items-center justify-center gap-2 rounded-[20px] text-[15.5px] font-extrabold">See all masters<ChevronRight size={18} /></Link>
@@ -434,7 +464,7 @@ function Done({ o, ev, phase, sent, total, planner = false, services = 0 }) {
         ))}
       </ol>
       <div className="mt-4 grid grid-cols-2 gap-2.5">
-        <Link to="/plans" className="cx-press flex h-[54px] items-center justify-center rounded-[18px] bg-[#F4EEFF] text-[14.5px] font-extrabold text-[#3B1670]" data-track>Track</Link>
+        <Link to={`/o/${o.id}/board`} className="cx-press flex h-[54px] items-center justify-center rounded-[18px] bg-[#F4EEFF] text-[14.5px] font-extrabold text-[#3B1670]" data-track>Track live</Link>
         <Link to="/" className="cx-press cx-cta flex h-[54px] items-center justify-center gap-1.5 rounded-[18px] text-[14.5px] font-extrabold"><Sparkles size={16} />Home</Link>
       </div>
       <InviteReady occasion={o} where="checkout" className="mt-5" />

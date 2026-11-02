@@ -11,7 +11,6 @@
 import { Check, Plus } from 'lucide-react'
 import { TRADE } from '../data/trades'
 import { usePlan } from '../state/PlanContext'
-import { rupees } from '../lib/format'
 import { Photo, Sheet } from '../ui/kit'
 
 const COL = 136
@@ -27,8 +26,6 @@ export default function CompareSheet({ open, onClose, tradeId, partners, occasio
   }
   const unitOf = p => (p.fromKind === 'package' ? `${p.fromLabel ?? ''} package`.trim() : p.fromUnit)
   const rows = [
-    { label: 'Base price', get: p => p.fromPaise, show: p => (p.fromPaise ? <span><span className="cx-num">{rupees(p.fromPaise)}</span><span className="block text-[11px] font-semibold text-[var(--ink-3)]">{unitOf(p)}</span></span> : 'On request'),
-      win: new Set(partners.map(unitOf)).size === 1 ? best(p => p.fromPaise) : null },
     { label: 'Rating', get: p => p.rating, show: p => (p.rating ? <span className="cx-num">★ {p.rating.toFixed(1)}{p.reviews ? <span className="text-[var(--ink-3)]"> ({p.reviews})</span> : null}</span> : 'New'), win: best(p => p.rating, 'max') },
     { label: 'Distance', get: p => p.distanceKm, show: p => (p.distanceKm != null ? <span className="cx-num">{p.distanceKm} km</span> : p.area ?? '—'), win: best(p => p.distanceKm) },
     { label: 'Accepts', get: p => (p.instant ? 1 : 0), show: p => (p.instant ? 'Within minutes' : `Within ${p.quoteHours ?? 12} h`), win: partners.some(p => p.instant) && partners.some(p => !p.instant) ? 1 : null },

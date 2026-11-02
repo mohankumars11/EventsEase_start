@@ -47,7 +47,13 @@ import { BadgeCheck, CalendarClock, Camera, Check, ChevronLeft, ChevronRight, Cl
 import { rupees } from '../../../lib/tierPackages'
 import './storefront.css'
 
-const money = p => (Number(p) > 0 ? rupees(p) : null)
+/* The customer app shows no price before a master accepts (Mohan,
+   2026-11-02): it renders this with hidePrices, and every amount below
+   reads as null. The partner's own preview keeps its prices. */
+const HidePrices = createContext(false)
+const show$ = p => (Number(p) > 0 ? rupees(p) : null)
+const hidden$ = () => null
+const useMoney = () => (useContext(HidePrices) ? hidden$ : show$)
 const plural = (n, one, many = one + 's') => `${n} ${n === 1 ? one : many}`
 const STATUS = {
   DRAFT: 'Draft preview', UNDER_REVIEW: 'In review', ACTION_REQUIRED: 'Changes needed',
@@ -157,12 +163,13 @@ function Hero({ model, onOpen, onEdit }) {
 
 /* ── Who they are, and the four numbers ──────────────────────────────── */
 function Identity({ model, avatarSlot, onEdit, nearby = null }) {
+  const money = useMoney()
   /* One word per label: four of them share 358px, and a label that
      truncates ("STARTING…") is a fact nobody can read. */
   /* Four coloured tiles, a number on each (2026-10-31: "coloured cards,
      numbers") — the facts a customer compares, in one glance. */
   const stats = [
-    model.fromPaise ? { v: money(model.fromPaise), l: 'From', icon: CreditCard, tone: ['#F3ECFF', '#5B21A8'] } : null,
+    model.fromPaise && money(model.fromPaise) ? { v: money(model.fromPaise), l: 'From', icon: CreditCard, tone: ['#F3ECFF', '#5B21A8'] } : null,
     model.years ? { v: `${model.years}+`, l: model.years === 1 ? 'Year' : 'Years', icon: Star, tone: ['#FFF4DC', '#9A5B00'] } : model.yearsBand ? { v: model.yearsBand, l: 'Years', icon: Star, tone: ['#FFF4DC', '#9A5B00'] } : null,
     model.capacity ? { v: Number(model.capacity.value).toLocaleString('en-IN'), l: model.capacity.unit[0].toUpperCase() + model.capacity.unit.slice(1), icon: Users, tone: ['#E9F8EF', '#0B6B3D'] }
       : model.team ? { v: String(model.team), l: 'Team', icon: Users, tone: ['#E9F8EF', '#0B6B3D'] } : null,
@@ -365,6 +372,7 @@ function Work({ model, id, onOpen, onEdit }) {
 
 const PKG_TONE = [['#F3ECFF', '#5B21A8', '#9F67FF'], ['#FDECF4', '#B0185E', '#F472B6'], ['#FFF4DC', '#9A5B00', '#F5B83D'], ['#E9F8EF', '#0B6B3D', '#34D399']]
 function PackageCard({ p, solo, selected, onPick, index = 0, icon: Logo = Package }) {
+  const money = useMoney()
   const [tint, ink, glow] = PKG_TONE[index % PKG_TONE.length]
   return (
     <div className={'sb-package relative flex shrink-0 snap-center flex-col overflow-hidden rounded-[24px] bg-white p-4 ring-1 ' +
@@ -400,6 +408,7 @@ function PackageCard({ p, solo, selected, onPick, index = 0, icon: Logo = Packag
 }
 
 function MenuCard({ m, solo }) {
+  const money = useMoney()
   return (
     <div className={'flex shrink-0 snap-center flex-col rounded-[24px] bg-white p-4 ring-1 ring-[#EEE8F8] ' + (solo ? 'w-full' : 'w-[78%] max-w-[300px]')}>
       <div className="flex items-center justify-between gap-2">
@@ -432,6 +441,7 @@ function Offers({ model, id, onPick, selectedId, onEdit, tradeIcon = null }) {
 }
 
 function PriceRow({ label, detail, price, priceText, unit, bare = false }) {
+  const money = useMoney()
   return (
     <div className="flex items-center justify-between gap-3 border-t border-[#F1ECFA] py-3 first:border-0 first:pt-0 last:pb-0">
       <div className="min-w-0">
@@ -448,6 +458,7 @@ function PriceRow({ label, detail, price, priceText, unit, bare = false }) {
 }
 
 function Pricing({ model, id, onEdit }) {
+  const money = useMoney()
   const { rules, items, extras } = model
   if (!rules.length && !items.length && !extras.length) return null
   return (
@@ -596,6 +607,8 @@ export default function Storefront({
   /* The customer app: the master's icon for package cards, how far they
      are, and Sambramo's booking flow and policy in place of the listing's. */
   tradeIcon = null, nearby = null, customerTerms = null,
+  /* The customer app: no amounts before a master accepts. */
+  hidePrices = false,
 }) {
   const edit = onEditSection || null
   const show = key => !focus || focus.includes(key)
@@ -630,6 +643,7 @@ export default function Storefront({
   }
 
   return (
+    <HidePrices.Provider value={hidePrices}>
     <Order.Provider value={sections.map(s => s.key)}>
     <article ref={ref} className="sb-store w-full bg-[#FBF9FF] pb-4 text-[#1B1433]" data-storefront>
       {rateNote && (
@@ -644,7 +658,7 @@ export default function Storefront({
       {show('about') && <About model={model} id={prefix + '-about'} onEdit={edit} />}
       {show('work') && <Work model={model} id={prefix + '-work'} onOpen={setViewer} onEdit={edit} />}
       {show('offers') && <Offers model={model} id={prefix + '-offers'} onPick={onPick} selectedId={selectedId} onEdit={edit} tradeIcon={tradeIcon} />}
-      {show('pricing') && <Pricing model={model} id={prefix + '-pricing'} onEdit={edit} />}
+      {show('pricing') && !hidePrices && <Pricing model={model} id={prefix + '-pricing'} onEdit={edit} />}
       {show('glance') && <Glance model={model} id={prefix + '-glance'} onEdit={edit} />}
       {show('terms') && <Terms model={model} id={prefix + '-terms'} onEdit={edit} customer={customerTerms} />}
       {!focus && <Trust verified={model.verified} />}
@@ -660,5 +674,6 @@ export default function Storefront({
       {viewer != null && <MediaViewer media={model.media} index={viewer} onIndex={setViewer} onClose={() => setViewer(null)} />}
     </article>
     </Order.Provider>
+    </HidePrices.Provider>
   )
 }
