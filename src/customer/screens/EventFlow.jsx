@@ -1,63 +1,42 @@
 /**
- * An occasion on ONE screen (Mohan, 2026-11-01: "keep popping up every
- * input one after another on the one specific screen itself").
+ * Screen 1 of 3 — the event, on one compact screen (spec 2026-11-02 §3).
  *
- *   When → What time → How long → Guests → Venue (only where it can be anywhere)
+ *   date · start time · duration · guests · location · venue · budget (optional)
  *
- * Each answer folds into a chip at the top and the next question slides
- * in under it; a chip is a tap to change it. After the last answer the
- * plan grows underneath — every service it takes, as tiles, each a tap to
- * drop or add — with the food question and "Anything special?" on the
- * same screen, so there is no second screen of questions and no
- * "setting up your party" pause. One button then matches masters live
- * (LiveMatch.jsx).
+ * Everything is visible at once with a sensible default already in it —
+ * 6 PM, 4 hours, the occasion's usual head count, the location the phone
+ * gave at sign-up — so the date is often the only thing to choose. The
+ * date opens the full month calendar the app already had; time, duration
+ * and budget are the phone's own pickers (native selects), which are the
+ * fastest controls a phone has. Every change is kept on the phone, so
+ * leaving and coming back loses nothing.
  *
- * Words are kept to the minimum: a question is two or three words, an
- * answer is one tap. No price here — the first rupee is a real master's,
- * on the live screen.
+ * "Create my event plan" → EventPlan.jsx (screen 2). No price here.
  */
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { AnimatePresence, motion } from 'motion/react'
-import { CalendarDays, Check, ChevronDown, ClipboardList, Clock3, LayoutGrid, KeyRound, MapPin, Minus, Moon, Plus, Radar, Search, Sparkles, Sun, Sunrise, Sunset, Timer, Users } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { Navigate, useNavigate, useParams } from 'react-router-dom'
+import { Building2, CalendarDays, ChevronDown, ChevronRight, Clock3, Hourglass, IndianRupee, LocateFixed, MapPin, Minus, Plus, Users } from 'lucide-react'
 import { OCCASION } from '../data/occasions'
-import { TRADE } from '../data/trades'
-import { occasionArt, serviceArt } from '../data/art'
-import { usePlan, needsFor, contextFor } from '../state/PlanContext'
+import { occasionArt } from '../data/art'
+import { usePlan } from '../state/PlanContext'
 import { savedWhere } from '../lib/where'
-import { partnersFor } from '../lib/market'
 import { dayLabel, iso, timeLabel } from '../lib/format'
-import { AboutEvent } from '../ui/aboutEvent'
 import { ActionBar, BackHeader, Sheet } from '../ui/kit'
 import { ArtFill } from '../ui/art'
 import { MonthCalendar } from './WhenSheet'
-import { Question } from './Brief'
-import { needsFor as tradeQuestions, loadCuisines, loadDishes } from '../lib/needs'
-import { needsSummary } from '../ui/needs'
-import { supabase } from '../../lib/supabase'
 import PlaceSheet from './PlaceSheet'
 
-const spring = { type: 'spring', stiffness: 420, damping: 34 }
 const toMin = t => (t ? Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5)) : null)
 const toTime = m => `${String(Math.floor(m / 60) % 24).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`
-/* Today, nothing earlier than two hours from now, on the half hour. */
-const earliestOn = date => {
-  if (date !== iso(new Date())) return 0
-  const n = new Date()
-  return Math.ceil((n.getHours() * 60 + n.getMinutes() + 120) / 30) * 30
-}
-const SLOTS = [
-  ['10:00', 'Morning', Sunrise, 'from-[#FFF6DD] to-[#FFE6C2]', 'text-[#A35A00]'],
-  ['13:00', 'Afternoon', Sun, 'from-[#FFF9E6] to-[#FFEFB8]', 'text-[#9A6B00]'],
-  ['18:00', 'Evening', Sunset, 'from-[#FFEDE6] to-[#FFD3DF]', 'text-[#B1365B]'],
-  ['20:00', 'Night', Moon, 'from-[#EEE9FF] to-[#DCD2FF]', 'text-[#4C2BB0]'],
-]
-const HOURS = [[2, '2 hrs'], [3, '3 hrs'], [4, '4 hrs'], [6, '6 hrs'], [10, 'Full day'], [null, 'Not sure']]
-const DIETS = [['veg', 'Veg'], ['non_veg', 'Non-veg'], ['mixed', 'Both']]
-const NEXT = { date: 'Date', time: 'Time', hours: 'Hours', guests: 'Guests', venue: 'Venue' }
-/* Only the fields "Anything special?" owns are kept in event.context. */
-const ABOUT_KEYS = ['venueProvides', 'setting', 'formats', 'food', 'drinks', 'media', 'travel', 'public', 'children', 'accessibility', 'privacy', 'budget']
-const onlyAbout = c => Object.fromEntries(Object.entries(c).filter(([k, v]) => ABOUT_KEYS.includes(k) && v != null && !(Array.isArray(v) && !v.length)))
+const TIMES = Array.from({ length: 36 }, (_, i) => toTime(6 * 60 + i * 30)) // 6:00 AM – 11:30 PM
+const HOURS = [[1, '1 hour'], [2, '2 hours'], [3, '3 hours'], [4, '4 hours'], [5, '5 hours'], [6, '6 hours'], [8, '8 hours'], [10, '10 hours'], [12, 'Full day'], [24, '2 days'], [48, '3 days']]
+/* Where it happens. "Help me find one" is the only answer that puts a venue
+   in the plan; the rest say where it is, which is what masters travel to. */
+export const VENUES = [['have', 'I have a venue'], ['need', 'Help me find one'], ['home', 'At my home'], ['restaurant', 'At a restaurant'], ['banquet', 'Banquet hall'], ['outdoor', 'Outdoor'], ['other', 'Other']]
+const KIND = { restaurant: 'dining', banquet: 'banquet', outdoor: 'lawn' }
+export const BUDGETS = [['', 'Not sure yet'], ['lt50k', 'Under ₹50,000'], ['50k-1l', '₹50,000 – ₹1,00,000'], ['1l-1.5l', '₹1,00,000 – ₹1,50,000'], ['1.5l-3l', '₹1,50,000 – ₹3,00,000'], ['3l-5l', '₹3,00,000 – ₹5,00,000'], ['5l+', 'Above ₹5,00,000']]
+const FEEL = { lt50k: 'tight', '50k-1l': 'tight', '1l-1.5l': 'moderate', '1.5l-3l': 'moderate', '3l-5l': 'premium', '5l+': 'premium' }
+const AT_HOME = new Set(['home', 'newhome'])
 
 export default function EventFlow() {
   const { occasionId } = useParams()
@@ -66,392 +45,162 @@ export default function EventFlow() {
   const plan = usePlan()
   const mine = plan.event.occasionId === occasionId
   const ev0 = mine ? plan.event : {}
-  const steps = ['date', 'time', 'hours', 'guests', ...(o?.where === 'ask' ? ['venue'] : [])]
-  const [a, setA] = useState(() => ({ date: ev0.date ?? null, time: ev0.time ?? null, hours: ev0.hours ?? null, guests: ev0.guests ?? null, venue: o?.where === 'ask' ? (ev0.date ? ev0.venue ?? null : null) : 'need' }))
-  const [done, setDone] = useState(() => new Set(ev0.date && ev0.time ? steps : ev0.date ? ['date'] : []))
-  /* Old links ask for one step (?step=when|guests|venue|about): open it. */
-  const [params] = useSearchParams()
-  const asked = { when: 'date', guests: 'guests', venue: 'venue' }[params.get('step')] ?? null
-  const [edit, setEdit] = useState(() => (asked && steps.includes(asked) && ev0.date ? asked : null))
-  const [sheet, setSheet] = useState(null) // 'place' | { edit: tradeId } | { remove: tradeId }
-  /* Cuisine and dish names load from the catalogue once; catering's
-     questions wait for them. */
-  const [, setFood] = useState(0)
-  useEffect(() => { Promise.all([loadCuisines(supabase), loadDishes(supabase)]).then(() => setFood(n => n + 1)).catch(() => {}) }, [])
-  const [more, setMore] = useState(params.get('step') === 'about')
-  const [about, setAbout] = useState(ev0.context ?? {})
-  const [how, setHow] = useState(params.get('how') === 'planner' ? 'planner' : 'each')
-  const stepRef = useRef(null)
-  const planRef = useRef(null)
-  const current = edit ?? steps.find(s => !done.has(s)) ?? null
-  const complete = steps.every(s => done.has(s))
+  const [f, setF] = useState(() => ({
+    date: ev0.date ?? null, time: ev0.time ?? '18:00', hours: ev0.hours ?? 4, guests: ev0.guests ?? o?.bands?.[1] ?? 50,
+    venueChoice: ev0.venueChoice ?? (o?.where === 'ask' ? null : AT_HOME.has(o?.where) ? 'home' : 'have'),
+    venueOther: ev0.venueOther ?? '', budget: ev0.budget ?? '',
+  }))
+  const [sheet, setSheet] = useState(null) // 'date' | 'place'
   const place = plan.place?.lat ? plan.place : savedWhere()
-  const picks = o ? plan.picks[o.id] ?? {} : {}
-  const ev = { ...plan.event, ...a, occasionId, venue: a.venue ?? 'need', context: about }
-  const evKey = JSON.stringify([a, about])
-  const p360 = useMemo(() => (o && complete ? needsFor(o, picks, ev) : null), [o, complete, picks, evKey]) // eslint-disable-line react-hooks/exhaustive-deps
+  const set = patch => setF(x => ({ ...x, ...patch }))
 
-  useEffect(() => {
-    const el = complete && !edit ? planRef.current : stepRef.current
-    if (!el) return
-    const t = setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: complete && !edit ? 'start' : 'center' }), 140)
-    return () => clearTimeout(t)
-  }, [current, complete]) // eslint-disable-line react-hooks/exhaustive-deps
+  /* Today: nothing earlier than two hours from now, on the half hour. */
+  const today = iso(new Date())
+  const earliest = useMemo(() => { const n = new Date(); return Math.ceil((n.getHours() * 60 + n.getMinutes() + 120) / 30) * 30 }, [])
+  const times = f.date === today ? TIMES.filter(t => toMin(t) >= earliest) : TIMES
+  useEffect(() => { if (f.date === today && toMin(f.time) < earliest && times.length) set({ time: times[0] }) }, [f.date]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* How many masters are live near the event for this plan — counted from
-     the same lists the live match reads, which also warms them up. A list
-     is capped at 40, so a full one reads "40+". */
-  /* The live screen's code loads while the customer is still here, so
-     "Find my masters" opens at once — no chunk fetch on the tap. */
-  useEffect(() => { if (complete) import('./LiveMatch').catch(() => {}) }, [complete])
-  const tradesKey = (p360?.needed ?? []).join(',')
-  const [nearby, setNearby] = useState(null)
-  useEffect(() => {
-    if (!tradesKey) return
-    let live = true
-    const at = place?.lat ? { lat: place.lat, lng: place.lng } : {}
-    Promise.all(tradesKey.split(',').map(t => partnersFor(t, at).then(l => l.length).catch(() => 0)))
-      .then(ns => { if (live) setNearby({ n: ns.reduce((s, x) => s + x, 0), more: ns.some(x => x >= 40) }) })
-    return () => { live = false }
-  }, [tradesKey, place?.lat, place?.lng]) // eslint-disable-line react-hooks/exhaustive-deps
+  /* Saved as it changes — the plan screen and the live match read it. */
+  const facts = () => ({
+    occasionId, date: f.date, time: f.time, hours: f.hours, guests: f.guests,
+    venue: f.venueChoice === 'need' || (!f.venueChoice && o?.where === 'ask') ? 'need' : 'have', venueKind: KIND[f.venueChoice] ?? null,
+    venueChoice: f.venueChoice, venueOther: f.venueChoice === 'other' ? f.venueOther.trim() : '', budget: f.budget,
+    context: { ...(mine ? plan.event.context ?? {} : {}), ...(f.venueChoice === 'home' ? { venueType: 'home' } : {}), ...(FEEL[f.budget] ? { budget: FEEL[f.budget] } : {}) },
+  })
+  useEffect(() => { if (o) plan.setEvent(facts()) }, [f]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!o) return <Navigate to="/" replace />
 
-  const answer = (step, patch) => {
-    const next = { ...a, ...patch }
-    const d = new Set([...done, step])
-    /* A new day can make the chosen start time impossible (today, too soon). */
-    if (step === 'date' && next.time && toMin(next.time) < earliestOn(next.date)) { next.time = null; d.delete('time') }
-    setA(next); setDone(d); setEdit(null)
-    plan.setEvent({ occasionId: o.id, ...(mine ? {} : { venueKind: null, context: {} }), date: next.date, time: next.time, hours: next.hours, guests: next.guests, venue: next.venue ?? 'need' })
-  }
-  const pick = (t, v) => plan.setPick(o.id, t, v)
-  const food = plan.needsOf(o.id, 'catering_food')
-  const diet = food.$diet?.[0] ?? null
-  const setDiet = d => plan.setNeeds(`${o.id}:catering_food`, { ...food, $diet: d ? [d] : [] })
-  const needed = p360?.needed ?? []
-  const addable = (p360?.rows ?? []).filter(r => (r.status === 'OPTIONAL' && r.state === 'off') || r.state === 'skip').slice(0, 10)
   const go = () => {
-    plan.setEvent({ occasionId: o.id, ...a, venue: a.venue ?? 'need', context: about })
+    plan.setEvent(facts())
     if (!plan.place?.lat && place?.lat) plan.setPlace({ area: place.area, lat: place.lat, lng: place.lng, city: place.city ?? 'Bengaluru', address: place.address ?? '' })
-    navigate(`/o/${o.id}/live${how === 'planner' ? '?planner=1' : ''}`)
+    navigate(`/o/${o.id}/plan`)
   }
-  const chip = {
-    date: [CalendarDays, a.date && dayLabel(a.date)],
-    time: [Clock3, a.time && timeLabel(a.time)],
-    hours: [Timer, a.hours ? (a.hours >= 10 ? 'Full day' : `${a.hours} hrs`) : 'Hours not sure'],
-    guests: [Users, a.guests ? `${a.guests.toLocaleString('en-IN')} ${o.people.toLowerCase()}` : 'Guests not sure'],
-    venue: [a.venue === 'have' ? KeyRound : Search, a.venue === 'have' ? 'Own venue' : 'Need a venue'],
-  }
+  const first = (() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d })()
+  const last = (() => { const d = new Date(first); d.setDate(d.getDate() + 119); return d })()
 
   return (
-    <main className="cx-enter min-h-[100dvh] bg-white pb-[calc(env(safe-area-inset-bottom,0px)+130px)]" data-event-flow>
-      <BackHeader title={o.name} sub={complete ? `${needed.length} services · tap to change` : `${done.size} of ${steps.length}`}
-        right={<ArtFill art={occasionArt(o)} tone={o.tone} className="h-11 w-11 shrink-0 rounded-[14px]" inset="10%" />} />
-      <div className="mx-4 h-[5px] overflow-hidden rounded-full bg-[#F1EDF7]">
-        <motion.div className="h-full rounded-full bg-gradient-to-r from-[#7C3AED] to-[#C026D3]" initial={false} animate={{ width: `${(done.size / steps.length) * 100}%` }} transition={spring} />
-      </div>
+    <main className="cx-enter min-h-[100dvh] bg-white pb-[calc(env(safe-area-inset-bottom,0px)+110px)]" data-event-details>
+      <BackHeader title="Event details" right={<span className="pr-1 text-[12px] font-bold text-[var(--ink-3)]">1 of 3</span>} />
+      <Progress at={1} />
 
-      {/* What is answered, as chips — each a tap to change */}
-      {done.size > 0 && (
-        <div className="flex flex-wrap gap-2 px-4 pt-4" data-answers>
-          <AnimatePresence initial={false}>
-            {steps.filter(s => done.has(s) && s !== current).map(s => {
-              const [Icon, text] = chip[s]
-              return (
-                <motion.button key={s} layout initial={{ opacity: 0, scale: 0.7 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.7 }} transition={spring}
-                  type="button" onClick={() => setEdit(s)} className="flex items-center gap-1.5 rounded-full bg-[#F4EEFF] py-2 pl-2.5 pr-3.5 text-[13px] font-extrabold text-[#3B1670]" data-answer={s}>
-                  <Icon size={15} className="text-[var(--brand)]" />{text}
-                </motion.button>
-              )
-            })}
-            {complete && (
-              <motion.button key="place" layout initial={{ opacity: 0, scale: 0.7 }} animate={{ opacity: 1, scale: 1 }} transition={spring}
-                type="button" onClick={() => setSheet('place')} className="flex items-center gap-1.5 rounded-full bg-[#EAF8EF] py-2 pl-2.5 pr-3.5 text-[13px] font-extrabold text-[#0B5B30]" data-answer="place">
-                <MapPin size={15} className="text-[#0C831F]" />{place?.area ?? 'Add location'}
-              </motion.button>
-            )}
-          </AnimatePresence>
+      <section className="flex items-center gap-3 px-4 pt-4">
+        <ArtFill art={occasionArt(o)} tone={o.tone} className="h-[60px] w-[60px] shrink-0 rounded-[18px]" inset="8%" />
+        <div className="min-w-0">
+          <h1 className="text-[21px] font-black leading-tight tracking-[-0.03em]">{o.name}</h1>
+          <p className="text-[12.5px] font-semibold text-[var(--ink-3)]">Tell us the basics — we’ll make the plan.</p>
         </div>
-      )}
+      </section>
 
-      {/* The one question being asked */}
-      <AnimatePresence mode="wait" initial={false}>
-        {current && (
-          <motion.section key={current} ref={stepRef} initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -14 }} transition={spring}
-            className="px-4 pt-6" data-step={current}>
-            {current === 'date' && <DateStep value={a.date} onPick={d => answer('date', { date: d })} />}
-            {current === 'time' && <TimeStep date={a.date} value={a.time} onPick={t => answer('time', { time: t })} />}
-            {current === 'hours' && (
-              <>
-                <Q>How long?</Q>
-                <div className="mt-4 grid grid-cols-3 gap-2.5">
-                  {HOURS.map(([h, label]) => (
-                    <Pill key={label} on={done.has('hours') && a.hours === h} onClick={() => answer('hours', { hours: h })} data-hours={h ?? 'unsure'}>{label}</Pill>
-                  ))}
-                </div>
-              </>
-            )}
-            {current === 'guests' && <GuestsStep occasion={o} value={a.guests} onPick={g => answer('guests', { guests: g })} />}
-            {current === 'venue' && (
-              <>
-                <Q>Venue?</Q>
-                <div className="mt-4 grid grid-cols-2 gap-2.5">
-                  <BigChoice icon={KeyRound} on={a.venue === 'have'} onClick={() => answer('venue', { venue: 'have' })} tone="from-[#EAF8EF] to-[#D5F2E0]" ink="text-[#0B5B30]">I have one</BigChoice>
-                  <BigChoice icon={Search} on={a.venue === 'need'} onClick={() => answer('venue', { venue: 'need' })} tone="from-[#F3ECFF] to-[#E6DAFF]" ink="text-[#4C1D95]">Find me one</BigChoice>
-                </div>
-              </>
-            )}
-          </motion.section>
-        )}
-      </AnimatePresence>
+      <div className="mt-4 space-y-3.5 px-4">
+        <Row icon={CalendarDays} label="Event date">
+          <Field onClick={() => setSheet('date')} empty={!f.date} data-field="date">
+            {f.date ? dayLabel(f.date) : 'Pick a date'}<CalendarDays size={17} className="text-[var(--brand)]" />
+          </Field>
+        </Row>
 
-      {/* What is still to come — a few taps, then the masters */}
-      {!complete && !edit && (
-        <div className="px-4 pt-8" data-up-next>
-          <p className="text-[11.5px] font-extrabold uppercase tracking-[0.12em] text-[var(--ink-3)]">Up next</p>
-          <div className="mt-2.5 flex flex-wrap gap-2">
-            {steps.filter(s => !done.has(s) && s !== current).map(s => {
-              const Icon = chip[s][0]
-              return <span key={s} className="flex items-center gap-1.5 rounded-full border border-dashed border-[#DDD3EE] px-3 py-2 text-[13px] font-bold text-[#A49BB6]"><Icon size={15} />{NEXT[s]}</span>
-            })}
-            <span className="flex items-center gap-1.5 rounded-full border border-dashed border-[#CDEFDC] px-3 py-2 text-[13px] font-bold text-[#3C7A5A]"><Radar size={15} />Your masters, live</span>
-          </div>
+        <div className="grid grid-cols-2 gap-3">
+          <Row icon={Clock3} label="Start time">
+            <Select value={f.time} onChange={v => set({ time: v })} data-field="time">
+              {times.map(t => <option key={t} value={t}>{timeLabel(t)}</option>)}
+            </Select>
+          </Row>
+          <Row icon={Hourglass} label="Duration">
+            <Select value={String(f.hours ?? '')} onChange={v => set({ hours: v ? Number(v) : null })} data-field="hours">
+              {HOURS.map(([h, l]) => <option key={h} value={h}>{l}</option>)}
+              <option value="">Not sure</option>
+            </Select>
+          </Row>
         </div>
-      )}
 
-      {/* The plan, grown under the answers */}
-      {complete && !edit && p360 && (
-        <motion.section ref={planRef} initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ ...spring, delay: 0.05 }} className="scroll-mt-24 px-4 pt-7" data-plan>
-          <div className="flex items-end justify-between gap-2">
-            <h2 className="text-[23px] font-black tracking-[-0.035em]">Your plan</h2>
-            {nearby?.n > 0
-              ? <span className="flex items-center gap-1.5 rounded-full bg-[#EAF8EF] px-2.5 py-1 text-[12px] font-extrabold text-[#0B6B3D]" data-nearby><span className="cx-live-dot h-2 w-2 rounded-full bg-[#16A34A]" />{nearby.n}{nearby.more ? '+' : ''} masters nearby</span>
-              : <span className="rounded-full bg-[#F4EEFF] px-2.5 py-1 text-[12px] font-extrabold text-[#3B1670]">{needed.length} services</span>}
+        <Row icon={Users} label="Number of guests">
+          <div className="flex h-12 items-center rounded-[14px] bg-white shadow-[inset_0_0_0_1.5px_#E9E3F2]" data-field="guests">
+            <button type="button" onClick={() => set({ guests: Math.max(1, f.guests - step(f.guests)) })} aria-label="Fewer guests" className="cx-press grid h-12 w-12 place-items-center text-[var(--ink-2)]"><Minus size={18} /></button>
+            <input inputMode="numeric" value={f.guests} onChange={e => set({ guests: Math.max(1, Math.min(100000, Number(e.target.value.replace(/\D/g, '')) || 1)) })} aria-label="Number of guests"
+              className="cx-num min-w-0 flex-1 bg-transparent text-center text-[17px] font-extrabold outline-none" />
+            <button type="button" onClick={() => set({ guests: Math.min(100000, f.guests + step(f.guests)) })} aria-label="More guests" className="cx-press grid h-12 w-12 place-items-center text-[var(--ink-2)]"><Plus size={18} /></button>
           </div>
-          {/* Two ways to book (2026-11-01): each service matched live, or the
-              whole plan handed to one planner — for the host too busy to book. */}
-          <div className="mt-3 grid grid-cols-2 gap-2.5" data-how>
-            {[['each', LayoutGrid, 'Each service', 'Matched live'], ['planner', ClipboardList, 'One planner', 'Runs it all']].map(([k, Icon, title, sub]) => (
-              <motion.button key={k} type="button" whileTap={{ scale: 0.96 }} onClick={() => setHow(k)} aria-pressed={how === k} data-how-pick={k}
-                className={'flex items-center gap-2.5 rounded-[20px] p-3 text-left transition-colors ' + (how === k ? 'bg-[#1C1033] text-white' : 'bg-white shadow-[0_0_0_1.5px_#ECE6F4]')}>
-                <span className={'grid h-10 w-10 shrink-0 place-items-center rounded-full ' + (how === k ? 'bg-white/15' : 'bg-[#F4EEFF] text-[var(--brand)]')}><Icon size={19} /></span>
-                <span className="min-w-0">
-                  <span className="block text-[14.5px] font-black tracking-[-0.02em]">{title}</span>
-                  <span className={'block text-[11.5px] font-bold ' + (how === k ? 'text-white/70' : 'text-[var(--ink-3)]')}>{sub}</span>
-                </span>
-              </motion.button>
+        </Row>
+
+        <Row icon={MapPin} label="Event location">
+          <Field onClick={() => setSheet('place')} empty={!place?.area} data-field="place">
+            <span className="min-w-0 truncate">{place?.area ? `${place.address || place.area}${place.address ? '' : ', Bengaluru'}` : 'Choose the location'}</span>
+            <LocateFixed size={17} className="shrink-0 text-[var(--brand)]" />
+          </Field>
+        </Row>
+
+        <Row icon={Building2} label="Venue">
+          <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Venue" data-field="venue">
+            {VENUES.map(([k, l]) => (
+              <button key={k} type="button" role="radio" aria-checked={f.venueChoice === k} onClick={() => set({ venueChoice: k })} data-venue={k}
+                className={'cx-press rounded-full px-3.5 py-2.5 text-[13px] font-bold transition-colors ' + (f.venueChoice === k ? 'bg-[#F1E9FF] text-[#4C1D95] shadow-[inset_0_0_0_1.5px_#7C3AED]' : 'bg-white text-[var(--ink-2)] shadow-[inset_0_0_0_1.5px_#E9E3F2]')}>
+                {l}
+              </button>
             ))}
           </div>
-          {how === 'planner' && <p className="mt-3 text-[13px] font-extrabold text-[#3B1670]" data-planner-note>Your planner arranges all of these:</p>}
-          <div className="mt-3 grid grid-cols-3 gap-2.5" data-plan-grid>
-            {needed.map((t, i) => <Tile key={t} t={t} on i={i} said={needsSummary(t, plan.needsOf(o.id, t))} onClick={() => setSheet({ edit: t })} />)}
-          </div>
-
-          {needed.includes('catering_food') && (
-            <div className="mt-6" data-diet>
-              <p className="text-[16px] font-black tracking-[-0.02em]">Food</p>
-              <div className="mt-2.5 grid grid-cols-3 gap-2.5">
-                {DIETS.map(([k, label]) => (
-                  <button key={k} type="button" onClick={() => setDiet(diet === k ? null : k)} aria-pressed={diet === k} data-diet-pick={k}
-                    className={'cx-press flex h-14 items-center justify-center gap-2 rounded-[18px] text-[14.5px] font-extrabold transition ' + (diet === k ? 'bg-[#1C1033] text-white' : 'bg-white shadow-[0_0_0_1.5px_#ECE6F4]')}>
-                    {k === 'mixed' ? <span className="flex gap-0.5"><DietMark kind="veg" /><DietMark kind="non_veg" /></span> : <DietMark kind={k} />}{label}
-                  </button>
-                ))}
-              </div>
-            </div>
+          {f.venueChoice === 'other' && (
+            <input value={f.venueOther} onChange={e => set({ venueOther: e.target.value.slice(0, 80) })} placeholder="Where is it? e.g. our office terrace" autoFocus
+              className="mt-2 h-12 w-full rounded-[14px] bg-white px-3.5 text-[14px] font-semibold shadow-[inset_0_0_0_1.5px_#E9E3F2] outline-none focus:shadow-[inset_0_0_0_2px_#7C3AED]" data-venue-other />
           )}
+        </Row>
 
-          {addable.length > 0 && (
-            <div className="mt-6" data-addons>
-              <p className="flex items-center gap-1.5 text-[16px] font-black tracking-[-0.02em]"><Plus size={17} className="text-[var(--brand)]" />Add more</p>
-              <div className="cx-noscroll -mx-4 mt-2.5 flex gap-2.5 overflow-x-auto px-4 pb-1">
-                {addable.map(r => <div key={r.tradeId} className="w-[96px] shrink-0"><Tile t={r.tradeId} on={false} onClick={() => pick(r.tradeId, 'need')} /></div>)}
-              </div>
-            </div>
-          )}
+        <Row icon={IndianRupee} label={<>Approx. budget <span className="font-semibold text-[var(--ink-3)]">(optional)</span></>}>
+          <Select value={f.budget} onChange={v => set({ budget: v })} data-field="budget">
+            {BUDGETS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+          </Select>
+        </Row>
+      </div>
 
-          <button type="button" onClick={() => setMore(m => !m)} aria-expanded={more} className="cx-press mt-6 flex w-full items-center gap-3 rounded-[20px] bg-[#FAF8FD] px-4 py-3.5 text-left shadow-[inset_0_0_0_1px_#EEE9F5]" data-special>
-            <Sparkles size={18} className="shrink-0 text-[var(--gold)]" />
-            <span className="flex-1 text-[14.5px] font-extrabold">Anything special?</span>
-            <span className="text-[12px] font-bold text-[var(--ink-3)]">Optional</span>
-            <ChevronDown size={18} className={'shrink-0 text-[var(--ink-3)] transition ' + (more ? 'rotate-180' : '')} />
-          </button>
-          {more && (
-            <div className="cx-enter mt-3">
-              <AboutEvent occasion={o} ctx={contextFor(o, {}, { ...ev, context: about })} onChange={c => setAbout(onlyAbout(c))} />
-            </div>
-          )}
-        </motion.section>
-      )}
+      <ActionBar>
+        <button type="button" disabled={!f.date} onClick={go} className="cx-press cx-cta flex h-[56px] w-full items-center justify-center gap-2 rounded-[18px] text-[16px] font-extrabold" data-create-plan>
+          {f.date ? <>Create my event plan<ChevronRight size={19} /></> : 'Pick the date to continue'}
+        </button>
+      </ActionBar>
 
-      {complete && !edit && (
-        <ActionBar>
-          <button type="button" disabled={!needed.length} onClick={go} className="cx-press cx-cta relative flex h-[58px] w-full items-center justify-center gap-2.5 overflow-hidden rounded-[20px] text-[16px] font-extrabold" data-find-live>
-            <span className="cx-live-dot h-2.5 w-2.5 rounded-full bg-[#4ADE80]" />{how === 'planner' ? 'Find my planner live' : 'Find my masters live'}<Radar size={19} />
-          </button>
-        </ActionBar>
-      )}
-
+      <Sheet open={sheet === 'date'} onClose={() => setSheet(null)} title="Event date">
+        <div className="pb-4"><MonthCalendar value={f.date} first={first} last={last} onPick={d => { set({ date: d }); setSheet(null) }} /></div>
+      </Sheet>
       <PlaceSheet open={sheet === 'place'} onClose={() => setSheet(null)} value={plan.place} onPick={p => { plan.setPlace(p); setSheet(null) }} />
-      {/* A service's own choices — cuisine, photo style, décor theme… — one
-          tap away on its tile, never a screen of questions (2026-11-01).
-          Optional; what is picked narrows the live match. */}
-      <Sheet open={!!sheet?.edit} onClose={() => setSheet(null)} title={sheet?.edit ? TRADE[sheet.edit].label : ''}
-        footer={sheet?.edit ? (
-          <div className="grid gap-1.5">
-            <button type="button" onClick={() => setSheet(null)} className="cx-press cx-cta h-12 w-full rounded-[16px] text-[14.5px] font-extrabold" data-edit-done>Done</button>
-            <button type="button" onClick={() => setSheet({ remove: sheet.edit })} className="h-10 w-full text-[13px] font-bold text-[#B42318]" data-edit-remove>Remove from plan</button>
-          </div>
-        ) : null}>
-        {sheet?.edit && (
-          <div className="space-y-3 pb-2" data-edit={sheet.edit}>
-            {tradeQuestions(sheet.edit).filter(q => q.group === 'choose' && q.kind !== 'dishes' && q.key !== '$diet' && q.key !== '$years').slice(0, 2).map(q => {
-              const cur = plan.needsOf(o.id, sheet.edit)
-              const set = (k, v) => plan.setNeeds(`${o.id}:${sheet.edit}`, { ...plan.needsOf(o.id, sheet.edit), [k]: v })
-              return <Question key={q.key} q={q} value={cur[q.key] ?? []} onChange={v => set(q.key, v)} occasion={o}
-                typed={cur[q.key + '__typed'] ?? []} onTyped={v => set(q.key + '__typed', v)} />
-            })}
-            {!tradeQuestions(sheet.edit).some(q => q.group === 'choose' && q.kind !== 'dishes' && q.key !== '$diet' && q.key !== '$years') && (
-              <p className="text-[13.5px] font-semibold text-[var(--ink-2)]">{o.why?.[sheet.edit] ?? TRADE[sheet.edit].why}. Nothing to choose — we match the best one.</p>
-            )}
-          </div>
-        )}
-      </Sheet>
-      <Sheet open={!!sheet?.remove} onClose={() => setSheet(null)} title={sheet?.remove ? `Remove ${TRADE[sheet.remove].label}?` : ''}
-        footer={sheet?.remove ? (
-          <div className="grid gap-2">
-            <button type="button" onClick={() => setSheet(null)} className="cx-press cx-cta h-12 w-full rounded-[16px] text-[14.5px] font-extrabold" data-keep>Keep it</button>
-            <button type="button" onClick={() => { pick(sheet.remove, 'have'); setSheet(null) }} className="h-11 w-full rounded-[16px] bg-[#F4F1F8] text-[13.5px] font-extrabold text-[var(--ink-2)]">I already have it</button>
-            <button type="button" onClick={() => { pick(sheet.remove, 'skip'); setSheet(null) }} className="h-10 w-full text-[13px] font-bold text-[#B42318]" data-remove-anyway>Remove</button>
-          </div>
-        ) : null}>
-        {sheet?.remove && (
-          <div className="flex items-center gap-3 pb-2">
-            <ArtFill art={serviceArt(sheet.remove)} tone="#F6F1FF" className="h-14 w-14 shrink-0 rounded-[14px]" inset="10%" />
-            <p className="text-[14px] font-semibold leading-snug text-[var(--ink-2)]">{o.why?.[sheet.remove] ?? TRADE[sheet.remove].why}.</p>
-          </div>
-        )}
-      </Sheet>
     </main>
   )
 }
 
-function Q({ children }) {
-  return <h2 className="text-[28px] font-black leading-[1.05] tracking-[-0.04em]">{children}</h2>
+const step = n => (n >= 1000 ? 100 : n >= 200 ? 25 : n >= 50 ? 10 : 1)
+
+export function Progress({ at }) {
+  return (
+    <div className="mx-4 flex gap-1.5" aria-label={`Step ${at} of 3`}>
+      {[1, 2, 3].map(i => <span key={i} className={'h-[4px] flex-1 rounded-full ' + (i <= at ? 'bg-gradient-to-r from-[#6D28D9] to-[#9333EA]' : 'bg-[#EEE9F5]')} />)}
+    </div>
+  )
 }
 
-function Pill({ on, onClick, children, ...rest }) {
+function Row({ icon: Icon, label, children }) {
   return (
-    <motion.button type="button" whileTap={{ scale: 0.95 }} onClick={onClick} aria-pressed={!!on} {...rest}
-      className={'flex h-[58px] items-center justify-center rounded-[18px] text-[15px] font-extrabold transition-colors ' + (on ? 'bg-[var(--brand)] text-white shadow-[0_12px_22px_-14px_rgba(106,43,217,.95)]' : 'bg-white shadow-[0_0_0_1.5px_#ECE6F4]')}>
+    <div>
+      <p className="mb-1.5 flex items-center gap-1.5 text-[13px] font-extrabold text-[var(--ink)]"><Icon size={15} className="text-[var(--ink-3)]" />{label}</p>
       {children}
-    </motion.button>
+    </div>
   )
 }
 
-function BigChoice({ icon: Icon, on, onClick, tone, ink, children }) {
+function Field({ onClick, empty, children, ...rest }) {
   return (
-    <motion.button type="button" whileTap={{ scale: 0.96 }} onClick={onClick} aria-pressed={on}
-      className={'flex h-[128px] flex-col items-center justify-center gap-2.5 rounded-[26px] bg-gradient-to-br ' + tone + ' ' + (on ? 'ring-[2.5px] ring-[var(--brand)]' : '')}>
-      <span className={'grid h-14 w-14 place-items-center rounded-full bg-white shadow-[0_10px_20px_-12px_rgba(40,10,90,.5)] ' + ink}><Icon size={26} /></span>
-      <span className={'text-[16px] font-black tracking-[-0.02em] ' + ink}>{children}</span>
-    </motion.button>
+    <button type="button" onClick={onClick} {...rest}
+      className={'cx-press flex h-12 w-full items-center justify-between gap-2 rounded-[14px] bg-white px-3.5 text-left text-[15px] font-bold shadow-[inset_0_0_0_1.5px_#E9E3F2] ' + (empty ? 'text-[var(--ink-3)]' : 'text-[var(--ink)]')}>
+      {children}
+    </button>
   )
 }
 
-/* The month calendar the app already had (WhenSheet), whole and inline —
-   Mohan, 2026-11-01: "the same calendar, display the entire calendar".
-   A tap answers; the date chip above is the way back to change it. */
-function DateStep({ value, onPick }) {
-  const [first, last] = useMemo(() => {
-    const a = new Date(); a.setHours(0, 0, 0, 0)
-    const b = new Date(a); b.setDate(b.getDate() + 119)
-    return [a, b]
-  }, [])
+function Select({ value, onChange, children, ...rest }) {
   return (
-    <>
-      <Q>When?</Q>
-      <MonthCalendar value={value} onPick={onPick} first={first} last={last} />
-    </>
-  )
-}
-
-function TimeStep({ date, value, onPick }) {
-  const min = earliestOn(date)
-  const [m, setM] = useState(() => Math.max(min, toMin(value) ?? 19 * 60))
-  return (
-    <>
-      <Q>What time?</Q>
-      <div className="mt-4 grid grid-cols-2 gap-2.5">
-        {SLOTS.map(([t, label, Icon, tone, ink]) => {
-          const off = toMin(t) < min
-          return (
-            <motion.button key={t} type="button" whileTap={{ scale: 0.95 }} disabled={off} onClick={() => onPick(t)} aria-pressed={value === t} data-slot={t}
-              className={'relative flex h-[92px] flex-col justify-between overflow-hidden rounded-[24px] bg-gradient-to-br p-3.5 text-left disabled:opacity-35 ' + tone + ' ' + (value === t ? 'ring-[2.5px] ring-[var(--brand)]' : '')}>
-              <Icon size={26} className={ink} />
-              <span>
-                <span className={'block text-[15.5px] font-black tracking-[-0.02em] ' + ink}>{label}</span>
-                <span className="block text-[12.5px] font-bold text-[#5B4A6E]">{timeLabel(t)}</span>
-              </span>
-            </motion.button>
-          )
-        })}
-      </div>
-      <div className="mt-3 flex items-center gap-2 rounded-[20px] bg-[#FAF8FD] p-2 shadow-[inset_0_0_0_1px_#EEE9F5]" data-other-time>
-        <button type="button" onClick={() => setM(x => Math.max(min, x - 30))} aria-label="30 minutes earlier" className="cx-press grid h-11 w-11 place-items-center rounded-full bg-white shadow-[0_0_0_1px_#ECE6F4]"><Minus size={18} /></button>
-        <span className="cx-num flex-1 text-center text-[19px] font-black tracking-[-0.02em]">{timeLabel(toTime(m))}</span>
-        <button type="button" onClick={() => setM(x => Math.min(1410, x + 30))} aria-label="30 minutes later" className="cx-press grid h-11 w-11 place-items-center rounded-full bg-white shadow-[0_0_0_1px_#ECE6F4]"><Plus size={18} /></button>
-        <button type="button" onClick={() => onPick(toTime(m))} className="cx-press h-11 rounded-full bg-[#1C1033] px-5 text-[14px] font-extrabold text-white" data-time-ok>OK</button>
-      </div>
-    </>
-  )
-}
-
-function GuestsStep({ occasion, value, onPick }) {
-  const [n, setN] = useState(value ?? occasion.bands[1])
-  const step = n >= 1000 ? 100 : n >= 200 ? 25 : n >= 50 ? 10 : 1
-  const set = x => setN(Math.max(1, Math.min(100000, x)))
-  return (
-    <>
-      <Q>How many {occasion.people.toLowerCase()}?</Q>
-      <div className="mt-4 grid grid-cols-4 gap-2">
-        {occasion.bands.map(b => <Pill key={b} on={value === b} onClick={() => onPick(b)} data-band={b}><span className="cx-num">{b.toLocaleString('en-IN')}</span></Pill>)}
-      </div>
-      <div className="mt-3 flex items-center gap-2 rounded-[20px] bg-[#FAF8FD] p-2 shadow-[inset_0_0_0_1px_#EEE9F5]">
-        <button type="button" onClick={() => set(n - step)} aria-label="Fewer" className="cx-press grid h-11 w-11 place-items-center rounded-full bg-white shadow-[0_0_0_1px_#ECE6F4]"><Minus size={18} /></button>
-        <input inputMode="numeric" value={n} onChange={e => set(Number(e.target.value.replace(/\D/g, '')) || 1)} aria-label="Number of guests"
-          className="cx-num min-w-0 flex-1 bg-transparent text-center text-[22px] font-black tracking-[-0.03em] outline-none" />
-        <button type="button" onClick={() => set(n + step)} aria-label="More" className="cx-press grid h-11 w-11 place-items-center rounded-full bg-white shadow-[0_0_0_1px_#ECE6F4]"><Plus size={18} /></button>
-        <button type="button" onClick={() => onPick(n)} className="cx-press h-11 rounded-full bg-[#1C1033] px-5 text-[14px] font-extrabold text-white" data-guests-ok>OK</button>
-      </div>
-      <button type="button" onClick={() => onPick(null)} className="mt-3 text-[13px] font-extrabold text-[var(--ink-3)] underline decoration-dotted underline-offset-4" data-guests-unsure>Not sure yet</button>
-    </>
-  )
-}
-
-function Tile({ t, on, i = 0, said = null, onClick }) {
-  return (
-    <motion.button type="button" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ ...spring, delay: Math.min(i, 9) * 0.035 }} whileTap={{ scale: 0.95 }}
-      onClick={onClick} aria-pressed={on} data-tile={t}
-      className={'relative flex w-full flex-col items-center rounded-[22px] p-1.5 pb-2.5 text-center ' + (on ? 'bg-white shadow-[0_0_0_1.5px_#E2D5FA,0_16px_28px_-22px_rgba(91,33,168,.9)]' : 'bg-[#FAF8FD] shadow-[inset_0_0_0_1px_#EEE9F5]')}>
-      <ArtFill art={serviceArt(t)} tone={on ? '#F6F1FF' : '#F3F0F8'} className={'aspect-square w-full rounded-[17px] ' + (on ? '' : 'opacity-75')} inset="12%" />
-      <span className="mt-1.5 line-clamp-2 min-h-[30px] px-0.5 text-[12px] font-extrabold leading-[1.2] tracking-[-0.01em]">{TRADE[t].label}</span>
-      {on && <span className={'mt-0.5 line-clamp-1 px-1 text-[10.5px] font-bold ' + (said ? 'text-[#0B6B3D]' : 'text-[var(--brand)]')}>{said ?? 'Tap to choose'}</span>}
-      <span className={'absolute right-2 top-2 grid h-6 w-6 place-items-center rounded-full ' + (on ? 'bg-[#0C831F] text-white shadow-[0_4px_10px_-4px_rgba(12,131,31,.9)]' : 'bg-white text-[var(--brand)] shadow-[0_0_0_1px_#E2D5FA]')}>
-        {on ? <Check size={13} strokeWidth={3.4} /> : <Plus size={14} strokeWidth={3} />}
-      </span>
-    </motion.button>
-  )
-}
-
-/* The marks every Indian food packet carries: a dot for veg, a triangle for non-veg. */
-function DietMark({ kind }) {
-  const c = kind === 'veg' ? '#0C831F' : '#A0381B'
-  return (
-    <span className="grid h-[17px] w-[17px] shrink-0 place-items-center rounded-[3px] border-2 bg-white" style={{ borderColor: c }}>
-      {kind === 'veg' ? <span className="h-[7px] w-[7px] rounded-full" style={{ background: c }} />
-        : <span className="h-[7px] w-[8px]" style={{ background: c, clipPath: 'polygon(50% 0, 100% 100%, 0 100%)' }} />}
-    </span>
+    <label className="relative block">
+      <select value={value} onChange={e => onChange(e.target.value)} {...rest}
+        className="h-12 w-full appearance-none rounded-[14px] bg-white pl-3.5 pr-9 text-[15px] font-bold text-[var(--ink)] shadow-[inset_0_0_0_1.5px_#E9E3F2] outline-none focus:shadow-[inset_0_0_0_2px_#7C3AED]">
+        {children}
+      </select>
+      <ChevronDown size={17} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[var(--ink-3)]" />
+    </label>
   )
 }

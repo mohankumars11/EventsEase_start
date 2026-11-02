@@ -34,7 +34,7 @@ import { TRADE } from '../data/trades'
 import { occasionArt, serviceArt } from '../data/art'
 import { usePlan, needsFor } from '../state/PlanContext'
 import { savedWhere } from '../lib/where'
-import { dayLabel, plural, rupees, timeLabel } from '../lib/format'
+import { dayLabel, plural, timeLabel } from '../lib/format'
 import { quoteLine, requestLine } from '../lib/booking'
 import { matchTrade, priceOne, some } from '../lib/liveMatch'
 import { loadCuisines } from '../lib/needs'
@@ -119,7 +119,6 @@ export default function LiveMatch() {
   const near = list.reduce((s, x) => s + (x.r.near ?? 0), 0)
   const landed = list.filter(x => x.r.stage === 'done')
   const gaps = list.filter(x => x.r.stage === 'none')
-  const quotes = landed.filter(x => x.r.match.q.path === 'QUOTE').length
   const instant = landed.filter(x => x.r.match.q.path === 'INSTANT')
   const total = instant.reduce((s, x) => s + Number(x.r.match.q.customer_paise || 0), 0)
   const allNear = list.every(x => x.r.near != null)
@@ -141,9 +140,12 @@ export default function LiveMatch() {
       try {
         const wants = needsSummary(t, plan.needsOf(o.id, t))
         const food = needsSummary('catering_food', plan.needsOf(o.id, 'catering_food'))
-        const note = planner
-          ? [`Plan the whole ${o.name}`, services.map(x => TRADE[x]?.label).filter(Boolean).join(', '), guestsText, food && `Food: ${food}`].filter(Boolean).join(' · ')
-          : wants ? `Needs: ${wants}` : undefined
+        /* "Something else" the customer typed on the plan travels with every request. */
+        const also = (ev.custom ?? []).length ? `Also: ${ev.custom.join(', ')}` : null
+        const where = ev.venueChoice === 'other' && ev.venueOther ? `Venue: ${ev.venueOther}` : null
+        const note = (planner
+          ? [`Plan the whole ${o.name}`, services.map(x => TRADE[x]?.label).filter(Boolean).join(', '), guestsText, food && `Food: ${food}`, also, where]
+          : [wants && `Needs: ${wants}`, also, where]).filter(Boolean).join(' · ') || undefined
         /* A planner prices THIS event (their listed package is a wedding's):
            the brief goes as a request for their fee, not a booking at it. */
         const b = planner ? await quoteLine(line, ev, place, { note, venue }) : await requestLine(line, ev, place, { note, venue, backups: r.backups ?? [] })
@@ -265,10 +267,12 @@ export default function LiveMatch() {
           ) : landed.length ? (
             <>
               <div className="mb-2.5 flex items-end justify-between gap-3 px-1">
+                {/* No price, not even an estimate, until a master accepts with theirs
+                    (Mohan, 2026-11-02): the masters' own rates still choose who is
+                    matched and who backs them up, behind the scenes. */}
                 <span>
-                  <span className="block text-[11.5px] font-extrabold uppercase tracking-[0.1em] text-[var(--ink-3)]">Total</span>
-                  <span className="cx-num block text-[24px] font-black leading-none tracking-[-0.03em]" data-total>{planner ? 'Fee on request' : rupees(total) ?? '—'}</span>
-                  {quotes > 0 && <span className="block text-[11px] font-bold text-[var(--ink-3)]">+ {quotes} priced on reply</span>}
+                  <span className="block text-[11.5px] font-extrabold uppercase tracking-[0.1em] text-[var(--ink-3)]">Price</span>
+                  <span className="block text-[16px] font-black leading-tight tracking-[-0.02em]" data-total>When they accept</span>
                 </span>
                 {requestLive === false ? (
                   <span className="text-right">
@@ -342,8 +346,6 @@ function MatchCard({ t, r, i, guests, onSwap, name, fee = false }) {
     )
   }
   const quote = m.q.path === 'QUOTE'
-  const price = !quote && !fee && rupees(m.q.customer_paise)
-  const unit = m.partner.quote?.note ?? m.line.fromLabel ?? null
   return (
     <motion.div initial={{ opacity: 0, y: 18, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ ...spring, delay: 0.02 * i }}
       className="overflow-hidden rounded-[22px] bg-white shadow-[0_0_0_1px_#E9E1F7,0_18px_30px_-26px_rgba(91,33,168,.9)]" data-match={t} data-state="done" data-path={m.q.path}>
@@ -361,10 +363,6 @@ function MatchCard({ t, r, i, guests, onSwap, name, fee = false }) {
             {(r.backups?.length ?? 0) > 0 && <span className="flex min-w-0 items-center gap-0.5"><ShieldCheck size={12} className="shrink-0" /><span className="truncate">+{r.backups.length}</span></span>}
           </p>
         </div>
-        <span className="shrink-0 text-right">
-          <span className="cx-num block text-[17px] font-black tracking-[-0.02em]">{price || (fee ? 'On request' : 'Quote')}</span>
-          <span className="block max-w-[96px] truncate text-[10.5px] font-bold text-[var(--ink-3)]">{fee ? 'Their fee, for your event' : quote ? 'they price it' : unit ?? (guests ? `${guests} guests` : '')}</span>
-        </span>
       </div>
       <div className="flex items-center justify-between border-t border-[#F3EFF8] bg-[#FCFBFE] px-3 py-1.5">
         <span className="flex items-center gap-1 text-[11.5px] font-extrabold text-[#0B6B3D]"><CalendarCheck2 size={13} />{quote ? 'Replies with a price' : 'Free on your date'}</span>
@@ -394,7 +392,6 @@ function SwapSheet({ swap, rows, onClose, onPick, occasionId }) {
                   {swap?.failed === p.serviceId && <span className="text-[#B42318]">Not free that day</span>}
                 </span>
               </span>
-              <span className="shrink-0 text-right text-[14px] font-black">{rupees(p.quote?.paise ?? p.fromPaise) ?? ''}</span>
               {swap?.busy === p.serviceId ? <Loader2 size={17} className="shrink-0 animate-spin text-[var(--brand)]" /> : <ChevronRight size={17} className="shrink-0 text-[var(--ink-3)]" />}
             </button>
           </li>
@@ -423,7 +420,7 @@ function Done({ o, ev, phase, sent, total, planner = false, services = 0 }) {
         <Check size={48} strokeWidth={3.2} />
       </motion.div>
       <h2 className="mt-5 text-center text-[26px] font-black tracking-[-0.04em]">{paid ? 'Booked!' : planner ? 'Sent to your planner!' : 'Requests sent!'}</h2>
-      <p className="mt-1 text-center text-[13.5px] font-bold text-[var(--ink-3)]">{o.name} · {dayLabel(ev.date)}{total ? ` · ${rupees(total)}` : ''}</p>
+      <p className="mt-1 text-center text-[13.5px] font-bold text-[var(--ink-3)]">{o.name} · {dayLabel(ev.date)}</p>
       <ol className="mt-6 rounded-[22px] bg-white p-4 shadow-[0_0_0_1px_#EEE8F6]" data-timeline>
         {steps.map(([title, sub, ok], i) => (
           <li key={title} className="relative flex gap-3 pb-4 last:pb-0">

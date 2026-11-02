@@ -49,6 +49,7 @@ const Trade = screen(() => import('./screens/Trade'))
    Occasion.jsx and Recommend.jsx stay for their exports; their routes moved here. */
 const EventFlow = screen(() => import('./screens/EventFlow'))
 const LiveMatch = screen(() => import('./screens/LiveMatch'))
+const EventPlan = screen(() => import('./screens/EventPlan'))
 const Services = screen(() => import('./screens/Small'), m => m.Services)
 const Plans = screen(() => import('./screens/Plans'))
 const Account = screen(() => import('./screens/Account'))
@@ -152,7 +153,7 @@ export default function CustomerApp() {
             <Route path="/search" element={<Search />} />
             <Route path="/c/:categoryId" element={<Category />} />
             <Route path="/o/:occasionId" element={<EventFlow />} />
-            <Route path="/o/:occasionId/plan" element={<EventFlow />} />
+            <Route path="/o/:occasionId/plan" element={<EventPlan />} />
             <Route path="/o/:occasionId/live" element={<LiveMatch />} />
             <Route path="/o/:occasionId/needs" element={<Needs />} />
             <Route path="/brief/:tradeId" element={<Brief />} />
