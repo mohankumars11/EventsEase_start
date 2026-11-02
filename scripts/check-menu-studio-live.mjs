@@ -64,7 +64,10 @@ const id = v2.data?.[0]?.menu_id
 ok(!v2.error && v2.data?.[0]?.version === 2 && id === v1.data?.[0]?.menu_id, 'same client key → same menu, version 2 (no duplicate)')
 const both = await me.from('sambramo_customer_menu_items').select('version').eq('menu_id', id)
 ok(both.data?.filter(r => r.version === 1).length === tpl.length && both.data?.some(r => r.version === 2), 'version 1 is kept beside version 2')
-const other = await session(`sambramo.menucheck.${Date.now()}@example.com`)
+/* A link can only be minted for a user that exists: make the throwaway first. */
+const otherEmail = `sambramo.menucheck.${Date.now()}@example.com`
+const { data: made } = await admin.auth.admin.createUser({ email: otherEmail, email_confirm: true })
+const other = await session(otherEmail)
 const peek = await other.from('sambramo_customer_menus').select('id').eq('id', id)
 ok(!peek.data?.length, 'another customer cannot read it')
 
@@ -79,7 +82,6 @@ if (qr) {
 
 await admin.from('sambramo_customer_menus').delete().eq('id', id)
 /* The throwaway second customer goes too. */
-const { data: ou } = await other.auth.getUser()
-if (ou?.user?.id) await admin.auth.admin.deleteUser(ou.user.id)
+if (made?.user?.id) await admin.auth.admin.deleteUser(made.user.id)
 console.log(`\n${fail ? 'FAIL' : 'PASS'} ${pass}/${pass + fail}`)
 process.exit(fail ? 1 : 0)

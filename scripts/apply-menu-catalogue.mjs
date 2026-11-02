@@ -98,7 +98,7 @@ console.log(`menu dishes: ${await upsert('sambramo_menu_template_items', items, 
 // 3 · photographs, with their licence and attribution
 const asset = (kind, subject, p) => ({ id: `pexels-${p.id}`, subject_kind: kind, subject_id: subject, url: p.url, alt: p.alt, source: 'pexels',
   source_page: p.page, licence: 'Pexels License', attribution: p.credit, kind: 'inspiration', usage_status: 'active' })
-const assets = [...Object.entries(P.FAMILY_PHOTOS ?? {}).map(([f, p]) => asset('family', f, p)), ...Object.entries(P.MENU_PHOTOS ?? {}).map(([m, p]) => asset('menu', m, p))]
+const assets = [...Object.entries(P.FAMILY_PHOTOS ?? {}).filter(([, p]) => p).map(([f, p]) => asset('family', f, p)), ...Object.entries(P.MENU_PHOTOS ?? {}).filter(([, p]) => p).map(([m, p]) => asset('menu', m, p))]
 const seen = new Set()
 console.log(`photos: ${await upsert('sambramo_catalogue_assets', assets.filter(a => !seen.has(a.id) && seen.add(a.id)), 'id')}`)
 console.log(DRY ? 'dry run — nothing written' : 'done')
