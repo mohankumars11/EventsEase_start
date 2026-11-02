@@ -126,7 +126,7 @@ export default function EventBoard() {
               </div>
               <ul>
                 {g.items.map(x => (
-                  <li key={x.b.lineId ?? x.b.quoteRequestId} className="flex items-center gap-3 border-b border-[#F7F4FA] px-3.5 py-2.5 last:border-0" data-board-item={x.state}>
+                  <li key={x.b.lineId ?? x.b.quoteRequestId} className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-[#F7F4FA] px-3.5 py-2.5 last:border-0" data-board-item={x.state}>
                     <span className="h-10 w-10 shrink-0 overflow-hidden rounded-[12px] bg-[#F3EEF9]">{x.b.cover && <Photo src={x.b.cover} className="h-full w-full object-cover" />}</span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[13.5px] font-extrabold">{x.b.name}</span>
@@ -137,6 +137,7 @@ export default function EventBoard() {
                               : x.state === 'confirmed' ? <><Check size={12} />Confirmed</> : 'Closed'}
                       </span>
                     </span>
+                    {(x.state === 'replied' || (x.quote && asks[x.quote.id])) && <span className="flex basis-full flex-wrap items-center justify-end gap-1.5 pl-[52px]" data-board-actions>
                     {x.state === 'replied' && x.reply && (
                       <button type="button" onClick={() => setDetail(x)} className={'cx-press flex h-8 shrink-0 items-center gap-1 rounded-full px-2.5 text-[11px] font-extrabold ' + (x.changed ? 'bg-[#FFF3DC] text-[#8A5300]' : 'bg-[#E9F8EF] text-[#0B6B3D]')} data-menu-reply={x.changed ? 'changed' : 'as-asked'}>
                         {x.changed ? <><TriangleAlert size={12} />{x.changed} change{x.changed === 1 ? '' : 's'}</> : <><Check size={12} />As asked</>}
@@ -151,6 +152,7 @@ export default function EventBoard() {
                         </button>
                       </span>
                     )}
+                    </span>}
                   </li>
                 ))}
               </ul>
