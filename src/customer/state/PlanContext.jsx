@@ -20,6 +20,7 @@
  */
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { recommend } from '../lib/recommend360'
+import { blueprint } from '../lib/blueprint'
 
 const KEY = 'sbm.cx.plan.v1'
 /* `place`: where the event is ({ area, lat, lng, address }) — the engine checks travel and
@@ -127,16 +128,18 @@ export function contextFor(occasion, picks = {}, event = {}) {
 
 const TIER = { CORE: 'must', CONDITIONAL: 'often', OPTIONAL: 'extra', NOT_DEFAULT: 'hidden' }
 /**
- * What an occasion needs — the 360° engine (lib/recommend360.js) over the
- * bundle baseline and the customer's context. `needed` is the shortlist;
- * `rows` carry every trade with its status, reason and the customer's state.
+ * What an occasion needs — the occasion's own template made proportionate
+ * to this event (lib/blueprint.js, 2026-11-02). The 360° engine's generic
+ * baseline made "event logistics" essential everywhere and gave a naming
+ * ceremony no priest; the curated templates do not. `result` is still the
+ * 360° engine's, for the screens that read its phases and rule version.
+ * `needed` is the shortlist every screen and the live match use.
  */
 export function needsFor(occasion, picks = {}, event = {}) {
   const r = recommend(occasion.id, contextFor(occasion, picks, event))
-  const shortlisted = new Set(r.shortlist)
-  const rows = r.services.map(x => ({
-    ...x, tier: TIER[x.status],
-    state: x.alreadyArranged || x.coveredByVenue ? 'have' : x.customerExcluded ? 'skip' : x.savedForLater ? 'later' : shortlisted.has(x.tradeId) ? 'need' : 'off',
-  }))
-  return { rows, needed: r.shortlist, result: r }
+  const b = blueprint(occasion, picks, event)
+  /* The reason a customer reads is the template's own (o.why) or a rule's —
+     never the 360° engine's "Core for a first birthday". */
+  const rows = b.rows.map(x => ({ ...x, tier: TIER[x.status] }))
+  return { rows, needed: b.needed, essential: b.essential, enhance: b.enhance, small: b.small, result: r }
 }

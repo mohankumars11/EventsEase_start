@@ -24,6 +24,7 @@ import { dayLabel, iso, timeLabel } from '../lib/format'
 import { ActionBar, BackHeader, Sheet } from '../ui/kit'
 import { ArtFill } from '../ui/art'
 import { MonthCalendar } from './WhenSheet'
+import EventJourney from '../ui/EventJourney'
 import PlaceSheet from './PlaceSheet'
 
 const toMin = t => (t ? Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5)) : null)
@@ -81,8 +82,8 @@ export default function EventFlow() {
 
   return (
     <main className="cx-enter min-h-[100dvh] bg-white pb-[calc(env(safe-area-inset-bottom,0px)+110px)]" data-event-details>
-      <BackHeader title="Event details" right={<span className="pr-1 text-[12px] font-bold text-[var(--ink-3)]">1 of 3</span>} />
-      <Progress at={1} />
+      <BackHeader title="Event details" />
+      <EventJourney at={0} occasionId={o.id} />
 
       <section className="flex items-center gap-3 px-4 pt-4">
         <ArtFill art={occasionArt(o)} tone={o.tone} className="h-[60px] w-[60px] shrink-0 rounded-[18px]" inset="8%" />
@@ -166,14 +167,6 @@ export default function EventFlow() {
 }
 
 const step = n => (n >= 1000 ? 100 : n >= 200 ? 25 : n >= 50 ? 10 : 1)
-
-export function Progress({ at }) {
-  return (
-    <div className="mx-4 flex gap-1.5" aria-label={`Step ${at} of 3`}>
-      {[1, 2, 3].map(i => <span key={i} className={'h-[4px] flex-1 rounded-full ' + (i <= at ? 'bg-gradient-to-r from-[#6D28D9] to-[#9333EA]' : 'bg-[#EEE9F5]')} />)}
-    </div>
-  )
-}
 
 function Row({ icon: Icon, label, children }) {
   return (

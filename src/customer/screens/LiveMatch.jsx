@@ -43,6 +43,8 @@ import { confirmPaid, rememberVoucher } from '../lib/bookings'
 import { linkBookings } from '../lib/eventPlans'
 import { needsSummary } from '../ui/needs'
 import { ActionBar, BackHeader, Photo, Sheet } from '../ui/kit'
+import EventJourney from '../ui/EventJourney'
+import { copyFor } from '../data/requirementCopy'
 import { ArtFill } from '../ui/art'
 import SignInSheet from './SignInSheet'
 import InviteReady from '../ui/InviteReady'
@@ -190,6 +192,7 @@ export default function LiveMatch() {
     <main className="cx-enter min-h-[100dvh] bg-white pb-[calc(env(safe-area-inset-bottom,0px)+190px)]" data-live-match data-phase={phase}>
       <BackHeader title={done ? 'All set' : planner ? 'Matching planner' : 'Matching masters'} sub={[o.name, guestsText].filter(Boolean).join(' · ')}
         right={<ArtFill art={occasionArt(o)} tone={o.tone} className="h-11 w-11 shrink-0 rounded-[14px]" inset="10%" />} />
+      {!done && <EventJourney at={3} occasionId={o.id} />}
 
       {!done && (
         <>
@@ -217,7 +220,7 @@ export default function LiveMatch() {
               <div className="cx-noscroll -mx-3.5 mt-2.5 flex gap-1.5 overflow-x-auto px-3.5">
                 {services.map(t => (
                   <span key={t} className="flex shrink-0 items-center gap-1.5 rounded-full bg-white py-1 pl-1 pr-2.5 text-[12px] font-extrabold shadow-[0_0_0_1px_#E7DCFB]">
-                    <ArtFill art={serviceArt(t)} tone="#F6F1FF" className="h-6 w-6 rounded-full" inset="10%" />{TRADE[t]?.label}
+                    <ArtFill art={serviceArt(t)} tone="#F6F1FF" className="h-6 w-6 rounded-full" inset="10%" />{copyFor(o, t).title}
                   </span>
                 ))}
               </div>
@@ -225,14 +228,14 @@ export default function LiveMatch() {
           )}
 
           <section className="mt-5 space-y-2.5 px-4" data-matches>
-            {list.filter(x => x.r.stage !== 'none').map(({ t, r }, i) => <MatchCard key={t} t={t} r={r} i={i} guests={ev.guests} onSwap={() => setSwap({ t })} name={planner ? 'Event planner' : undefined} fee={planner} />)}
+            {list.filter(x => x.r.stage !== 'none').map(({ t, r }, i) => <MatchCard key={t} t={t} r={r} i={i} guests={ev.guests} onSwap={() => setSwap({ t })} name={planner ? 'Event planner' : copyFor(o, t).title} fee={planner} />)}
             {gaps.length > 0 && (
               <div className="rounded-[22px] bg-[#FFF8F3] p-3.5 shadow-[0_0_0_1px_#FBE3D3]" data-gaps>
                 <p className="text-[14px] font-extrabold">No {who} free {dayLabel(ev.date).split(',')[0]} for</p>
                 <div className="mt-2.5 flex flex-wrap gap-2">
                   {gaps.map(({ t }) => (
                     <Link key={t} to={`/s/${t}?o=${o.id}`} className="cx-press flex items-center gap-1.5 rounded-full bg-white py-1 pl-1 pr-2.5 text-[12.5px] font-extrabold shadow-[0_0_0_1px_#F6DCCB]" data-gap={t}>
-                      <ArtFill art={serviceArt(t)} tone="#FFF1E7" className="h-7 w-7 rounded-full" inset="10%" />{TRADE[t]?.label ?? t}<ChevronRight size={14} className="text-[#C2652A]" />
+                      <ArtFill art={serviceArt(t)} tone="#FFF1E7" className="h-7 w-7 rounded-full" inset="10%" />{copyFor(o, t).title}<ChevronRight size={14} className="text-[#C2652A]" />
                     </Link>
                   ))}
                 </div>
@@ -355,7 +358,7 @@ function MatchCard({ t, r, i, guests, onSwap, name, fee = false }) {
           <span className="absolute -bottom-1 -right-1 grid h-6 w-6 place-items-center rounded-full bg-[#0C831F] text-white ring-[2.5px] ring-white"><Check size={13} strokeWidth={3.4} /></span>
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-extrabold uppercase tracking-[0.08em] text-[var(--brand)]">{label}</p>
+          <p className="truncate text-[11.5px] font-extrabold text-[var(--brand)]">{label}</p>
           <p className="truncate text-[15px] font-black tracking-[-0.02em]">{m.line.name}</p>
           <p className="mt-0.5 flex items-center gap-2 overflow-hidden whitespace-nowrap text-[12px] font-bold text-[var(--ink-3)]">
             {m.line.rating ? <span className="flex shrink-0 items-center gap-0.5 text-[#B7791F]"><Star size={12} className="fill-current" />{Number(m.line.rating).toFixed(1)}</span> : <span className="shrink-0 text-[#0B6B3D]">New</span>}
