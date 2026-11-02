@@ -24,9 +24,11 @@ begin
   select * into s from public.vendor_services where id = p_vendor_service_id;
   if not found then raise exception 'Service not found.'; end if;
   select * into vd from public.vendors where id = s.vendor_id;
-  if vd.profile_id is distinct from auth.uid()
-     and not coalesce(public.get_my_role() = 'admin', false)
-     and not coalesce(auth.role() = 'service_role', false) then
+  if not (
+       coalesce(vd.profile_id = auth.uid(), false)
+       or coalesce(public.get_my_role() = 'admin', false)
+       or coalesce(auth.role() = 'service_role', false)
+     ) then
     raise exception 'Not your listing.';
   end if;
 
@@ -114,9 +116,11 @@ begin
   select * into s from public.vendor_services where id = p_vendor_service_id;
   if not found then raise exception 'Service not found.'; end if;
   select * into vd from public.vendors where id = s.vendor_id;
-  if vd.profile_id is distinct from auth.uid()
-     and not coalesce(public.get_my_role() = 'admin', false)
-     and not coalesce(auth.role() = 'service_role', false) then
+  if not (
+       coalesce(vd.profile_id = auth.uid(), false)
+       or coalesce(public.get_my_role() = 'admin', false)
+       or coalesce(auth.role() = 'service_role', false)
+     ) then
     raise exception 'Not your listing.';
   end if;
   select * into reg from public.sambramo_trade_registry where id = public.sambramo_trade_id(s.category);
