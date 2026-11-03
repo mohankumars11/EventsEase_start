@@ -6,7 +6,8 @@
  *   ?s=feast    the event, meal, diet and service — and the cuisines for it
  *   ?s=menus    the curated menus of one cuisine (&f=family)
  *   ?s=menu     one menu, as a menu card (&m=menu)
- *   ?s=edit     the customer's own copy: swap, remove, add, type, photos
+ *   ?s=edit     the customer's copy: swap any dish (no adding or removing —
+ *               the menu stays Sambramo's), allergies, notes, a photo
  *   ?s=review   everything, then "Get catering offers"
  *
  * No partner names and no prices anywhere here: the same menu goes to every
@@ -17,7 +18,7 @@
  */
 import { useEffect, useMemo, useState } from 'react'
 import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { ArrowLeftRight, Camera, Check, ChevronDown, ChevronRight, Loader2, Minus, Plus, Search, Send, Sparkles, TriangleAlert, X } from 'lucide-react'
+import { ArrowLeftRight, Camera, Check, ChevronDown, ChevronRight, Loader2, Minus, Plus, Send, Sparkles, TriangleAlert, X } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { OCCASION } from '../data/occasions'
 import { usePlan } from '../state/PlanContext'
@@ -31,9 +32,10 @@ import { uploadReference } from '../lib/referencePhotos'
 import { loadCuisines } from '../lib/needs'
 import { supabase } from '../../lib/supabase'
 import {
-  loadCatalogue, familiesFor, rankMenus, dietAllows, startFrom, dishCount, sectionName, alternativesFor, searchDishes,
+  loadCatalogue, familiesFor, rankMenus, dietAllows, startFrom, dishCount, sectionName, alternativesFor,
   flagsFor, menuFlags, snapshotFor, menuText, saveCustomerMenu, DIETS, MEALS, SERVES, mealFor,
 } from '../lib/menuStudio'
+import { FOOD_WAYS, RESTAURANT_KITCHEN, foodNeeds, wayOf } from '../data/visualCatalogue'
 import { ActionBar, BackHeader, Photo, Sheet } from '../ui/kit'
 import SignInSheet from './SignInSheet'
 
@@ -65,9 +67,11 @@ export default function MenuStudio() {
   const ctx = {
     diet: needs.$studioDiet ?? (needs.$diet?.[0] ?? 'veg'), meal: needs.$meal ?? mealFor(ev.time), serve: needs.$serve ?? null,
     guests: Number(needs.$guests) || Number(ev.guests) || 50, allergies: needs.$allergies ?? '', instructions: needs.$instructions ?? '', refs: needs.$refs ?? [],
+    way: wayOf(needs),
   }
   const setDiet = d => set({ $studioDiet: d, $diet: ['veg', 'non_veg', 'mixed', 'vegan', 'jain'].includes(d) ? [d] : [] })
-  const setServe = s => { const sv = SERVES.find(x => x.id === s); set({ $serve: s, service_styles: sv?.styles ?? [], ...(sv?.prep ? { prep_location: [sv.prep] } : {}) }) }
+  const setServe = s => { const sv = SERVES.find(x => x.id === s); set({ $serve: s, service_styles: [...new Set([...foodNeeds([ctx.way]).service_styles, ...(sv?.styles ?? [])])] }) }
+  const setWay = w => { const n = foodNeeds([w]); set({ $ways: [w], prep_location: n.prep_location, kitchen_type: n.kitchen_type, services: n.services, service_styles: [...new Set([...n.service_styles, ...(SERVES.find(x => x.id === ctx.serve)?.styles ?? [])])] }) }
   const studio = needs.$studio ?? null
   const setStudio = st => set({ $studio: st, $menu: null })
 
@@ -79,18 +83,18 @@ export default function MenuStudio() {
   return (
     <main className="cx-enter min-h-[100dvh] bg-white pb-[calc(env(safe-area-inset-bottom,0px)+124px)]" data-menu-studio={step}>
       <BackHeader title={head[0]} sub={head[1]} onBack={() => (step === 'feast' ? navigate(`/o/${o.id}/plan`) : navigate(-1))} />
-      {step === 'feast' && <Feast cat={cat} o={o} ev={ev} place={place} ctx={ctx} set={set} setDiet={setDiet} setServe={setServe} studio={studio} go={go} />}
+      {step === 'feast' && <Feast cat={cat} o={o} ev={ev} place={place} ctx={ctx} set={set} setDiet={setDiet} setServe={setServe} setWay={setWay} studio={studio} go={go} />}
       {step === 'menus' && <FamilyMenus cat={cat} o={o} ctx={ctx} family={params.get('f')} go={go} />}
       {step === 'menu' && <MenuDetail cat={cat} o={o} ctx={ctx} menuId={params.get('m')} studio={studio}
         onChoose={m => { setStudio({ ...startFrom(cat, m), clientKey: studio?.clientKey ?? crypto.randomUUID() }); go('edit') }} />}
       {step === 'edit' && (studio ? <Customise cat={cat} o={o} ctx={ctx} set={set} studio={studio} setStudio={setStudio} go={go} /> : <Navigate to={`/o/${o.id}/menu`} replace />)}
-      {step === 'review' && (studio ? <Review cat={cat} o={o} ev={ev} place={place} ctx={ctx} studio={studio} setStudio={setStudio} plan={plan} user={user} navigate={navigate} /> : <Navigate to={`/o/${o.id}/menu`} replace />)}
+      {step === 'review' && (studio ? <Review cat={cat} o={o} ev={ev} place={place} ctx={ctx} studio={studio} setStudio={setStudio} setWay={setWay} plan={plan} user={user} navigate={navigate} /> : <Navigate to={`/o/${o.id}/menu`} replace />)}
     </main>
   )
 }
 
 /* ── Screen 1 + 2: the event, then cuisines ───────────────────────────── */
-function Feast({ cat, o, ev, place, ctx, set, setDiet, setServe, studio, go }) {
+function Feast({ cat, o, ev, place, ctx, set, setDiet, setServe, setWay, studio, go }) {
   const fams = familiesFor(cat, { city: place?.city ?? (place?.area ? 'bengaluru' : '') })
   const hidden = fams.filter(f => !cat.menus.some(m => m.family === f.id && dietAllows(m, ctx.diet)))
   const count = f => cat.menus.filter(m => m.family === f.id && dietAllows(m, ctx.diet)).length
@@ -103,6 +107,19 @@ function Feast({ cat, o, ev, place, ctx, set, setDiet, setServe, studio, go }) {
         <span className="rounded-full bg-[#F6F3FA] px-2.5 py-1">{o.name}</span>
         {place?.area && <span className="rounded-full bg-[#F6F3FA] px-2.5 py-1">{place.area}</span>}
         {ev.date && <span className="rounded-full bg-[#F6F3FA] px-2.5 py-1">{dayLabel(ev.date)}{ev.time ? ` · ${timeLabel(ev.time)}` : ''}</span>}
+      </div>
+
+      <Label>How do you want your food?</Label>
+      <div className="grid grid-cols-3 gap-2" data-food-way>
+        {FOOD_WAYS.map(w => (
+          <button key={w.id} type="button" onClick={() => setWay(w.id)} aria-pressed={ctx.way === w.id} data-way={w.id}
+            className={'cx-press overflow-hidden rounded-[14px] bg-white text-left ' + (ctx.way === w.id ? 'shadow-[0_0_0_2.5px_#7C3AED]' : 'shadow-[0_0_0_1px_#ECE6F4]')}>
+            <span className="relative block aspect-[4/3] bg-[#F3EEF9]">{w.photo && <Photo src={w.photo.url} alt={w.photo.alt} className="absolute inset-0 h-full w-full object-cover" />}
+              {ctx.way === w.id && <span className="absolute right-1.5 top-1.5 grid h-6 w-6 place-items-center rounded-full bg-[#7C3AED] text-white"><Check size={13} strokeWidth={3.2} /></span>}</span>
+            <span className="block px-1.5 pt-1.5 text-[12px] font-extrabold leading-tight">{w.label}</span>
+            <span className="block truncate px-1.5 pb-1.5 text-[10px] font-semibold text-[var(--ink-3)]">{w.line}</span>
+          </button>
+        ))}
       </div>
 
       <div className="mt-4 flex items-center justify-between rounded-[18px] bg-[#FAF8FD] p-3" data-guests>
@@ -284,11 +301,9 @@ function MenuCard({ cat, o, title, family, diet, serve, meal, guests, sections, 
 /* ── Screen 5: make it yours ─────────────────────────────────────────── */
 function Customise({ cat, o, ctx, set, studio, setStudio, go }) {
   const [swap, setSwap] = useState(null)      // { section, index }
-  const [adding, setAdding] = useState(false)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
   const edit = fn => setStudio({ ...studio, sections: fn(studio.sections.map(s => ({ ...s, items: [...s.items] }))) })
-  const remove = (si, i) => edit(ss => { ss[si].items.splice(i, 1); return ss })
   const flags = menuFlags(cat, studio, ctx.diet, ctx.allergies)
   async function addPhoto(file) {
     if (!file) return
@@ -299,7 +314,7 @@ function Customise({ cat, o, ctx, set, studio, setStudio, go }) {
     <>
       <div className="px-4">
         <h1 className="cx-display mt-3 text-[24px]">{studio.name}</h1>
-        <p className="text-[12.5px] font-semibold text-[var(--ink-3)]">{dishCount(studio)} dishes · swap, remove or add — the original menu stays as it was</p>
+        <p className="text-[12.5px] font-semibold text-[var(--ink-3)]">{dishCount(studio)} dishes, made by Sambramo · tap Swap on any dish you’d like changed</p>
         {ctx.diet === 'jain' && <p className="mt-2 rounded-[12px] bg-[#FFF7E6] px-3 py-2 text-[11.5px] font-bold text-[#7A4B00]" data-diet-review>Your caterer cooks every dish Jain-style — no onion or garlic. {flags.length ? `${flags.length} ${flags.length === 1 ? 'dish is' : 'dishes are'} made with roots, onion or garlic — marked below; swap them.` : ''}</p>}
         {ctx.diet !== 'jain' && flags.length > 0 && <p className="mt-2 rounded-[12px] bg-[#FFF7E6] px-3 py-2 text-[11.5px] font-bold text-[#7A4B00]" data-diet-review>{flags.length} {flags.length === 1 ? 'dish needs' : 'dishes need'} a change for your diet — marked below. Swap them, or leave it to the caterer to confirm.</p>}
         <div className="mt-3 space-y-4" data-edit-sections>
@@ -319,16 +334,13 @@ function Customise({ cat, o, ctx, set, studio, setStudio, go }) {
                         {f.map(x => <span key={x} className="block truncate text-[11px] font-bold text-[#9A5B00]">{x}</span>)}
                       </span>
                       {!d.typed && <button type="button" onClick={() => setSwap({ si, i })} className="cx-press flex h-8 items-center gap-1 rounded-full bg-[#F4EEFF] px-2.5 text-[11.5px] font-extrabold text-[#4C1D95]" data-swap><ArrowLeftRight size={13} />Swap</button>}
-                      <button type="button" aria-label={`Remove ${d.name}`} onClick={() => remove(si, i)} className="cx-press grid h-8 w-8 place-items-center rounded-full bg-[#F6F3FA] text-[var(--ink-2)]" data-remove><X size={14} /></button>
                     </li>
                   )
                 })}
-                {!s.items.length && <li className="px-3 py-2.5 text-[12px] font-semibold text-[var(--ink-3)]">Nothing here — fine to leave empty.</li>}
               </ul>
             </section>
           ))}
         </div>
-        <button type="button" onClick={() => setAdding(true)} className="cx-press mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-[16px] bg-[#F4EEFF] text-[14px] font-extrabold text-[#4C1D95]" data-add-dish><Plus size={16} />Add a dish</button>
 
         <Label>Allergies or things to avoid</Label>
         <input value={ctx.allergies} onChange={e => set({ $allergies: e.target.value.slice(0, 300) })} placeholder="e.g. no peanuts, one guest is lactose intolerant"
@@ -356,12 +368,7 @@ function Customise({ cat, o, ctx, set, studio, setStudio, go }) {
         <button type="button" disabled={!dishCount(studio)} onClick={() => go('review')} className="cx-press cx-cta flex h-[56px] w-full items-center justify-center gap-2 rounded-[18px] text-[16px] font-extrabold disabled:opacity-50" data-to-review>Review my menu</button>
       </ActionBar>
       <SwapSheet cat={cat} ctx={ctx} studio={studio} at={swap} onClose={() => setSwap(null)}
-        onPick={d => { edit(ss => { const cur = ss[swap.si].items[swap.i]; ss[swap.si].items[swap.i] = { id: d.id, name: d.name, diet: d.diet, replaces: cur.replaces ?? cur.name, replacesId: cur.replacesId ?? cur.id }; return ss }); setSwap(null) }} />
-      <AddSheet open={adding} cat={cat} ctx={ctx} studio={studio} onClose={() => setAdding(false)}
-        onAdd={(sectionId, d) => {
-          edit(ss => { let s = ss.find(x => x.id === sectionId); if (!s) { s = { id: sectionId, items: [] }; ss.push(s); ss.sort((a, b) => cat.sections.findIndex(x => x.id === a.id) - cat.sections.findIndex(x => x.id === b.id)) } s.items.push(d); return ss })
-          setAdding(false)
-        }} />
+        onPick={d => { edit(ss => { const cur = ss[swap.si].items[swap.i]; ss[swap.si].items[swap.i] = d.original ? { id: d.id, name: d.name, diet: d.diet } : { id: d.id, name: d.name, diet: d.diet, replaces: cur.replaces ?? cur.name, replacesId: cur.replacesId ?? cur.id }; return ss }); setSwap(null) }} />
     </>
   )
 }
@@ -372,6 +379,14 @@ function SwapSheet({ cat, ctx, studio, at, onClose, onPick }) {
   return (
     <Sheet open={!!cur} onClose={onClose} title={cur ? `Instead of ${cur.name}` : ''}>
       <ul className="space-y-1.5 pb-2" data-swap-list>
+        {cur?.replacesId && cat.dishes[cur.replacesId] && (
+          <li>
+            <button type="button" onClick={() => onPick({ ...cat.dishes[cur.replacesId], original: true })} className="cx-press flex w-full items-center gap-2.5 rounded-[14px] bg-[#F4EEFF] p-2.5 text-left" data-swap-back>
+              <DietMark d={cat.dishes[cur.replacesId].diet} />
+              <span className="min-w-0 flex-1"><span className="block truncate text-[14px] font-extrabold">Back to {cat.dishes[cur.replacesId].name}</span><span className="block text-[11.5px] font-semibold text-[var(--ink-3)]">Sambramo’s original</span></span>
+            </button>
+          </li>
+        )}
         {alts.map(d => (
           <li key={d.id}>
             <button type="button" onClick={() => onPick(d)} className="cx-press flex w-full items-center gap-2.5 rounded-[14px] bg-white p-2.5 text-left shadow-[inset_0_0_0_1.5px_#ECE6F4]" data-swap-to={d.id}>
@@ -381,46 +396,15 @@ function SwapSheet({ cat, ctx, studio, at, onClose, onPick }) {
             </button>
           </li>
         ))}
-        {!alts.length && <li className="text-[13px] font-semibold text-[var(--ink-3)]">No other dish for this course yet — remove it, or add your own.</li>}
+        {!alts.length && <li className="text-[13px] font-semibold text-[var(--ink-3)]">No other dish for this course yet — add a note for the caterer below.</li>}
       </ul>
     </Sheet>
   )
 }
 
-function AddSheet({ open, cat, ctx, studio, onClose, onAdd }) {
-  const [q, setQ] = useState('')
-  const [section, setSection] = useState('special')
-  const hits = searchDishes(cat, q, { diet: ctx.diet, menuDiet: studio.menuDiet })
-  const typed = q.trim()
-  return (
-    <Sheet open={open} onClose={onClose} title="Add a dish">
-      <div className="pb-2">
-        <span className="flex h-12 items-center gap-2 rounded-[14px] bg-white px-3 shadow-[inset_0_0_0_1.5px_#E9E3F2]"><Search size={16} className="text-[var(--ink-3)]" />
-          <input autoFocus value={q} onChange={e => setQ(e.target.value.slice(0, 60))} placeholder="Search 900+ dishes, or type your own" className="h-full flex-1 bg-transparent text-[14px] font-semibold outline-none" data-add-search />
-        </span>
-        <ul className="mt-2 space-y-1.5">
-          {hits.map(d => (
-            <li key={d.id}><button type="button" onClick={() => { onAdd(d.section, { id: d.id, name: d.name, diet: d.diet }); setQ('') }} className="cx-press flex w-full items-center gap-2.5 rounded-[14px] bg-white p-2.5 text-left shadow-[inset_0_0_0_1.5px_#ECE6F4]" data-add-hit={d.id}>
-              <DietMark d={d.diet} /><span className="min-w-0 flex-1"><span className="block truncate text-[14px] font-extrabold">{d.name}</span><span className="block text-[11px] font-bold text-[var(--ink-3)]">{sectionName(cat, d.section)}</span></span><Plus size={16} className="text-[#7C3AED]" />
-            </button></li>
-          ))}
-        </ul>
-        {typed.length >= 3 && (
-          <div className="mt-3 rounded-[16px] bg-[#FAF8FD] p-3" data-add-typed>
-            <p className="text-[12.5px] font-extrabold">Not listed? Add “{typed}” as your own dish</p>
-            <div className="cx-noscroll mt-2 flex gap-1.5 overflow-x-auto">{cat.sections.map(s => (
-              <button key={s.id} type="button" onClick={() => setSection(s.id)} aria-pressed={section === s.id} className={'shrink-0 rounded-full px-2.5 py-1 text-[11.5px] font-bold ' + (section === s.id ? 'bg-[#1C1033] text-white' : 'bg-white text-[var(--ink-2)] shadow-[inset_0_0_0_1.5px_#ECE6F4]')}>{s.name}</button>
-            ))}</div>
-            <button type="button" onClick={() => { onAdd(section, { id: `typed:${typed.toLowerCase()}`, name: typed.slice(0, 80), diet: null, typed: true }); setQ('') }} className="cx-press mt-2 h-10 w-full rounded-[12px] bg-[#7C3AED] text-[13px] font-extrabold text-white" data-add-own>Add to {sectionName(cat, section)}</button>
-          </div>
-        )}
-      </div>
-    </Sheet>
-  )
-}
-
 /* ── Screen 6: review, then send ─────────────────────────────────────── */
-function Review({ cat, o, ev, place, ctx, studio, setStudio, plan, user, navigate }) {
+function Review({ cat, o, ev, place, ctx, studio, setStudio, setWay, plan, user, navigate }) {
+  const noun = FOOD_WAYS.find(w => w.id === ctx.way)?.noun ?? 'caterer'
   const [phase, setPhase] = useState('idle')   // idle | finding | confirm | sending | error
   const [found, setFound] = useState(null)
   const [msg, setMsg] = useState('')
@@ -435,10 +419,16 @@ function Review({ cat, o, ev, place, ctx, studio, setStudio, plan, user, navigat
     if (!user) { setSignIn(true); return }
     setPhase('finding'); setMsg('')
     await loadCuisines(supabase).catch(() => {})
-    const r = await poolFor(T, { event: ev, place, needs, seed: o.id })
+    let r = await poolFor(T, { event: ev, place, needs, seed: o.id })
+    /* A restaurant order goes to restaurants only — never to caterers
+       dressed up as the closest match. */
+    if (ctx.way === 'restaurant') {
+      const pool = r.pool.filter(p => [].concat(p.facets?.kitchen_type ?? []).includes(RESTAURANT_KITCHEN))
+      r = { ...r, pool, exact: r.exact && pool.length > 0 }
+    }
     setFound(r)
     setPhase(r.pool.length ? 'confirm' : 'error')
-    if (!r.pool.length) setMsg('No caterer near your venue can take this yet. Try another cuisine, or ask us — we’ll find one.')
+    if (!r.pool.length) setMsg(ctx.way === 'restaurant' ? 'No restaurant near your venue takes event orders on Sambramo yet.' : `No ${noun} near your venue can take this yet. Try another cuisine, or ask us — we’ll find one.`)
   }
   async function send() {
     setPhase('sending')
@@ -481,7 +471,7 @@ function Review({ cat, o, ev, place, ctx, studio, setStudio, plan, user, navigat
         )}
         {phase === 'confirm' && found && (
           <div className="mt-3 rounded-[18px] bg-[#F4EEFF] p-3.5" data-offer-confirm>
-            <p className="text-[14px] font-extrabold text-[#3B1670]"><Sparkles size={15} className="mr-1 inline" />{Math.min(10, found.pool.length)} caterer{found.pool.length === 1 ? '' : 's'} can be asked</p>
+            <p className="text-[14px] font-extrabold text-[#3B1670]"><Sparkles size={15} className="mr-1 inline" />{Math.min(10, found.pool.length)} {noun}{found.pool.length === 1 ? '' : 's'} can be asked</p>
             <p className="mt-0.5 text-[12px] font-semibold leading-snug text-[#5B3E8E]">
               {found.exact ? `They cook ${fam?.name ?? 'this'} food and serve the way you asked.` : `None near you matches every detail — cuisine, diet or service — so these are the closest. They can accept, suggest changes or decline.`}
               {' '}Each replies with their own price for exactly this menu.
@@ -489,15 +479,16 @@ function Review({ cat, o, ev, place, ctx, studio, setStudio, plan, user, navigat
           </div>
         )}
         {msg && <p className="mt-3 rounded-[14px] bg-[#FFF1F0] px-3 py-2.5 text-[12.5px] font-bold text-[#B42318]" data-offer-error>{msg}</p>}
+        {msg && ctx.way === 'restaurant' && <button type="button" onClick={() => { setWay('caterer'); setMsg(''); setPhase('idle') }} className="mt-2 h-10 w-full rounded-[14px] bg-[#F4EEFF] text-[13px] font-extrabold text-[#4C1D95]" data-way-fallback>Hire a caterer instead</button>}
         {!ready && <p className="mt-3 rounded-[14px] bg-[#FFF7E6] px-3 py-2.5 text-[12.5px] font-bold text-[#7A4B00]">Add your event’s date and place first — caterers need both to say yes.</p>}
       </div>
-      <ActionBar note={phase === 'confirm' ? 'Your number stays private until you book' : 'No price until caterers reply — you compare and choose'}>
+      <ActionBar note={phase === 'confirm' ? 'Your number stays private until you book' : `No price until ${noun}s reply — you compare and choose`}>
         {phase === 'confirm' ? (
           <button type="button" onClick={send} className="cx-press cx-cta flex h-[56px] w-full items-center justify-center gap-2 rounded-[18px] text-[16px] font-extrabold" data-send-menu><Send size={17} />Send my menu</button>
         ) : (
           <div className="grid gap-1.5">
             <button type="button" disabled={!ready || ['finding', 'sending'].includes(phase)} onClick={find} className="cx-press cx-cta flex h-[56px] w-full items-center justify-center gap-2 rounded-[18px] text-[16px] font-extrabold disabled:opacity-50" data-get-offers>
-              {['finding', 'sending'].includes(phase) ? <Loader2 size={18} className="animate-spin" /> : null}Get catering offers
+              {['finding', 'sending'].includes(phase) ? <Loader2 size={18} className="animate-spin" /> : null}{ctx.way === 'restaurant' ? 'Get restaurant offers' : ctx.way === 'cook' ? 'Get offers from cooks' : 'Get catering offers'}
             </button>
             <button type="button" onClick={() => { plan.setPick(o.id, T, 'need'); navigate(`/o/${o.id}/plan`) }} className="h-10 rounded-[14px] text-[13px] font-extrabold text-[#4C1D95]" data-save-to-plan>Save to my plan and send later</button>
           </div>

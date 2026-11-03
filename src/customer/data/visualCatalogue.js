@@ -56,17 +56,22 @@ export const FONTS = [
    partners who said they do it. Restaurants are not offered until
    restaurant partners exist (no impossible options). */
 const F = id => VISUALS[`food:${id}`] ?? null
+/* How the customer wants the food — three plain choices (Mohan, 2 Nov:
+   "hire a caterer, hire a cook, order from a restaurant — very simple").
+   Each maps to the catering partners' own answers: a cook cooks at the
+   customer's venue; a restaurant answered kitchen_type (catering_food.js).
+   Live counters, packed meals etc. are HOW it is served — the Menu Studio
+   asks that. */
+export const RESTAURANT_KITCHEN = 'Restaurant or cloud kitchen — we deliver bulk orders ourselves'
 export const FOOD_WAYS = [
-  { id: 'caterer', label: 'Caterer', line: 'Cooked in their kitchen, served at yours', photo: F('caterer'), needs: {} },
-  { id: 'cook', label: 'Cook or chef', line: 'Cooks fresh at your place', photo: F('cook'), needs: { prep_location: ["At the customer's venue", 'At both locations'] } },
-  { id: 'live', label: 'Live cooking', line: 'Cooked in front of guests', photo: F('live'), needs: { service_styles: ['Live cooking'] } },
-  { id: 'counters', label: 'Live counters', line: 'Dosa, chaat, BBQ stations', photo: F('counters'), needs: { service_styles: ['Food counters'] } },
-  { id: 'packed', label: 'Packed meals', line: 'Boxed meals, delivered', photo: F('packed'), needs: { services: ['Packed meals', 'Institutional or bulk catering'] } },
-  { id: 'custom', label: 'Something else', line: 'Tell us how', photo: F('custom'), needs: {} },
+  { id: 'caterer', label: 'Hire a caterer', line: 'They cook, bring and serve', noun: 'caterer', photo: F('caterer'), needs: {} },
+  { id: 'cook', label: 'Hire a cook', line: 'Cooks fresh at your place', noun: 'cook', photo: F('cook'), needs: { prep_location: ["At the customer's venue", 'At both locations'] } },
+  { id: 'restaurant', label: 'Order from a restaurant', line: 'The restaurant delivers', noun: 'restaurant', photo: F('packed'), needs: { kitchen_type: [RESTAURANT_KITCHEN] } },
 ]
-/* The partner-facet answers several ways add up to — any of them within a question. */
+export const wayOf = needs => (needs?.$ways ?? []).find(w => FOOD_WAYS.some(x => x.id === w)) ?? 'caterer'
+/* The partner-facet answers a way adds up to. */
 export function foodNeeds(ways = []) {
-  const out = { prep_location: [], service_styles: [], services: [] }
+  const out = { prep_location: [], service_styles: [], services: [], kitchen_type: [] }
   for (const w of FOOD_WAYS.filter(x => ways.includes(x.id))) for (const [k, v] of Object.entries(w.needs)) out[k] = [...new Set([...out[k], ...v])]
   return out
 }

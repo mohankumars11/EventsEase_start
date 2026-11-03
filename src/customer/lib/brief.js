@@ -20,7 +20,9 @@ export function briefFor(o, tradeId, needs = {}) {
   const parts = []
   const said = needsSummary(tradeId, needs)
   if (said) parts.push(said)
-  const ways = FOOD_WAYS.filter(w => (needs.$ways ?? []).includes(w.id)).map(w => w.label)
+  /* Said to the partner, not the customer: "Hire a cook" becomes what the job is. */
+  const AS_JOB = { caterer: 'Catering — cook, bring and serve', cook: 'Cook at the customer’s place', restaurant: 'Restaurant order — delivered by the restaurant' }
+  const ways = FOOD_WAYS.filter(w => (needs.$ways ?? []).includes(w.id)).map(w => AS_JOB[w.id] ?? w.label)
   if (ways.length) parts.push(`Food: ${ways.join(', ')}`)
   if (needs.$customWay) parts.push(`Food arranged as: ${needs.$customWay}`)
   if (needs.$cookTeam) parts.push(`Cooking: ${needs.$cookTeam}`)

@@ -95,7 +95,6 @@ export const SERVES = [
   { id: 'family', label: 'Family-style', styles: ['Family-style serving'] },
   { id: 'counters', label: 'Live counters', styles: ['Food counters', 'Live cooking'] },
   { id: 'packed', label: 'Packed meals', styles: ['Packed meals'] },
-  { id: 'onsite', label: 'Cooked at venue', styles: [], prep: 'On-site cooking' },
 ]
 export const mealFor = time => { const h = Number(String(time ?? '').slice(0, 2)); return Number.isNaN(h) || !String(time ?? '').trim() ? 'lunch' : h < 11 ? 'breakfast' : h < 16 ? 'lunch' : h < 18 ? 'hightea' : 'dinner' }
 
@@ -223,7 +222,7 @@ export function snapshotFor(cat, studio, ctx) {
   const orig = new Set(tpl?.sections.flatMap(s => s.dishes) ?? [])
   const fam = cat.families.find(f => f.id === studio.family)
   return {
-    menuId: ctx.menuId ?? null, version: ctx.version ?? null, templateId: studio.templateId, name: studio.name,
+    menuId: ctx.menuId ?? null, version: ctx.version ?? null, templateId: studio.templateId, name: studio.name, way: ctx.way ?? 'caterer',
     cuisine: fam?.name ?? studio.family, diet: ctx.diet, meal: ctx.meal, serve: SERVES.find(s => s.id === ctx.serve)?.label ?? ctx.serve, guests: ctx.guests,
     allergies: ctx.allergies || null, instructions: ctx.instructions || null, refs: ctx.refs ?? [],
     flags: menuFlags(cat, studio, ctx.diet, ctx.allergies).map(x => `${x.name}: ${x.flags.join('; ')}`),

@@ -24,7 +24,7 @@ import { OCCASION } from '../data/occasions'
 import { serviceArt } from '../data/art'
 import { copyFor, introFor } from '../data/requirementCopy'
 import { photoFor } from '../data/requirementPhotos.generated'
-import { themesFor, CAKES, DECOR_THEMES, ACTION, TAG, COLOURS, FONTS, FOOD_WAYS, foodNeeds, COOK_TEAM, INGREDIENTS, DRINKS, DECOR_ELEMENTS, CAKE_OPTIONS, PHOTO_HOURS, PHOTO_EXTRAS, ENTERTAINERS, designFamilies, byOrder, OPS } from '../data/visualCatalogue'
+import { wayOf, themesFor, CAKES, DECOR_THEMES, ACTION, TAG, COLOURS, FONTS, FOOD_WAYS, foodNeeds, COOK_TEAM, INGREDIENTS, DRINKS, DECOR_ELEMENTS, CAKE_OPTIONS, PHOTO_HOURS, PHOTO_EXTRAS, ENTERTAINERS, designFamilies, byOrder, OPS } from '../data/visualCatalogue'
 import { SERVE } from '../lib/sambramoMenu'
 import { usePlan, needsFor } from '../state/PlanContext'
 import { savedWhere } from '../lib/where'
@@ -320,9 +320,9 @@ function ChooseSheet({ o, t, plan, place, on, why, video, onVideo, ensure, onClo
 
           {t === 'catering_food' && (
             <>
-              <Section title="How should the food be arranged?" sub="Pick one or more">
-                <PhotoMulti items={FOOD_WAYS} value={cur.$ways ?? []} data="food-ways"
-                  onChange={ways => { const n = foodNeeds(ways); set({ $ways: ways, prep_location: n.prep_location, services: n.services, service_styles: [...new Set([...n.service_styles, ...(SERVE.find(x => x.id === cur.$serve)?.styles ?? [])])] }) }} />
+              <Section title="How do you want your food?">
+                <PhotoMulti items={FOOD_WAYS} value={[wayOf(cur)]} data="food-ways"
+                  onChange={v => { const ways = v.slice(-1).length ? v.slice(-1) : [wayOf(cur)]; const n = foodNeeds(ways); set({ $ways: ways, prep_location: n.prep_location, kitchen_type: n.kitchen_type, services: n.services, service_styles: [...new Set([...n.service_styles, ...(SERVE.find(x => x.id === cur.$serve)?.styles ?? [])])] }) }} />
               </Section>
               {(cur.$ways ?? []).includes('cook') && (
                 <Section title="Cooking at your place">
@@ -330,10 +330,8 @@ function ChooseSheet({ o, t, plan, place, on, why, video, onVideo, ensure, onClo
                   <div className="mt-2"><OneChips items={INGREDIENTS} value={cur.$ingredients ?? null} onPick={v => set({ $ingredients: v })} data="ingredients" /></div>
                 </Section>
               )}
-              {(cur.$ways ?? []).includes('custom') && (
-                <input value={cur.$customWay ?? ''} onChange={e => set({ $customWay: e.target.value.slice(0, 80) })} placeholder="How would you like the food arranged?"
-                  className="h-12 w-full rounded-[14px] bg-white px-3.5 text-[14px] font-semibold shadow-[inset_0_0_0_1.5px_#E9E3F2] outline-none focus:shadow-[inset_0_0_0_2px_#7C3AED]" data-custom-way />
-              )}
+              <input value={cur.$customWay ?? ''} onChange={e => set({ $customWay: e.target.value.slice(0, 80) })} placeholder="Something else? Tell us how you’d like it"
+                className="h-12 w-full rounded-[14px] bg-white px-3.5 text-[14px] font-semibold shadow-[inset_0_0_0_1.5px_#E9E3F2] outline-none focus:shadow-[inset_0_0_0_2px_#7C3AED]" data-custom-way />
               <StudioEntry o={o} cur={cur} onClose={onClose} />
               <Section title="Drinks">
                 <ManyChips items={DRINKS} value={cur.$drinks ?? []} onChange={v => set({ $drinks: v })} data="drinks" />

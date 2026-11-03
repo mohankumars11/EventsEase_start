@@ -17,6 +17,13 @@ export default {
         'Breakfast catering', 'Lunch or dinner catering', 'Buffet catering', 'Plated meals', 'Packed meals', 'Live food counters',
         'Dessert catering', 'Beverage catering', 'Institutional or bulk catering',
       ], { required: true, other: true }),
+      /* Restaurants and home cooks list here too (Mohan, 2 Nov: "hire a
+         caterer, hire a cook, order from a restaurant" — restaurants are a
+         kind of caterer that delivers itself, not a trade of their own).
+         Not required: listings made before 3 Nov never saw it. */
+      q.multi('kitchen_type', 'What kind of food business are you?', [
+        'Catering service', 'Restaurant or cloud kitchen — we deliver bulk orders ourselves', 'Cook or chef — I cook at the customer’s place',
+      ]),
       q.single('prep_location', 'Where is your food prepared?', ['At my kitchen or catering facility', "At the customer's venue", 'At both locations'], { required: true }),
       q.multi('service_styles', 'How do you serve food?', ['Buffet', 'Traditional banana-leaf meal', 'Seated / plated service', 'Family-style serving',
         'Packed meals', 'Food counters', 'Live cooking', 'Mixed service styles'], { required: true, other: true }),

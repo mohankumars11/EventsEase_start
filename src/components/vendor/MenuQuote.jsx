@@ -39,7 +39,7 @@ export function MenuBrief({ menu, compact = false }) {
   const show = compact ? all.slice(0, 6) : all
   return (
     <div className="mt-3 rounded-2xl bg-[#FFFCF5] p-3 ring-1 ring-[#EDE2CB]" data-menu-brief>
-      <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#9A7637]">Sambramo menu · price it as it is</p>
+      <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#9A7637]">{{ restaurant: 'Restaurant order · you deliver', cook: 'Cook at the customer’s place' }[menu.way] ?? 'Sambramo menu · price it as it is'}</p>
       <p className="mt-0.5 text-[15px] font-extrabold text-ink">{menu.name}</p>
       <p className="text-[11.5px] font-bold text-ink-soft">{[menu.cuisine, menu.diet && { veg: 'Vegetarian', non_veg: 'Non-veg', mixed: 'Veg + non-veg', jain: 'Jain', vegan: 'Vegan', eggless: 'Eggless' }[menu.diet], menu.serve, MEAL[menu.meal] ?? menu.meal, menu.guests && `${menu.guests} guests`].filter(Boolean).join(' · ')}</p>
       {compact ? (

@@ -142,7 +142,7 @@ export function menuSnapshot(m) {
   if (!sections.length) return null
   return {
     menuId: /^[0-9a-f-]{36}$/i.test(String(m.menuId ?? '')) ? m.menuId : null, version: Number(m.version) || null,
-    templateId: clean(m.templateId, 60), name: clean(m.name, 120), cuisine: clean(m.cuisine, 60), diet: clean(m.diet, 12),
+    templateId: clean(m.templateId, 60), way: ['caterer', 'cook', 'restaurant'].includes(m.way) ? m.way : null, name: clean(m.name, 120), cuisine: clean(m.cuisine, 60), diet: clean(m.diet, 12),
     meal: clean(m.meal, 12), serve: clean(m.serve, 40), guests: Math.max(0, Math.min(100000, Number(m.guests) || 0)) || null,
     allergies: clean(m.allergies, 300), instructions: clean(m.instructions, 1000), flags: (Array.isArray(m.flags) ? m.flags : []).slice(0, 20).map(f => clean(f, 120)).filter(Boolean),
     refs: (Array.isArray(m.refs) ? m.refs : []).filter(u => /^https:\/\//.test(String(u))).slice(0, 5).map(u => String(u).slice(0, 500)),
