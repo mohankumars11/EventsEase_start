@@ -85,7 +85,7 @@ export default function Plans() {
         </section>
       )}
 
-      {(tab === 'all' || tab === 'upcoming') && <SavedPlans skip={ids} onResume={row => { const { event, picks } = planFromSaved(row); plan.setEvent(event); Object.entries(picks).forEach(([t, v]) => plan.setPick(row.occasion_id, t, v)) }} />}
+      {(tab === 'all' || tab === 'upcoming') && <SavedPlans skip={ids} onResume={row => { const { event, picks, place } = planFromSaved(row); plan.setEvent(event); plan.setPlace(place); Object.entries(picks).forEach(([t, v]) => plan.setPick(row.occasion_id, t, v)) }} />}
 
       <Booked tab={tab} />
 
