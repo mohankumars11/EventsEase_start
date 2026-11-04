@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { contextFor } from '../src/customer/lib/eventContext.js'
+import { contextFor, eventContextDraft } from '../src/customer/lib/eventContext.js'
 
 const occasion = { id: 'birthday-party', where: 'ask' }
 
@@ -81,4 +81,30 @@ test('clearing a date, time or guest count clears the old value', () => {
 test('an occasion with a fixed setting supplies its venue type only when no choice overrides it', () => {
   assert.equal(contextFor({ where: 'home' }, {}).venueType, 'home')
   assert.equal(contextFor({ where: 'home' }, {}, { venueChoice: 'outdoor' }).venueType, 'outdoor')
+})
+
+test('venue facilities survive an edit when the venue choice is unchanged', () => {
+  const ctx = eventContextDraft({
+    venueType: 'restaurant',
+    venueBooked: true,
+    venueProvides: ['catering', 'sound'],
+    budget: 'premium',
+    formats: ['speeches'],
+  }, 'restaurant', 'restaurant', 'moderate')
+  assert.deepEqual(ctx.venueProvides, ['catering', 'sound'])
+  assert.deepEqual(ctx.formats, ['speeches'])
+  assert.equal(ctx.venueType, undefined)
+  assert.equal(ctx.venueBooked, undefined)
+  assert.equal(ctx.budget, 'moderate')
+})
+
+test('venue facilities are cleared when the customer changes venue choice', () => {
+  const ctx = eventContextDraft({
+    venueProvides: ['catering', 'sound'],
+    formats: ['speeches'],
+    budget: 'premium',
+  }, 'restaurant', 'home', undefined)
+  assert.equal(ctx.venueProvides, undefined)
+  assert.deepEqual(ctx.formats, ['speeches'])
+  assert.equal(ctx.budget, undefined)
 })
