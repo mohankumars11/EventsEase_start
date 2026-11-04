@@ -19,6 +19,7 @@ import { Building2, CalendarDays, ChevronDown, ChevronRight, Clock3, Hourglass, 
 import { OCCASION } from '../data/occasions'
 import { occasionArt } from '../data/art'
 import { usePlan } from '../state/PlanContext'
+import { eventContextDraft } from '../lib/eventContext'
 import { savedWhere } from '../lib/where'
 import { dayLabel, iso, timeLabel } from '../lib/format'
 import { ActionBar, BackHeader, Sheet } from '../ui/kit'
@@ -61,16 +62,12 @@ export default function EventFlow() {
   const times = f.date === today ? TIMES.filter(t => toMin(t) >= earliest) : TIMES
   useEffect(() => { if (f.date === today && toMin(f.time) < earliest && times.length) set({ time: times[0] }) }, [f.date]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const eventContext = () => {
-    const context = { ...(mine ? plan.event.context ?? {} : {}) }
-    // Venue, date and budget are derived from the controls above. Remove old
-    // derived values so changing an answer cannot leave stale recommendations.
-    delete context.venueType
-    delete context.venueBooked
-    delete context.budget
-    if (FEEL[f.budget]) context.budget = FEEL[f.budget]
-    return context
-  }
+  const eventContext = () => eventContextDraft(
+    mine ? plan.event.context ?? {} : {},
+    mine ? plan.event.venueChoice ?? null : null,
+    f.venueChoice,
+    FEEL[f.budget],
+  )
 
   /* Saved as it changes — the plan screen and the live match read it. */
   const facts = () => ({
