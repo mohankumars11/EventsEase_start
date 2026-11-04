@@ -15,9 +15,6 @@
  * labelled) and go to masters as the customer's reference.
  */
 import { VISUALS } from './visualCatalogue.generated'
-import { RESTAURANT_KITCHEN } from '../lib/restaurantMatching.js'
-export { RESTAURANT_KITCHEN }
-
 const T = (id, label) => ({ id, label, photo: VISUALS[`theme:${id}`] ?? null })
 const SETS = {
   kids: [T('teddy', 'Teddy bear'), T('jungle', 'Jungle safari'), T('princess', 'Princess'), T('rainbow', 'Pastel rainbow'), T('space', 'Space'), T('balloon', 'Balloon garden')],
@@ -58,22 +55,17 @@ export const FONTS = [
    partners who said they do it. Restaurants are not offered until
    restaurant partners exist (no impossible options). */
 const F = id => VISUALS[`food:${id}`] ?? null
-/* How the customer wants the food — three plain choices (Mohan, 2 Nov:
-   "hire a caterer, hire a cook, order from a restaurant — very simple").
-   Each maps to the catering partners' own answers: a cook cooks at the
-   customer's venue; a restaurant answered kitchen_type (catering_food.js).
-   Live counters, packed meals etc. are HOW it is served — the Menu Studio
-   asks that. */
+/* Caterer and cook are both fulfilled by catering trade listings. Restaurant
+   ordering is deliberately separated into RestaurantOrder.jsx. */
 export const FOOD_WAYS = [
   { id: 'caterer', label: 'Hire a caterer', line: 'They cook, bring and serve', noun: 'caterer', photo: F('caterer'), needs: {} },
   { id: 'cook', label: 'Hire a cook', line: 'Cooks fresh at your place', noun: 'cook', photo: F('cook'), needs: { prep_location: ["At the customer's venue", 'At both locations'] } },
-  { id: 'restaurant', label: 'Order from a restaurant', line: 'The restaurant delivers', noun: 'restaurant', photo: F('packed'), needs: { kitchen_type: [RESTAURANT_KITCHEN] } },
 ]
 export const wayOf = needs => (needs?.$ways ?? []).find(w => FOOD_WAYS.some(x => x.id === w)) ?? 'caterer'
 
 /* The partner-facet answers a way adds up to. */
 export function foodNeeds(ways = []) {
-  const out = { prep_location: [], service_styles: [], services: [], kitchen_type: [] }
+  const out = { prep_location: [], service_styles: [], services: [] }
   for (const w of FOOD_WAYS.filter(x => ways.includes(x.id))) for (const [k, v] of Object.entries(w.needs)) out[k] = [...new Set([...out[k], ...v])]
   return out
 }
