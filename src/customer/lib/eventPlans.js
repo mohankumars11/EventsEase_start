@@ -12,6 +12,7 @@ import { supabase } from '../../lib/supabase'
 import { RULES, RULES_VERSION } from '../data/rules360'
 import { validateRules } from './recommend360'
 import { planFromSaved, serviceRowsForPlan, staleServiceIds } from './eventPlanSnapshot'
+import { serializeByKey } from './saveQueue'
 export { planFromSaved, savedContextFor } from './eventPlanSnapshot'
 
 let published = null
@@ -29,8 +30,13 @@ export async function loadRules() {
  * Save (create or update) one occasion's plan for the signed-in customer.
  * `clientKey` keeps it to one row per occasion per customer.
  */
-export async function savePlan({ userId, occasionId, context, picks = {}, statuses = {}, lines = [], ruleVersion }) {
-  if (!userId) return { ok: false, reason: 'signed-out' }
+export function savePlan(input = {}) {
+  const { userId, occasionId } = input
+  if (!userId) return Promise.resolve({ ok: false, reason: 'signed-out' })
+  return serializeByKey(`${userId}:${occasionId}`, () => savePlanNow(input))
+}
+
+async function savePlanNow({ userId, occasionId, context, picks = {}, statuses = {}, lines = [], ruleVersion }) {
   try {
     const clientKey = `occ:${occasionId}`
     const { data: existing, error: lookupError } = await supabase.from('event_plans')
@@ -82,13 +88,27 @@ export async function linkBookings(userId, results = []) {
   if (!userId) return { ok: false, reason: 'signed-out' }
   const booked = results.filter(r => r.lineId && r.tradeId && r.occasionId)
   for (const occ of [...new Set(booked.map(r => r.occasionId))]) {
-    const { data: plan } = await supabase.from('event_plans').select('id').eq('customer_id', userId).eq('client_key', `occ:${occ}`).maybeSingle()
-    if (!plan) continue
-    const rows = booked.filter(r => r.occasionId === occ).map(r => ({ plan_id: plan.id, trade_id: r.tradeId, decision: 'selected', vendor_service_id: r.serviceId ?? null, booking_line_id: r.lineId }))
-    const { error } = await supabase.from('event_plan_services').upsert(rows, { onConflict: 'plan_id,trade_id' })
-    if (error) return { ok: false, reason: error.message }
-    await supabase.from('event_plans').update({ status: 'booked' }).eq('id', plan.id)
+    const result = await serializeByKey(`${userId}:${occ}`, async () => {
+      try {
+        const { data: plan, error: planError } = await supabase.from('event_plans').select('id')
+          .eq('customer_id', userId).eq('client_key', `occ:${occ}`).maybeSingle()
+        if (planError) return { ok: false, reason: planError.message }
+        if (!plan) return { ok: true }
+        const rows = booked.filter(r => r.occasionId === occ).map(r => ({
+          plan_id: plan.id,
+          trade_id: r.tradeId,
+          decision: 'selected',
+          vendor_service_id: r.serviceId ?? null,
+          booking_line_id: r.lineId,
+        }))
+        const { error } = await supabase.from('event_plan_services').upsert(rows, { onConflict: 'plan_id,trade_id' })
+        if (error) return { ok: false, reason: error.message }
+        const { error: statusError } = await supabase.from('event_plans').update({ status: 'booked' }).eq('id', plan.id)
+        if (statusError) return { ok: false, reason: statusError.message }
+        return { ok: true }
+      } catch (e) { return { ok: false, reason: e.message } }
+    })
+    if (!result.ok) return result
   }
   return { ok: true }
 }
-
