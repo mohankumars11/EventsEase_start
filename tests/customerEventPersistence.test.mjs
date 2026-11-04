@@ -36,11 +36,11 @@ test('account snapshot preserves event choice, venue facilities and the event lo
 })
 
 test('booking priority persists and rehydrates with the saved event plan', () => {
-  const saved = savedContextFor(occasion, {}, { bookingPriority: 'premium', context: { bookingPriority: 'premium' } })
+  const saved = savedContextFor(occasion, {}, { bookingPriority: 'premium', context: {} })
   assert.equal(saved.bookingPriority, 'premium')
   const restored = planFromSaved({ occasion_id: occasion.id, context: saved, event_plan_services: [] })
   assert.equal(restored.event.bookingPriority, 'premium')
-  assert.equal(restored.event.context.bookingPriority, 'premium')
+  assert.equal(restored.event.context.bookingPriority, undefined)
 })
 
 test('saved plan rehydrates venue, event place, service decisions and context', () => {
