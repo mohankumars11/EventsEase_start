@@ -36,7 +36,7 @@ const hash = s => [...String(s)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>>
 const durationHours = value => {
   const direct = Number(value)
   if (Number.isFinite(direct) && direct > 0) return direct
-  const parsed = Number(String(value ?? '').match(/\\d+(?:\\.\\d+)?/)?.[0])
+  const parsed = Number(String(value ?? '').match(/\d+(?:\.\d+)?/)?.[0])
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null
 }
 
