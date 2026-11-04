@@ -25,10 +25,10 @@ import { asLine, withQuotes } from './quote'
 import { previewLine } from './booking'
 
 /** The line shape PlanContext.add() builds, without touching the plan. */
-export const lineOf = (p, occasionId) => ({
+export const lineOf = (p, occasionId, addons = []) => ({
   key: `${occasionId ?? 'solo'}:${p.tradeId}`, occasionId, tradeId: p.tradeId, serviceId: p.serviceId, name: p.name, area: p.area,
   cover: p.cover, fromPaise: p.fromPaise, fromKind: p.fromKind, fromUnit: p.fromUnit, fromLabel: p.fromLabel,
-  fromRef: p.fromRef ?? null, qty: null, hours: p.askHours ?? null, guests: p.askGuests ?? null, instant: p.instant, advancePct: p.advancePct,
+  fromRef: p.fromRef ?? null, qty: null, hours: p.askHours ?? null, guests: p.askGuests ?? null, addons, instant: p.instant, advancePct: p.advancePct,
   rating: p.rating, reviews: p.reviews, distanceKm: p.distanceKm, quoteHours: p.quoteHours,
 })
 
@@ -73,7 +73,7 @@ export async function matchTrade(tradeId, { occasionId, event, place, needs = {}
   const backups = []
   for (const p of pool.slice(0, 7)) {
     if (first && backups.length >= 2) break
-    const line = lineOf(asLine(p), occasionId)
+    const line = lineOf(asLine(p), occasionId, addonKeysFor(tradeId, needs.$extras ?? []))
     const r = await previewLine(line, event, place).catch(() => null)
     if (r?.path === 'INSTANT') {
       if (!first) first = { line, partner: p, q: r }
