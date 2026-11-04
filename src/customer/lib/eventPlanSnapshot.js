@@ -65,6 +65,30 @@ export function planFromSaved(row) {
  * Map current plan decisions into rows for event_plan_services while
  * preserving any booking linkage already stored for that trade.
  */
+/**
+ * Apply an account snapshot as the source of truth for the resumed occasion.
+ * Older device-only picks and requirement answers for this event must not
+ * leak back into the restored plan. Other occasions and the basket survive.
+ */
+export function restorePlanState(state, snapshot) {
+  const occasionId = snapshot?.event?.occasionId
+  if (!occasionId) return state
+  const prefix = `${occasionId}:`
+  const needs = Object.fromEntries(
+    Object.entries(state.needs ?? {}).filter(([key]) => !key.startsWith(prefix)),
+  )
+  return {
+    ...state,
+    event: { ...snapshot.event },
+    place: snapshot.place ?? null,
+    picks: {
+      ...(state.picks ?? {}),
+      [occasionId]: { ...(snapshot.picks ?? {}) },
+    },
+    needs: { ...needs, ...(snapshot.needs ?? {}) },
+  }
+}
+
 const DECISION = { need: 'selected', skip: 'removed', have: 'arranged', later: 'later' }
 
 export function serviceRowsForPlan(planId, statuses = {}, picks = {}, lines = [], previousServices = []) {
