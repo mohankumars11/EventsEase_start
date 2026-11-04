@@ -19,8 +19,9 @@
  * once a customer is signed in.
  */
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import { recommend } from '../lib/recommend360'
+import { recommend, setActiveRules } from '../lib/recommend360'
 import { blueprint } from '../lib/blueprint'
+import { loadRules } from '../lib/eventPlans'
 import { contextFor } from '../lib/eventContext'
 export { contextFor }
 
@@ -41,6 +42,21 @@ const PlanContext = createContext(null)
 
 export function PlanProvider({ children }) {
   const [state, setState] = useState(load)
+  const [rulesRevision, setRulesRevision] = useState(0)
+
+  // The published, validated rule set is shared by the same deterministic
+  // engine used for every customer screen. Fall back to bundled rules when
+  // the table is unavailable; never block the planner on a network request.
+  useEffect(() => {
+    let current = true
+    loadRules().then(ruleSet => {
+      if (!current) return
+      setActiveRules(ruleSet)
+      setRulesRevision(value => value + 1)
+    }).catch(() => {})
+    return () => { current = false }
+  }, [])
+
   useEffect(() => { try { localStorage.setItem(KEY, JSON.stringify(state)) } catch { /* storage off */ } }, [state])
 
   const setEvent = useCallback(patch => setState(s => ({ ...s, event: { ...s.event, ...patch } })), [])
@@ -83,12 +99,13 @@ export function PlanProvider({ children }) {
 
   const value = useMemo(() => ({
     ...state,
+    rulesRevision,
     setEvent, setPick, add, remove, setQty, setPlace, setNeeds, recordBookings, clearOccasion, toggleSaved,
     needsOf: (occasionId, tradeId) => state.needs?.[`${occasionId ?? 'solo'}:${tradeId}`] ?? {},
     inBasket: (serviceId) => state.basket.some(l => l.serviceId === serviceId),
     lineFor: (occasionId, tradeId) => state.basket.find(l => l.key === `${occasionId ?? 'solo'}:${tradeId}`) ?? null,
     isSaved: serviceId => state.saved.some(x => x.serviceId === serviceId),
-  }), [state, setEvent, setPick, add, remove, setQty, setPlace, setNeeds, recordBookings, clearOccasion, toggleSaved])
+  }), [state, rulesRevision, setEvent, setPick, add, remove, setQty, setPlace, setNeeds, recordBookings, clearOccasion, toggleSaved])
 
   return <PlanContext.Provider value={value}>{children}</PlanContext.Provider>
 }
