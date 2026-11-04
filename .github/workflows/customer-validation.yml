@@ -1,0 +1,42 @@
+name: Customer app validation
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [AI-implementation]
+    paths:
+      - 'src/customer/**'
+      - 'tests/customerEventContext.test.mjs'
+      - 'tests/recommend360.test.mjs'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.*'
+      - 'scripts/**'
+
+jobs:
+  customer:
+    name: Customer tests and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Customer regression suite
+        run: npm test
+      - name: 360-degree catalogue and rules integrity
+        run: npm run check:360
+      - name: Build customer app
+        env:
+          CAPACITOR_BUILD: 'true'
+        run: |
+          set -a
+          . ./.env.android
+          set +a
+          export VITE_SURFACE=customer
+          node scripts/build-api-bundle.mjs
+          npm run build
