@@ -61,12 +61,23 @@ export default function EventFlow() {
   const times = f.date === today ? TIMES.filter(t => toMin(t) >= earliest) : TIMES
   useEffect(() => { if (f.date === today && toMin(f.time) < earliest && times.length) set({ time: times[0] }) }, [f.date]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  const eventContext = () => {
+    const context = { ...(mine ? plan.event.context ?? {} : {}) }
+    // Venue, date and budget are derived from the controls above. Remove old
+    // derived values so changing an answer cannot leave stale recommendations.
+    delete context.venueType
+    delete context.venueBooked
+    delete context.budget
+    if (FEEL[f.budget]) context.budget = FEEL[f.budget]
+    return context
+  }
+
   /* Saved as it changes — the plan screen and the live match read it. */
   const facts = () => ({
     occasionId, date: f.date, time: f.time, hours: f.hours, guests: f.guests,
     venue: f.venueChoice === 'need' || (!f.venueChoice && o?.where === 'ask') ? 'need' : 'have', venueKind: KIND[f.venueChoice] ?? null,
     venueChoice: f.venueChoice, venueOther: f.venueChoice === 'other' ? f.venueOther.trim() : '', budget: f.budget,
-    context: { ...(mine ? plan.event.context ?? {} : {}), ...(f.venueChoice === 'home' ? { venueType: 'home' } : {}), ...(FEEL[f.budget] ? { budget: FEEL[f.budget] } : {}) },
+    context: eventContext(),
   })
   useEffect(() => { if (o) plan.setEvent(facts()) }, [f]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -74,7 +85,7 @@ export default function EventFlow() {
 
   const go = () => {
     plan.setEvent(facts())
-    if (!plan.place?.lat && place?.lat) plan.setPlace({ area: place.area, lat: place.lat, lng: place.lng, city: place.city ?? 'Bengaluru', address: place.address ?? '' })
+    if (!plan.place?.lat && place?.lat) plan.setPlace({ area: place.area, lat: place.lat, lng: place.lng, city: place.city ?? null, address: place.address ?? '' })
     navigate(`/o/${o.id}/plan`)
   }
   const first = (() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d })()
