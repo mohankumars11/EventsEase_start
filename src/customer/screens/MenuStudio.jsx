@@ -411,7 +411,7 @@ function Review({ cat, o, ev, place, ctx, studio, setStudio, setWay, plan, user,
   const [signIn, setSignIn] = useState(false)
   const fam = cat.families.find(f => f.id === studio.family)
   const sections = studio.sections.map(s => ({ id: s.id, items: s.items.map(i => ({ ...cat.dishes[i.id], ...i })) }))
-  const venue = { address: place?.address || `${place?.area ?? ''}, Bengaluru`, area: place?.area ?? null, city: 'Bengaluru' }
+  const venue = { address: place?.address || [place?.area, place?.city].filter(Boolean).join(', ') || null, area: place?.area ?? null, city: place?.city ?? null }
   const needs = { ...plan.needsOf(o.id, T), $cuisine: GROUP[studio.family] ? [GROUP[studio.family]] : [] }
   const ready = ev.date && place?.lat
 
