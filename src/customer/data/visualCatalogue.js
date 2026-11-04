@@ -78,7 +78,7 @@ export const CAKE_OPTIONS = {
   egg: ['With egg', 'Eggless'], delivery: ['Deliver to venue', 'I’ll pick it up'],
 }
 export const PHOTO_HOURS = ['2 hours', '4 hours', '6 hours']
-export const PHOTO_EXTRAS = ['Printed album', 'Reels', 'Drone', 'Photo booth', 'Instant prints', 'Same-day edit', 'Cake-smash shoot']
+export const PHOTO_EXTRAS = ['Reels', 'Drone', 'Photo booth', 'Instant prints', 'Same-day edit', 'Cake-smash shoot']
 const E = (id, label) => ({ id, label, photo: VISUALS[`ent:${id}`] ?? null })
 export const ENTERTAINERS = [E('magician', 'Magician'), E('mascot', 'Mascot'), E('puppet', 'Puppet show'), E('games', 'Kids’ games'), E('singer', 'Live singer'),
   E('dj', 'DJ'), E('anchor', 'Anchor'), E('band', 'Live band'), E('dance', 'Dancers')]
