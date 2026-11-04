@@ -45,6 +45,7 @@ import { authenticatedUser } from './auth.js'
 import { PLATFORM_FEE_RATE } from './tradeNames.js'
 import { loadMarginOverrides, marginPct, toListAt } from './listPrice.js'
 import { notifyPartners } from './fcm.js'
+import { isCustomerVisibleListing } from '../../src/lib/customerListingVisibility.js'
 
 const url = process.env.VITE_SUPABASE_URL
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -209,6 +210,9 @@ async function priceBackups(db, raw, { r, first, vendorId, requestId, note, city
     const { data: res, error } = await db.rpc('resolve_booking', { p_vendor_service_id: b.serviceId, p_req: b.request })
     // Same trade only: a backup photographer is not a backup caterer.
     if (error || res?.path !== 'INSTANT' || !res.vendor_id || res.vendor_id === vendorId || (tradeCode && res.trade_code && res.trade_code !== tradeCode)) continue
+    const { data: backupOwner, error: backupOwnerError } = await db.from('vendors')
+      .select('is_synthetic').eq('id', res.vendor_id).maybeSingle()
+    if (backupOwnerError || !isCustomerVisibleListing({ vendorIsSynthetic: backupOwner?.is_synthetic })) continue
     const code = res.trade_code ?? 'E16'
     const margin = marginPct(code, city)
     const list = toListAt(res.customer_paise, margin)
@@ -249,6 +253,25 @@ export default async function handler(req, res) {
     ;({ data: resolution, error: resErr } = await db.rpc('resolve_anchor_booking', { p_vendor_service_id: vendorServiceId, p_req: r }))
   }
   if (resErr) return res.status(500).json({ error: resErr.message })
+
+  // Enforce the same customer-visibility boundary on the server. A caller
+  // cannot bypass the client listing filter by posting a synthetic service id.
+  if (['INSTANT', 'QUOTE'].includes(resolution?.path)) {
+    if (!resolution.vendor_id) return res.status(503).json({ error: 'Could not verify this listing for customer booking.' })
+    const { data: listingOwner, error: ownerError } = await db.from('vendors')
+      .select('is_synthetic').eq('id', resolution.vendor_id).maybeSingle()
+    if (ownerError || !listingOwner) return res.status(503).json({ error: 'Could not verify this listing for customer booking.' })
+    if (!isCustomerVisibleListing({ vendorIsSynthetic: listingOwner.is_synthetic })) {
+      const reasons = ['sample_listing_not_customer_available']
+      return res.status(200).json({
+        ...resolution,
+        path: 'NOT_ELIGIBLE',
+        reasons,
+        reasons_text: ['This sample listing is not available for customer bookings.'],
+      })
+    }
+  }
+
   const out = { ...resolution, reasons_text: (resolution.reasons ?? []).map(explain) }
   const TRADE = resolution.trade_name ?? 'Anchor & MC'
   const TRADE_CODE = resolution.trade_code ?? 'E16'
