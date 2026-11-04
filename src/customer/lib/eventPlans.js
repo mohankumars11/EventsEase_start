@@ -11,7 +11,7 @@
 import { supabase } from '../../lib/supabase'
 import { RULES, RULES_VERSION } from '../data/rules360'
 import { validateRules } from './recommend360'
-import { planFromSaved, serviceRowsForPlan } from './eventPlanSnapshot'
+import { planFromSaved, serviceRowsForPlan, staleServiceIds } from './eventPlanSnapshot'
 export { planFromSaved, savedContextFor } from './eventPlanSnapshot'
 
 let published = null
@@ -43,12 +43,23 @@ export async function savePlan({ userId, occasionId, context, picks = {}, status
       .select('id').single()
     if (error) return { ok: false, reason: error.code === '42P01' || /does not exist|schema cache/i.test(error.message) ? 'not-migrated' : error.message }
     const { data: savedServices, error: serviceReadError } = await supabase.from('event_plan_services')
-      .select('trade_id, vendor_service_id, booking_line_id').eq('plan_id', plan.id)
+      .select('trade_id, recommendation_status, decision, vendor_service_id, booking_line_id').eq('plan_id', plan.id)
     if (serviceReadError) return { ok: false, reason: serviceReadError.message }
-    const rows = serviceRowsForPlan(plan.id, statuses, picks, lines, savedServices ?? [])
+    const previousServices = savedServices ?? []
+    const rows = serviceRowsForPlan(plan.id, statuses, picks, lines, previousServices)
     if (rows.length) {
       const r = await supabase.from('event_plan_services').upsert(rows, { onConflict: 'plan_id,trade_id' })
       if (r.error) return { ok: false, reason: r.error.message }
+    }
+
+    // The child table is the current plan snapshot. Without this cleanup,
+    // deselected optional services survive the upsert and are rehydrated as
+    // selected on the customer's next device. Booking-linked rows are kept.
+    const obsoleteTradeIds = staleServiceIds(previousServices, rows)
+    if (obsoleteTradeIds.length) {
+      const { error: deleteError } = await supabase.from('event_plan_services')
+        .delete().eq('plan_id', plan.id).in('trade_id', obsoleteTradeIds)
+      if (deleteError) return { ok: false, reason: deleteError.message }
     }
     return { ok: true, id: plan.id }
   } catch (e) { return { ok: false, reason: e.message } }
