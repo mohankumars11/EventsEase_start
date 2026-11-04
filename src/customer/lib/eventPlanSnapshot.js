@@ -91,6 +91,18 @@ export function restorePlanState(state, snapshot) {
 
 const DECISION = { need: 'selected', skip: 'removed', have: 'arranged', later: 'later' }
 
+/*
+ * Live event_plan_services also records who owns the action and where it
+ * sits in the requirement lifecycle. Keep these fields in step with the
+ * decision so RLS/constraint-guarded writes agree with what the customer saw.
+ */
+const OWNERSHIP = {
+  need: { owner: 'marketplace', state: 'selected' },
+  skip: { owner: 'not_needed', state: 'closed' },
+  have: { owner: 'arranged', state: 'closed' },
+  later: { owner: 'ask_customer', state: 'suggested' },
+}
+
 export function serviceRowsForPlan(planId, statuses = {}, picks = {}, lines = [], previousServices = []) {
   const previousByTrade = Object.fromEntries(previousServices.map(row => [row.trade_id, row]))
   const lineByTrade = Object.fromEntries(lines.map(line => [line.tradeId, line]))
@@ -107,11 +119,15 @@ export function serviceRowsForPlan(planId, statuses = {}, picks = {}, lines = []
     const line = lineByTrade[tradeId]
     const previous = previousByTrade[tradeId]
     const booked = !!previous?.booking_line_id
+    const choice = booked ? 'need' : picks[tradeId]
+    const ownership = OWNERSHIP[choice] ?? { owner: 'ask_customer', state: 'suggested' }
     return {
       plan_id: planId,
       trade_id: tradeId,
       recommendation_status: statuses[tradeId] ?? previous?.recommendation_status ?? 'CORE',
-      decision: booked ? 'selected' : (DECISION[picks[tradeId]] ?? 'recommended'),
+      decision: booked ? 'selected' : (DECISION[choice] ?? 'recommended'),
+      owner: booked ? (previous?.owner ?? 'marketplace') : ownership.owner,
+      state: booked ? (previous?.state ?? 'dispatched') : ownership.state,
       vendor_service_id: line?.serviceId ?? previous?.vendor_service_id ?? null,
       booking_line_id: previous?.booking_line_id ?? null,
     }
