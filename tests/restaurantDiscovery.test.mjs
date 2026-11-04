@@ -1,21 +1,23 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import {
-  RESTAURANT_KITCHEN,
-  isRestaurantOrderListing,
-} from '../src/customer/lib/restaurantMatching.js'
+import { readFileSync } from 'node:fs'
 
-test('restaurant orders match only explicitly declared restaurant-capable listings', () => {
-  assert.equal(isRestaurantOrderListing({ facets: { kitchen_type: [RESTAURANT_KITCHEN] } }), true)
-  assert.equal(isRestaurantOrderListing({ facets: { kitchen_type: RESTAURANT_KITCHEN } }), true)
-  assert.equal(isRestaurantOrderListing({ facets: { kitchen_type: ['Catering service'] } }), false)
-  assert.equal(isRestaurantOrderListing({ facets: { prep_location: ['At both locations'] } }), false)
-  assert.equal(isRestaurantOrderListing({ facets: {} }), false)
-  assert.equal(isRestaurantOrderListing(null), false)
+const source = path => readFileSync(new URL(path, import.meta.url), 'utf8')
+
+test('restaurant is not represented as a catering kitchen subtype', () => {
+  const catalogue = source('../src/customer/data/visualCatalogue.js')
+  const menu = source('../src/customer/screens/MenuStudio.jsx')
+  assert.doesNotMatch(catalogue, /id:\s*['"]restaurant['"]/)
+  assert.doesNotMatch(menu, /isRestaurantOrderListing|ctx\.way\s*===\s*['"]restaurant['"]/)
 })
 
-test('restaurant matching fails closed when capability data is absent', () => {
-  assert.equal(isRestaurantOrderListing({}), false)
-  assert.equal(isRestaurantOrderListing({ facets: { kitchen_type: null } }), false)
-  assert.equal(isRestaurantOrderListing({ facets: { kitchen_type: [] } }), false)
+test('restaurant ordering has its own customer route and sourcing screen', () => {
+  const app = source('../src/customer/CustomerApp.jsx')
+  const screen = source('../src/customer/screens/RestaurantOrder.jsx')
+  const menu = source('../src/customer/screens/MenuStudio.jsx')
+  assert.match(app, /\/o\/:occasionId\/restaurants/)
+  assert.match(menu, /data-restaurant-order-link/)
+  assert.match(screen, /separate restaurant order/)
+  assert.match(screen, /does not place an order or confirm a price/)
+  assert.match(screen, /data-source-restaurant/)
 })
