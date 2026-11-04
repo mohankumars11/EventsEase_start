@@ -52,7 +52,7 @@ export default function EventPlan() {
   const ev = plan.event
   const valid = !!(o && ev.occasionId === o.id && ev.date)
   const picks = o ? plan.picks[o.id] ?? {} : {}
-  const p = useMemo(() => (valid ? needsFor(o, picks, ev) : null), [valid, o, picks, ev])
+  const p = useMemo(() => (valid ? needsFor(o, picks, ev) : null), [valid, o, picks, ev, plan.rulesRevision])
   const [sheet, setSheet] = useState(null) // { edit: t } | 'add'
   const [how, setHow] = useState('each')
   const [other, setOther] = useState('')
