@@ -93,3 +93,20 @@ export function contextFor(occasion, picks = {}, event = {}) {
 
   return context;
 }
+
+/**
+ * Draft-context cleanup for the compact event-details screen.
+ *
+ * Keep customer-entered programme and accessibility facts, but discard
+ * derived venue facts when the venue choice changes. Otherwise facilities
+ * from the previous venue could suppress services for the new one.
+ */
+export function eventContextDraft(previous = {}, previousVenueChoice, nextVenueChoice, budget) {
+  const context = { ...(previous ?? {}) }
+  delete context.venueType
+  delete context.venueBooked
+  delete context.budget
+  if (previousVenueChoice !== nextVenueChoice) delete context.venueProvides
+  if (budget) context.budget = budget
+  return context
+}
