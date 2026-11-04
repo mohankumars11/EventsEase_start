@@ -97,7 +97,7 @@ export default function LiveMatch() {
   useEffect(() => { if (profile?.phone && !phone) setPhone(profile.phone.replace(/^\+91/, '')) }, [profile?.phone]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (user) myVouchers(user.id).then(v => { const b = bookingVouchers(v); setVoucher(b.find(x => x.kind === 'welcome_pct') ?? b[0] ?? null) }).catch(() => {}) }, [user])
 
-  const sig = JSON.stringify([needed, ev.date, ev.time, ev.hours, ev.guests, place?.lat, place?.lng])
+  const sig = JSON.stringify([needed, ev.date, ev.time, ev.hours, ev.guests, ev.bookingPriority ?? 'balanced', place?.lat, place?.lng])
   useEffect(() => {
     if (!valid || !needed.length) return
     let live = true
@@ -107,7 +107,7 @@ export default function LiveMatch() {
       await loadCuisines(supabase).catch(() => {})
       const t0 = Date.now()
       await some(needed.map((t, i) => async () => {
-        const r = await matchTrade(t, { occasionId: o.id, event: ev, place, needs: plan.needsOf(o.id, t), seed,
+        const r = await matchTrade(t, { occasionId: o.id, event: ev, place, needs: plan.needsOf(o.id, t), priority: ev.bookingPriority ?? 'balanced', seed,
           onPool: n => { if (live) setRows(x => ({ ...x, [t]: { ...(x[t] ?? {}), stage: 'date', near: n } })) } })
         /* The result is real; only its reveal is paced, one service after
            another, so the customer can watch each land. */
