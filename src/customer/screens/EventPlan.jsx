@@ -75,7 +75,7 @@ export default function EventPlan() {
       const result = await savePlan({
         userId: user.id,
         occasionId: o.id,
-        context: savedContextFor(o, picks, ev, plan.place),
+        context: savedContextFor(o, picks, ev, plan.place, plan.needs),
         picks,
         statuses,
         lines: plan.basket.filter(line => line.occasionId === o.id),
