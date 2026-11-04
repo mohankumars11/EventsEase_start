@@ -49,7 +49,7 @@ async function savePlanNow({ userId, occasionId, context, picks = {}, statuses =
       .select('id').single()
     if (error) return { ok: false, reason: error.code === '42P01' || /does not exist|schema cache/i.test(error.message) ? 'not-migrated' : error.message }
     const { data: savedServices, error: serviceReadError } = await supabase.from('event_plan_services')
-      .select('trade_id, recommendation_status, decision, vendor_service_id, booking_line_id').eq('plan_id', plan.id)
+      .select('trade_id, recommendation_status, decision, owner, state, vendor_service_id, booking_line_id').eq('plan_id', plan.id)
     if (serviceReadError) return { ok: false, reason: serviceReadError.message }
     const previousServices = savedServices ?? []
     const rows = serviceRowsForPlan(plan.id, statuses, picks, lines, previousServices)
@@ -98,6 +98,8 @@ export async function linkBookings(userId, results = []) {
           plan_id: plan.id,
           trade_id: r.tradeId,
           decision: 'selected',
+          owner: 'marketplace',
+          state: 'dispatched',
           vendor_service_id: r.serviceId ?? null,
           booking_line_id: r.lineId,
         }))
