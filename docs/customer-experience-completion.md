@@ -15,13 +15,20 @@ Production database changes: migrations may be authored and tested, but not appl
 
 ## Work sequence
 
-- [ ] Audit the existing customer plan, 360° engine, matching and resolver contracts.
-- [ ] Connect the plan UI to the 360° engine and improve lifecycle/reason/status presentation.
-- [ ] Complete contextual venue preferences and customer inventory sourcing behavior.
-- [ ] Implement a separate restaurant trade contract across registry, customer UI, listing facets and booking resolution. Do not route restaurant orders through catering.
-- [ ] Add regression tests for occasion recommendations, venue coverage, synthetic visibility, restaurant separation and checkout persistence.
+- [x] Audit the existing customer plan, 360° engine, matching and resolver contracts.
+- [x] Reorganise customer plan recommendations by lifecycle and show recommendation labels/reasons in compact actionable rows.
+- [x] Ask conditional recommendation follow-ups in the plan and update the engine context as answers change.
+- [x] Add Fast & Simple (best-fit) versus I want control (compare eligible masters) booking preference.
+- [x] Add Best fit / Budget conscious / Premium experience ranking preference to live matching.
+- [x] Add a separate restaurant-order sourcing screen and remove restaurant from the catering kitchen-type selector/matcher.
+- [ ] Implement the live restaurant trade contract across canonical registry, partner listing, catalogue, delivery availability, pricing and booking resolution. Customer screen is deliberately transparent that live restaurant inventory is not connected yet.
+- [ ] Add/finish regression tests for all new customer behavior and verify current validation.
 - [ ] Run all validation and fix failures.
-- [ ] Build and publish a fresh customer-only Android APK.
+- [ ] Build and publish a fresh customer-only Android APK after implementation is complete.
+
+## Known dependency
+
+The customer app has a separate restaurant-order request screen, but the repository's live registry and booking engine still have 34 trades and no restaurant-specific listing/menu/availability resolver. A genuinely bookable restaurant trade needs its partner onboarding/listing contract and server-side order resolver. The prior implementation scope excluded partner-app changes, so this part cannot be called end-to-end complete while that exclusion remains. No fake restaurant listings or prices are shown.
 
 ## Explicit exclusions
 
