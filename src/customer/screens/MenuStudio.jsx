@@ -35,7 +35,8 @@ import {
   loadCatalogue, familiesFor, rankMenus, dietAllows, startFrom, dishCount, sectionName, alternativesFor,
   flagsFor, menuFlags, snapshotFor, menuText, saveCustomerMenu, DIETS, MEALS, SERVES, mealFor,
 } from '../lib/menuStudio'
-import { FOOD_WAYS, foodNeeds, isRestaurantOrderListing, wayOf } from '../data/visualCatalogue'
+import { FOOD_WAYS, foodNeeds, wayOf } from '../data/visualCatalogue'
+import { isRestaurantOrderListing } from '../lib/restaurantMatching'
 import { ActionBar, BackHeader, Photo, Sheet } from '../ui/kit'
 import SignInSheet from './SignInSheet'
 
