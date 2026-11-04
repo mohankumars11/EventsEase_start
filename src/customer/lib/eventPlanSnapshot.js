@@ -6,7 +6,7 @@
  * fields from contextFor(); persistence also retains the selected venue and
  * event place so a plan can resume accurately on another device.
  */
-import { contextFor } from './eventContext'
+import { contextFor } from './eventContext.js'
 
 const ABOUT = [
   'venueProvides', 'venueType', 'setting', 'formats', 'food', 'drinks', 'media',
