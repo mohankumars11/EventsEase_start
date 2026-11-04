@@ -228,7 +228,7 @@ export default function LiveMatch() {
   async function choose(p) {
     const t = swap
     setSwap({ t, busy: p.serviceId })
-    const m = await priceOne(p, { occasionId: o.id, event: ev, place })
+    const m = await priceOne(p, { occasionId: o.id, event: ev, place, tradeId: t, needs: plan.needsOf(o.id, t) })
     if (m) setRows(x => ({ ...x, [t]: { ...x[t], match: m, backups: (x[t].backups ?? []).filter(b => b.serviceId !== p.serviceId), stage: 'done' } }))
     setSwap(m ? null : { t, busy: null, failed: p.serviceId })
   }
