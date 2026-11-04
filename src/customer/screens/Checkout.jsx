@@ -199,7 +199,7 @@ export default function Checkout() {
     setPhase('booking')
     const tel = `+91${phone.replace(/\D/g, '').slice(-10)}`
     if (profile?.id && profile.phone !== tel) supabase.from('profiles').update({ phone: tel }).eq('id', profile.id).then(() => {}, () => {})
-    const venue = { address: place.address, area: place.area, city: 'Bengaluru' }
+    const venue = { address: place.address || [place.area, place.city].filter(Boolean).join(', ') || null, area: place.area ?? null, city: place.city ?? null }
     const results = []
     for (const r of [...instant, ...quoteLines]) {
       try {
