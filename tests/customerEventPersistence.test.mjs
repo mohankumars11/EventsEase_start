@@ -253,3 +253,50 @@ test('a failed write does not block the next write for the same event', async ()
   assert.equal(await second, 'ok')
   assert.deepEqual(order, ['failed', 'recovered'])
 })
+
+
+test('customer service decisions carry the live ownership and lifecycle fields', () => {
+  const rows = serviceRowsForPlan('plan-1', {
+    catering_food: 'CORE',
+    photography: 'OPTIONAL',
+    videography: 'OPTIONAL',
+    dj_music: 'OPTIONAL',
+  }, {
+    catering_food: 'need',
+    photography: 'have',
+    videography: 'skip',
+    dj_music: 'later',
+  })
+
+  const byTrade = Object.fromEntries(rows.map(row => [row.trade_id, row]))
+  assert.equal(byTrade.catering_food.decision, 'selected')
+  assert.equal(byTrade.catering_food.owner, 'marketplace')
+  assert.equal(byTrade.catering_food.state, 'selected')
+  assert.equal(byTrade.photography.decision, 'arranged')
+  assert.equal(byTrade.photography.owner, 'arranged')
+  assert.equal(byTrade.photography.state, 'closed')
+  assert.equal(byTrade.videography.decision, 'removed')
+  assert.equal(byTrade.videography.owner, 'not_needed')
+  assert.equal(byTrade.videography.state, 'closed')
+  assert.equal(byTrade.dj_music.decision, 'later')
+  assert.equal(byTrade.dj_music.owner, 'ask_customer')
+  assert.equal(byTrade.dj_music.state, 'suggested')
+})
+
+test('booked service rows preserve existing owner and dispatched lifecycle state', () => {
+  const rows = serviceRowsForPlan('plan-1', { photography: 'NOT_DEFAULT' }, {}, [], [
+    {
+      trade_id: 'photography',
+      decision: 'selected',
+      owner: 'marketplace',
+      state: 'dispatched',
+      recommendation_status: 'CORE',
+      vendor_service_id: 'master-1',
+      booking_line_id: 'booking-line-1',
+    },
+  ])
+  assert.equal(rows[0].owner, 'marketplace')
+  assert.equal(rows[0].state, 'dispatched')
+  assert.equal(rows[0].decision, 'selected')
+  assert.equal(rows[0].booking_line_id, 'booking-line-1')
+})
