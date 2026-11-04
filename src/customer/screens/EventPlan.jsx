@@ -558,7 +558,7 @@ function ChooseSheet({ o, t, plan, place, on, why, video, onVideo, ensure, onClo
               {rest.slice(0, 2).map(ask)}
               <Section title="Choose your coverage">
                 <OneChips items={PHOTO_HOURS.map(x => x === '6 hours' ? '6 hours + printed album' : x)} value={cur.$coverage ?? cur.$hours ?? null} onPick={v => {
-                  const hours = Number(String(v).match(/\\d+/)?.[0]) || null
+                  const hours = Number(String(v).match(/\d+/)?.[0]) || null
                   const vip = v.includes('printed album')
                   const extras = new Set(cur.$extras ?? [])
                   if (vip) extras.add(VIP_EXTRA.photography); else extras.delete(VIP_EXTRA.photography)
@@ -578,13 +578,13 @@ function ChooseSheet({ o, t, plan, place, on, why, video, onVideo, ensure, onClo
 
           {SERVICE_COVERAGE[t] && t !== 'anchor_mc' && (
             <Section title="Choose your coverage">
-              <OneChips items={SERVICE_COVERAGE[t]} value={cur.$coverage ?? cur.$hours ?? null} onPick={v => set({ $coverage: v, $hours: Number(String(v).match(/\\d+/)?.[0]) || null })} data={`${t}-hours`} />
+              <OneChips items={SERVICE_COVERAGE[t]} value={cur.$coverage ?? cur.$hours ?? null} onPick={v => set({ $coverage: v, $hours: Number(String(v).match(/\d+/)?.[0]) || null })} data={`${t}-hours`} />
             </Section>
           )}
           {t === 'anchor_mc' && (
             <Section title="Choose your coverage">
               <OneChips items={SERVICE_COVERAGE.anchor_mc} value={cur.$coverage ?? cur.$hours ?? null} onPick={v => {
-                const hours = Number(String(v).match(/\\d+/)?.[0]) || null
+                const hours = Number(String(v).match(/\d+/)?.[0]) || null
                 const vip = v.includes('custom script')
                 const extras = new Set(cur.$extras ?? [])
                 if (vip) extras.add(VIP_EXTRA.anchor_mc); else extras.delete(VIP_EXTRA.anchor_mc)
