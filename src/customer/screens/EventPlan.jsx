@@ -182,7 +182,7 @@ export default function EventPlan() {
         <div className="mt-4 space-y-5" data-arrange-grid>
           {phaseGroups.map(group => <section key={group.id} data-lifecycle-phase={group.id}>
             <div className="mb-2 flex items-center justify-between gap-2"><h3 className="text-[14px] font-extrabold">{group.title}</h3><span className="text-[10.5px] font-bold text-[var(--ink-3)]">{group.trades.length} {group.trades.length === 1 ? 'service' : 'services'}</span></div>
-            <div className="space-y-2.5">{group.trades.filter(t => arrange.includes(t)).map(t => <ReqCard key={t} o={o} t={t} on={on(t)} video={t === 'photography' && on('videography')} said={briefFor(o, t, plan.needsOf(o.id, t))} why={engineByTrade[t]?.reason ?? row(t)?.reason} recommendationStatus={engineByTrade[t]?.status ?? row(t)?.status}
+            <div className="space-y-2.5">{group.trades.filter(t => arrange.includes(t)).map(t => <ReqCard key={t} o={o} t={t} on={on(t)} video={t === 'photography' && on('videography')} said={briefFor(o, t, plan.needsOf(o.id, t))} why={engineByTrade[t]?.reason ?? row(t)?.reason} recommendationStatus={row(t)?.status ?? engineByTrade[t]?.status}
               onToggle={() => pick(t, on(t) ? 'skip' : 'need')} onOpen={() => setSheet({ edit: t })} />)}</div>
           </section>)}
         </div>
@@ -211,7 +211,7 @@ export default function EventPlan() {
       {extra.length > 0 && <section className="mt-7 px-4" data-extra>
         <div className="flex items-end justify-between gap-2"><div><h2 className="flex items-center gap-1.5 text-[19px] font-black tracking-[-0.03em]"><Sparkles size={18} className="text-[#C026D3]" />Optional enhancements</h2><p className="mt-0.5 text-[11.5px] font-semibold text-[var(--ink-3)]">Only add what makes this occasion better for you.</p></div>
           {extra.length > 6 && <button type="button" onClick={() => setAllExtra(x => !x)} className="shrink-0 text-[12.5px] font-extrabold text-[var(--brand)]">{allExtra ? 'Fewer' : `All ${extra.length}`}</button>}</div>
-        <div className="mt-3 space-y-2.5">{shownExtra.map(t => <ReqCard key={t} o={o} t={t} small on={on(t)} video={t === 'photography' && on('videography')} popular={row(t)?.kind === 'RECOMMENDED'} why={engineByTrade[t]?.reason ?? row(t)?.reason} recommendationStatus={engineByTrade[t]?.status ?? row(t)?.status}
+        <div className="mt-3 space-y-2.5">{shownExtra.map(t => <ReqCard key={t} o={o} t={t} small on={on(t)} video={t === 'photography' && on('videography')} popular={row(t)?.kind === 'RECOMMENDED'} why={engineByTrade[t]?.reason ?? row(t)?.reason} recommendationStatus={row(t)?.status ?? engineByTrade[t]?.status}
           onToggle={() => pick(t, on(t) ? 'off' : 'need')} onOpen={() => setSheet({ edit: t })} />)}</div>
       </section>}
 
