@@ -111,8 +111,32 @@ const TIER = { CORE: 'must', CONDITIONAL: 'often', OPTIONAL: 'extra', NOT_DEFAUL
 export function needsFor(occasion, picks = {}, event = {}) {
   const r = recommend(occasion.id, contextFor(occasion, picks, event))
   const b = blueprint(occasion, picks, event)
-  /* The reason a customer reads is the template's own (o.why) or a rule's —
-     never the 360° engine's "Core for a first birthday". */
-  const rows = b.rows.map(x => ({ ...x, tier: TIER[x.status] }))
-  return { rows, needed: b.needed, essential: b.essential, enhance: b.enhance, small: b.small, result: r }
+  /* The template owns occasion-specific defaults; the 360° engine owns
+     event facts such as venue coverage. Merge them before any screen or
+     matcher consumes the plan, so a facility is never requested twice. */
+  const engineRows = new Map(r.services.map(x => [x.tradeId, x]))
+  const rows = b.rows.map(x => {
+    const engine = engineRows.get(x.tradeId)
+    const coveredByVenue = !!engine?.coveredByVenue
+    const alreadyArranged = x.alreadyArranged || !!engine?.alreadyArranged
+    return {
+      ...x,
+      tier: TIER[x.status],
+      coveredByVenue,
+      alreadyArranged,
+      addedByCustomer: x.addedByCustomer || !!engine?.addedByCustomer,
+      reason: coveredByVenue || alreadyArranged ? engine?.reason ?? x.reason : x.reason,
+    }
+  })
+  const coveredIds = new Set(rows.filter(x => x.coveredByVenue || x.alreadyArranged).map(x => x.tradeId))
+  const covered = rows.filter(x => coveredIds.has(x.tradeId))
+  return {
+    rows,
+    covered,
+    needed: b.needed.filter(t => !coveredIds.has(t)),
+    essential: b.essential.filter(t => !coveredIds.has(t)),
+    enhance: b.enhance.filter(t => !coveredIds.has(t)),
+    small: b.small,
+    result: r,
+  }
 }
