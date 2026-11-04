@@ -21,6 +21,22 @@ export function durationHours(value) {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null
 }
 
+const ADDON_KEYS = {
+  photography: { 'Printed album': 'album', 'Drone': 'drone', 'Same-day edit': 'same_day', 'Instant prints': 'prints' },
+  videography: { 'Drone': 'drone', 'Live streaming': 'streaming', 'Same-week teaser': 'teaser' },
+  dj_music: { 'Dance-floor lighting': 'lighting', 'Fog / haze machine': 'fog', 'Dhol player': 'dhol', 'Extra speaker zone': 'extra_speakers' },
+  live_entertainment: { 'Sound system': 'sound', 'Themed costumes': 'costume_theme' },
+  bridal_makeup_hair: { 'Saree / dupatta draping': 'draping', 'Hair extensions / accessories': 'hair_extensions', 'Touch-up artist on standby': 'touch_up', 'Premium lashes': 'lashes' },
+  mehendi_artist: { 'Glitter / stones': 'glitter', 'Extra artist': 'extra_artist' },
+}
+
+/** Only send declared server add-on keys; descriptive extras remain in the
+ * customer brief and are quoted by the partner rather than mis-keyed. */
+export function addonKeysFor(tradeId, extras = []) {
+  const map = ADDON_KEYS[tradeId] ?? {}
+  return [...new Set(extras.map(x => map[x]).filter(Boolean))]
+}
+
 export function coverageSelection(tradeId, label, currentExtras = []) {
   const hours = durationHours(label)
   const vip = tradeId === 'photography' ? String(label).includes('printed album')
