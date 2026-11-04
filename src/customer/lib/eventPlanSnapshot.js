@@ -69,18 +69,39 @@ const DECISION = { need: 'selected', skip: 'removed', have: 'arranged', later: '
 
 export function serviceRowsForPlan(planId, statuses = {}, picks = {}, lines = [], previousServices = []) {
   const previousByTrade = Object.fromEntries(previousServices.map(row => [row.trade_id, row]))
-  return Object.entries(statuses)
-    .filter(([tradeId]) => picks[tradeId] || statuses[tradeId] === 'CORE' || lines.some(line => line.tradeId === tradeId))
-    .map(([tradeId, status]) => {
-      const line = lines.find(item => item.tradeId === tradeId)
-      const previous = previousByTrade[tradeId]
-      return {
-        plan_id: planId,
-        trade_id: tradeId,
-        recommendation_status: status,
-        decision: DECISION[picks[tradeId]] ?? 'recommended',
-        vendor_service_id: line?.serviceId ?? previous?.vendor_service_id ?? null,
-        booking_line_id: previous?.booking_line_id ?? null,
-      }
-    })
+  const lineByTrade = Object.fromEntries(lines.map(line => [line.tradeId, line]))
+  const tradeIds = new Set([
+    ...Object.entries(statuses)
+      .filter(([tradeId, status]) => picks[tradeId] || status === 'CORE' || lineByTrade[tradeId])
+      .map(([tradeId]) => tradeId),
+    // A completed booking is historical truth. Keep its link even if the
+    // customer later changes the planning preference for that trade.
+    ...previousServices.filter(row => row.booking_line_id).map(row => row.trade_id),
+  ])
+
+  return [...tradeIds].map(tradeId => {
+    const line = lineByTrade[tradeId]
+    const previous = previousByTrade[tradeId]
+    const booked = !!previous?.booking_line_id
+    return {
+      plan_id: planId,
+      trade_id: tradeId,
+      recommendation_status: statuses[tradeId] ?? previous?.recommendation_status ?? 'CORE',
+      decision: booked ? 'selected' : (DECISION[picks[tradeId]] ?? 'recommended'),
+      vendor_service_id: line?.serviceId ?? previous?.vendor_service_id ?? null,
+      booking_line_id: previous?.booking_line_id ?? null,
+    }
+  })
+}
+
+/**
+ * Service rows are a snapshot, not an append-only log. Remove obsolete
+ * unbooked rows after the new snapshot has been written; booked rows are
+ * retained by serviceRowsForPlan and must never be pruned by autosave.
+ */
+export function staleServiceIds(previousServices = [], currentRows = []) {
+  const current = new Set(currentRows.map(row => row.trade_id))
+  return previousServices
+    .filter(row => row.trade_id && !row.booking_line_id && !current.has(row.trade_id))
+    .map(row => row.trade_id)
 }
