@@ -33,7 +33,7 @@ export const lineOf = (p, occasionId) => ({
 })
 
 const hash = s => [...String(s)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7)
-const durationHours = value => {
+export const durationHours = value => {
   const direct = Number(value)
   if (Number.isFinite(direct) && direct > 0) return direct
   const parsed = Number(String(value ?? '').match(/\d+(?:\.\d+)?/)?.[0])
