@@ -13,7 +13,7 @@ name: Field validation tests
 on:
   workflow_dispatch:
   push:
-    branches: [feature/trade-champion-referral-from-build145, refactor/sambramo-workbook-pricing-20260929, feature/sambramo-catering-pricing-20260930, feature/sambramo-partner-full-ready-20261003]
+    branches: [feature/trade-champion-referral-from-build145, refactor/sambramo-workbook-pricing-20260929, feature/sambramo-catering-pricing-20260930, feature/sambramo-partner-full-ready-20261003, AI-implementation]
   pull_request:
     branches: [main]
     paths:
@@ -35,6 +35,9 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
+
+      - name: Customer event-context regression tests
+        run: node --test tests/customerEventContext.test.mjs
 
       - name: Rule matrix (every rule, every category that applies)
         run: node scripts/check-field-validation-matrix.mjs
@@ -69,6 +72,15 @@ jobs:
           VITE_SURFACE: partner
         run: |
           set -a; . ./.env.android; set +a
+          node scripts/build-api-bundle.mjs
+          npm run build
+
+      - name: Build the customer web app
+        env:
+          CAPACITOR_BUILD: 'true'
+        run: |
+          set -a; . ./.env.android; set +a
+          export VITE_SURFACE=customer
           node scripts/build-api-bundle.mjs
           npm run build
 
