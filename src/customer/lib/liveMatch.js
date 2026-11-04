@@ -103,8 +103,8 @@ export async function poolFor(tradeId, { event, place, needs = {}, seed = '' } =
  * Price one named master for the same request (the Swap sheet). Null when
  * they cannot take it.
  */
-export async function priceOne(p, { occasionId, event, place }) {
-  const line = lineOf(asLine(p), occasionId)
+export async function priceOne(p, { occasionId, event, place, tradeId = p.tradeId, needs = {} }) {
+  const line = lineOf(asLine(p), occasionId, addonKeysFor(tradeId, needs.$extras ?? []))
   const r = await previewLine(line, event, place).catch(() => null)
   return r && ['INSTANT', 'QUOTE'].includes(r.path) ? { line, partner: p, q: r } : null
 }
