@@ -70,6 +70,13 @@ export default function EventFlow() {
     delete updated.venue_type
     plan.setNeeds(`${o.id}:venue`, updated)
   }
+  const setVenueSpecialRequest = value => {
+    const updated = { ...venueNeeds }
+    const note = value.slice(0, 180)
+    if (note.trim()) updated.special_setting_note = note
+    else delete updated.special_setting_note
+    plan.setNeeds(`${o.id}:venue`, updated)
+  }
 
   /* Today: nothing earlier than two hours from now, on the half hour. */
   const today = iso(new Date())
@@ -192,7 +199,13 @@ export default function EventFlow() {
                   )
                 })}
               </div>
-              <p className="mt-2.5 text-[10.5px] font-semibold leading-snug text-[var(--ink-3)]">Special locations such as parks, lakesides or backwaters can be mentioned to the coordinator, but they are not shown as bookable venue types until matching partner listings exist.</p>
+              <label className="mt-3 block">
+                <span className="mb-1 block text-[12px] font-extrabold">A special setting in mind? <span className="font-semibold text-[var(--ink-3)]">(optional)</span></span>
+                <input value={venueNeeds.special_setting_note ?? ''} onChange={e => setVenueSpecialRequest(e.target.value)}
+                  placeholder="e.g. lakeside picnic, park, backwater stay or weekend retreat"
+                  className="h-11 w-full rounded-[12px] bg-white px-3 text-[12.5px] font-semibold shadow-[inset_0_0_0_1px_#E9E3F2] outline-none focus:shadow-[inset_0_0_0_2px_#7C3AED]" data-venue-special-note />
+              </label>
+              <p className="mt-2.5 text-[10.5px] font-semibold leading-snug text-[var(--ink-3)]">Special settings are shared with the coordinator as a sourcing request. They are not treated as bookable inventory until a matching live venue listing exists.</p>
             </div>
           )}
         </Row>
