@@ -50,3 +50,27 @@ export function planFromSaved(row) {
   }
   return { event, picks, place: c.eventPlace ?? null }
 }
+
+/**
+ * Map current plan decisions into rows for event_plan_services while
+ * preserving any booking linkage already stored for that trade.
+ */
+const DECISION = { need: 'selected', skip: 'removed', have: 'arranged', later: 'later' }
+
+export function serviceRowsForPlan(planId, statuses = {}, picks = {}, lines = [], previousServices = []) {
+  const previousByTrade = Object.fromEntries(previousServices.map(row => [row.trade_id, row]))
+  return Object.entries(statuses)
+    .filter(([tradeId]) => picks[tradeId] || statuses[tradeId] === 'CORE' || lines.some(line => line.tradeId === tradeId))
+    .map(([tradeId, status]) => {
+      const line = lines.find(item => item.tradeId === tradeId)
+      const previous = previousByTrade[tradeId]
+      return {
+        plan_id: planId,
+        trade_id: tradeId,
+        recommendation_status: status,
+        decision: DECISION[picks[tradeId]] ?? 'recommended',
+        vendor_service_id: line?.serviceId ?? previous?.vendor_service_id ?? null,
+        booking_line_id: previous?.booking_line_id ?? null,
+      }
+    })
+}
