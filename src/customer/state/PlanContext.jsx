@@ -21,6 +21,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { recommend } from '../lib/recommend360'
 import { blueprint } from '../lib/blueprint'
+import { contextFor } from '../lib/eventContext'
+export { contextFor } from '../lib/eventContext'
 
 const KEY = 'sbm.cx.plan.v1'
 /* `place`: where the event is ({ area, lat, lng, address }) — the engine checks travel and
@@ -95,35 +97,6 @@ export function usePlan() {
   const ctx = useContext(PlanContext)
   if (!ctx) throw new Error('usePlan must be used within PlanProvider')
   return ctx
-}
-
-/* The venue kinds the occasion step offers, as the engine's venue types. */
-const VENUE_TYPE = { banquet: 'banquet', lawn: 'outdoor', rooftop: 'outdoor', hotel: 'hotel', resort: 'destination', farmhouse: 'outdoor',
-  dining: 'banquet', community: 'banquet', convention: 'banquet', ground: 'outdoor' }
-const WHERE_TYPE = { home: 'home', newhome: 'home', school: 'campus', campus: 'campus', premises: 'office', site: 'outdoor', online: 'virtual' }
-
-/**
- * The engine's context for one occasion, from what the customer told us:
- * the event step (date, time, guests, venue), the "About your event" step
- * (event.context), and their choices on the plan (picks: need → added,
- * have → arranged, skip → excluded, later → saved for later).
- */
-export function contextFor(occasion, picks = {}, event = {}) {
-  const c = { ...(event.context ?? {}) }
-  if (event.guests) c.guests = event.guests
-  if (event.time) c.time = event.time
-  if (event.hours) c.hours = event.hours
-  if (event.date) c.date = event.date
-  if (event.venue === 'have') c.venueBooked = true
-  if (!c.venueType) c.venueType = WHERE_TYPE[occasion.where] ?? VENUE_TYPE[event.venueKind] ?? undefined
-  if (!c.venueType) delete c.venueType
-  const by = v => Object.keys(picks).filter(t => picks[t] === v)
-  const [added, arranged, excluded, later] = ['need', 'have', 'skip', 'later'].map(by)
-  if (added.length) c.added = added
-  if (arranged.length) c.arranged = arranged
-  if (excluded.length) c.excluded = excluded
-  if (later.length) c.later = later
-  return c
 }
 
 const TIER = { CORE: 'must', CONDITIONAL: 'often', OPTIONAL: 'extra', NOT_DEFAULT: 'hidden' }
