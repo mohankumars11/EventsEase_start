@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { savedContextFor, planFromSaved, serviceRowsForPlan, staleServiceIds } from '../src/customer/lib/eventPlanSnapshot.js'
+import { savedContextFor, planFromSaved, serviceRowsForPlan, staleServiceIds, restorePlanState } from '../src/customer/lib/eventPlanSnapshot.js'
 
 const occasion = { id: 'birthday-party', where: 'ask' }
 
@@ -159,4 +159,38 @@ test('autosave retains a booked service even after the planning preference is cl
   assert.equal(rows[0].vendor_service_id, 'master-1')
   assert.equal(rows[0].booking_line_id, 'booking-line-1')
   assert.deepEqual(staleServiceIds(previous, rows), ['dj_music'])
+})
+
+
+test('resuming an account plan replaces stale local choices and requirements for that occasion', () => {
+  const current = {
+    event: { occasionId: 'another-event', date: '2026-12-30' },
+    place: { area: 'Old place' },
+    picks: {
+      'birthday-party': { catering_food: 'need', photography: 'need', dj_music: 'skip' },
+      'another-event': { photography: 'have' },
+    },
+    needs: {
+      'birthday-party:catering_food': { $ways: ['cater'] },
+      'birthday-party:photography': { styles: ['traditional'] },
+      'another-event:photography': { styles: ['documentary'] },
+    },
+    basket: [{ key: 'another-event:photography', serviceId: 'master-2' }],
+  }
+  const restored = restorePlanState(current, {
+    event: { occasionId: 'birthday-party', date: '2026-12-12', venueChoice: 'home' },
+    picks: { videography: 'have' },
+    place: null,
+    needs: { 'birthday-party:videography': { style: 'documentary' } },
+  })
+
+  assert.deepEqual(restored.picks['birthday-party'], { videography: 'have' })
+  assert.deepEqual(restored.needs, {
+    'another-event:photography': { styles: ['documentary'] },
+    'birthday-party:videography': { style: 'documentary' },
+  })
+  assert.deepEqual(restored.picks['another-event'], { photography: 'have' })
+  assert.deepEqual(restored.basket, current.basket)
+  assert.equal(restored.event.date, '2026-12-12')
+  assert.equal(restored.place, null)
 })
