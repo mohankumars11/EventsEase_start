@@ -18,6 +18,7 @@ import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { Building2, CalendarDays, ChevronDown, ChevronRight, Clock3, Hourglass, IndianRupee, LocateFixed, MapPin, Minus, Plus, Users } from 'lucide-react'
 import { OCCASION } from '../data/occasions'
 import { occasionArt } from '../data/art'
+import { VENUE_EXPERIENCES, toggleVenueExperience, experienceSelected } from '../data/venueExperiences'
 import { usePlan } from '../state/PlanContext'
 import { eventContextDraft } from '../lib/eventContext'
 import { savedWhere } from '../lib/where'
@@ -55,6 +56,20 @@ export default function EventFlow() {
   const [sheet, setSheet] = useState(null) // 'date' | 'place'
   const place = plan.place?.lat ? plan.place : savedWhere()
   const set = patch => setF(x => ({ ...x, ...patch }))
+  const venueNeeds = o ? plan.needsOf(o.id, 'venue') : {}
+  const selectedVenueTypes = Array.isArray(venueNeeds.venue_type) ? venueNeeds.venue_type : []
+  const toggleExperience = experienceId => {
+    const next = toggleVenueExperience(selectedVenueTypes, experienceId)
+    const updated = { ...venueNeeds }
+    if (next.length) updated.venue_type = next
+    else delete updated.venue_type
+    plan.setNeeds(`${o.id}:venue`, updated)
+  }
+  const clearVenueTypes = () => {
+    const updated = { ...venueNeeds }
+    delete updated.venue_type
+    plan.setNeeds(`${o.id}:venue`, updated)
+  }
 
   /* Today: nothing earlier than two hours from now, on the half hour. */
   const today = iso(new Date())
@@ -150,6 +165,35 @@ export default function EventFlow() {
           {f.venueChoice === 'other' && (
             <input value={f.venueOther} onChange={e => set({ venueOther: e.target.value.slice(0, 80) })} placeholder="Where is it? e.g. our office terrace" autoFocus
               className="mt-2 h-12 w-full rounded-[14px] bg-white px-3.5 text-[14px] font-semibold shadow-[inset_0_0_0_1.5px_#E9E3F2] outline-none focus:shadow-[inset_0_0_0_2px_#7C3AED]" data-venue-other />
+          )}
+          {f.venueChoice === 'need' && (
+            <div className="mt-3 rounded-[18px] bg-[#FAF8FD] p-3.5 shadow-[inset_0_0_0_1px_#EEE8F6]" data-venue-experiences>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[13.5px] font-extrabold">What kind of place would you enjoy?</p>
+                  <p className="mt-0.5 text-[11.5px] font-semibold text-[var(--ink-3)]">Choose one or more. We’ll use these venue types to narrow the match.</p>
+                </div>
+                <button type="button" onClick={clearVenueTypes} className="shrink-0 rounded-full bg-white px-2.5 py-1.5 text-[11px] font-extrabold text-[var(--brand)] shadow-[inset_0_0_0_1px_#E6DDF1]" data-venue-any>
+                  Any type
+                </button>
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                {VENUE_EXPERIENCES.map(experience => {
+                  const active = experienceSelected(selectedVenueTypes, experience.id)
+                  return (
+                    <button key={experience.id} type="button" aria-pressed={active}
+                      onClick={() => toggleExperience(experience.id)} data-venue-experience={experience.id}
+                      className={'cx-press min-h-[64px] rounded-[13px] px-3 py-2.5 text-left transition-colors ' + (active
+                        ? 'bg-[#EEE5FF] text-[#4C1D95] shadow-[inset_0_0_0_1.5px_#7C3AED]'
+                        : 'bg-white text-[var(--ink)] shadow-[inset_0_0_0_1px_#E9E3F2]')}>
+                      <span className="block text-[12.5px] font-extrabold leading-snug">{experience.label}</span>
+                      <span className="mt-0.5 block text-[10.5px] font-semibold leading-snug text-[var(--ink-3)]">{experience.hint}</span>
+                    </button>
+                  )
+                })}
+              </div>
+              <p className="mt-2.5 text-[10.5px] font-semibold leading-snug text-[var(--ink-3)]">Special locations such as parks, lakesides or backwaters can be mentioned to the coordinator, but they are not shown as bookable venue types until matching partner listings exist.</p>
+            </div>
           )}
         </Row>
 
