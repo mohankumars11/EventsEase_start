@@ -44,11 +44,22 @@ export async function savePlan({ userId, occasionId, context, picks = {}, status
       .upsert({ customer_id: userId, client_key: clientKey, occasion_id: occasionId, context, rule_version: ruleVersion, status }, { onConflict: 'customer_id,client_key' })
       .select('id').single()
     if (error) return { ok: false, reason: error.code === '42P01' || /does not exist|schema cache/i.test(error.message) ? 'not-migrated' : error.message }
-    const rows = Object.entries(statuses).filter(([t]) => picks[t] || statuses[t] === 'CORE' || lines.some(l => l.tradeId === t)).map(([t, status]) => ({
-      plan_id: plan.id, trade_id: t, recommendation_status: status,
-      decision: DECISION[picks[t]] ?? 'recommended',
-      vendor_service_id: lines.find(l => l.tradeId === t)?.serviceId ?? null,
-    }))
+    const { data: savedServices, error: serviceReadError } = await supabase.from('event_plan_services')
+      .select('trade_id, vendor_service_id, booking_line_id').eq('plan_id', plan.id)
+    if (serviceReadError) return { ok: false, reason: serviceReadError.message }
+    const previousByTrade = Object.fromEntries((savedServices ?? []).map(row => [row.trade_id, row]))
+    const rows = Object.entries(statuses).filter(([t]) => picks[t] || statuses[t] === 'CORE' || lines.some(l => l.tradeId === t)).map(([t, status]) => {
+      const line = lines.find(item => item.tradeId === t)
+      const previous = previousByTrade[t]
+      return {
+        plan_id: plan.id, trade_id: t, recommendation_status: status,
+        decision: DECISION[picks[t]] ?? 'recommended',
+        // An autosave after checkout must not clear the master or the booking
+        // line already linked to this service.
+        vendor_service_id: line?.serviceId ?? previous?.vendor_service_id ?? null,
+        booking_line_id: previous?.booking_line_id ?? null,
+      }
+    })
     if (rows.length) {
       const r = await supabase.from('event_plan_services').upsert(rows, { onConflict: 'plan_id,trade_id' })
       if (r.error) return { ok: false, reason: r.error.message }
