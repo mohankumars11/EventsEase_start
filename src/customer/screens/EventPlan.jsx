@@ -84,7 +84,7 @@ export default function EventPlan() {
   const photoCard = [...p.essential, ...p.enhance, ...p.needed].includes('photography')
   const arrange = [...p.essential, ...p.needed.filter(t => !p.essential.includes(t))].filter(t => !(photoCard && t === 'videography')).sort(byOrder)
   const extra = p.enhance.filter(t => !arrange.includes(t) && !OPS.has(t) && !(photoCard && t === 'videography')).sort(byOrder)
-  const rest = p.rows.filter(r => !arrange.includes(r.tradeId) && !extra.includes(r.tradeId)).map(r => r.tradeId)
+  const rest = p.rows.filter(r => !arrange.includes(r.tradeId) && !extra.includes(r.tradeId) && !r.coveredByVenue && !r.alreadyArranged).map(r => r.tradeId)
   const intro = introFor(o)
   const custom = ev.custom ?? []
   const addCustom = () => { const v = other.trim(); if (v) { plan.setEvent({ custom: [...custom, v].slice(0, 8) }); setOther('') } }
@@ -142,6 +142,25 @@ export default function EventPlan() {
             onToggle={() => pick(t, on(t) ? 'skip' : 'need')} onOpen={() => setSheet({ edit: t })} />)}
         </div>
       </section>
+
+      {p.covered.length > 0 && (
+        <section className="mt-6 px-4" data-covered>
+          <h2 className="text-[16px] font-black tracking-[-0.02em]">Already taken care of</h2>
+          <p className="mt-1 text-[12px] font-semibold text-[var(--ink-3)]">We’ll keep these out of your booking list to avoid paying twice.</p>
+          <div className="mt-2 grid gap-2">
+            {p.covered.map(r => (
+              <div key={r.tradeId} className="flex items-center gap-3 rounded-[15px] bg-[#F7F4FB] px-3 py-2.5">
+                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#EDE6F8] text-[#5B3A87]"><Check size={15} strokeWidth={3} /></span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[13px] font-extrabold">{copyFor(o, r.tradeId).title}</span>
+                  <span className="block truncate text-[11.5px] font-semibold text-[var(--ink-3)]">{r.reason ?? (r.alreadyArranged ? 'You’ve already arranged this' : 'Included at your venue')}</span>
+                </span>
+                <span className="shrink-0 text-[10.5px] font-extrabold text-[#23734D]">{r.coveredByVenue ? 'Included' : 'Arranged'}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Make it extra special — offered, never pre-ticked. */}
       {extra.length > 0 && (
