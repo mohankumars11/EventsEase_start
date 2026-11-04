@@ -1,6 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { savedContextFor, planFromSaved, serviceRowsForPlan, staleServiceIds, restorePlanState } from '../src/customer/lib/eventPlanSnapshot.js'
+import { serializeByKey } from '../src/customer/lib/saveQueue.js'
 
 const occasion = { id: 'birthday-party', where: 'ask' }
 
@@ -193,4 +194,62 @@ test('resuming an account plan replaces stale local choices and requirements for
   assert.deepEqual(restored.basket, current.basket)
   assert.equal(restored.event.date, '2026-12-12')
   assert.equal(restored.place, null)
+})
+
+
+test('writes for the same customer event are serialized in invocation order', async () => {
+  const order = []
+  let release
+  const gate = new Promise(resolve => { release = resolve })
+  const first = serializeByKey('user-1:birthday-party', async () => {
+    order.push('first:start')
+    await gate
+    order.push('first:end')
+  })
+  const second = serializeByKey('user-1:birthday-party', async () => {
+    order.push('second')
+  })
+
+  await Promise.resolve()
+  await Promise.resolve()
+  assert.deepEqual(order, ['first:start'])
+  release()
+  await Promise.all([first, second])
+  assert.deepEqual(order, ['first:start', 'first:end', 'second'])
+})
+
+test('writes for separate customer events can proceed independently', async () => {
+  const order = []
+  let release
+  const gate = new Promise(resolve => { release = resolve })
+  const first = serializeByKey('user-1:birthday-party', async () => {
+    order.push('first:start')
+    await gate
+    order.push('first:end')
+  })
+  const second = serializeByKey('user-1:housewarming', async () => {
+    order.push('second')
+  })
+
+  await second
+  assert.deepEqual(order, ['first:start', 'second'])
+  release()
+  await first
+  assert.deepEqual(order, ['first:start', 'second', 'first:end'])
+})
+
+test('a failed write does not block the next write for the same event', async () => {
+  const order = []
+  const first = serializeByKey('user-1:engagement', async () => {
+    order.push('failed')
+    throw new Error('network unavailable')
+  })
+  const second = serializeByKey('user-1:engagement', async () => {
+    order.push('recovered')
+    return 'ok'
+  })
+
+  await assert.rejects(first, /network unavailable/)
+  assert.equal(await second, 'ok')
+  assert.deepEqual(order, ['failed', 'recovered'])
 })
