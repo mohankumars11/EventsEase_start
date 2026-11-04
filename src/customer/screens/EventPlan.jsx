@@ -22,16 +22,6 @@ import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { Check, ClipboardList, LayoutGrid, Pencil, Plus, Radar, Share2, Sparkles, X } from 'lucide-react'
 import { OCCASION } from '../data/occasions'
 
-const SERVICE_COVERAGE = {
-  videography: ['2 hours', '4 hours', '6 hours'],
-  dj_music: ['2 hours', '3 hours', '4 hours'],
-  anchor_mc: ['2 hours', '4 hours', '6 hours + custom script'],
-  live_entertainment: ['1 hour', '2 hours', '3 hours'],
-  bridal_makeup_hair: ['1 hour', '2 hours', '3 hours'],
-  mehendi_artist: ['1 hour', '2 hours', '3 hours'],
-}
-const VIP_EXTRA = { photography: 'Printed album', anchor_mc: 'Custom script writing' }
-
 const FOLLOW_UP_OPTIONS = {
   formats: { multi: true, values: [['stage','Stage programme'],['speeches','Speeches'],['performance','Performances'],['concert','Concert'],['workshop','Workshop'],['livestream','Livestream'],['dancing','Dancing'],['rituals','Rituals'],['procession','Procession'],['sports','Sports']] },
   setting: { values: [['indoor','Indoors'],['outdoor','Outdoors'],['mixed','A mix of both']] },
@@ -44,9 +34,10 @@ const FOLLOW_UP_OPTIONS = {
 import { serviceArt } from '../data/art'
 import { copyFor, introFor } from '../data/requirementCopy'
 import { photoFor } from '../data/requirementPhotos.generated'
-import { wayOf, themesFor, CAKES, DECOR_THEMES, ACTION, COLOURS, FONTS, FOOD_WAYS, foodNeeds, COOK_TEAM, INGREDIENTS, DRINKS, DECOR_ELEMENTS, CAKE_OPTIONS, PHOTO_HOURS, PHOTO_EXTRAS, ENTERTAINERS, designFamilies, byOrder, OPS } from '../data/visualCatalogue'
+import { wayOf, themesFor, CAKES, DECOR_THEMES, ACTION, COLOURS, FONTS, FOOD_WAYS, foodNeeds, COOK_TEAM, INGREDIENTS, DRINKS, DECOR_ELEMENTS, CAKE_OPTIONS, PHOTO_EXTRAS, ENTERTAINERS, designFamilies, byOrder, OPS } from '../data/visualCatalogue'
 import { SERVE } from '../lib/sambramoMenu'
 import { usePlan, needsFor } from '../state/PlanContext'
+import { SERVICE_COVERAGE, coverageSelection } from '../lib/serviceCoverage'
 import { savePlan, savedContextFor } from '../lib/eventPlans'
 import { savedWhere } from '../lib/where'
 import { partnersFor } from '../lib/market'
@@ -557,13 +548,7 @@ function ChooseSheet({ o, t, plan, place, on, why, video, onVideo, ensure, onClo
             <>
               {rest.slice(0, 2).map(ask)}
               <Section title="Choose your coverage">
-                <OneChips items={PHOTO_HOURS.map(x => x === '6 hours' ? '6 hours + printed album' : x)} value={cur.$coverage ?? cur.$hours ?? null} onPick={v => {
-                  const hours = Number(String(v).match(/\d+/)?.[0]) || null
-                  const vip = v.includes('printed album')
-                  const extras = new Set(cur.$extras ?? [])
-                  if (vip) extras.add(VIP_EXTRA.photography); else extras.delete(VIP_EXTRA.photography)
-                  set({ $coverage: v, $hours: hours, $extras: [...extras] })
-                }} data="photo-hours" />
+                <OneChips items={SERVICE_COVERAGE.photography} value={cur.$coverage ?? cur.$hours ?? null} onPick={v => set(coverageSelection('photography', v, cur.$extras))} data="photo-hours" />
                 <p className="mt-1.5 text-[10.5px] font-semibold text-[var(--ink-3)]">The 6-hour coverage includes a printed album in the requested scope. The photographer confirms the final inclusions.</p>
               </Section>
               <Section title="Extras"><ManyChips items={PHOTO_EXTRAS} value={cur.$extras ?? []} onChange={v => set({ $extras: v })} data="photo-extras" /></Section>
@@ -578,18 +563,12 @@ function ChooseSheet({ o, t, plan, place, on, why, video, onVideo, ensure, onClo
 
           {SERVICE_COVERAGE[t] && t !== 'anchor_mc' && (
             <Section title="Choose your coverage">
-              <OneChips items={SERVICE_COVERAGE[t]} value={cur.$coverage ?? cur.$hours ?? null} onPick={v => set({ $coverage: v, $hours: Number(String(v).match(/\d+/)?.[0]) || null })} data={`${t}-hours`} />
+              <OneChips items={SERVICE_COVERAGE[t]} value={cur.$coverage ?? cur.$hours ?? null} onPick={v => set(coverageSelection(t, v, cur.$extras))} data={`${t}-hours`} />
             </Section>
           )}
           {t === 'anchor_mc' && (
             <Section title="Choose your coverage">
-              <OneChips items={SERVICE_COVERAGE.anchor_mc} value={cur.$coverage ?? cur.$hours ?? null} onPick={v => {
-                const hours = Number(String(v).match(/\d+/)?.[0]) || null
-                const vip = v.includes('custom script')
-                const extras = new Set(cur.$extras ?? [])
-                if (vip) extras.add(VIP_EXTRA.anchor_mc); else extras.delete(VIP_EXTRA.anchor_mc)
-                set({ $coverage: v, $hours: hours, $extras: [...extras] })
-              }} data="anchor-hours" />
+              <OneChips items={SERVICE_COVERAGE.anchor_mc} value={cur.$coverage ?? cur.$hours ?? null} onPick={v => set(coverageSelection('anchor_mc', v, cur.$extras))} data="anchor-hours" />
               <p className="mt-1.5 text-[10.5px] font-semibold text-[var(--ink-3)]">The 6-hour coverage includes custom script writing in the requested scope. The anchor confirms the final inclusions.</p>
             </Section>
           )}
