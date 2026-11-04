@@ -70,6 +70,12 @@ export default function EventFlow() {
     delete updated.venue_type
     plan.setNeeds(`${o.id}:venue`, updated)
   }
+  const clearVenueSearchPreferences = () => {
+    const updated = { ...venueNeeds }
+    delete updated.venue_type
+    delete updated.special_setting_note
+    plan.setNeeds(`${o.id}:venue`, updated)
+  }
   const setVenueSpecialRequest = value => {
     const updated = { ...venueNeeds }
     const note = value.slice(0, 180)
@@ -163,7 +169,7 @@ export default function EventFlow() {
         <Row icon={Building2} label="Venue">
           <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Venue" data-field="venue">
             {VENUES.map(([k, l]) => (
-              <button key={k} type="button" role="radio" aria-checked={f.venueChoice === k} onClick={() => { if (k !== 'need') clearVenueTypes(); set({ venueChoice: k }) }} data-venue={k}
+              <button key={k} type="button" role="radio" aria-checked={f.venueChoice === k} onClick={() => { if (k !== 'need') clearVenueSearchPreferences(); set({ venueChoice: k }) }} data-venue={k}
                 className={'cx-press rounded-full px-3.5 py-2.5 text-[13px] font-bold transition-colors ' + (f.venueChoice === k ? 'bg-[#F1E9FF] text-[#4C1D95] shadow-[inset_0_0_0_1.5px_#7C3AED]' : 'bg-white text-[var(--ink-2)] shadow-[inset_0_0_0_1.5px_#E9E3F2]')}>
                 {l}
               </button>
