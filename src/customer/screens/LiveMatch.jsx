@@ -26,6 +26,7 @@ import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-r
 import { AnimatePresence, motion } from 'motion/react'
 import { ArrowLeftRight, BadgePercent, CalendarCheck2, Check, ChevronRight, ClipboardList, Clock3, Loader2, Lock, MapPin, Phone, Send, ShieldCheck, Sparkles, Star, Users } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import { BRAND } from '../../config/sambramo'
 import { supabase } from '../../lib/supabase'
 import { payLines } from '../../lib/payLines'
 import { enableAlerts } from '../../lib/push'
@@ -133,6 +134,15 @@ export default function LiveMatch() {
   const askPhone = () => { phoneRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => phoneRef.current?.focus(), 300) }
   const venue = { address: place?.address || [place?.area, place?.city].filter(Boolean).join(', ') || null, area: place?.area ?? null, city: place?.city ?? null }
   const guestsText = ev.guests ? `${ev.guests.toLocaleString('en-IN')} ${o.people.toLowerCase()}` : null
+  const sourcingMessage = encodeURIComponent([
+    `Hi Sambramo, please help source ${gaps.map(({ t }) => planner ? 'an event planner' : copyFor(o, t).title).join(', ')}`,
+    `for my ${o.name}`,
+    guestsText ? `for ${guestsText}` : null,
+    ev.date ? `on ${dayLabel(ev.date)}` : null,
+    ev.time ? `at ${timeLabel(ev.time)}` : null,
+    place?.area || place?.city ? `near ${place.area ?? place.city}` : null,
+    'Please share suitable verified options and their availability. I understand these services do not currently have a live match in the app.',
+  ].filter(Boolean).join(' ')+'.')
 
   /* send(): the best match per service, theirs alone (197). send(true):
      "Compare & negotiate" — the brief goes as a price request to every
@@ -270,7 +280,11 @@ export default function LiveMatch() {
                     </Link>
                   ))}
                 </div>
-                <p className="mt-2 text-[11.5px] font-bold text-[#9A4A12]">Tap one to pick a master yourself, or go ahead without it.</p>
+                <p className="mt-2 text-[11.5px] font-bold text-[#9A4A12]">There isn’t a live, published match for these services in this search. You can continue without them or ask Sambramo to source suitable providers.</p>
+                <a href={`https://wa.me/${BRAND.whatsappNumber}?text=${sourcingMessage}`} target="_blank" rel="noopener noreferrer"
+                  className="cx-press mt-3 flex h-11 items-center justify-center gap-2 rounded-[14px] bg-white text-[13px] font-extrabold text-[#4C1D95] shadow-[inset_0_0_0_1px_#E8D8FB]" data-source-missing>
+                  <Send size={15} />Ask Sambramo to source these services
+                </a>
               </div>
             )}
           </section>
