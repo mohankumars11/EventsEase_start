@@ -211,6 +211,14 @@ export default function EventPlan() {
         </div>
       </section>}
 
+      {how === 'each' && <section className="mx-4 mt-3" data-booking-priority>
+        <p className="mb-2 text-[12px] font-extrabold text-[var(--ink-2)]">What matters most to you?</p>
+        <div className="flex gap-2">
+          {[["balanced","Best fit"],["value","Budget conscious"],["premium","Premium experience"]].map(([value,label]) => <button key={value} type="button" aria-pressed={(ev.bookingPriority ?? 'balanced') === value} onClick={() => plan.setEvent({ bookingPriority: value })}
+            className={'cx-press flex-1 rounded-full px-2 py-2 text-[10.5px] font-extrabold ' + ((ev.bookingPriority ?? 'balanced') === value ? 'bg-[#EEE5FF] text-[#4C1D95] shadow-[inset_0_0_0_1.5px_#7C3AED]' : 'bg-white text-[var(--ink-2)] shadow-[inset_0_0_0_1px_#E9E3F2]')}>{label}</button>)}
+        </div>
+      </section>}
+
       {p.result.followUps.length > 0 && <FollowUpSection followUps={p.result.followUps} context={ev.context ?? {}} onAnswer={answerFollowUp} />}
 
       {/* Occasion-specific services, grouped by the 360° event lifecycle. */}
