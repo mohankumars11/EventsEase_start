@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
-import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, MapPin, Utensils, MessageCircle, CheckCircle2 } from 'lucide-react'
+import { Navigate, useNavigate, useParams } from 'react-router-dom'
+import { MapPin, Utensils, MessageCircle } from 'lucide-react'
 import { BRAND } from '../../config/sambramo'
 import { OCCASION } from '../data/occasions'
 import { usePlan } from '../state/PlanContext'
