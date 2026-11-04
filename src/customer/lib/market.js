@@ -185,11 +185,20 @@ export function partnersFor(tradeId, { lat = BLR.lat, lng = BLR.lng, limit = 40 
  * each order is there. The reasons are facts from the rows ("Closest",
  * "Top rated"), never marketing.
  */
-export function rank(partners, { budgetPaise = null } = {}) {
+export function rank(partners, { budgetPaise = null, priority = 'balanced' } = {}) {
   if (!partners?.length) return []
-  const price = p => p.quote?.paise ?? p.fromPaise
-  const score = p => (p.rating ?? 4.2) * 22 + Math.min(p.reviews ?? 0, 400) / 40 + (p.instant ? 8 : 0)
-    - (p.distanceKm ?? 8) * 1.2 - (budgetPaise && price(p) > budgetPaise ? 25 : 0)
+  const price = p => Number(p.quote?.paise ?? p.fromPaise) || null
+  const prices = partners.map(price).filter(x => x != null)
+  const minPrice = prices.length ? Math.min(...prices) : null
+  const maxPrice = prices.length ? Math.max(...prices) : null
+  const valueSpan = maxPrice != null && maxPrice > minPrice ? maxPrice - minPrice : 0
+  const score = p => {
+    const quality = (p.rating ?? 4.2) * 22 + Math.min(p.reviews ?? 0, 400) / 40 + (p.instant ? 8 : 0)
+      - (p.distanceKm ?? 8) * 1.2
+    const valueBoost = priority === 'value' && valueSpan && price(p) != null ? ((maxPrice - price(p)) / valueSpan) * 24 : 0
+    const premiumBoost = priority === 'premium' ? (p.rating ? (p.rating - 4) * 10 : 0) + Math.min(p.reviews ?? 0, 400) / 80 + (p.instant ? 4 : 0) : 0
+    return quality + valueBoost + premiumBoost - (budgetPaise && price(p) > budgetPaise ? 25 : 0)
+  }
   const sorted = [...partners].sort((a, b) => score(b) - score(a))
   const tag = (pick, label) => { const p = pick(); if (p && !p.reason) p.reason = label }
   const out = sorted.map(p => ({ ...p, reason: null }))
