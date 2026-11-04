@@ -21,6 +21,16 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { Check, ClipboardList, LayoutGrid, Pencil, Plus, Radar, Share2, Sparkles, X } from 'lucide-react'
 import { OCCASION } from '../data/occasions'
+
+const FOLLOW_UP_OPTIONS = {
+  formats: { multi: true, values: [['stage','Stage programme'],['speeches','Speeches'],['performance','Performances'],['concert','Concert'],['workshop','Workshop'],['livestream','Livestream'],['dancing','Dancing'],['rituals','Rituals'],['procession','Procession'],['sports','Sports']] },
+  setting: { values: [['indoor','Indoors'],['outdoor','Outdoors'],['mixed','A mix of both']] },
+  food: { values: [['none','No food'],['snacks','Snacks'],['meal','A meal']] },
+  drinks: { values: [['soft','Soft drinks'],['alcohol','Alcoholic drinks']] },
+  media: { values: [['none','No media'],['photo','Photos'],['video','Video'],['both','Both']] },
+  travel: { values: [['local','Local guests'],['outstation','Outstation guests'],['destination','Destination event']] },
+  public: { values: [['true','Open to the public'],['false','Private / invited guests only']] },
+};
 import { serviceArt } from '../data/art'
 import { copyFor, introFor } from '../data/requirementCopy'
 import { photoFor } from '../data/requirementPhotos.generated'
@@ -122,6 +132,17 @@ export default function EventPlan() {
   }
   const go = () => navigate(`/o/${o.id}/live${how === 'planner' ? '?planner=1' : ''}`)
   const shownExtra = allExtra ? extra : extra.slice(0, 6)
+  const answerFollowUp = (field, value, multi = false) => {
+    const context = { ...(ev.context ?? {}) }
+    if (multi) {
+      const current = Array.isArray(context[field]) ? context[field] : []
+      const next = current.includes(value) ? current.filter(x => x !== value) : [...current, value]
+      if (next.length) context[field] = next
+      else delete context[field]
+    } else if (field === 'public') context[field] = value === 'true'
+    else context[field] = value
+    plan.setEvent({ context })
+  }
   // The curated occasion blueprint decides what to offer; the 360° engine
   // supplies lifecycle grouping and an auditable reason for each service.
   const engineByTrade = Object.fromEntries(p.result.services.map(x => [x.tradeId, x]))
@@ -171,6 +192,8 @@ export default function EventPlan() {
           </button>
         ))}
       </div>
+
+      {p.result.followUps.length > 0 && <FollowUpSection followUps={p.result.followUps} context={ev.context ?? {}} onAnswer={answerFollowUp} />}
 
       {/* Occasion-specific services, grouped by the 360° event lifecycle. */}
       <section className="mt-6 px-4" data-arrange>
@@ -300,6 +323,32 @@ function ReqCard({ o, t, on, said = null, why = null, recommendationStatus = nul
         </div>
       </div>
     </article>
+  )
+}
+
+function FollowUpSection({ followUps, context, onAnswer }) {
+  const visible = followUps.filter(q => FOLLOW_UP_OPTIONS[q.field])
+  if (!visible.length) return null
+  return (
+    <section className="mx-4 mt-5 rounded-[20px] bg-[#FAF8FD] p-3.5 shadow-[inset_0_0_0_1px_#EEE8F6]" data-recommendation-followups>
+      <div className="flex items-start gap-2"><Sparkles size={17} className="mt-0.5 shrink-0 text-[#7C3AED]" /><div><h2 className="text-[15px] font-extrabold">A few details will improve your matches</h2><p className="mt-0.5 text-[11.5px] font-semibold text-[var(--ink-3)]">Answer only what applies. Your service plan updates as you choose.</p></div></div>
+      <div className="mt-3 space-y-3.5">
+        {visible.map(q => {
+          const cfg = FOLLOW_UP_OPTIONS[q.field]
+          const selected = context[q.field]
+          return <div key={q.field} data-followup={q.field}>
+            <p className="text-[12.5px] font-extrabold">{q.text}</p>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {cfg.values.map(([value, label]) => {
+                const active = cfg.multi ? (Array.isArray(selected) && selected.includes(value)) : q.field === 'public' ? selected === (value === 'true') : selected === value
+                return <button key={value} type="button" aria-pressed={active} onClick={() => onAnswer(q.field, value, cfg.multi)}
+                  className={'cx-press rounded-full px-3 py-2 text-[11.5px] font-bold ' + (active ? 'bg-[#EEE5FF] text-[#4C1D95] shadow-[inset_0_0_0_1.5px_#7C3AED]' : 'bg-white text-[var(--ink-2)] shadow-[inset_0_0_0_1px_#E6DFF0]')}>{label}</button>
+              })}
+            </div>
+          </div>
+        })}
+      </div>
+    </section>
   )
 }
 
