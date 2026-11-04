@@ -17,12 +17,20 @@ test('account snapshot preserves event choice, venue facilities and the event lo
     venueOther: '',
     budget: '1l-1.5l',
     context: { venueProvides: ['sound'], formats: ['meal'] },
-  }, place)
+  }, place, {
+    'birthday-party:venue': { venue_type: ['lawn_garden'], facilities: ['power_backup'] },
+    'birthday-party:catering_food': { $ways: ['cater'], $studio: { menuId: 'family_feast', name: 'Family Feast' }, $studioDiet: 'veg', $guests: 80 },
+    'another-event:photography': { styles: ['candid'] },
+  })
   assert.equal(context.venueType, 'restaurant')
   assert.equal(context.venueChoice, 'restaurant')
   assert.equal(context.venueKind, 'dining')
   assert.equal(context.budgetChoice, '1l-1.5l')
   assert.deepEqual(context.eventPlace, place)
+  assert.deepEqual(context.$serviceNeeds, {
+    venue: { venue_type: ['lawn_garden'], facilities: ['power_backup'] },
+    catering_food: { $ways: ['cater'], $studio: { menuId: 'family_feast', name: 'Family Feast' }, $studioDiet: 'veg', $guests: 80 },
+  })
   assert.deepEqual(context.added, ['catering_food'])
 })
 
@@ -35,6 +43,10 @@ test('saved plan rehydrates venue, event place, service decisions and context', 
       venueType: 'restaurant', venueBooked: true, venueChoice: 'restaurant',
       venueKind: 'dining', venueOther: '', budgetChoice: '1l-1.5l',
       venueProvides: ['sound'], eventPlace: place,
+      $serviceNeeds: {
+        venue: { venue_type: ['resort'], facilities: ['power_backup'] },
+        catering_food: { $ways: ['cook'], $studio: { menuId: 'southern_thali', name: 'Southern Thali' }, $studioDiet: 'jain' },
+      },
     },
     event_plan_services: [
       { trade_id: 'catering_food', decision: 'selected' },
@@ -49,6 +61,10 @@ test('saved plan rehydrates venue, event place, service decisions and context', 
   assert.equal(restored.event.budget, '1l-1.5l')
   assert.equal(restored.event.context.venueType, 'restaurant')
   assert.deepEqual(restored.place, place)
+  assert.deepEqual(restored.needs, {
+    'birthday-party:venue': { venue_type: ['resort'], facilities: ['power_backup'] },
+    'birthday-party:catering_food': { $ways: ['cook'], $studio: { menuId: 'southern_thali', name: 'Southern Thali' }, $studioDiet: 'jain' },
+  })
   assert.deepEqual(restored.picks, {
     catering_food: 'need', photography: 'have', videography: 'skip', dj_music: 'later',
   })
