@@ -22,7 +22,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { recommend } from '../lib/recommend360'
 import { blueprint } from '../lib/blueprint'
 import { contextFor } from '../lib/eventContext'
-export { contextFor } from '../lib/eventContext'
+export { contextFor }
 
 const KEY = 'sbm.cx.plan.v1'
 /* `place`: where the event is ({ area, lat, lng, address }) — the engine checks travel and
