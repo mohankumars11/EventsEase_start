@@ -10,7 +10,7 @@ import { contextFor } from './eventContext.js'
 
 const ABOUT = [
   'venueProvides', 'venueType', 'setting', 'formats', 'food', 'drinks', 'media',
-  'travel', 'public', 'children', 'accessibility', 'privacy', 'budget', 'bookingPriority',
+  'travel', 'public', 'children', 'accessibility', 'privacy', 'budget',
 ]
 
 export function savedContextFor(occasion, picks = {}, event = {}, place = null, needs = {}) {
@@ -22,6 +22,7 @@ export function savedContextFor(occasion, picks = {}, event = {}, place = null, 
   )
   return {
     ...contextFor(occasion, picks, event),
+    bookingPriority: event.bookingPriority ?? 'balanced',
     venueChoice: event.venueChoice ?? null,
     venueKind: event.venueKind ?? null,
     venueOther: event.venueOther ?? null,
