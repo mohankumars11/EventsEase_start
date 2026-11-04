@@ -35,6 +35,14 @@ test('account snapshot preserves event choice, venue facilities and the event lo
   assert.deepEqual(context.added, ['catering_food'])
 })
 
+test('booking priority persists and rehydrates with the saved event plan', () => {
+  const saved = savedContextFor(occasion, {}, { bookingPriority: 'premium', context: { bookingPriority: 'premium' } })
+  assert.equal(saved.bookingPriority, 'premium')
+  const restored = planFromSaved({ occasion_id: occasion.id, context: saved, event_plan_services: [] })
+  assert.equal(restored.event.bookingPriority, 'premium')
+  assert.equal(restored.event.context.bookingPriority, 'premium')
+})
+
 test('saved plan rehydrates venue, event place, service decisions and context', () => {
   const place = { area: 'Vijayanagar', city: 'Mysuru', lat: 12.3, lng: 76.6 }
   const restored = planFromSaved({
