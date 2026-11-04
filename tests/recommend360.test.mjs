@@ -160,6 +160,13 @@ test('customer choices beat rules; covered services leave the shortlist', () => 
   assert.ok(!listed(r, 'venue'))
 })
 
+test('an explicit customer request overrides a venue-provided facility', () => {
+  const r = R('first-birthday', { venueBooked: true, venueProvides: ['catering'], added: ['catering_food'] })
+  assert.equal(svc(r, 'catering_food').coveredByVenue, false)
+  assert.equal(svc(r, 'catering_food').addedByCustomer, true)
+  assert.ok(listed(r, 'catering_food'))
+})
+
 test('NOT_DEFAULT is not upgraded against a contradictory fact', () => {
   const r = R('webinar', { venueType: 'virtual', formats: ['rituals'] })
   assert.ok(!listed(r, 'priest_rituals'))
