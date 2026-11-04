@@ -23,7 +23,6 @@ import Home from './screens/Home'
 import Onboarding, { forgetOnboarding, onboardFlags } from './screens/Onboarding'
 import { forgetWhere, savedWhere } from './lib/where'
 import { loadRules } from './lib/eventPlans'
-import { setActiveRules } from './lib/recommend360'
 import { flushConsent } from './lib/rewards'
 import './cx.css'
 
@@ -135,7 +134,6 @@ function useOnboarding() {
 
 export default function CustomerApp() {
   /* The published 360° rule set, if one exists; the bundled rules until then. */
-  useEffect(() => { loadRules().then(setActiveRules).catch(() => {}) }, [])
   // installExternalLinks: on the phone, WhatsApp / Maps / outside links open through the system (lib/share.js).
   useEffect(() => { warmScreens(); flushConsent().catch(() => {}); installExternalLinks() }, [])
   const { pathname } = useLocation()
@@ -145,9 +143,9 @@ export default function CustomerApp() {
     return <div className="cx" data-customer-app><Suspense fallback={<Loading />}><Routes><Route path="/rsvp/circle/:join" element={<CircleWelcome />} /><Route path="/rsvp/:token" element={<Rsvp />} /></Routes></Suspense></div>
   }
   if (step === 'loading') return <div className="cx" data-customer-app><Loading /></div>
-  if (step) return <PlanProvider><div className="cx" data-customer-app><Onboarding step={step} onDone={next} /></div></PlanProvider>
+  if (step) return <PlanProvider loadPublishedRules={loadRules}><div className="cx" data-customer-app><Onboarding step={step} onDone={next} /></div></PlanProvider>
   return (
-    <PlanProvider>
+    <PlanProvider loadPublishedRules={loadRules}>
       <div className="cx" data-customer-app>
         <Suspense fallback={<Loading />}>
           <Routes>
