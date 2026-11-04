@@ -6,7 +6,7 @@ Production database changes: migrations may be authored and tested, but not appl
 
 ## Acceptance gates
 
-1. **Occasion recommendations are the source of truth.** The customer event-plan screen must render the deterministic 360° engine output for the selected occasion and current event context, not a parallel legacy `needsFor` shortlist. CORE, CONDITIONAL, OPTIONAL and NOT_DEFAULT must have distinct presentation and customer controls. Each recommendation must show its reason and lifecycle phase. Venue-covered, already-arranged, excluded and later states must remain distinct.
+1. **Occasion recommendations are explainable.** The occasion blueprint supplies the curated defaults for each of the 438 occasions; the deterministic 360° engine applies event-context rules, customer decisions, venue coverage and lifecycle phases. The UI must preserve that combined contract rather than create a third recommendation list. CORE, CONDITIONAL, OPTIONAL and NOT_DEFAULT must have distinct presentation and customer controls. Each recommendation must show its reason and lifecycle phase. Venue-covered, already-arranged, excluded and later states must remain distinct.
 2. **Context changes recalculate.** Guest count, time/duration, venue and its facilities, indoor/outdoor setting, event format, food, privacy, access, budget and customer decisions must be carried into the recommendation input. Unknown answers must not be treated as true.
 3. **Inventory is real.** Availability and prices must come only from eligible non-synthetic LIVE listings and existing quote/booking resolvers. Empty supply must offer sourcing/concierge, never sample vendors or invented availability.
 4. **Restaurant is a separate trade.** Add a canonical `restaurant` trade end-to-end without silently reusing catering as the restaurant resolver. Include customer discovery/order requirements and a dedicated partner listing schema contract. Any production DB migration must be reviewed and explicitly approved before application.
@@ -20,6 +20,8 @@ Production database changes: migrations may be authored and tested, but not appl
 - [x] Ask conditional recommendation follow-ups in the plan and update the engine context as answers change.
 - [x] Add Fast & Simple (best-fit) versus I want control (compare eligible masters) booking preference.
 - [x] Add Best fit / Budget conscious / Premium experience ranking preference to live matching.
+- [x] Add price-free, service-specific coverage scopes (photo/video 2/4/6h; DJ 2/3/4h; anchor 2/4/6h with script in the longest scope; entertainment/makeup/mehendi 1/2/3h).
+- [x] Freeze selected coverage hours and supported add-ons into matching/booking requests for server revalidation.
 - [x] Add price-free, service-specific coverage scopes (photo/video 2/4/6h; DJ 2/3/4h; anchor 2/4/6h with script in the longest scope; entertainment/makeup/mehendi 1/2/3h).
 - [x] Freeze selected coverage hours and supported add-ons into matching/booking requests for server revalidation.
 - [x] Add a separate restaurant-order sourcing screen and remove restaurant from the catering kitchen-type selector/matcher.
