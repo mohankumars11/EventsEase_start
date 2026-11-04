@@ -120,11 +120,13 @@ export function recommend(occasionId, context = {}, { rules = ACTIVE.rules, rule
     let status = s.baseline
     if (s.demotes.length) status = 'NOT_DEFAULT'
     else if (s.acts.length && status === 'NOT_DEFAULT') status = 'CONDITIONAL'
-    const coveredByVenue = s.covers.length > 0
+    const addedByCustomer = added.has(t)
+    // Explicit customer intent wins over a venue's general facility list:
+    // they may still want their own caterer, photographer or sound operator.
+    const coveredByVenue = s.covers.length > 0 && !addedByCustomer
     const suppressed = s.sups.length > 0 || s.demotes.length > 0
     let recommended = status === 'CORE' ? !suppressed : status === 'CONDITIONAL' ? s.acts.length > 0 && !suppressed
       : status === 'OPTIONAL' ? s.acts.length > 0 && !suppressed : false
-    const addedByCustomer = added.has(t)
     if (addedByCustomer) recommended = true
     const q = QUESTIONS[t]
     const requiresFollowUpQuestion = !recommended && status === 'CONDITIONAL' && !suppressed && !!q && read(ctx, occ, q.field) == null
