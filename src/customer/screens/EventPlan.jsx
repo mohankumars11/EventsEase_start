@@ -84,7 +84,7 @@ export default function EventPlan() {
       if (current) setAccountSave(result.ok ? 'account' : 'device')
     }, 700)
     return () => { current = false; clearTimeout(timer) }
-  }, [valid, user?.id, o?.id, p, picks, ev, plan.basket, plan.place])
+  }, [valid, user?.id, o?.id, p, picks, ev, plan.basket, plan.place, plan.needs])
 
   useEffect(() => { import('./LiveMatch').catch(() => {}) }, []) // the next screen loads while they read
 
