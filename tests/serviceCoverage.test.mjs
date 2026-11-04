@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { SERVICE_COVERAGE, coverageSelection, durationHours } from '../src/customer/lib/serviceCoverage.js'
+import { SERVICE_COVERAGE, addonKeysFor, coverageSelection, durationHours } from '../src/customer/lib/serviceCoverage.js'
 
 test('service coverage durations are occasion-facing scopes, not partner tier names', () => {
   assert.deepEqual(SERVICE_COVERAGE.photography, ['2 hours', '4 hours', '6 hours + printed album'])
@@ -32,4 +32,10 @@ test('anchor six-hour coverage freezes custom script writing in the request', ()
   assert.deepEqual(coverageSelection('anchor_mc', '6 hours + custom script', []), {
     coverage: '6 hours + custom script', hours: 6, extras: ['Custom script writing'],
   })
+})
+
+test('only canonical add-on ids are sent to the server; unsupported requests remain in the customer brief', () => {
+  assert.deepEqual(addonKeysFor('photography', ['Printed album', 'Drone', 'Photo booth']), ['album', 'drone'])
+  assert.deepEqual(addonKeysFor('videography', ['Drone', 'Live streaming']), ['drone', 'streaming'])
+  assert.deepEqual(addonKeysFor('anchor_mc', ['Custom script writing']), [])
 })
