@@ -22,6 +22,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { recommend, setActiveRules } from '../lib/recommend360'
 import { blueprint } from '../lib/blueprint'
 import { contextFor } from '../lib/eventContext'
+import { restorePlanState } from '../lib/eventPlanSnapshot'
 export { contextFor }
 
 const KEY = 'sbm.cx.plan.v1'
@@ -60,6 +61,7 @@ export function PlanProvider({ children, loadPublishedRules = null }) {
   useEffect(() => { try { localStorage.setItem(KEY, JSON.stringify(state)) } catch { /* storage off */ } }, [state])
 
   const setEvent = useCallback(patch => setState(s => ({ ...s, event: { ...s.event, ...patch } })), [])
+  const restore = useCallback(snapshot => setState(s => restorePlanState(s, snapshot)), [])
 
   /** need | have | skip, per occasion and trade. Undefined means "the template's default". */
   const setPick = useCallback((occasionId, tradeId, value) => setState(s => ({
@@ -100,12 +102,12 @@ export function PlanProvider({ children, loadPublishedRules = null }) {
   const value = useMemo(() => ({
     ...state,
     rulesRevision,
-    setEvent, setPick, add, remove, setQty, setPlace, setNeeds, recordBookings, clearOccasion, toggleSaved,
+    setEvent, restore, setPick, add, remove, setQty, setPlace, setNeeds, recordBookings, clearOccasion, toggleSaved,
     needsOf: (occasionId, tradeId) => state.needs?.[`${occasionId ?? 'solo'}:${tradeId}`] ?? {},
     inBasket: (serviceId) => state.basket.some(l => l.serviceId === serviceId),
     lineFor: (occasionId, tradeId) => state.basket.find(l => l.key === `${occasionId ?? 'solo'}:${tradeId}`) ?? null,
     isSaved: serviceId => state.saved.some(x => x.serviceId === serviceId),
-  }), [state, rulesRevision, setEvent, setPick, add, remove, setQty, setPlace, setNeeds, recordBookings, clearOccasion, toggleSaved])
+  }), [state, rulesRevision, setEvent, restore, setPick, add, remove, setQty, setPlace, setNeeds, recordBookings, clearOccasion, toggleSaved])
 
   return <PlanContext.Provider value={value}>{children}</PlanContext.Provider>
 }
