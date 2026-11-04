@@ -96,6 +96,7 @@ export function MastersPanel({ tradeId, occasionId = null, guests = null, onCoun
     occasionId ? `for my ${occasionId.replace(/-/g, ' ')}` : 'for an upcoming event',
     guests ? `for ${guests} guests` : null,
     plan.place?.area ? `near ${plan.place.area}` : null,
+    String(plan.needsOf(occasionId, 'venue').special_setting_note ?? '').trim() || null,
     'Please help source suitable options and share their availability and price.',
   ].filter(Boolean).join(' ')+'.')
   // As many as the customer likes — the table scrolls sideways.
