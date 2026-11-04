@@ -17,6 +17,7 @@
  */
 import { supabase } from '../../lib/supabase'
 import { TRADE } from '../data/trades'
+import { isCustomerVisibleListing } from '../../lib/customerListingVisibility'
 import { pickFacets } from './needs'
 /* Every price a card or an instant quote shows is the Sambramo price — the
    partner's price + Sambramo's margin — from the same code the server
@@ -88,10 +89,32 @@ export function partnersFor(tradeId, { lat = BLR.lat, lng = BLR.lng, limit = 40 
     if (error) throw error
     const rows = data ?? []
     if (!rows.length) return []
-    const { data: versions } = await supabase.from('sambramo_listing_versions')
-      .select('id, vendor_service_id, profile, booking_rules, answers').eq('status', 'LIVE')
+    const { data: rawVersions, error: versionsError } = await supabase.from('sambramo_listing_versions')
+      .select('id, vendor_id, vendor_service_id, profile, booking_rules, answers').eq('status', 'LIVE')
       .in('vendor_service_id', rows.map(r => r.vendor_service_id))
-    const byId = Object.fromEntries((versions ?? []).map(v => [v.vendor_service_id, v]))
+    if (versionsError) throw versionsError
+    if (!rawVersions?.length) return []
+
+    // The public RPC intentionally includes approved synthetic/demo rows for
+    // product testing. They are never supply that a real customer can book.
+    // Read the canonical vendor flag as well as the version snapshot and fail
+    // closed if the public visibility check cannot be completed.
+    const vendorIds = [...new Set(rawVersions.map(v => v.vendor_id).filter(Boolean))]
+    if (!vendorIds.length) return []
+    const { data: owners, error: ownersError } = await supabase.from('vendors')
+      .select('id, is_synthetic').in('id', vendorIds)
+    if (ownersError) throw ownersError
+    const ownerById = Object.fromEntries((owners ?? []).map(v => [v.id, v]))
+    const versions = rawVersions.filter(v => isCustomerVisibleListing({
+      vendorIsSynthetic: ownerById[v.vendor_id]?.is_synthetic,
+      profile: v.profile,
+      answers: v.answers,
+    }))
+    if (!versions.length) return []
+    const visibleServiceIds = new Set(versions.map(v => v.vendor_service_id))
+    const customerRows = rows.filter(row => visibleServiceIds.has(row.vendor_service_id))
+    if (!customerRows.length) return []
+    const byId = Object.fromEntries(versions.map(v => [v.vendor_service_id, v]))
     /* What "from" is a price OF. public_listings returns the minimum across
        packages, catalogue lines and rate rules, which for a photographer is
        their HOURLY rate — shown bare, it reads as the price of the day. So
@@ -134,7 +157,7 @@ export function partnersFor(tradeId, { lat = BLR.lat, lng = BLR.lng, limit = 40 
       if (x.rule_kind === 'per_guest' && tradeId === 'catering_food') continue
       put(x.listing_version_id, { type: 'rule', key: x.rule_kind, paise: x.customer_paise, includedHours: num(x.included_hours), minHours: num(x.min_hours), maxHours: num(x.max_hours), minQty: num(x.min_qty), label: null, ref: { type: 'rule', key: x.rule_kind } })
     }
-    return rows.map(r => {
+    return customerRows.map(r => {
       const v = byId[r.vendor_service_id]
       const p = shape(r, v, tradeId)
       const b = v && best[v.id]
