@@ -22,6 +22,16 @@ import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { Check, ClipboardList, LayoutGrid, Pencil, Plus, Radar, Share2, Sparkles, X } from 'lucide-react'
 import { OCCASION } from '../data/occasions'
 
+const SERVICE_COVERAGE = {
+  videography: ['2 hours', '4 hours', '6 hours'],
+  dj_music: ['2 hours', '3 hours', '4 hours'],
+  anchor_mc: ['2 hours', '4 hours', '6 hours + custom script'],
+  live_entertainment: ['1 hour', '2 hours', '3 hours'],
+  bridal_makeup_hair: ['1 hour', '2 hours', '3 hours'],
+  mehendi_artist: ['1 hour', '2 hours', '3 hours'],
+}
+const VIP_EXTRA = { photography: 'Printed album', anchor_mc: 'Custom script writing' }
+
 const FOLLOW_UP_OPTIONS = {
   formats: { multi: true, values: [['stage','Stage programme'],['speeches','Speeches'],['performance','Performances'],['concert','Concert'],['workshop','Workshop'],['livestream','Livestream'],['dancing','Dancing'],['rituals','Rituals'],['procession','Procession'],['sports','Sports']] },
   setting: { values: [['indoor','Indoors'],['outdoor','Outdoors'],['mixed','A mix of both']] },
@@ -546,7 +556,16 @@ function ChooseSheet({ o, t, plan, place, on, why, video, onVideo, ensure, onClo
           {t === 'photography' && (
             <>
               {rest.slice(0, 2).map(ask)}
-              <Section title="How long should they stay?"><OneChips items={PHOTO_HOURS} value={cur.$hours ?? null} onPick={v => set({ $hours: v })} data="photo-hours" /></Section>
+              <Section title="Choose your coverage">
+                <OneChips items={PHOTO_HOURS.map(x => x === '6 hours' ? '6 hours + printed album' : x)} value={cur.$coverage ?? cur.$hours ?? null} onPick={v => {
+                  const hours = Number(String(v).match(/\\d+/)?.[0]) || null
+                  const vip = v.includes('printed album')
+                  const extras = new Set(cur.$extras ?? [])
+                  if (vip) extras.add(VIP_EXTRA.photography); else extras.delete(VIP_EXTRA.photography)
+                  set({ $coverage: v, $hours: hours, $extras: [...extras] })
+                }} data="photo-hours" />
+                <p className="mt-1.5 text-[10.5px] font-semibold text-[var(--ink-3)]">The 6-hour coverage includes a printed album in the requested scope. The photographer confirms the final inclusions.</p>
+              </Section>
               <Section title="Extras"><ManyChips items={PHOTO_EXTRAS} value={cur.$extras ?? []} onChange={v => set({ $extras: v })} data="photo-extras" /></Section>
               <button type="button" role="switch" aria-checked={video} onClick={() => { onVideo(!video); ensure() }} data-video-toggle
                 className="cx-press flex w-full items-center gap-3 rounded-[16px] bg-white p-3 text-left shadow-[inset_0_0_0_1.5px_#ECE6F4]">
@@ -555,6 +574,24 @@ function ChooseSheet({ o, t, plan, place, on, why, video, onVideo, ensure, onClo
                 <span className={'relative h-[26px] w-[46px] shrink-0 rounded-full transition-colors ' + (video ? 'bg-[#7C3AED]' : 'bg-[#E4DDF0]')}><span className={'absolute top-[3px] h-5 w-5 rounded-full bg-white shadow transition-all ' + (video ? 'right-[3px]' : 'left-[3px]')} /></span>
               </button>
             </>
+          )}
+
+          {SERVICE_COVERAGE[t] && t !== 'anchor_mc' && (
+            <Section title="Choose your coverage">
+              <OneChips items={SERVICE_COVERAGE[t]} value={cur.$coverage ?? cur.$hours ?? null} onPick={v => set({ $coverage: v, $hours: Number(String(v).match(/\\d+/)?.[0]) || null })} data={`${t}-hours`} />
+            </Section>
+          )}
+          {t === 'anchor_mc' && (
+            <Section title="Choose your coverage">
+              <OneChips items={SERVICE_COVERAGE.anchor_mc} value={cur.$coverage ?? cur.$hours ?? null} onPick={v => {
+                const hours = Number(String(v).match(/\\d+/)?.[0]) || null
+                const vip = v.includes('custom script')
+                const extras = new Set(cur.$extras ?? [])
+                if (vip) extras.add(VIP_EXTRA.anchor_mc); else extras.delete(VIP_EXTRA.anchor_mc)
+                set({ $coverage: v, $hours: hours, $extras: [...extras] })
+              }} data="anchor-hours" />
+              <p className="mt-1.5 text-[10.5px] font-semibold text-[var(--ink-3)]">The 6-hour coverage includes custom script writing in the requested scope. The anchor confirms the final inclusions.</p>
+            </Section>
           )}
 
           {t === 'live_entertainment' && (
