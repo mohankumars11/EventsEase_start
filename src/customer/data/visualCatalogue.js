@@ -15,6 +15,8 @@
  * labelled) and go to masters as the customer's reference.
  */
 import { VISUALS } from './visualCatalogue.generated'
+import { RESTAURANT_KITCHEN } from '../lib/restaurantMatching.js'
+export { RESTAURANT_KITCHEN }
 
 const T = (id, label) => ({ id, label, photo: VISUALS[`theme:${id}`] ?? null })
 const SETS = {
@@ -62,19 +64,12 @@ const F = id => VISUALS[`food:${id}`] ?? null
    customer's venue; a restaurant answered kitchen_type (catering_food.js).
    Live counters, packed meals etc. are HOW it is served — the Menu Studio
    asks that. */
-export const RESTAURANT_KITCHEN = 'Restaurant or cloud kitchen — we deliver bulk orders ourselves'
 export const FOOD_WAYS = [
   { id: 'caterer', label: 'Hire a caterer', line: 'They cook, bring and serve', noun: 'caterer', photo: F('caterer'), needs: {} },
   { id: 'cook', label: 'Hire a cook', line: 'Cooks fresh at your place', noun: 'cook', photo: F('cook'), needs: { prep_location: ["At the customer's venue", 'At both locations'] } },
   { id: 'restaurant', label: 'Order from a restaurant', line: 'The restaurant delivers', noun: 'restaurant', photo: F('packed'), needs: { kitchen_type: [RESTAURANT_KITCHEN] } },
 ]
 export const wayOf = needs => (needs?.$ways ?? []).find(w => FOOD_WAYS.some(x => x.id === w)) ?? 'caterer'
-
-/** Restaurant orders match only listings that explicitly declared this kitchen type. */
-export function isRestaurantOrderListing(partner) {
-  const kitchenTypes = [].concat(partner?.facets?.kitchen_type ?? [])
-  return kitchenTypes.includes(RESTAURANT_KITCHEN)
-}
 
 /* The partner-facet answers a way adds up to. */
 export function foodNeeds(ways = []) {
