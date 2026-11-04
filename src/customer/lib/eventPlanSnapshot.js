@@ -13,7 +13,13 @@ const ABOUT = [
   'travel', 'public', 'children', 'accessibility', 'privacy', 'budget',
 ]
 
-export function savedContextFor(occasion, picks = {}, event = {}, place = null) {
+export function savedContextFor(occasion, picks = {}, event = {}, place = null, needs = {}) {
+  const prefix = `${occasion?.id}:`
+  const serviceNeeds = Object.fromEntries(
+    Object.entries(needs ?? {})
+      .filter(([key]) => key.startsWith(prefix))
+      .map(([key, value]) => [key.slice(prefix.length), value]),
+  )
   return {
     ...contextFor(occasion, picks, event),
     venueChoice: event.venueChoice ?? null,
@@ -21,6 +27,7 @@ export function savedContextFor(occasion, picks = {}, event = {}, place = null) 
     venueOther: event.venueOther ?? null,
     budgetChoice: event.budget ?? null,
     eventPlace: place ?? null,
+    $serviceNeeds: serviceNeeds,
   }
 }
 
@@ -48,7 +55,10 @@ export function planFromSaved(row) {
     const value = decisionToPick[service.decision]
     if (value) picks[service.trade_id] = value
   }
-  return { event, picks, place: c.eventPlace ?? null }
+  const needs = Object.fromEntries(
+    Object.entries(c.$serviceNeeds ?? {}).map(([tradeId, value]) => [`${row.occasion_id}:${tradeId}`, value]),
+  )
+  return { event, picks, place: c.eventPlace ?? null, needs }
 }
 
 /**
