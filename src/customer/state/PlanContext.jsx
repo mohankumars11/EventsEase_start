@@ -21,7 +21,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { recommend, setActiveRules } from '../lib/recommend360'
 import { blueprint } from '../lib/blueprint'
-import { loadRules } from '../lib/eventPlans'
 import { contextFor } from '../lib/eventContext'
 export { contextFor }
 
@@ -40,7 +39,7 @@ function load() {
 
 const PlanContext = createContext(null)
 
-export function PlanProvider({ children }) {
+export function PlanProvider({ children, loadPublishedRules = null }) {
   const [state, setState] = useState(load)
   const [rulesRevision, setRulesRevision] = useState(0)
 
@@ -48,14 +47,15 @@ export function PlanProvider({ children }) {
   // engine used for every customer screen. Fall back to bundled rules when
   // the table is unavailable; never block the planner on a network request.
   useEffect(() => {
+    if (typeof loadPublishedRules !== 'function') return
     let current = true
-    loadRules().then(ruleSet => {
-      if (!current) return
+    loadPublishedRules().then(ruleSet => {
+      if (!current || !ruleSet?.rules) return
       setActiveRules(ruleSet)
       setRulesRevision(value => value + 1)
     }).catch(() => {})
     return () => { current = false }
-  }, [])
+  }, [loadPublishedRules])
 
   useEffect(() => { try { localStorage.setItem(KEY, JSON.stringify(state)) } catch { /* storage off */ } }, [state])
 
