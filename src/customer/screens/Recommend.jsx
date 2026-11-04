@@ -47,7 +47,7 @@ export default function Recommend() {
   const ev = plan.event
   const picks = plan.picks[occasionId] ?? {}
   const valid = !!(o && ev.occasionId === o.id && ev.date)
-  const plan360 = useMemo(() => (valid ? needsFor(o, picks, ev) : null), [valid, o, picks, ev])
+  const plan360 = useMemo(() => (valid ? needsFor(o, picks, ev) : null), [valid, o, picks, ev, plan.rulesRevision])
 
   /* Save to the account when signed in (migration 190); otherwise it stays on this phone. */
   useEffect(() => {
