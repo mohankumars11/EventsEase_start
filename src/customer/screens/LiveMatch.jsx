@@ -72,6 +72,7 @@ export default function LiveMatch() {
   const valid = !!(o && ev.occasionId === o.id && ev.date)
   const [params] = useSearchParams()
   const planner = params.get('planner') === '1'
+  const controlMode = params.get('control') === '1' && !planner
   const services = useMemo(() => (valid ? needsFor(o, plan.picks[o.id] ?? {}, ev).needed : []), [valid, o, plan.picks, ev])
   const needed = useMemo(() => (planner ? [PLANNER] : services), [planner, services])
   const who = planner ? 'planner' : 'master'
@@ -340,14 +341,14 @@ export default function LiveMatch() {
               </div>
               {voucher && <p className="mb-2 flex items-center gap-1.5 rounded-[12px] bg-[#FFF6E0] px-3 py-1.5 text-[12px] font-extrabold text-[#8A5300]" data-offer><BadgePercent size={14} />{voucher.kind === 'welcome_pct' ? '25% off' : 'Your offer'} applies when you pay</p>}
               {phase === 'error' && <p className="mb-2 rounded-[12px] bg-[#FFF1F0] px-3 py-1.5 text-[12px] font-bold text-[#B42318]" data-send-error>{sent?.results?.flatMap(x => x.reasons ?? [])[0] ?? 'Could not send — try again.'}</p>}
-              <button type="button" disabled={!canSend} onClick={!phoneOk ? askPhone : phase === 'unpaid' ? () => pay(sent.held.map(x => x.lineId)) : () => send(false)} className="cx-press cx-cta flex h-[58px] w-full items-center justify-center gap-2.5 rounded-[20px] text-[16px] font-extrabold" data-send>
+              <button type="button" disabled={!canSend} onClick={!phoneOk ? askPhone : phase === 'unpaid' ? () => pay(sent.held.map(x => x.lineId)) : () => send(controlMode)} className="cx-press cx-cta flex h-[58px] w-full items-center justify-center gap-2.5 rounded-[20px] text-[16px] font-extrabold" data-send>
                 {phase === 'sending' || phase === 'paying' ? <><Loader2 size={18} className="animate-spin" />{phase === 'paying' ? 'Opening payment…' : 'Sending…'}</>
                   : phase === 'unpaid' ? <>Pay now<ChevronRight size={18} /></>
-                    : !phoneOk ? <><Phone size={17} />Add your mobile number</> : requestLive === false ? <>Book · pay advance<ChevronRight size={18} /></> : <><Send size={18} />{planner ? 'Send to planner' : `Send ${plural(landed.length, 'request')}`}</>}
+                    : !phoneOk ? <><Phone size={17} />Add your mobile number</> : requestLive === false ? <>Book · pay advance<ChevronRight size={18} /></> : <><Send size={18} />{planner ? 'Send to planner' : controlMode ? 'Compare & request offers' : `Send ${plural(landed.length, 'request')}`}</>}
               </button>
               {!planner && ['ready', 'error'].includes(phase) && (
-                <button type="button" onClick={phoneOk ? () => send(true) : askPhone} className="cx-press mt-2 flex h-11 w-full items-center justify-center gap-1.5 rounded-[16px] text-[13.5px] font-extrabold text-[var(--brand)] shadow-[inset_0_0_0_1.5px_#E3D5FA]" data-compare-all>
-                  Compare &amp; negotiate with every master
+                <button type="button" onClick={phoneOk ? () => send(!controlMode) : askPhone} className="cx-press mt-2 flex h-11 w-full items-center justify-center gap-1.5 rounded-[16px] text-[13.5px] font-extrabold text-[var(--brand)] shadow-[inset_0_0_0_1.5px_#E3D5FA]" data-compare-all>
+                  {controlMode ? 'Use Sambramo’s best-fit master instead' : 'Compare &amp; negotiate with every master'}
                 </button>
               )}
             </>
