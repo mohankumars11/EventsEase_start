@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { savedContextFor, planFromSaved, serviceRowsForPlan } from '../src/customer/lib/eventPlanSnapshot.js'
+import { savedContextFor, planFromSaved, serviceRowsForPlan, staleServiceIds } from '../src/customer/lib/eventPlanSnapshot.js'
 
 const occasion = { id: 'birthday-party', where: 'ask' }
 
@@ -110,4 +110,53 @@ test('a newly selected master replaces the saved master without dropping a booki
   ])
   assert.equal(rows[0].vendor_service_id, 'master-2')
   assert.equal(rows[0].booking_line_id, 'booking-line-1')
+})
+
+
+test('autosave removes a previously selected optional service when the customer deselects it', () => {
+  const previous = [
+    { trade_id: 'photography', decision: 'selected', recommendation_status: 'OPTIONAL', booking_line_id: null },
+    { trade_id: 'catering_food', decision: 'selected', recommendation_status: 'CORE', booking_line_id: null },
+    { trade_id: 'sound_av', decision: 'selected', recommendation_status: 'OPTIONAL', booking_line_id: null },
+  ]
+  const rows = serviceRowsForPlan('plan-1', {
+    photography: 'OPTIONAL',
+    catering_food: 'CORE',
+    sound_av: 'OPTIONAL',
+  }, {
+    catering_food: 'need',
+  }, [], previous)
+
+  assert.deepEqual(rows.map(row => row.trade_id).sort(), ['catering_food'])
+  assert.deepEqual(staleServiceIds(previous, rows).sort(), ['photography', 'sound_av'])
+})
+
+test('autosave retains a booked service even after the planning preference is cleared', () => {
+  const previous = [
+    {
+      trade_id: 'photography',
+      decision: 'selected',
+      recommendation_status: 'CORE',
+      vendor_service_id: 'master-1',
+      booking_line_id: 'booking-line-1',
+    },
+    {
+      trade_id: 'dj_music',
+      decision: 'selected',
+      recommendation_status: 'OPTIONAL',
+      vendor_service_id: null,
+      booking_line_id: null,
+    },
+  ]
+  const rows = serviceRowsForPlan('plan-1', {
+    photography: 'NOT_DEFAULT',
+    dj_music: 'OPTIONAL',
+  }, {}, [], previous)
+
+  assert.equal(rows.length, 1)
+  assert.equal(rows[0].trade_id, 'photography')
+  assert.equal(rows[0].decision, 'selected')
+  assert.equal(rows[0].vendor_service_id, 'master-1')
+  assert.equal(rows[0].booking_line_id, 'booking-line-1')
+  assert.deepEqual(staleServiceIds(previous, rows), ['dj_music'])
 })
