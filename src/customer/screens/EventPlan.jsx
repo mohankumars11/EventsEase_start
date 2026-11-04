@@ -27,6 +27,7 @@ import { photoFor } from '../data/requirementPhotos.generated'
 import { wayOf, themesFor, CAKES, DECOR_THEMES, ACTION, TAG, COLOURS, FONTS, FOOD_WAYS, foodNeeds, COOK_TEAM, INGREDIENTS, DRINKS, DECOR_ELEMENTS, CAKE_OPTIONS, PHOTO_HOURS, PHOTO_EXTRAS, ENTERTAINERS, designFamilies, byOrder, OPS } from '../data/visualCatalogue'
 import { SERVE } from '../lib/sambramoMenu'
 import { usePlan, needsFor } from '../state/PlanContext'
+import { savePlan, savedContextFor } from '../lib/eventPlans'
 import { savedWhere } from '../lib/where'
 import { partnersFor } from '../lib/market'
 import { needsFor as tradeQuestions, loadCuisines, loadDishes } from '../lib/needs'
@@ -57,8 +58,34 @@ export default function EventPlan() {
   const [other, setOther] = useState('')
   const [allExtra, setAllExtra] = useState(false)
   const [, setFood] = useState(0)
+  const [accountSave, setAccountSave] = useState('device')
   const place = plan.place?.lat ? plan.place : savedWhere()
   useEffect(() => { Promise.all([loadCuisines(supabase), loadDishes(supabase)]).then(() => setFood(n => n + 1)).catch(() => {}) }, [])
+
+  /* The active customer flow autosaves to migration 190. Until the server
+     confirms the write, the plan remains available from PlanContext on this
+     device and the UI never claims cross-device sync prematurely. */
+  useEffect(() => {
+    if (!valid || !p) return
+    if (!user?.id) { setAccountSave('device'); return }
+    let current = true
+    setAccountSave('saving')
+    const timer = setTimeout(async () => {
+      const statuses = Object.fromEntries(p.result.services.map(service => [service.tradeId, service.status]))
+      const result = await savePlan({
+        userId: user.id,
+        occasionId: o.id,
+        context: savedContextFor(o, picks, ev, plan.place),
+        picks,
+        statuses,
+        lines: plan.basket.filter(line => line.occasionId === o.id),
+        ruleVersion: p.result.ruleVersion,
+      })
+      if (current) setAccountSave(result.ok ? 'account' : 'device')
+    }, 700)
+    return () => { current = false; clearTimeout(timer) }
+  }, [valid, user?.id, o?.id, p, picks, ev, plan.basket, plan.place])
+
   useEffect(() => { import('./LiveMatch').catch(() => {}) }, []) // the next screen loads while they read
 
   /* Masters live near the event for what is selected (lists capped at 40). */
@@ -119,6 +146,9 @@ export default function EventPlan() {
           </button>
           <Link to={`/invites/new?o=${o.id}&step=review`} className="flex shrink-0 items-center gap-1 text-[12.5px] font-extrabold text-[#DB2777]" data-plan-share><Share2 size={14} />Share</Link>
         </div>
+        <p className="mt-2 text-[10.5px] font-bold text-[#6B5A83]" data-account-save>
+          {accountSave === 'saving' ? 'Saving your plan…' : accountSave === 'account' ? 'Saved to your account' : 'Saved on this device'}
+        </p>
       </section>
 
       <div className="mx-4 mt-4 grid grid-cols-2 gap-2" data-how>
