@@ -189,8 +189,6 @@ export default function EventPlan() {
       </section>
 
       {p.covered.length > 0 && (
-
-      {p.covered.length > 0 && (
         <section className="mt-6 px-4" data-covered>
           <h2 className="text-[16px] font-black tracking-[-0.02em]">Already taken care of</h2>
           <p className="mt-1 text-[12px] font-semibold text-[var(--ink-3)]">We’ll keep these out of your booking list to avoid paying twice.</p>
