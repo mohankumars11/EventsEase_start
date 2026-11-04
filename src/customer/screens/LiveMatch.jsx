@@ -134,6 +134,7 @@ export default function LiveMatch() {
   const askPhone = () => { phoneRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => phoneRef.current?.focus(), 300) }
   const venue = { address: place?.address || [place?.area, place?.city].filter(Boolean).join(', ') || null, area: place?.area ?? null, city: place?.city ?? null }
   const guestsText = ev.guests ? `${ev.guests.toLocaleString('en-IN')} ${o.people.toLowerCase()}` : null
+  const specialVenueNote = String(plan.needsOf(o.id, 'venue').special_setting_note ?? '').trim()
   const sourcingMessage = encodeURIComponent([
     `Hi Sambramo, please help source ${gaps.map(({ t }) => planner ? 'an event planner' : copyFor(o, t).title).join(', ')}`,
     `for my ${o.name}`,
@@ -141,6 +142,7 @@ export default function LiveMatch() {
     ev.date ? `on ${dayLabel(ev.date)}` : null,
     ev.time ? `at ${timeLabel(ev.time)}` : null,
     place?.area || place?.city ? `near ${place.area ?? place.city}` : null,
+    specialVenueNote ? `Special place requested: ${specialVenueNote}` : null,
     'Please share suitable verified options and their availability. I understand these services do not currently have a live match in the app.',
   ].filter(Boolean).join(' ')+'.')
 
@@ -164,9 +166,11 @@ export default function LiveMatch() {
         /* "Something else" the customer typed on the plan travels with every request. */
         const also = (ev.custom ?? []).length ? `Also: ${ev.custom.join(', ')}` : null
         const where = ev.venueChoice === 'other' && ev.venueOther ? `Venue: ${ev.venueOther}` : null
+        const specialPlace = String(plan.needsOf(o.id, 'venue').special_setting_note ?? '').trim()
+        const special = specialPlace ? `Special venue setting: ${specialPlace}` : null
         const note = (planner
-          ? [`Plan the whole ${o.name}`, services.map(x => TRADE[x]?.label).filter(Boolean).join(', '), guestsText, food && `Food: ${food}`, also, where]
-          : [wants && `Needs: ${wants}`, also, where]).filter(Boolean).join(' · ') || undefined
+          ? [`Plan the whole ${o.name}`, services.map(x => TRADE[x]?.label).filter(Boolean).join(', '), guestsText, food && `Food: ${food}`, also, where, special]
+          : [wants && `Needs: ${wants}`, also, where, special]).filter(Boolean).join(' · ') || undefined
         /* A planner prices THIS event (their listed package is a wedding's):
            the brief goes as a request for their fee, not a booking at it. */
         /* Catering built in the Menu Studio goes as the structured menu too. */
