@@ -131,7 +131,7 @@ export default function LiveMatch() {
   const phoneOk = /^[6-9]\d{9}$/.test(phone.replace(/\D/g, '').slice(-10))
   const canSend = ['ready', 'error', 'unpaid'].includes(phase) && landed.length > 0
   const askPhone = () => { phoneRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => phoneRef.current?.focus(), 300) }
-  const venue = { address: place?.address || `${place?.area ?? ''}, Bengaluru`, area: place?.area ?? null, city: 'Bengaluru' }
+  const venue = { address: place?.address || [place?.area, place?.city].filter(Boolean).join(', ') || null, area: place?.area ?? null, city: place?.city ?? null }
   const guestsText = ev.guests ? `${ev.guests.toLocaleString('en-IN')} ${o.people.toLowerCase()}` : null
 
   /* send(): the best match per service, theirs alone (197). send(true):
