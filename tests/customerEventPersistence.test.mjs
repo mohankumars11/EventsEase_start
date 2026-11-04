@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { savedContextFor, planFromSaved } from '../src/customer/lib/eventPlanSnapshot.js'
+import { savedContextFor, planFromSaved, serviceRowsForPlan } from '../src/customer/lib/eventPlanSnapshot.js'
 
 const occasion = { id: 'birthday-party', where: 'ask' }
 
@@ -68,4 +68,30 @@ test('legacy saved home plans remain a home event when resumed', () => {
 test('legacy saved venue plans without a type still recover booked vs not booked', () => {
   assert.equal(planFromSaved({ occasion_id: 'birthday-party', context: { venueBooked: true } }).event.venueChoice, 'have')
   assert.equal(planFromSaved({ occasion_id: 'birthday-party', context: {} }).event.venueChoice, 'need')
+})
+
+test('autosave preserves existing booking-line and master links after checkout removes the basket line', () => {
+  const rows = serviceRowsForPlan('plan-1', {
+    photography: 'CORE',
+    catering_food: 'CONDITIONAL',
+  }, {
+    photography: 'need',
+    catering_food: 'need',
+  }, [], [
+    { trade_id: 'photography', vendor_service_id: 'master-1', booking_line_id: 'booking-line-1' },
+  ])
+  const photo = rows.find(row => row.trade_id === 'photography')
+  assert.equal(photo.vendor_service_id, 'master-1')
+  assert.equal(photo.booking_line_id, 'booking-line-1')
+  assert.equal(rows.find(row => row.trade_id === 'catering_food').booking_line_id, null)
+})
+
+test('a newly selected master replaces the saved master without dropping a booking link', () => {
+  const rows = serviceRowsForPlan('plan-1', { photography: 'CORE' }, { photography: 'need' }, [
+    { tradeId: 'photography', serviceId: 'master-2' },
+  ], [
+    { trade_id: 'photography', vendor_service_id: 'master-1', booking_line_id: 'booking-line-1' },
+  ])
+  assert.equal(rows[0].vendor_service_id, 'master-2')
+  assert.equal(rows[0].booking_line_id, 'booking-line-1')
 })
