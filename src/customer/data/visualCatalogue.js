@@ -69,6 +69,13 @@ export const FOOD_WAYS = [
   { id: 'restaurant', label: 'Order from a restaurant', line: 'The restaurant delivers', noun: 'restaurant', photo: F('packed'), needs: { kitchen_type: [RESTAURANT_KITCHEN] } },
 ]
 export const wayOf = needs => (needs?.$ways ?? []).find(w => FOOD_WAYS.some(x => x.id === w)) ?? 'caterer'
+
+/** Restaurant orders match only listings that explicitly declared this kitchen type. */
+export function isRestaurantOrderListing(partner) {
+  const kitchenTypes = [].concat(partner?.facets?.kitchen_type ?? [])
+  return kitchenTypes.includes(RESTAURANT_KITCHEN)
+}
+
 /* The partner-facet answers a way adds up to. */
 export function foodNeeds(ways = []) {
   const out = { prep_location: [], service_styles: [], services: [], kitchen_type: [] }
