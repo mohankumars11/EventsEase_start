@@ -11,6 +11,8 @@
 import { supabase } from '../../lib/supabase'
 import { RULES, RULES_VERSION } from '../data/rules360'
 import { validateRules } from './recommend360'
+import { planFromSaved } from './eventPlanSnapshot'
+export { planFromSaved, savedContextFor } from './eventPlanSnapshot'
 
 let published = null
 /** The published rule set, validated; the bundled one when there is none. */
@@ -32,8 +34,14 @@ const DECISION = { need: 'selected', skip: 'removed', have: 'arranged', later: '
 export async function savePlan({ userId, occasionId, context, picks = {}, statuses = {}, lines = [], ruleVersion }) {
   if (!userId) return { ok: false, reason: 'signed-out' }
   try {
+    const clientKey = `occ:${occasionId}`
+    const { data: existing, error: lookupError } = await supabase.from('event_plans')
+      .select('id, status').eq('customer_id', userId).eq('client_key', clientKey).maybeSingle()
+    if (lookupError) return { ok: false, reason: lookupError.code === '42P01' || /does not exist|schema cache/i.test(lookupError.message) ? 'not-migrated' : lookupError.message }
+    // Autosave must never demote a completed booking back to an active draft.
+    const status = existing?.status === 'booked' ? 'booked' : 'active'
     const { data: plan, error } = await supabase.from('event_plans')
-      .upsert({ customer_id: userId, client_key: `occ:${occasionId}`, occasion_id: occasionId, context, rule_version: ruleVersion, status: 'active' }, { onConflict: 'customer_id,client_key' })
+      .upsert({ customer_id: userId, client_key: clientKey, occasion_id: occasionId, context, rule_version: ruleVersion, status }, { onConflict: 'customer_id,client_key' })
       .select('id').single()
     if (error) return { ok: false, reason: error.code === '42P01' || /does not exist|schema cache/i.test(error.message) ? 'not-migrated' : error.message }
     const rows = Object.entries(statuses).filter(([t]) => picks[t] || statuses[t] === 'CORE' || lines.some(l => l.tradeId === t)).map(([t, status]) => ({
@@ -76,18 +84,3 @@ export async function linkBookings(userId, results = []) {
   return { ok: true }
 }
 
-const PICK = { selected: 'need', removed: 'skip', arranged: 'have', later: 'later' }
-const ABOUT = ['venueProvides', 'setting', 'formats', 'food', 'drinks', 'media', 'travel', 'public', 'children', 'accessibility', 'privacy', 'budget']
-
-/** A saved plan back into the phone's plan state: { event, picks }. */
-export function planFromSaved(row) {
-  const c = row.context ?? {}
-  const event = {
-    occasionId: row.occasion_id, date: c.date ?? null, time: c.time ?? null, hours: c.hours ?? null, guests: c.guests ?? null,
-    venue: c.venueBooked ? 'have' : 'need', venueKind: null,
-    context: Object.fromEntries(Object.entries(c).filter(([k]) => ABOUT.includes(k))),
-  }
-  const picks = {}
-  for (const s of row.event_plan_services ?? []) if (PICK[s.decision]) picks[s.trade_id] = PICK[s.decision]
-  return { event, picks }
-}
