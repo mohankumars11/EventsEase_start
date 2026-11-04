@@ -35,7 +35,7 @@ import {
   loadCatalogue, familiesFor, rankMenus, dietAllows, startFrom, dishCount, sectionName, alternativesFor,
   flagsFor, menuFlags, snapshotFor, menuText, saveCustomerMenu, DIETS, MEALS, SERVES, mealFor,
 } from '../lib/menuStudio'
-import { FOOD_WAYS, RESTAURANT_KITCHEN, foodNeeds, wayOf } from '../data/visualCatalogue'
+import { FOOD_WAYS, foodNeeds, isRestaurantOrderListing, wayOf } from '../data/visualCatalogue'
 import { ActionBar, BackHeader, Photo, Sheet } from '../ui/kit'
 import SignInSheet from './SignInSheet'
 
@@ -423,7 +423,7 @@ function Review({ cat, o, ev, place, ctx, studio, setStudio, setWay, plan, user,
     /* A restaurant order goes to restaurants only — never to caterers
        dressed up as the closest match. */
     if (ctx.way === 'restaurant') {
-      const pool = r.pool.filter(p => [].concat(p.facets?.kitchen_type ?? []).includes(RESTAURANT_KITCHEN))
+      const pool = r.pool.filter(isRestaurantOrderListing)
       r = { ...r, pool, exact: r.exact && pool.length > 0 }
     }
     setFound(r)
