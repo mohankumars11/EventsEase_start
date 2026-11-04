@@ -122,6 +122,17 @@ export default function EventPlan() {
   }
   const go = () => navigate(`/o/${o.id}/live${how === 'planner' ? '?planner=1' : ''}`)
   const shownExtra = allExtra ? extra : extra.slice(0, 6)
+  // The curated occasion blueprint decides what to offer; the 360° engine
+  // supplies lifecycle grouping and an auditable reason for each service.
+  const engineByTrade = Object.fromEntries(p.result.services.map(x => [x.tradeId, x]))
+  const phaseByTrade = new Map(p.result.phases.flatMap(phase => phase.tradeIds.map(t => [t, phase])))
+  const visibleTrades = [...new Set([...arrange, ...extra])]
+  const phaseGroups = [...new Set(visibleTrades.map(t => phaseByTrade.get(t)?.id ?? engineByTrade[t]?.primaryPhase ?? 8))]
+    .sort((a, b) => a - b).map(id => {
+      const firstTrade = visibleTrades.find(t => (phaseByTrade.get(t)?.id ?? engineByTrade[t]?.primaryPhase ?? 8) === id)
+      const phase = phaseByTrade.get(firstTrade)
+      return { id, title: phase?.title ?? lifecycleTitle(id), trades: visibleTrades.filter(t => (phaseByTrade.get(t)?.id ?? engineByTrade[t]?.primaryPhase ?? 8) === id) }
+    })
 
   return (
     <main className="cx-enter min-h-[100dvh] bg-white pb-[calc(env(safe-area-inset-bottom,0px)+110px)]" data-event-plan>
@@ -161,17 +172,23 @@ export default function EventPlan() {
         ))}
       </div>
 
-      {/* Let's arrange these — the essentials, as photographs. */}
+      {/* Occasion-specific services, grouped by the 360° event lifecycle. */}
       <section className="mt-6 px-4" data-arrange>
         <div className="flex items-end justify-between gap-2">
-          <h2 className="text-[19px] font-black tracking-[-0.03em]">{how === 'planner' ? 'Your planner arranges' : 'Let’s arrange these'}</h2>
+          <div><h2 className="text-[19px] font-black tracking-[-0.03em]">{how === 'planner' ? 'Your planner arranges' : 'Your event plan'}</h2><p className="mt-0.5 text-[11.5px] font-semibold text-[var(--ink-3)]">Relevant services, organised from preparation through event day</p></div>
           {nearby?.n > 0 && <span className="flex shrink-0 items-center gap-1.5 text-[11.5px] font-extrabold text-[#0B6B3D]" data-nearby><span className="cx-live-dot h-2 w-2 rounded-full bg-[#16A34A]" />{nearby.n}{nearby.more ? '+' : ''} masters nearby</span>}
         </div>
-        <div className="mt-3 grid grid-cols-2 gap-3" data-arrange-grid>
-          {arrange.map(t => <ReqCard key={t} o={o} t={t} on={on(t)} video={t === 'photography' && on('videography')} said={briefFor(o, t, plan.needsOf(o.id, t))} why={row(t)?.reason}
-            onToggle={() => pick(t, on(t) ? 'skip' : 'need')} onOpen={() => setSheet({ edit: t })} />)}
+        <div className="mt-3 flex gap-2 overflow-x-auto pb-1 cx-noscroll" data-lifecycle-summary>{phaseGroups.map((g, i) => <span key={g.id} className="shrink-0 rounded-full bg-[#F4EEFF] px-3 py-1.5 text-[10.5px] font-extrabold text-[#4C1D95]">{i + 1}. {g.title} · {g.trades.length}</span>)}</div>
+        <div className="mt-4 space-y-5" data-arrange-grid>
+          {phaseGroups.map(group => <section key={group.id} data-lifecycle-phase={group.id}>
+            <div className="mb-2 flex items-center justify-between gap-2"><h3 className="text-[14px] font-extrabold">{group.title}</h3><span className="text-[10.5px] font-bold text-[var(--ink-3)]">{group.trades.length} {group.trades.length === 1 ? 'service' : 'services'}</span></div>
+            <div className="grid grid-cols-2 gap-3">{group.trades.filter(t => arrange.includes(t)).map(t => <ReqCard key={t} o={o} t={t} on={on(t)} video={t === 'photography' && on('videography')} said={briefFor(o, t, plan.needsOf(o.id, t))} why={engineByTrade[t]?.reason ?? row(t)?.reason} recommendationStatus={engineByTrade[t]?.status ?? row(t)?.status}
+              onToggle={() => pick(t, on(t) ? 'skip' : 'need')} onOpen={() => setSheet({ edit: t })} />)}</div>
+          </section>)}
         </div>
       </section>
+
+      {p.covered.length > 0 && (
 
       {p.covered.length > 0 && (
         <section className="mt-6 px-4" data-covered>
@@ -192,22 +209,13 @@ export default function EventPlan() {
         </section>
       )}
 
-      {/* Make it extra special — offered, never pre-ticked. */}
-      {extra.length > 0 && (
-        <section className="mt-7" data-extra>
-          <div className="flex items-end justify-between gap-2 px-4">
-            <h2 className="flex items-center gap-1.5 text-[19px] font-black tracking-[-0.03em]"><Sparkles size={18} className="text-[#C026D3]" />Make it extra special</h2>
-            {extra.length > 6 && <button type="button" onClick={() => setAllExtra(x => !x)} className="shrink-0 text-[12.5px] font-extrabold text-[var(--brand)]">{allExtra ? 'Fewer' : `All ${extra.length}`}</button>}
-          </div>
-          <div className={allExtra ? 'mt-3 grid grid-cols-2 gap-3 px-4' : 'cx-noscroll mt-3 flex gap-3 overflow-x-auto px-4 pb-1'}>
-            {shownExtra.map(t => (
-              <div key={t} className={allExtra ? '' : 'w-[150px] shrink-0'}>
-                <ReqCard o={o} t={t} small on={on(t)} video={t === 'photography' && on('videography')} popular={row(t)?.kind === 'RECOMMENDED'} onToggle={() => pick(t, on(t) ? 'off' : 'need')} onOpen={() => setSheet({ edit: t })} />
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
+      {/* Enhancements stay opt-in and separate from the core requirements. */}
+      {extra.length > 0 && <section className="mt-7 px-4" data-extra>
+        <div className="flex items-end justify-between gap-2"><div><h2 className="flex items-center gap-1.5 text-[19px] font-black tracking-[-0.03em]"><Sparkles size={18} className="text-[#C026D3]" />Optional enhancements</h2><p className="mt-0.5 text-[11.5px] font-semibold text-[var(--ink-3)]">Only add what makes this occasion better for you.</p></div>
+          {extra.length > 6 && <button type="button" onClick={() => setAllExtra(x => !x)} className="shrink-0 text-[12.5px] font-extrabold text-[var(--brand)]">{allExtra ? 'Fewer' : `All ${extra.length}`}</button>}</div>
+        <div className="mt-3 grid grid-cols-2 gap-3">{shownExtra.map(t => <ReqCard key={t} o={o} t={t} small on={on(t)} video={t === 'photography' && on('videography')} popular={row(t)?.kind === 'RECOMMENDED'} why={engineByTrade[t]?.reason ?? row(t)?.reason} recommendationStatus={engineByTrade[t]?.status ?? row(t)?.status}
+          onToggle={() => pick(t, on(t) ? 'off' : 'need')} onOpen={() => setSheet({ edit: t })} />)}</div>
+      </section>}
 
       <section className="mt-6 px-4">
         {custom.length > 0 && (
@@ -268,7 +276,7 @@ function Thumb({ o, t, className = '', tag = false }) {
   )
 }
 
-function ReqCard({ o, t, on, said = null, why = null, popular = false, small = false, video = false, onToggle, onOpen }) {
+function ReqCard({ o, t, on, said = null, why = null, recommendationStatus = null, popular = false, small = false, video = false, onToggle, onOpen }) {
   const c = copyFor(o, t)
   return (
     <article className={'overflow-hidden rounded-[20px] bg-white transition-shadow ' + (on ? 'shadow-[0_0_0_2px_#7C3AED,0_16px_30px_-22px_rgba(91,33,168,.9)]' : 'shadow-[0_0_0_1px_#ECE6F4]')} data-req={t} data-on={on}>
@@ -281,6 +289,7 @@ function ReqCard({ o, t, on, said = null, why = null, popular = false, small = f
         <span className="block px-2.5 pt-2">
           <span className={'block truncate font-extrabold leading-[1.25] tracking-[-0.015em] ' + (small ? 'text-[12.5px]' : 'text-[13.5px]')}>{c.title}</span>
           <span className={'mt-0.5 block truncate text-[11px] font-semibold leading-snug ' + (said ? 'text-[#0B6B3D]' : 'text-[var(--ink-3)]')}>{said || why || c.line}</span>
+          {recommendationStatus && <span className="mt-1 inline-flex rounded-full bg-[#F4EEFF] px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wide text-[#5B21B6]">{recommendationStatus === 'CORE' ? 'Core recommendation' : recommendationStatus === 'CONDITIONAL' ? 'Context-based' : recommendationStatus === 'OPTIONAL' ? 'Optional' : 'Available on request'}</span>}
         </span>
       </button>
       <div className="flex items-center gap-2 px-2.5 pb-2.5 pt-2">
@@ -495,6 +504,8 @@ function ChooseSheet({ o, t, plan, place, on, why, video, onVideo, ensure, onClo
  * curated menus, swaps, diet and how it is served. Here, just the way in —
  * and what was chosen, once it was.
  */
+function lifecycleTitle(id) { return ({1:'Discover & define',2:'Plan & budget',3:'Book key services',4:'Pre-event coordination',5:'Logistics & procurement',6:'Setup & technical checks',7:'Guest arrival',8:'Main celebration',9:'Food & hospitality',10:'Guest departure',11:'Cleanup & teardown',12:'After the event'})[id] ?? 'Event preparation' }
+
 function StudioEntry({ o, cur, onClose }) {
   const navigate = useNavigate()
   const st = cur.$studio
