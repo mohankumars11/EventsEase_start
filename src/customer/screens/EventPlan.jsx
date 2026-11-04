@@ -182,7 +182,7 @@ export default function EventPlan() {
         <div className="mt-4 space-y-5" data-arrange-grid>
           {phaseGroups.map(group => <section key={group.id} data-lifecycle-phase={group.id}>
             <div className="mb-2 flex items-center justify-between gap-2"><h3 className="text-[14px] font-extrabold">{group.title}</h3><span className="text-[10.5px] font-bold text-[var(--ink-3)]">{group.trades.length} {group.trades.length === 1 ? 'service' : 'services'}</span></div>
-            <div className="grid grid-cols-2 gap-3">{group.trades.filter(t => arrange.includes(t)).map(t => <ReqCard key={t} o={o} t={t} on={on(t)} video={t === 'photography' && on('videography')} said={briefFor(o, t, plan.needsOf(o.id, t))} why={engineByTrade[t]?.reason ?? row(t)?.reason} recommendationStatus={engineByTrade[t]?.status ?? row(t)?.status}
+            <div className="space-y-2.5">{group.trades.filter(t => arrange.includes(t)).map(t => <ReqCard key={t} o={o} t={t} on={on(t)} video={t === 'photography' && on('videography')} said={briefFor(o, t, plan.needsOf(o.id, t))} why={engineByTrade[t]?.reason ?? row(t)?.reason} recommendationStatus={engineByTrade[t]?.status ?? row(t)?.status}
               onToggle={() => pick(t, on(t) ? 'skip' : 'need')} onOpen={() => setSheet({ edit: t })} />)}</div>
           </section>)}
         </div>
@@ -211,7 +211,7 @@ export default function EventPlan() {
       {extra.length > 0 && <section className="mt-7 px-4" data-extra>
         <div className="flex items-end justify-between gap-2"><div><h2 className="flex items-center gap-1.5 text-[19px] font-black tracking-[-0.03em]"><Sparkles size={18} className="text-[#C026D3]" />Optional enhancements</h2><p className="mt-0.5 text-[11.5px] font-semibold text-[var(--ink-3)]">Only add what makes this occasion better for you.</p></div>
           {extra.length > 6 && <button type="button" onClick={() => setAllExtra(x => !x)} className="shrink-0 text-[12.5px] font-extrabold text-[var(--brand)]">{allExtra ? 'Fewer' : `All ${extra.length}`}</button>}</div>
-        <div className="mt-3 grid grid-cols-2 gap-3">{shownExtra.map(t => <ReqCard key={t} o={o} t={t} small on={on(t)} video={t === 'photography' && on('videography')} popular={row(t)?.kind === 'RECOMMENDED'} why={engineByTrade[t]?.reason ?? row(t)?.reason} recommendationStatus={engineByTrade[t]?.status ?? row(t)?.status}
+        <div className="mt-3 space-y-2.5">{shownExtra.map(t => <ReqCard key={t} o={o} t={t} small on={on(t)} video={t === 'photography' && on('videography')} popular={row(t)?.kind === 'RECOMMENDED'} why={engineByTrade[t]?.reason ?? row(t)?.reason} recommendationStatus={engineByTrade[t]?.status ?? row(t)?.status}
           onToggle={() => pick(t, on(t) ? 'off' : 'need')} onOpen={() => setSheet({ edit: t })} />)}</div>
       </section>}
 
@@ -277,27 +277,27 @@ function Thumb({ o, t, className = '', tag = false }) {
 function ReqCard({ o, t, on, said = null, why = null, recommendationStatus = null, popular = false, small = false, video = false, onToggle, onOpen }) {
   const c = copyFor(o, t)
   return (
-    <article className={'overflow-hidden rounded-[20px] bg-white transition-shadow ' + (on ? 'shadow-[0_0_0_2px_#7C3AED,0_16px_30px_-22px_rgba(91,33,168,.9)]' : 'shadow-[0_0_0_1px_#ECE6F4]')} data-req={t} data-on={on}>
-      <button type="button" onClick={onOpen} className="block w-full text-left" data-req-open={t}>
-        <span className="relative block">
-          <Thumb o={o} t={t} tag={!small} className="aspect-[4/3] w-full" />
-          {popular && <span className="absolute left-2 top-2 rounded-full bg-white/95 px-2 py-0.5 text-[10px] font-extrabold text-[#9D174D]">Popular</span>}
-          {TAG[t] && <span className="absolute bottom-1.5 right-1.5 rounded-full bg-white/95 px-2 py-0.5 text-[10px] font-extrabold text-[#3B1670]" data-tag={t}>{TAG[t]}{video ? ' & video' : ''}</span>}
-        </span>
-        <span className="block px-2.5 pt-2">
-          <span className={'block truncate font-extrabold leading-[1.25] tracking-[-0.015em] ' + (small ? 'text-[12.5px]' : 'text-[13.5px]')}>{c.title}</span>
-          <span className={'mt-0.5 block truncate text-[11px] font-semibold leading-snug ' + (said ? 'text-[#0B6B3D]' : 'text-[var(--ink-3)]')}>{said || why || c.line}</span>
-          {recommendationStatus && <span className="mt-1 inline-flex rounded-full bg-[#F4EEFF] px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wide text-[#5B21B6]">{recommendationStatus === 'CORE' ? 'Core recommendation' : recommendationStatus === 'CONDITIONAL' ? 'Context-based' : recommendationStatus === 'OPTIONAL' ? 'Optional' : 'Available on request'}</span>}
-        </span>
+    <article className={'flex items-center gap-3 rounded-[18px] bg-white p-2.5 transition-shadow ' + (on ? 'shadow-[0_0_0_1.8px_#7C3AED,0_10px_24px_-18px_rgba(91,33,168,.8)]' : 'shadow-[0_0_0_1px_#ECE6F4]')} data-req={t} data-on={on}>
+      <button type="button" onClick={onOpen} className="relative h-[76px] w-[76px] shrink-0 overflow-hidden rounded-[14px] bg-[#F3EEF9] text-left" aria-label={`View ${c.title}`} data-req-open={t}>
+        <Thumb o={o} t={t} tag={false} className="h-full w-full" />
+        {popular && <span className="absolute left-1 top-1 rounded-full bg-white/95 px-1.5 py-0.5 text-[8px] font-extrabold text-[#9D174D]">Popular</span>}
       </button>
-      <div className="flex items-center gap-2 px-2.5 pb-2.5 pt-2">
-        <button type="button" onClick={onOpen} className="cx-press flex h-8 min-w-0 flex-1 items-center justify-center rounded-full bg-[#F4EEFF] px-1.5 text-[12px] font-extrabold text-[#4C1D95]" data-req-action={t}>
-          <span className="truncate">{small ? 'Choose' : ACTION[t] ?? 'Choose'}</span>
+      <div className="min-w-0 flex-1">
+        <button type="button" onClick={onOpen} className="block w-full text-left" data-req-title={t}>
+          <span className="block truncate text-[14px] font-extrabold leading-tight tracking-[-0.015em]">{c.title}</span>
+          <span className="mt-1 block line-clamp-2 text-[11.5px] font-semibold leading-snug text-[var(--ink-3)]">{said || why || c.line}</span>
         </button>
-        <button type="button" role="checkbox" aria-checked={on} aria-label={`${on ? 'Remove' : 'Add'} ${c.title}`} onClick={onToggle} data-req-check={t}
-          className={'cx-press grid h-8 w-8 shrink-0 place-items-center rounded-full transition-colors ' + (on ? 'bg-[#7C3AED] text-white' : 'bg-white text-[#7C3AED] shadow-[inset_0_0_0_1.5px_#CDBCF2]')}>
-          {on ? <Check size={15} strokeWidth={3.2} /> : <Plus size={15} strokeWidth={3} />}
-        </button>
+        <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+          {recommendationStatus && <span className="rounded-full bg-[#F4EEFF] px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wide text-[#5B21B6]">{recommendationStatus === 'CORE' ? 'Core' : recommendationStatus === 'CONDITIONAL' ? 'Context-based' : recommendationStatus === 'OPTIONAL' ? 'Optional' : 'On request'}</span>}
+          {video && <span className="rounded-full bg-[#F0FDF4] px-2 py-0.5 text-[9px] font-extrabold text-[#166534]">Photo + video</span>}
+        </div>
+        <div className="mt-2 flex items-center gap-2">
+          <button type="button" onClick={onOpen} className="text-[11.5px] font-extrabold text-[#5B21B6]" data-req-action={t}>{ACTION[t] ?? 'Choose options'}</button>
+          <button type="button" role="checkbox" aria-checked={on} aria-label={`${on ? 'Remove' : 'Add'} ${c.title}`} onClick={onToggle}
+            className={'ml-auto grid h-8 w-8 shrink-0 place-items-center rounded-full transition-colors ' + (on ? 'bg-[#7C3AED] text-white' : 'bg-[#F4EEFF] text-[#5B21B6]')}>
+            {on ? <Check size={15} strokeWidth={3.2} /> : <Plus size={15} strokeWidth={3} />}
+          </button>
+        </div>
       </div>
     </article>
   )
