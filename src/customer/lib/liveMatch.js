@@ -33,6 +33,12 @@ export const lineOf = (p, occasionId) => ({
 })
 
 const hash = s => [...String(s)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7)
+const durationHours = value => {
+  const direct = Number(value)
+  if (Number.isFinite(direct) && direct > 0) return direct
+  const parsed = Number(String(value ?? '').match(/\\d+(?:\\.\\d+)?/)?.[0])
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null
+}
 
 /* The top three rotate; everyone below keeps their place. */
 function fair(list, seed) {
@@ -51,7 +57,7 @@ export async function matchTrade(tradeId, { occasionId, event, place, needs = {}
   const all = await partnersFor(tradeId, at).catch(() => [])
   onPool?.(all.length)
   const fit = filterByNeeds(all, tradeId, needs, event.guests).list ?? all
-  const ask = { hours: Number(needs.$hours) || Number(event.hours) || null, guests: Number(needs.$guests) || Number(event.guests) || null, diets: needs.$diet ?? [] }
+  const ask = { hours: durationHours(needs.$hours) || durationHours(event.hours), guests: Number(needs.$guests) || Number(event.guests) || null, diets: needs.$diet ?? [] }
   const quoted = withQuotes(fit, ask) ?? fit
   const pool = fair(rank(quoted, { priority }).filter(p => (p.fromRef || p.quote) && !skip.includes(p.serviceId)), `${seed}|${tradeId}`)
   /* A menu card the customer chose (lib/menus) is that caterer's own menu:
