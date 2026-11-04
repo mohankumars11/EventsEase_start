@@ -17,7 +17,7 @@ export const VIP_EXTRA = Object.freeze({ photography: 'Printed album', anchor_mc
 export function durationHours(value) {
   const direct = Number(value)
   if (Number.isFinite(direct) && direct > 0) return direct
-  const parsed = Number(String(value ?? '').match(/\\d+(?:\\.\\d+)?/)?.[0])
+  const parsed = Number(String(value ?? '').match(/\d+(?:\.\d+)?/)?.[0])
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null
 }
 
