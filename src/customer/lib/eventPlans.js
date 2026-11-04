@@ -25,8 +25,6 @@ export async function loadRules() {
   return (published = { rules: RULES, ruleVersion: RULES_VERSION, source: 'bundled' })
 }
 
-const DECISION = { need: 'selected', skip: 'removed', have: 'arranged', later: 'later' }
-
 /**
  * Save (create or update) one occasion's plan for the signed-in customer.
  * `clientKey` keeps it to one row per occasion per customer.
