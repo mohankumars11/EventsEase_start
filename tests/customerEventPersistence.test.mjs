@@ -19,7 +19,7 @@ test('account snapshot preserves event choice, venue facilities and the event lo
     budget: '1l-1.5l',
     context: { venueProvides: ['sound'], formats: ['meal'] },
   }, place, {
-    'birthday-party:venue': { venue_type: ['lawn_garden'], facilities: ['power_backup'] },
+    'birthday-party:venue': { venue_type: ['lawn_garden'], facilities: ['power_backup'], special_setting_note: 'A lakeside picnic area' },
     'birthday-party:catering_food': { $ways: ['cater'], $studio: { menuId: 'family_feast', name: 'Family Feast' }, $studioDiet: 'veg', $guests: 80 },
     'another-event:photography': { styles: ['candid'] },
   })
@@ -29,7 +29,7 @@ test('account snapshot preserves event choice, venue facilities and the event lo
   assert.equal(context.budgetChoice, '1l-1.5l')
   assert.deepEqual(context.eventPlace, place)
   assert.deepEqual(context.$serviceNeeds, {
-    venue: { venue_type: ['lawn_garden'], facilities: ['power_backup'] },
+    venue: { venue_type: ['lawn_garden'], facilities: ['power_backup'], special_setting_note: 'A lakeside picnic area' },
     catering_food: { $ways: ['cater'], $studio: { menuId: 'family_feast', name: 'Family Feast' }, $studioDiet: 'veg', $guests: 80 },
   })
   assert.deepEqual(context.added, ['catering_food'])
