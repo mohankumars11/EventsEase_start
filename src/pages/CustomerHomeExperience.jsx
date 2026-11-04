@@ -52,6 +52,67 @@ const OCCASIONS = {
   special: ['Surprise Celebration','Romantic Dinner','Anniversary Dinner','Proposal Setup','Private Screening','Luxury Picnic','Candlelight Dinner','Personalised Theme Party','VIP Celebration','Exclusive House Party','Private Music Performance','Intimate Garden Dinner','Luxury Rooftop Dinner','Private Karaoke Party','Family Celebration Dinner','Milestone Achievement Party','Welcome Home Party','Going-Away Party','Reunion Dinner','Graduation Dinner']
 }
 
+
+/*
+ * The home catalogue is intentionally broader than the guided blueprint
+ * catalogue. Route each visible occasion to the closest supported journey,
+ * while preserving the exact name the customer selected for the coordinator.
+ * This avoids unknown slugs silently opening the birthday journey.
+ */
+const JOURNEY_DEFAULT_BY_CATEGORY = {
+  life: 'birthday',
+  weddings: 'wedding',
+  festivals: 'get_together',
+  school: 'graduation',
+  college: 'graduation',
+  corporate: 'corporate_event',
+  nightlife: 'get_together',
+  public: 'get_together',
+  sports: 'get_together',
+  food: 'get_together',
+  retail: 'shop_opening',
+  property: 'housewarming',
+  community: 'get_together',
+  industry: 'corporate_event',
+  themed: 'birthday',
+  outdoor: 'get_together',
+  virtual: 'corporate_event',
+  special: 'engagement',
+}
+
+function resolveJourneyOccasionId(label, categoryId) {
+  const name = String(label || '').toLowerCase()
+    .replace(/[’']/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+
+  if (/first birthday/.test(name)) return 'first_birthday'
+  if (/seemantham|godh bharai|god bharai/.test(name)) return 'seemantham'
+  if (/rice feeding|annaprashana|annaprasana/.test(name)) return 'annaprashana'
+  if (/naming ceremony|cradle ceremony/.test(name)) return 'naming_ceremony'
+  if (/housewarming|griha pravesh/.test(name)) return 'housewarming'
+  if (/retirement/.test(name)) return 'retirement'
+  if (/graduation|convocation/.test(name)) return 'graduation'
+  if (/farewell|going away/.test(name)) return 'farewell'
+  if (/vehicle pooja|vahana pooja/.test(name)) return 'vehicle_pooja'
+  if (/bhoomi pooja|groundbreaking/.test(name)) return 'bhoomi_pooja'
+  if (/shop opening|store opening/.test(name)) return 'shop_opening'
+  if (/mundan|tonsure/.test(name)) return 'mundan'
+  if (/half saree|ritu kala/.test(name)) return 'half_saree'
+  if (/upanayanam|thread ceremony/.test(name)) return 'thread_ceremony'
+  if (/baby shower|gender reveal/.test(name)) return 'baby_shower'
+  if (/haldi/.test(name)) return 'haldi'
+  if (/mehendi|sangeet/.test(name)) return 'sangeet'
+  if (/reception/.test(name)) return 'reception'
+  if (/anniversary|valentines day|romantic dinner|candlelight dinner/.test(name)) return 'anniversary'
+  if (/engagement|roka|marriage proposal|proposal setup/.test(name)) return 'engagement'
+  if (/wedding|muhurtham|baraat|jaimala|pellikuthuru|pellikoduku|bridal entry|bridal shower/.test(name)) return 'wedding'
+  if (/birthday/.test(name)) return 'birthday'
+  if (/corporate|business|conference|summit|product launch|brand launch|board meeting|annual general meeting|dealer meet|team building|workshop|networking|press conference|media launch|recruitment|franchise|town hall|office inauguration/.test(name)) return 'corporate_event'
+
+  return JOURNEY_DEFAULT_BY_CATEGORY[categoryId] || 'get_together'
+}
+
 const SERVICE_EMOJI = {
   photography: '📸', videography: '🎥', 'anchor & mc': '🎤', anchor: '🎤',
   catering: '🍽️', food: '🍲', decoration: '🌸', decor: '🌷', music: '🎧',
@@ -123,7 +184,10 @@ export default function CustomerHomeExperience() {
 
   const selectedOccasions = selectedCategory ? (OCCASIONS[selectedCategory.id] || []) : []
   const filteredOccasions = selectedOccasions.filter(occasion => !query.trim() || occasion.toLowerCase().includes(query.trim().toLowerCase()))
-  const chooseOccasion = occasion => navigate(`/plan?occasion=${encodeURIComponent(occasion)}&category=${encodeURIComponent(selectedCategory?.id || '')}`)
+  const chooseOccasion = occasion => {
+    const journeyId = resolveJourneyOccasionId(occasion, selectedCategory?.id)
+    navigate(`/celebrate/${journeyId}?occasion=${encodeURIComponent(occasion)}`)
+  }
 
   return (
     <div className="sambramo-home">

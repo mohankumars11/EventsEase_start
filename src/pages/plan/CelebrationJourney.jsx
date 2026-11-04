@@ -209,6 +209,7 @@ export default function CelebrationJourney() {
 
   const occasionId = routeOccasion && EVENT_DATA[routeOccasion] ? routeOccasion : 'birthday'
   const occasion = EVENT_DATA[occasionId]
+  const journeyOccasionName = searchParams.get('occasion')?.trim() || occasion?.name || 'Celebration'
   const blueprint = useMemo(() => blueprintFor(occasionId), [occasionId])
 
   /* ── The answers ──────────────────────────────────────────────────── */
@@ -883,7 +884,7 @@ export default function CelebrationJourney() {
       const payload = {
         customer_id: user.id,
         event_id: s.occasionId,
-        event_name: EVENT_DATA[s.occasionId]?.name ?? 'Celebration',
+        event_name: journeyOccasionName,
         event_date: s.eventDate || null,
         start_time: slot?.start ?? null,
         guest_count: s.guests,
@@ -923,7 +924,7 @@ export default function CelebrationJourney() {
     } finally {
       setSubmitting(false)
     }
-  }, [stateForDraft, flags, user, navigate, location])
+  }, [stateForDraft, flags, user, navigate, location, journeyOccasionName])
 
   /**
    * Record that the customer says they paid.
@@ -951,8 +952,8 @@ export default function CelebrationJourney() {
     // would have home offering to "finish" a page nobody engaged with.
     if (!stepKey || (!circleId && Object.keys(choices).length === 0)) return
     saveDraft(RESUME_KEY, stateForDraft())
-    noteDetail(`${occasion?.name ?? 'Celebration'} · ${guests} guests`)
-  }, [stateForDraft, enquiryId, stepKey, circleId, choices, occasion, guests])
+    noteDetail(`${journeyOccasionName} · ${guests} guests`)
+  }, [stateForDraft, enquiryId, stepKey, circleId, choices, journeyOccasionName, guests])
 
   const restored = useRef(false)
   useEffect(() => {
@@ -1053,7 +1054,7 @@ export default function CelebrationJourney() {
             claimed={lockClaimed}
             onClaim={claimLock}
             onSkip={() => navigate('/dashboard/customer/events')}
-            whatsappText={`Hi Sambramo, I'd like to hold my quote (ref ${enquiryId.slice(0, 8).toUpperCase()}) — ${occasion?.name ?? ''} for ${guests} guests.`}
+            whatsappText={`Hi Sambramo, I'd like to hold my quote (ref ${enquiryId.slice(0, 8).toUpperCase()}) — ${journeyOccasionName} for ${guests} guests.`}
           />
 
           <div className="flex flex-col gap-2 pt-2">
@@ -1061,7 +1062,7 @@ export default function CelebrationJourney() {
               Track this celebration
             </Link>
             <Link to={`/services/${occasionId}`} className="a-btn-ghost w-full text-[13.5px]">
-              Browse everything for a {occasion?.name?.toLowerCase()}
+              Browse everything for a {journeyOccasionName.toLowerCase()}
             </Link>
           </div>
         </div>
@@ -1119,7 +1120,7 @@ export default function CelebrationJourney() {
   return (
     <div className={`a-canvas min-h-screen ${ACTION_BAR_CLEARANCE}`} ref={topRef}>
       <JourneyBar
-        title={occasion?.name ?? 'Celebration'}
+        title={journeyOccasionName}
         emoji={occasion?.emoji ?? '🎉'}
         stepIndex={stepIndex}
         stepCount={steps.length}
@@ -1296,7 +1297,7 @@ export default function CelebrationJourney() {
       {isReveal && (
         <RevealStep
           quote={quote}
-          occasionName={occasion?.name ?? 'celebration'}
+          occasionName={journeyOccasionName}
           occasionEmoji={occasion?.emoji ?? '🎉'}
           circle={circle}
           guests={guests}
