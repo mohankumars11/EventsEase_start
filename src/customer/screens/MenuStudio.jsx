@@ -17,7 +17,7 @@
  * migration 200 is in (save_customer_menu).
  */
 import { useEffect, useMemo, useState } from 'react'
-import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ArrowLeftRight, Camera, Check, ChevronDown, ChevronRight, Loader2, Minus, Plus, Send, Sparkles, TriangleAlert, X } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { OCCASION } from '../data/occasions'
@@ -36,7 +36,6 @@ import {
   flagsFor, menuFlags, snapshotFor, menuText, saveCustomerMenu, DIETS, MEALS, SERVES, mealFor,
 } from '../lib/menuStudio'
 import { FOOD_WAYS, foodNeeds, wayOf } from '../data/visualCatalogue'
-import { isRestaurantOrderListing } from '../lib/restaurantMatching'
 import { ActionBar, BackHeader, Photo, Sheet } from '../ui/kit'
 import SignInSheet from './SignInSheet'
 
@@ -111,7 +110,7 @@ function Feast({ cat, o, ev, place, ctx, set, setDiet, setServe, setWay, studio,
       </div>
 
       <Label>How do you want your food?</Label>
-      <div className="grid grid-cols-3 gap-2" data-food-way>
+      <div className="grid grid-cols-2 gap-2" data-food-way>
         {FOOD_WAYS.map(w => (
           <button key={w.id} type="button" onClick={() => setWay(w.id)} aria-pressed={ctx.way === w.id} data-way={w.id}
             className={'cx-press overflow-hidden rounded-[14px] bg-white text-left ' + (ctx.way === w.id ? 'shadow-[0_0_0_2.5px_#7C3AED]' : 'shadow-[0_0_0_1px_#ECE6F4]')}>
@@ -122,6 +121,9 @@ function Feast({ cat, o, ev, place, ctx, set, setDiet, setServe, setWay, studio,
           </button>
         ))}
       </div>
+      <Link to={`/o/${o.id}/restaurants`} className="cx-press mt-2 flex items-center justify-between rounded-[15px] bg-[#FAF8FD] px-3 py-2.5 text-left shadow-[inset_0_0_0_1px_#EEE8F6]" data-restaurant-order-link>
+        <span><span className="block text-[12.5px] font-extrabold">Order from a restaurant</span><span className="mt-0.5 block text-[10.5px] font-semibold text-[var(--ink-3)]">Separate menus, prices and delivery terms</span></span><ChevronRight size={17} className="text-[#7C3AED]"/>
+      </Link>
 
       <div className="mt-4 flex items-center justify-between rounded-[18px] bg-[#FAF8FD] p-3" data-guests>
         <span><span className="block text-[14px] font-extrabold">Guests</span><span className="block text-[11.5px] font-semibold text-[var(--ink-3)]">Caterers price for this many</span></span>
@@ -421,15 +423,9 @@ function Review({ cat, o, ev, place, ctx, studio, setStudio, setWay, plan, user,
     setPhase('finding'); setMsg('')
     await loadCuisines(supabase).catch(() => {})
     let r = await poolFor(T, { event: ev, place, needs, seed: o.id })
-    /* A restaurant order goes to restaurants only — never to caterers
-       dressed up as the closest match. */
-    if (ctx.way === 'restaurant') {
-      const pool = r.pool.filter(isRestaurantOrderListing)
-      r = { ...r, pool, exact: r.exact && pool.length > 0 }
-    }
     setFound(r)
     setPhase(r.pool.length ? 'confirm' : 'error')
-    if (!r.pool.length) setMsg(ctx.way === 'restaurant' ? 'No restaurant near your venue takes event orders on Sambramo yet.' : `No ${noun} near your venue can take this yet. Try another cuisine, or ask us — we’ll find one.`)
+    if (!r.pool.length) setMsg(`No ${noun} near your venue can take this yet. Try another cuisine, or ask us — we’ll find one.`)
   }
   async function send() {
     setPhase('sending')
