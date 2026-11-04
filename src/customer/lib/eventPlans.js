@@ -11,7 +11,7 @@
 import { supabase } from '../../lib/supabase'
 import { RULES, RULES_VERSION } from '../data/rules360'
 import { validateRules } from './recommend360'
-import { planFromSaved } from './eventPlanSnapshot'
+import { planFromSaved, serviceRowsForPlan } from './eventPlanSnapshot'
 export { planFromSaved, savedContextFor } from './eventPlanSnapshot'
 
 let published = null
@@ -47,19 +47,7 @@ export async function savePlan({ userId, occasionId, context, picks = {}, status
     const { data: savedServices, error: serviceReadError } = await supabase.from('event_plan_services')
       .select('trade_id, vendor_service_id, booking_line_id').eq('plan_id', plan.id)
     if (serviceReadError) return { ok: false, reason: serviceReadError.message }
-    const previousByTrade = Object.fromEntries((savedServices ?? []).map(row => [row.trade_id, row]))
-    const rows = Object.entries(statuses).filter(([t]) => picks[t] || statuses[t] === 'CORE' || lines.some(l => l.tradeId === t)).map(([t, status]) => {
-      const line = lines.find(item => item.tradeId === t)
-      const previous = previousByTrade[t]
-      return {
-        plan_id: plan.id, trade_id: t, recommendation_status: status,
-        decision: DECISION[picks[t]] ?? 'recommended',
-        // An autosave after checkout must not clear the master or the booking
-        // line already linked to this service.
-        vendor_service_id: line?.serviceId ?? previous?.vendor_service_id ?? null,
-        booking_line_id: previous?.booking_line_id ?? null,
-      }
-    })
+    const rows = serviceRowsForPlan(plan.id, statuses, picks, lines, savedServices ?? [])
     if (rows.length) {
       const r = await supabase.from('event_plan_services').upsert(rows, { onConflict: 'plan_id,trade_id' })
       if (r.error) return { ok: false, reason: r.error.message }
