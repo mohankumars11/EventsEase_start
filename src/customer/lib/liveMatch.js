@@ -46,14 +46,14 @@ function fair(list, seed) {
  * Match one service. `onPool(n)` fires once the masters near the event
  * are known, so the screen can count them while the previews run.
  */
-export async function matchTrade(tradeId, { occasionId, event, place, needs = {}, seed = '', skip = [], onPool } = {}) {
+export async function matchTrade(tradeId, { occasionId, event, place, needs = {}, seed = '', skip = [], priority = 'balanced', onPool } = {}) {
   const at = place?.lat ? { lat: place.lat, lng: place.lng } : {}
   const all = await partnersFor(tradeId, at).catch(() => [])
   onPool?.(all.length)
   const fit = filterByNeeds(all, tradeId, needs, event.guests).list ?? all
   const ask = { hours: Number(needs.$hours) || Number(event.hours) || null, guests: Number(needs.$guests) || Number(event.guests) || null, diets: needs.$diet ?? [] }
   const quoted = withQuotes(fit, ask) ?? fit
-  const pool = fair(rank(quoted).filter(p => (p.fromRef || p.quote) && !skip.includes(p.serviceId)), `${seed}|${tradeId}`)
+  const pool = fair(rank(quoted, { priority }).filter(p => (p.fromRef || p.quote) && !skip.includes(p.serviceId)), `${seed}|${tradeId}`)
   /* A menu card the customer chose (lib/menus) is that caterer's own menu:
      ask them first, for exactly that menu; the rest stay as backups. */
   const menu = needs.$menu
