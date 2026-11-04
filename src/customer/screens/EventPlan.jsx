@@ -65,6 +65,7 @@ export default function EventPlan() {
   const p = useMemo(() => (valid ? needsFor(o, picks, ev) : null), [valid, o, picks, ev, plan.rulesRevision])
   const [sheet, setSheet] = useState(null) // { edit: t } | 'add'
   const [how, setHow] = useState('each')
+  const [bookingStyle, setBookingStyle] = useState('fast') // fast = best fit; control = compare eligible masters
   const [other, setOther] = useState('')
   const [allExtra, setAllExtra] = useState(false)
   const [, setFood] = useState(0)
@@ -130,7 +131,12 @@ export default function EventPlan() {
     title: first ? `${first}’s ${o.name}` : o.name, event_date: ev.date ?? '', start_time: ev.time ?? '',
     venue_name: place?.area ?? '', theme: themeString((templatesFor(o)[0] ?? TEMPLATES[0]).id, { art: true, live: true }),
   }
-  const go = () => navigate(`/o/${o.id}/live${how === 'planner' ? '?planner=1' : ''}`)
+  const go = () => {
+    const query = new URLSearchParams()
+    if (how === 'planner') query.set('planner', '1')
+    else if (bookingStyle === 'control') query.set('control', '1')
+    navigate(`/o/${o.id}/live${query.size ? `?${query.toString()}` : ''}`)
+  }
   const shownExtra = allExtra ? extra : extra.slice(0, 6)
   const answerFollowUp = (field, value, multi = false) => {
     const context = { ...(ev.context ?? {}) }
@@ -192,6 +198,18 @@ export default function EventPlan() {
           </button>
         ))}
       </div>
+
+      {how === 'each' && <section className="mx-4 mt-4" data-booking-style>
+        <p className="mb-2 text-[12px] font-extrabold text-[var(--ink-2)]">How would you like to choose your masters?</p>
+        <div className="grid grid-cols-2 gap-2">
+          <button type="button" onClick={() => setBookingStyle('fast')} aria-pressed={bookingStyle === 'fast'} className={'cx-press rounded-[15px] p-3 text-left ' + (bookingStyle === 'fast' ? 'bg-[#F1E9FF] shadow-[inset_0_0_0_1.5px_#7C3AED]' : 'bg-white shadow-[inset_0_0_0_1px_#E9E3F2]')}>
+            <span className="block text-[13px] font-extrabold">Fast & simple</span><span className="mt-0.5 block text-[10.5px] font-semibold text-[var(--ink-3)]">Sambramo finds the best-fit master for each service.</span>
+          </button>
+          <button type="button" onClick={() => setBookingStyle('control')} aria-pressed={bookingStyle === 'control'} className={'cx-press rounded-[15px] p-3 text-left ' + (bookingStyle === 'control' ? 'bg-[#F1E9FF] shadow-[inset_0_0_0_1.5px_#7C3AED]' : 'bg-white shadow-[inset_0_0_0_1px_#E9E3F2]')}>
+            <span className="block text-[13px] font-extrabold">I want control</span><span className="mt-0.5 block text-[10.5px] font-semibold text-[var(--ink-3)]">Compare eligible masters and review their offers.</span>
+          </button>
+        </div>
+      </section>}
 
       {p.result.followUps.length > 0 && <FollowUpSection followUps={p.result.followUps} context={ev.context ?? {}} onAnswer={answerFollowUp} />}
 
