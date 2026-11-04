@@ -10,7 +10,7 @@ import { contextFor } from './eventContext.js'
 
 const ABOUT = [
   'venueProvides', 'venueType', 'setting', 'formats', 'food', 'drinks', 'media',
-  'travel', 'public', 'children', 'accessibility', 'privacy', 'budget',
+  'travel', 'public', 'children', 'accessibility', 'privacy', 'budget', 'bookingPriority',
 ]
 
 export function savedContextFor(occasion, picks = {}, event = {}, place = null, needs = {}) {
@@ -47,6 +47,7 @@ export function planFromSaved(row) {
     venueKind: c.venueKind ?? null,
     venueOther: c.venueOther ?? '',
     budget: c.budgetChoice ?? '',
+    bookingPriority: c.bookingPriority ?? 'balanced',
     context: Object.fromEntries(Object.entries(c).filter(([key]) => ABOUT.includes(key))),
   }
   const decisionToPick = { selected: 'need', removed: 'skip', arranged: 'have', later: 'later' }
