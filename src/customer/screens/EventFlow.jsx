@@ -136,7 +136,7 @@ export default function EventFlow() {
 
         <Row icon={MapPin} label="Event location">
           <Field onClick={() => setSheet('place')} empty={!place?.area} data-field="place">
-            <span className="min-w-0 truncate">{place?.area ? `${place.address || place.area}${place.address ? '' : ', Bengaluru'}` : 'Choose the location'}</span>
+            <span className="min-w-0 truncate">{place?.area ? `${place.address || place.area}${place.address || !place.city ? '' : `, ${place.city}`}` : 'Choose the location'}</span>
             <LocateFixed size={17} className="shrink-0 text-[var(--brand)]" />
           </Field>
         </Row>
