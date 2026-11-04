@@ -22,6 +22,7 @@ import { ArtFill } from './art'
 import { ArrowUpDown, Check, ChevronDown, ChevronRight, IndianRupee, Scale, SlidersHorizontal, X, Zap } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { TRADE } from '../data/trades'
+import { BRAND } from '../../config/sambramo'
 import { usePlan } from '../state/PlanContext'
 import { partnersFor, SORTS } from '../lib/market'
 import { filterByNeeds, loadCuisines, loadDishes, needsFor } from '../lib/needs'
@@ -90,6 +91,13 @@ export function MastersPanel({ tradeId, occasionId = null, guests = null, onCoun
   const said = needsSummary(tradeId, wants)
   const asks = needsFor(tradeId).length > 0
   const nF = [f.instant, f.km != null, f.rating != null, f.minRupees != null || f.maxRupees != null].filter(Boolean).length
+  const sourceMessage = encodeURIComponent([
+    `Hi Sambramo, please help me find a verified ${t?.label ?? 'service'} option`,
+    occasionId ? `for my ${occasionId.replace(/-/g, ' ')}` : 'for an upcoming event',
+    guests ? `for ${guests} guests` : null,
+    plan.place?.area ? `near ${plan.place.area}` : null,
+    'Please help source suitable options and share their availability and price.',
+  ].filter(Boolean).join(' ')+'.')
   // As many as the customer likes — the table scrolls sideways.
   const pick = x => setPicked(s => (s.some(y => y.serviceId === x.serviceId) ? s.filter(y => y.serviceId !== x.serviceId) : [...s, x]))
   const brief = `/brief/${tradeId}${occasionId ? `?o=${occasionId}` : ''}`
@@ -161,8 +169,10 @@ export function MastersPanel({ tradeId, occasionId = null, guests = null, onCoun
         ))}
       </div>
       {list?.length === 0 && <div className="pt-4"><Empty title={all?.length ? 'No one matches those filters' : `No ${t.label.toLowerCase()} live yet`}
-        body={all?.length ? 'Widen a filter to see more masters.' : 'Masters for this service are being verified in your city.'}
-        action={nF ? <button type="button" onClick={() => setF(NONE)} className="font-extrabold text-[var(--brand)]">Clear filters</button> : null} /></div>}
+        body={all?.length ? 'Widen a filter to see more masters.' : 'We only show real, published listings here. Ask Sambramo to help source a suitable provider while local supply grows.'}
+        action={nF
+          ? <button type="button" onClick={() => setF(NONE)} className="font-extrabold text-[var(--brand)]">Clear filters</button>
+          : <a href={`https://wa.me/${BRAND.whatsappNumber}?text=${sourceMessage}`} target="_blank" rel="noopener noreferrer" data-source-request className="font-extrabold text-[var(--brand)]">Ask Sambramo to source this</a>} /></div>}
 
       {comparing && picked.length >= 2 && (
         <div className="fixed inset-x-0 z-[145] px-3" style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 92px)' }}>
