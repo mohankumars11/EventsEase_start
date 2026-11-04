@@ -20,6 +20,8 @@ Production database changes: migrations may be authored and tested, but not appl
 - [x] Ask conditional recommendation follow-ups in the plan and update the engine context as answers change.
 - [x] Add Fast & Simple (best-fit) versus I want control (compare eligible masters) booking preference.
 - [x] Add Best fit / Budget conscious / Premium experience ranking preference to live matching.
+- [x] Add price-free, service-specific coverage scopes (photo/video 2/4/6h; DJ 2/3/4h; anchor 2/4/6h with script in the longest scope; entertainment/makeup/mehendi 1/2/3h).
+- [x] Freeze selected coverage hours and supported add-ons into matching/booking requests for server revalidation.
 - [x] Add a separate restaurant-order sourcing screen and remove restaurant from the catering kitchen-type selector/matcher.
 - [ ] Implement the live restaurant trade contract across canonical registry, partner listing, catalogue, delivery availability, pricing and booking resolution. Customer screen is deliberately transparent that live restaurant inventory is not connected yet.
 - [ ] Add/finish regression tests for all new customer behavior and verify current validation.
