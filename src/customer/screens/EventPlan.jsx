@@ -153,6 +153,7 @@ export default function EventPlan() {
   // The curated occasion blueprint decides what to offer; the 360° engine
   // supplies lifecycle grouping and an auditable reason for each service.
   const engineByTrade = Object.fromEntries(p.result.services.map(x => [x.tradeId, x]))
+  const statusForTrade = t => engineByTrade[t]?.recommended ? engineByTrade[t].status : row(t)?.status ?? engineByTrade[t]?.status
   const phaseByTrade = new Map(p.result.phases.flatMap(phase => phase.tradeIds.map(t => [t, phase])))
   const visibleTrades = [...new Set([...arrange, ...extra])]
   const phaseGroups = [...new Set(visibleTrades.map(t => phaseByTrade.get(t)?.id ?? engineByTrade[t]?.primaryPhase ?? 8))]
@@ -232,7 +233,7 @@ export default function EventPlan() {
         <div className="mt-4 space-y-5" data-arrange-grid>
           {phaseGroups.map(group => <section key={group.id} data-lifecycle-phase={group.id}>
             <div className="mb-2 flex items-center justify-between gap-2"><h3 className="text-[14px] font-extrabold">{group.title}</h3><span className="text-[10.5px] font-bold text-[var(--ink-3)]">{group.trades.length} {group.trades.length === 1 ? 'service' : 'services'}</span></div>
-            <div className="space-y-2.5">{group.trades.filter(t => arrange.includes(t)).map(t => <ReqCard key={t} o={o} t={t} on={on(t)} video={t === 'photography' && on('videography')} said={briefFor(o, t, plan.needsOf(o.id, t))} why={engineByTrade[t]?.reason ?? row(t)?.reason} recommendationStatus={row(t)?.status ?? engineByTrade[t]?.status}
+            <div className="space-y-2.5">{group.trades.filter(t => arrange.includes(t)).map(t => <ReqCard key={t} o={o} t={t} on={on(t)} video={t === 'photography' && on('videography')} said={briefFor(o, t, plan.needsOf(o.id, t))} why={engineByTrade[t]?.reason ?? row(t)?.reason} recommendationStatus={statusForTrade(t)}
               onToggle={() => pick(t, on(t) ? 'skip' : 'need')} onOpen={() => setSheet({ edit: t })} />)}</div>
           </section>)}
         </div>
@@ -338,7 +339,7 @@ function ReqCard({ o, t, on, said = null, why = null, recommendationStatus = nul
           <span className="mt-1 block line-clamp-2 text-[11.5px] font-semibold leading-snug text-[var(--ink-3)]">{said || why || c.line}</span>
         </button>
         <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-          {recommendationStatus && <span className="rounded-full bg-[#F4EEFF] px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wide text-[#5B21B6]">{recommendationStatus === 'CORE' ? 'Core' : recommendationStatus === 'CONDITIONAL' ? 'Context-based' : recommendationStatus === 'OPTIONAL' ? 'Optional' : 'On request'}</span>}
+          {recommendationStatus && <span className="rounded-full bg-[#F4EEFF] px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wide text-[#5B21B6]">{statusLabel(recommendationStatus)}</span>}
           {video && <span className="rounded-full bg-[#F0FDF4] px-2 py-0.5 text-[9px] font-extrabold text-[#166534]">Photo + video</span>}
         </div>
         <div className="mt-2 flex items-center gap-2">
@@ -594,6 +595,7 @@ function ChooseSheet({ o, t, plan, place, on, why, video, onVideo, ensure, onClo
  * and what was chosen, once it was.
  */
 function lifecycleTitle(id) { return ({1:'Discover & define',2:'Plan & budget',3:'Book key services',4:'Pre-event coordination',5:'Logistics & procurement',6:'Setup & technical checks',7:'Guest arrival',8:'Main celebration',9:'Food & hospitality',10:'Guest departure',11:'Cleanup & teardown',12:'After the event'})[id] ?? 'Event preparation' }
+function statusLabel(status) { return ({ CORE: 'Core', ESSENTIAL: 'Essential', CONDITIONAL: 'Context-based', OPTIONAL: 'Optional', RECOMMENDED: 'Recommended', NOT_DEFAULT: 'On request' })[status] ?? 'Suggested' }
 
 function StudioEntry({ o, cur, onClose }) {
   const navigate = useNavigate()
