@@ -71,7 +71,7 @@ export default function MenuStudio() {
   }
   const setDiet = d => set({ $studioDiet: d, $diet: ['veg', 'non_veg', 'mixed', 'vegan', 'jain'].includes(d) ? [d] : [] })
   const setServe = s => { const sv = SERVES.find(x => x.id === s); set({ $serve: s, service_styles: [...new Set([...foodNeeds([ctx.way]).service_styles, ...(sv?.styles ?? [])])] }) }
-  const setWay = w => { const n = foodNeeds([w]); set({ $ways: [w], prep_location: n.prep_location, kitchen_type: n.kitchen_type, services: n.services, service_styles: [...new Set([...n.service_styles, ...(SERVES.find(x => x.id === ctx.serve)?.styles ?? [])])] }) }
+  const setWay = w => { const n = foodNeeds([w]); set({ $ways: [w], prep_location: n.prep_location, services: n.services, service_styles: [...new Set([...n.service_styles, ...(SERVES.find(x => x.id === ctx.serve)?.styles ?? [])])] }) }
   const studio = needs.$studio ?? null
   const setStudio = st => set({ $studio: st, $menu: null })
 
@@ -476,7 +476,6 @@ function Review({ cat, o, ev, place, ctx, studio, setStudio, setWay, plan, user,
           </div>
         )}
         {msg && <p className="mt-3 rounded-[14px] bg-[#FFF1F0] px-3 py-2.5 text-[12.5px] font-bold text-[#B42318]" data-offer-error>{msg}</p>}
-        {msg && ctx.way === 'restaurant' && <button type="button" onClick={() => { setWay('caterer'); setMsg(''); setPhase('idle') }} className="mt-2 h-10 w-full rounded-[14px] bg-[#F4EEFF] text-[13px] font-extrabold text-[#4C1D95]" data-way-fallback>Hire a caterer instead</button>}
         {!ready && <p className="mt-3 rounded-[14px] bg-[#FFF7E6] px-3 py-2.5 text-[12.5px] font-bold text-[#7A4B00]">Add your event’s date and place first — caterers need both to say yes.</p>}
       </div>
       <ActionBar note={phase === 'confirm' ? 'Your number stays private until you book' : `No price until ${noun}s reply — you compare and choose`}>
@@ -485,7 +484,7 @@ function Review({ cat, o, ev, place, ctx, studio, setStudio, setWay, plan, user,
         ) : (
           <div className="grid gap-1.5">
             <button type="button" disabled={!ready || ['finding', 'sending'].includes(phase)} onClick={find} className="cx-press cx-cta flex h-[56px] w-full items-center justify-center gap-2 rounded-[18px] text-[16px] font-extrabold disabled:opacity-50" data-get-offers>
-              {['finding', 'sending'].includes(phase) ? <Loader2 size={18} className="animate-spin" /> : null}{ctx.way === 'restaurant' ? 'Get restaurant offers' : ctx.way === 'cook' ? 'Get offers from cooks' : 'Get catering offers'}
+              {['finding', 'sending'].includes(phase) ? <Loader2 size={18} className="animate-spin" /> : null}{ctx.way === 'cook' ? 'Get offers from cooks' : 'Get catering offers'}
             </button>
             <button type="button" onClick={() => { plan.setPick(o.id, T, 'need'); navigate(`/o/${o.id}/plan`) }} className="h-10 rounded-[14px] text-[13px] font-extrabold text-[#4C1D95]" data-save-to-plan>Save to my plan and send later</button>
           </div>
