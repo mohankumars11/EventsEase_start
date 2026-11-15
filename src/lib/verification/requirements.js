@@ -75,6 +75,7 @@ export const TRADE_TIERS = {
   'Bridal Makeup & Hair':     [TIER.BASELINE, TIER.ALONE_WITH_CUSTOMER],
   'Cake & Desserts':          [TIER.BASELINE, TIER.FOOD],
   'Catering & Food':          [TIER.BASELINE, TIER.FOOD],
+  'Restaurant & Dining':      [TIER.BASELINE, TIER.FOOD, TIER.PREMISES], // trade #35 (2026-11-11): serves food on its own premises
   'DJ & Music':               [TIER.BASELINE],
   'Decoration & Floral':      [TIER.BASELINE, TIER.ALONE_WITH_CUSTOMER],
   'Event Lighting':           [TIER.BASELINE, TIER.PUBLIC_SAFETY],

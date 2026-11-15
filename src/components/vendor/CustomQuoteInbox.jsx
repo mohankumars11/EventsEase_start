@@ -20,7 +20,9 @@ export default function CustomQuoteInbox({ vendorId }) {
     if (!vendorId) return
     const { data } = await supabase
       .from('sambramo_quote_requests')
-      .select('id, trade_id, offering_id, service_name, event_date, start_time, end_time, service_location, canonical_demand, state, required_actions, expires_at, quote_group_id, reference_photo_url, created_at')
+      /* '*': picks up planner_brief_id and acknowledged_at once migration 210
+         is pasted, and still works before it — naming them would not. */
+      .select('*')
       .eq('vendor_id', vendorId)
       .in('state', ['VENDOR_QUOTE', 'QUOTE_ACTION_REQUIRED'])
       .or('expires_at.is.null,expires_at.gt.' + new Date().toISOString())
@@ -56,17 +58,21 @@ export default function CustomQuoteInbox({ vendorId }) {
     <section className="space-y-3" data-custom-quote-inbox>
       {flash && <p className="rounded-2xl bg-surface p-3 text-[12px] font-bold text-ink-soft">{flash}</p>}
       {requests.length > 0 && requests.map(r => (
-        <QuoteCard key={r.id} request={r} onRespond={() => setOpen(r)} />
+        <QuoteCard key={r.id} request={r} onRespond={() => setOpen(r)} onAck={async () => {
+          const { error } = await supabase.rpc('sambramo_planner_acknowledge', { p_quote_request_id: r.id })
+          setFlash(error ? error.message : 'The customer can see you are on it.'); read()
+        }} />
       ))}
       {open && open.canonical_demand?.menu && <MenuQuoteSheet request={open} busy={busy} onClose={() => setOpen(null)} onSubmit={submit} />}
-      {open && !open.canonical_demand?.menu && (/^(anchor|trades)-engine/.test(String(open.canonical_demand?.engine ?? ''))
+      {open && open.planner_brief_id && <PlannerProposalSheet request={open} busy={busy} onClose={() => setOpen(null)} onSubmit={submit} />}
+      {open && !open.planner_brief_id && !open.canonical_demand?.menu && (/^(anchor|trades)-engine/.test(String(open.canonical_demand?.engine ?? ''))
         ? <DirectedQuoteSheet request={open} busy={busy} onClose={() => setOpen(null)} onSubmit={submit} />
         : <QuoteSheet request={open} busy={busy} onClose={() => setOpen(null)} onSubmit={submit} />)}
     </section>
   )
 }
 
-function QuoteCard({ request, onRespond }) {
+function QuoteCard({ request, onRespond, onAck }) {
   const seconds = request.expires_at ? secondsLeft(request.expires_at) : null
   const demand = request.canonical_demand ?? {}
   const loc = request.service_location ?? {}
@@ -75,7 +81,7 @@ function QuoteCard({ request, onRespond }) {
   return (
     <article className="rounded-[24px] bg-white p-4 shadow-[var(--shadow-1)] ring-1 ring-hairline/10">
       <div className="flex items-center justify-between gap-3">
-        <span className="rounded-full bg-plum-50 px-2 py-1 text-[10px] font-extrabold uppercase tracking-wide text-plum-700">Instant Quote &amp; Pay</span>
+        <span className="rounded-full bg-plum-50 px-2 py-1 text-[10px] font-extrabold uppercase tracking-wide text-plum-700">{request.planner_brief_id ? 'Planning brief' : <>Instant Quote &amp; Pay</>}</span>
         {seconds != null && <span className="flex items-center gap-1 text-[11px] font-extrabold text-amber-700"><Clock3 size={12} /> {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')}</span>}
       </div>
       <h3 className="mt-2 text-[19px] font-extrabold text-ink">{request.service_name ?? request.offering_id ?? request.trade_id}</h3>
@@ -86,8 +92,14 @@ function QuoteCard({ request, onRespond }) {
       {request.reference_photo_url && <p className="mt-2 flex items-center gap-1 text-[11px] font-bold text-ink-mute"><Camera size={12} /> Reference attached</p>}
       {demand.menu ? <MenuBrief menu={demand.menu} compact /> : demand.note && <BriefNote text={demand.note} className="mt-3" />}
       {scope && <div className="mt-3 rounded-2xl bg-surface p-3 text-[11.5px] leading-relaxed text-ink-soft"><strong>Scope:</strong> {scope}</div>}
+      {/* A planner says "on it" first; the customer sees it, and it is never taken for a proposal. */}
+      {request.planner_brief_id && !request.acknowledged_at && (
+        <button type="button" onClick={onAck} className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-plum-50 py-3 text-[13px] font-extrabold text-plum-700" data-ack>
+          <CheckCircle2 size={14} /> I’m on it — proposal to follow
+        </button>
+      )}
       <button type="button" onClick={onRespond} className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-saffron-400 py-3 text-[13px] font-extrabold text-plum-950">
-        <Send size={14} /> {demand.menu ? 'Price this menu' : 'Respond with quote'}
+        <Send size={14} /> {request.planner_brief_id ? 'Send your proposal' : demand.menu ? 'Price this menu' : 'Respond with quote'}
       </button>
     </article>
   )
@@ -225,4 +237,85 @@ function Field({ label, value, onChange, suffix = '', type = 'text' }) {
 }
 function Area({ label, value, onChange, placeholder }) {
   return <label className="block rounded-2xl bg-surface p-3"><span className="block text-[10px] font-extrabold uppercase tracking-wide text-ink-mute">{label}</span><textarea rows={2} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} className="mt-1 w-full resize-none bg-transparent text-[12px] leading-relaxed outline-none" /></label>
+}
+
+/* A planner's proposal (migration 210) — structured so a customer can put
+   two planners side by side: the planning fee (the only line charged), what
+   vendors will cost as ESTIMATES that are never added to the fee, each
+   saying whether it is a Sambramo partner or a vendor of the planner's own,
+   then the approach, timeline and how it is paid. */
+function PlannerProposalSheet({ request, busy, onClose, onSubmit }) {
+  const [fee, setFee] = useState('')
+  const [approach, setApproach] = useState('')
+  const [inclusions, setInclusions] = useState('')
+  const [exclusions, setExclusions] = useState('')
+  const [vendors, setVendors] = useState([{ description: '', amount: '', source: 'sambramo_partner' }])
+  const [timeline, setTimeline] = useState('')
+  const [schedule, setSchedule] = useState('30% on booking\n70% a week before')
+  const [staffing, setStaffing] = useState('')
+  const [assumptions, setAssumptions] = useState('')
+  const lines = t => t.split('\n').map(x => x.trim()).filter(Boolean)
+  const setV = (i, patch) => setVendors(v => v.map((x, k) => (k === i ? { ...x, ...patch } : x)))
+
+  async function send() {
+    if (Number(fee) <= 0) return
+    const { data } = await supabase.auth.getSession()
+    const token = data?.session?.access_token
+    const vend = vendors.filter(v => v.description.trim()).map(v => ({ description: v.description.trim(), quantity: 1, unit: 'estimate',
+      unit_take_home_paise: Math.round((Number(v.amount) || 0) * 100), charged: false, is_estimate: true,
+      estimate_note: 'An estimate until that vendor is booked', source: v.source }))
+    await onSubmit(request.id, {
+      headers: { 'content-type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) },
+      body: {
+        lines: [{ description: 'Planning fee', quantity: 1, unit: 'event', unit_take_home_paise: Math.round(Number(fee) * 100), charged: true, source: 'planner_fee' }, ...vend],
+        inclusions: lines(inclusions).slice(0, 50), exclusions: lines(exclusions).slice(0, 50),
+        proposal: {
+          approach: approach.trim() || null, staffing: staffing.trim() || null,
+          timeline: lines(timeline).map(l => { const [when, ...what] = l.split(/\s+[—-]\s+/); return { when, what: what.join(' — ') || when } }),
+          payment_schedule: lines(schedule).map(l => { const m = l.match(/(\d+)\s*%\s*(.*)/); return m ? { pct: Number(m[1]), when: m[2] || 'on booking' } : null }).filter(Boolean),
+          assumptions: lines(assumptions),
+        },
+      },
+    })
+  }
+
+  return (
+    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/55 sm:items-center">
+      <div className="flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl bg-white sm:rounded-3xl" data-planner-proposal>
+        <div className="flex items-start justify-between gap-3 border-b border-gray-100 px-5 py-4">
+          <div><p className="text-[10px] font-extrabold uppercase tracking-wide text-plum-600">Your proposal</p><h3 className="mt-0.5 text-[18px] font-extrabold text-ink">{request.service_name}</h3></div>
+          <button onClick={onClose} aria-label="Close"><X size={19} /></button>
+        </div>
+        <div className="flex-1 space-y-3 overflow-y-auto px-5 py-4">
+          {request.canonical_demand?.note && <BriefNote text={request.canonical_demand.note} />}
+          <Field label="Your planning fee" value={fee} onChange={setFee} suffix="₹" type="number" />
+          <Area label="Your approach" value={approach} onChange={setApproach} placeholder="How you would run this celebration" />
+          <Area label="Included" value={inclusions} onChange={setInclusions} placeholder="One item per line" />
+          <Area label="Not included" value={exclusions} onChange={setExclusions} placeholder="One item per line" />
+          <div className="rounded-2xl bg-surface p-3">
+            <p className="text-[11px] font-extrabold uppercase tracking-wide text-ink-mute">What vendors will cost — estimates, not added to your fee</p>
+            {vendors.map((v, i) => (
+              <div key={i} className="mt-2 grid grid-cols-[1fr_88px] gap-1.5">
+                <input value={v.description} onChange={e => setV(i, { description: e.target.value.slice(0, 200) })} placeholder="e.g. Catering for 150" className="h-10 rounded-xl bg-white px-3 text-[13px] ring-1 ring-ink/10" />
+                <input value={v.amount} onChange={e => setV(i, { amount: e.target.value })} placeholder="₹" inputMode="numeric" className="h-10 rounded-xl bg-white px-3 text-[13px] ring-1 ring-ink/10" />
+                <select value={v.source} onChange={e => setV(i, { source: e.target.value })} className="col-span-2 h-9 rounded-xl bg-white px-2 text-[12px] ring-1 ring-ink/10">
+                  <option value="sambramo_partner">A Sambramo partner</option><option value="planner_sourced">A vendor of my own</option>
+                </select>
+              </div>
+            ))}
+            <button type="button" onClick={() => setVendors(v => [...v, { description: '', amount: '', source: 'sambramo_partner' }])} className="mt-2 text-[12px] font-extrabold text-plum-700">+ Add a vendor cost</button>
+          </div>
+          <Area label="Timeline" value={timeline} onChange={setTimeline} placeholder={'One step per line: “2 weeks before — décor finalised”'} />
+          <Area label="How you are paid" value={schedule} onChange={setSchedule} placeholder="30% on booking" />
+          <Area label="Your team on the day" value={staffing} onChange={setStaffing} placeholder="e.g. 1 lead coordinator + 3 assistants" />
+          <Area label="Assumptions" value={assumptions} onChange={setAssumptions} placeholder="One per line" />
+        </div>
+        <div className="border-t border-gray-100 p-4">
+          <button disabled={busy || Number(fee) <= 0} onClick={send} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-saffron-400 py-3 text-[13px] font-extrabold text-plum-950 disabled:opacity-50" data-send-proposal>
+            <CheckCircle2 size={15} /> {busy ? 'Sending…' : 'Send proposal'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
 }

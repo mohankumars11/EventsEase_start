@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useToast, friendlyError } from '../../context/ToastContext'
+import VegCheck from './VegCheck'
 
 /**
  * The shared dish catalogue, and the queue nobody could reach.
@@ -40,7 +41,9 @@ const Pill = ({ on, onClick, children }) => (
   </button>
 )
 
-export default function FoodCatalogueReview() {
+export default function FoodCatalogueReview({ onNavigate } = {}) {
+  const [mode, setMode] = useState('all') // 'all' | 'veg'
+  const [diet, setDiet] = useState({})    // dish id → the diet the reviewer is certifying
   const toast = useToast()
   const [rows, setRows] = useState([])
   const [total, setTotal] = useState(0)
@@ -87,6 +90,24 @@ export default function FoodCatalogueReview() {
   useEffect(() => { loadCounts() }, [loadCounts])
   useEffect(() => { setPage(0) }, [status, provenance, q])
 
+  /* Approving certifies the dish's DIET as well as the dish: since 205 a
+     reviewed veg dish is what a vegetarian customer's menu may contain.
+     So it goes through sambramo_review_dish_diet (207) with the diet the
+     reviewer chose — recorded with who and when — and never as a bare
+     status flip that certifies whatever tag happened to be there. */
+  async function approve(d) {
+    const verdict = diet[d.id] ?? d.suggested_diet
+    if (!verdict) { toast.error('Choose the diet first'); return }
+    const { error } = await supabase.rpc('sambramo_review_dish_diet', { p_dish_ids: [d.id], p_verdict: verdict })
+    if (error) {
+      toast.error(error.code === 'PGRST202' ? 'Paste migration 207 first' : friendlyError(error)); return
+    }
+    setRows(r => r.filter(x => x.id !== d.id))
+    setTotal(t => Math.max(0, t - 1))
+    loadCounts()
+    toast.success(`Approved as ${verdict.replace('_', '-')}`)
+  }
+
   async function decide(id, next) {
     const { error } = await supabase.from('sambramo_master_dishes')
       .update({ review_status: next }).eq('id', id)
@@ -123,6 +144,12 @@ export default function FoodCatalogueReview() {
         a seeded guess and a catalogue somebody trusts.
       </p>
 
+      <div className="mt-4 flex flex-wrap gap-1.5" data-food-mode>
+        <Pill on={mode === 'all'} onClick={() => setMode('all')}>All dishes</Pill>
+        <Pill on={mode === 'veg'} onClick={() => setMode('veg')}>Veg check — unlock vegetarian menus</Pill>
+      </div>
+
+      {mode === 'veg' ? <VegCheck onNavigate={onNavigate} /> : (<>
       <div className="mt-4 flex flex-wrap gap-1.5">
         {[['needs_review', 'Needs review'], ['reviewed', 'Approved'], ['rejected', 'Hidden']].map(([id, label]) => (
           <Pill key={id} on={status === id} onClick={() => setStatus(id)}>
@@ -163,8 +190,20 @@ export default function FoodCatalogueReview() {
                 </div>
                 <div className="flex shrink-0 flex-col gap-1.5">
                   {status !== 'reviewed' && (
-                    <button type="button" onClick={() => decide(d.id, 'reviewed')}
-                      className="rounded-full bg-forest-700 px-3 py-1.5 text-[11.5px] font-extrabold text-white">Approve</button>
+                    <>
+                      <select value={diet[d.id] ?? d.suggested_diet ?? ''} aria-label={`Diet of ${d.name}`}
+                        onChange={e => setDiet(m => ({ ...m, [d.id]: e.target.value }))}
+                        className="rounded-full bg-ink/[0.04] px-2 py-1.5 text-[11.5px] font-bold text-ink ring-1 ring-ink/[0.07]">
+                        <option value="" disabled>Diet…</option>
+                        <option value="veg">Pure veg</option>
+                        <option value="egg">Contains egg</option>
+                        <option value="non_veg">Non-veg</option>
+                        <option value="vegan">Vegan</option>
+                        <option value="jain">Jain</option>
+                      </select>
+                      <button type="button" onClick={() => approve(d)} disabled={!(diet[d.id] ?? d.suggested_diet)}
+                        className="rounded-full bg-forest-700 px-3 py-1.5 text-[11.5px] font-extrabold text-white disabled:opacity-40">Approve</button>
+                    </>
                   )}
                   <button type="button" onClick={() => rename(d)}
                     className="rounded-full bg-ink/[0.05] px-3 py-1.5 text-[11.5px] font-extrabold text-ink ring-1 ring-ink/[0.07]">Rename</button>
@@ -191,6 +230,8 @@ export default function FoodCatalogueReview() {
             className="rounded-full bg-ink/[0.05] px-4 py-2 text-[12.5px] font-extrabold text-ink disabled:opacity-40">Next</button>
         </div>
       )}
+
+      </>)}
 
       <p className="mt-5 text-[11.5px] leading-relaxed text-ink/45">
         Hiding a dish sets its status to rejected and keeps the row. A dish id is load-bearing —

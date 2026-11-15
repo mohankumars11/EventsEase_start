@@ -13,6 +13,8 @@ const ALIASES = {
   'Toilets & Sanitation': 'Guest Services',
   'Signage & Branding': 'Invitation & Printing',
   'Live Counters & Food Stalls': 'Catering & Food',
+  /* Trade #35 draws the catering pictogram until it has one of its own. */
+  'Restaurant & Dining': 'Catering & Food',
 }
 
 function canonicalTrade(trade) {

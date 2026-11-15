@@ -67,7 +67,7 @@ export default function AdminDashboard() {
     : activeNav === 'trade-workspaces' ? <TradeWorkspaces />
     : activeNav === 'directory' ? <PartnerDirectory />
     : activeNav === 'onboarding-review' ? <OnboardingReview />
-    : activeNav === 'food-catalogue' ? <FoodCatalogueReview />
+    : activeNav === 'food-catalogue' ? <FoodCatalogueReview onNavigate={go} />
     : activeNav === 'menu-catalogue' ? <MenuCatalogueAdmin />
     : activeNav === 'media' ? <MediaLibrary />
     : activeNav === 'orders' ? <OrdersConsole />

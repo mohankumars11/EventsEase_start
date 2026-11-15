@@ -46,8 +46,8 @@ const ok = (name, cond, d = '') => {
 }
 
 /* ── Registry ──────────────────────────────────────────────────────── */
-ok('34 trades', TRADE_CONFIGS.length === 34, `got ${TRADE_CONFIGS.length}`)
-ok('canonical order 1..34', TRADE_REGISTRY.every((r, i) => r.order === i + 1))
+ok('35 trades', TRADE_CONFIGS.length === 35, `got ${TRADE_CONFIGS.length}`)
+ok('canonical order 1..35', TRADE_REGISTRY.every((r, i) => r.order === i + 1))
 for (const k of ['id', 'code', 'name']) {
   const vals = TRADE_REGISTRY.map(r => r[k])
   ok(`registry ${k}s unique`, new Set(vals).size === vals.length)

@@ -28,6 +28,7 @@ export const SAMBRAMO_TRADE_REGISTRY_V2 = {
   E23:{pillar:'Events',internalName:'Safety & Facilities',customerLabel:'Safety & Facilities',boundary:'Toilets, first aid, barriers, waste and safety/facility equipment.'},
   E24:{pillar:'Events',internalName:'Priest & Rituals',customerLabel:'Priest & Rituals',boundary:'Ritual/ceremony delivery, traditions, languages and samagri responsibility.'},
   E25:{pillar:'Events',internalName:'Gifts & Favours',customerLabel:'Gifts & Favours',boundary:'Finished gift/hamper/return-gift SKUs; not bulk event materials or packing labour.'},
+  E27:{pillar:'Events',internalName:'Restaurant & Dining',customerLabel:'Restaurants',boundary:'Table bookings, private rooms, party halls and bulk orders from a restaurant, priced per person; cooking at the customer’s venue belongs to E01.'},
   E26:{pillar:'Events',internalName:'Trousseau & Gift Packing',customerLabel:'Trousseau & Gift Packing',boundary:'Packing/tray/tags/ribbon and packing labour; does not sell the gift itself.'},
   L01:{pillar:'Logistics',internalName:'Mini Truck / Pickup',customerLabel:'Mini Truck / Pickup',boundary:'Small goods movement with structured payload/route; no passenger service.'},
   L02:{pillar:'Logistics',internalName:'Medium / Large Goods Vehicle',customerLabel:'Medium / Large Goods Vehicle',boundary:'Heavy/bulk event cargo with payload, dimensions, access and special handling.'},

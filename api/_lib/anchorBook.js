@@ -164,9 +164,90 @@ function offerSummary(offer, resolution, fee) {
   return parts.join(' ')
 }
 
+/* ── A chosen experience (migration 208) ──────────────────────────────
+   The customer chose "Complete Story", and the phone matched it to one of
+   this partner's packages on hours and inclusions. The engine prices that
+   package by its own label (resolve_booking), so here the server checks the
+   thing that matters, on its own data, before anything is written:
+
+     · the package it PRICED is the package the customer was SHOWN
+       (request.package_id) — never a different one under the same label
+     · that package really delivers the experience — sambramo_package_fit,
+       on the package's real hours and inclusions, for the hours asked
+     · an hourly master (no package) is held to the minimum hours, and
+       cannot deliver an experience that requires an inclusion (a rate
+       cannot promise an album)
+     · décor and the like (VISUAL_SPECIFICATION): nothing can be checked,
+       so the experience travels with the request as the customer's intent
+
+   Returns null when no experience was chosen, so nothing changes for a
+   request that does not ask for one. The result is put on the resolution,
+   which lineFrom spreads into pricing_snapshot — the experience, its
+   version and the verdict are frozen on the line with the price. */
+/* The package as it stood when it was checked — what the booking keeps.
+   Never the partner's take-home: this travels to the customer's phone in
+   `out`, and what a partner keeps is not the customer's business. */
+async function packageSnapshot(db, id) {
+  if (!id) return null
+  const { data: p } = await db.from('sambramo_trade_packages')
+    .select('id, name, status, listing_version_id, commercial_inputs, trade_inputs, updated_at').eq('id', id).maybeSingle()
+  if (!p) return null
+  return { id: p.id, name: p.name, label: p.commercial_inputs?.tier ?? null, status: p.status, listing_version_id: p.listing_version_id,
+    coverage_hours: Number(p.trade_inputs?.duration_hours) || null,
+    inclusions: Array.isArray(p.commercial_inputs?.inclusions) ? p.commercial_inputs.inclusions : [], updated_at: p.updated_at }
+}
+
+/* Shown one package, priced another: a different package under the same
+   label, or none at all (a rate the engine fell back to). Checked for EVERY
+   request that names a package, experience or not — the customer must pay
+   for exactly what they were shown. Old apps send no package_id and are
+   not affected. */
+const shownIsNotPriced = (r, resolution) => !!r?.package_id && r.package_id !== resolution?.package_id
+
+export async function experienceFit(db, resolution, r) {
+  const e = r?.experience
+  if (!e?.tier || !e?.trade) return null
+  const { data: t } = await db.from('sambramo_experience_tiers')
+    .select('trade_id, tier, name, model, min_hours, required_inclusions, version')
+    .eq('trade_id', String(e.trade)).eq('tier', String(e.tier).toUpperCase()).eq('active', true).maybeSingle()
+  if (!t) return { ok: false, gaps: [{ need: 'experience', want: e.tier }], tier: e.tier, trade: e.trade }
+  const asked = Number(e.hours) || null
+  // The criteria as they were when checked: the experience's version names them, these spell them out.
+  const base = { trade: t.trade_id, tier: t.tier, name: t.name, version: t.version, model: t.model,
+    min_hours: Number(t.min_hours) || null, required_inclusions: t.required_inclusions ?? [],
+    asked_hours: asked, checked_at: new Date().toISOString() }
+  if (t.model !== 'PARTNER_PACKAGE') return { ...base, ok: true, kind: 'intent', gaps: [] }
+
+  /* Shown a package, priced something else — a different package under the
+     same label, or no package at all (a rate or catalogue line the engine
+     fell back to). Either way it is not what the customer chose. */
+  if (shownIsNotPriced(r, resolution)) {
+    return { ...base, ok: false, kind: 'package', gaps: [{ need: 'package', want: r.package_id, have: resolution.package_id ?? null }] }
+  }
+  if (resolution.package_id) {
+    const [{ data, error }, pkg] = await Promise.all([
+      db.rpc('sambramo_package_fit', { p_package_id: resolution.package_id, p_trade_id: t.trade_id, p_tier: t.tier, p_hours: asked }),
+      packageSnapshot(db, resolution.package_id),
+    ])
+    const f = data?.[0]
+    return { ...base, ok: !error && !!f?.qualifies, kind: 'package', package_id: resolution.package_id,
+      package: pkg, coverage_hours: pkg?.coverage_hours ?? null,
+      gaps: error ? [{ need: 'check_failed' }] : (f?.gaps ?? []) }
+  }
+  /* An hourly master: what is BOOKED must cover the higher of the
+     experience's minimum and what the customer asked for. (Taking the max
+     of booked and asked here would let a 2-hour booking pass a 6-hour ask.) */
+  const booked = Number(r.hours) || 0
+  const want = Math.max(Number(t.min_hours) || 0, asked ?? 0)
+  const gaps = []
+  if (!(booked >= want)) gaps.push({ need: 'hours', want, have: booked || null })
+  for (const x of t.required_inclusions ?? []) gaps.push({ need: 'inclusion', want: x })
+  return { ...base, ok: gaps.length === 0, kind: 'rate', coverage_hours: Number(r.hours) || null, gaps }
+}
+
 /* The line the database writes, from one resolution — the first master's
    and every backup's are built the same way, so a hop is like-for-like. */
-function lineFrom(resolution, { requestId, serviceId, name, trade, note, fee, r, list, listAdv, margin, city }) {
+export function lineFrom(resolution, { requestId, serviceId, name, trade, note, fee, r, list, listAdv, margin, city }) {
   const quoted = resolution.customer_paise
   const partner = resolution.take_home_paise
   return {
@@ -194,12 +275,16 @@ function lineFrom(resolution, { requestId, serviceId, name, trade, note, fee, r,
  * master does not win every time and a newer one gets a fair turn.
  * Only masters the engine can book instantly for this exact request.
  */
-async function priceBackups(db, raw, { r, first, vendorId, requestId, note, city, tradeCode }) {
+export async function priceBackups(db, raw, { r, first, vendorId, requestId, note, city, tradeCode }) {
   const asked = (Array.isArray(raw) ? raw : []).map(b => (typeof b === 'string' ? { serviceId: b } : b))
     /* Each backup carries its OWN request — its menu, package or item —
        with the event, place and guests the server checks against the first. */
     .map(b => ({ serviceId: clean(b?.serviceId, 60), chosenBy: b?.chosenBy === 'sambramo' ? 'sambramo' : 'customer',
-      request: b?.request && typeof b.request === 'object' ? { ...b.request, event_date: r.event_date, start_time: r.start_time, lat: r.lat, lng: r.lng, guests: r.guests } : r }))
+      request: b?.request && typeof b.request === 'object'
+        ? { ...b.request, event_date: r.event_date, start_time: r.start_time, lat: r.lat, lng: r.lng, guests: r.guests,
+            // The experience belongs to the requirement, not to one master: every backup is held to it.
+            ...(r.experience ? { experience: r.experience } : {}) }
+        : r }))
     .filter(b => b.serviceId && b.serviceId !== first)
   const seen = new Set()
   const out = []
@@ -209,6 +294,12 @@ async function priceBackups(db, raw, { r, first, vendorId, requestId, note, city
     const { data: res, error } = await db.rpc('resolve_booking', { p_vendor_service_id: b.serviceId, p_req: b.request })
     // Same trade only: a backup photographer is not a backup caterer.
     if (error || res?.path !== 'INSTANT' || !res.vendor_id || res.vendor_id === vendorId || (tradeCode && res.trade_code && res.trade_code !== tradeCode)) continue
+    /* A backup that does not deliver the chosen experience is dropped, not
+       demoted: a hop must never land the customer on something shorter. */
+    if (shownIsNotPriced(b.request, res)) continue
+    const fit = await experienceFit(db, res, b.request)
+    if (fit && !fit.ok) continue
+    if (fit) res.experience_fit = fit
     const code = res.trade_code ?? 'E16'
     const margin = marginPct(code, city)
     const list = toListAt(res.customer_paise, margin)
@@ -229,17 +320,18 @@ async function priceBackups(db, raw, { r, first, vendorId, requestId, note, city
   return [...out.filter(b => b.chosen_by === 'customer'), ...auto].slice(0, 3)
 }
 
-export default async function handler(req, res) {
-  if (cors(req, res)) return
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
-  if (!url || !serviceKey) return res.status(500).json({ error: 'Supabase not configured' })
-
-  const db = createClient(url, serviceKey, { auth: { persistSession: false } })
-  const body = req.body ?? {}
-  const vendorServiceId = clean(body.vendorServiceId, 60)
-  const r = body.request && typeof body.request === 'object' ? body.request : null
-  if (!vendorServiceId || !r) return res.status(400).json({ error: 'vendorServiceId and request are required.' })
-
+/**
+ * Price one request the way a booking would — the engine, the Sambramo
+ * margin, shown-is-priced, the experience — and nothing more: no login, no
+ * write. The single booking path and the offer board (api/_lib/offers.js)
+ * both call this, so the price on a card and the price at checkout come
+ * from one function and cannot drift apart.
+ *
+ * Returns { resolution, out, ctx, stop }: `out` is what the phone may see
+ * (no take-home), `resolution` stays in the partner's terms for the line,
+ * `stop` means "refused — answer with out and write nothing".
+ */
+export async function priceOffer(db, { vendorServiceId, r, venue = {} }) {
   let { data: resolution, error: resErr } = await db.rpc('resolve_booking', {
     p_vendor_service_id: vendorServiceId, p_req: r,
   })
@@ -248,7 +340,7 @@ export default async function handler(req, res) {
   if (resErr?.code === 'PGRST202' || /resolve_booking/.test(resErr?.message ?? '')) {
     ;({ data: resolution, error: resErr } = await db.rpc('resolve_anchor_booking', { p_vendor_service_id: vendorServiceId, p_req: r }))
   }
-  if (resErr) return res.status(500).json({ error: resErr.message })
+  if (resErr) return { error: resErr.message }
   const out = { ...resolution, reasons_text: (resolution.reasons ?? []).map(explain) }
   const TRADE = resolution.trade_name ?? 'Anchor & MC'
   const TRADE_CODE = resolution.trade_code ?? 'E16'
@@ -260,12 +352,52 @@ export default async function handler(req, res) {
      is what the line's quote, share and fee are written from; `out` is what
      the phone sees. The partner's take-home is not the customer's business. */
   await loadMarginOverrides(db)
-  const CITY = clean(body.venue?.city, 120) ?? clean(r.city, 120)
+  const CITY = clean(venue?.city, 120) ?? clean(r.city, 120)
   const MARGIN = marginPct(TRADE_CODE, CITY)
   const LIST = toListAt(resolution.customer_paise, MARGIN)
   const LIST_ADV = Number(resolution.advance_paise) > 0 ? Math.min(LIST, toListAt(resolution.advance_paise, MARGIN)) : null
   if (LIST) Object.assign(out, { customer_paise: LIST, base_paise: resolution.customer_paise, advance_paise: LIST_ADV ?? out.advance_paise, margin_pct: MARGIN })
   delete out.take_home_paise
+  const ctx = { TRADE, TRADE_CODE, FEE, slug, CITY, MARGIN, LIST, LIST_ADV }
+
+  if (shownIsNotPriced(r, resolution)) {
+    out.path = 'NOT_QUALIFIED'
+    out.reasons = [...(out.reasons ?? []), 'package_changed']
+    out.reasons_text = ['The package you were shown is not the one this master offers now.', ...(out.reasons_text ?? [])]
+    return { resolution, out, ctx, stop: true }
+  }
+  const fit = await experienceFit(db, resolution, r)
+  if (fit) {
+    resolution.experience_fit = fit
+    out.experience_fit = fit
+    if (!fit.ok) {
+      /* Not "the closest package, sold as the experience": this partner
+         simply does not offer it at a fixed price. Nothing is written. */
+      out.path = 'NOT_QUALIFIED'
+      out.reasons = [...(out.reasons ?? []), 'experience_not_delivered']
+      out.reasons_text = [`This package does not deliver ${fit.name ?? 'the experience you chose'}.`, ...(out.reasons_text ?? [])]   // first: checkout shows [0]
+      return { resolution, out, ctx, stop: true }
+    }
+  }
+  return { resolution, out, ctx, stop: false }
+}
+
+export default async function handler(req, res) {
+  if (cors(req, res)) return
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
+  if (!url || !serviceKey) return res.status(500).json({ error: 'Supabase not configured' })
+
+  const db = createClient(url, serviceKey, { auth: { persistSession: false } })
+  const body = req.body ?? {}
+  const vendorServiceId = clean(body.vendorServiceId, 60)
+  const r = body.request && typeof body.request === 'object' ? body.request : null
+  if (!vendorServiceId || !r) return res.status(400).json({ error: 'vendorServiceId and request are required.' })
+
+  const pre = await priceOffer(db, { vendorServiceId, r, venue: body.venue })
+  if (pre.error) return res.status(500).json({ error: pre.error })
+  const { resolution, out } = pre
+  const { TRADE, TRADE_CODE, FEE, slug, CITY, MARGIN, LIST, LIST_ADV } = pre.ctx
+  if (pre.stop) return res.status(200).json(out)
   if (body.preview) return res.status(200).json(out)
 
   /* A customer's offer. Bounded so a typo cannot read as an insult or a
@@ -365,9 +497,20 @@ export default async function handler(req, res) {
   /* Compare (LiveMatch "Compare & negotiate"): the same brief to several
      masters shares one group, so accepting one closes the others
      (accept-custom-quote). A uuid from the phone, checked here. */
-  const group = /^[0-9a-f-]{36}$/i.test(String(body.quoteGroup ?? '')) ? body.quoteGroup : null
+  let group = /^[0-9a-f-]{36}$/i.test(String(body.quoteGroup ?? '')) ? body.quoteGroup : null
+  /* A planner brief (migration 210): the request belongs to the customer's
+     own SENT brief, and its group is the brief's — taken from the database,
+     never from the phone, so a planner's proposal can only ever be accepted
+     against the brief it answered. */
+  let briefId = null
+  if (/^[0-9a-f-]{36}$/i.test(String(body.plannerBriefId ?? ''))) {
+    const { data: br } = await db.from('sambramo_planner_briefs').select('id, quote_group_id, status')
+      .eq('id', body.plannerBriefId).eq('customer_id', customerId).maybeSingle()
+    if (!br || br.status !== 'sent' || !br.quote_group_id) return res.status(409).json({ error: 'Send your planning brief first.' })
+    briefId = br.id; group = br.quote_group_id
+  }
   const { data: q, error: qErr } = await db.from('sambramo_quote_requests').insert({
-    quote_group_id: group,
+    quote_group_id: group, planner_brief_id: briefId,
     customer_id: customerId, vendor_id: resolution.vendor_id ?? svc?.vendor_id, vendor_service_id: vendorServiceId,
     trade_id: TRADE_CODE, offering_id: vendorServiceId, service_name: svc?.name ?? TRADE,
     event_date: r.event_date, start_time: clean(r.start_time, 20), end_time: null,

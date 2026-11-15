@@ -17,6 +17,8 @@ const money = value => {
 }
 const list = value => Array.isArray(value) ? value.map(x => String(x).trim()).filter(Boolean).slice(0, 50) : []
 
+const SOURCES = new Set(['planner_fee', 'sambramo_partner', 'planner_sourced'])
+
 export default async function handler(req, res) {
   if (cors(req, res)) return
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
@@ -27,6 +29,20 @@ export default async function handler(req, res) {
   if (authn.error) return res.status(401).json({ error: 'Authentication required' })
 
   const body = req.body ?? {}
+  /* A planner's structured proposal (migration 210): shapes, not free text,
+     so two planners can be compared side by side. Absent for every other
+     quote — and then nothing about the response changes. */
+  const txt = (v, n) => (typeof v === 'string' && v.trim() ? v.trim().slice(0, n) : null)
+  const rows = (v, n) => (Array.isArray(v) ? v.slice(0, n) : [])
+  const proposal = body.proposal && typeof body.proposal === 'object' ? {
+    approach: txt(body.proposal.approach, 1000), vendor_approach: txt(body.proposal.vendor_approach, 500),
+    staffing: txt(body.proposal.staffing, 300), responsibilities: txt(body.proposal.responsibilities, 500),
+    cancellation: txt(body.proposal.cancellation, 500),
+    timeline: rows(body.proposal.timeline, 12).map(t => ({ when: txt(t?.when, 40), what: txt(t?.what, 120) })).filter(t => t.when && t.what),
+    payment_schedule: rows(body.proposal.payment_schedule, 6).map(t => ({ when: txt(t?.when, 40), pct: Math.max(0, Math.min(100, Math.round(Number(t?.pct) || 0))) })).filter(t => t.when && t.pct),
+    assumptions: rows(body.proposal.assumptions, 10).map(a => txt(a, 160)).filter(Boolean),
+  } : null
+  if (proposal && proposal.payment_schedule.reduce((n, t) => n + t.pct, 0) > 100) return res.status(400).json({ error: 'The payment schedule adds up to more than 100%.' })
   const quoteRequestId = String(body.quoteRequestId ?? '')
 
   /* Line items, when sent, ARE the quote: the total is computed here from
@@ -44,6 +60,9 @@ export default async function handler(req, res) {
     is_estimate: !!l.is_estimate,
     is_discount: !!l.is_discount,
     estimate_note: l.is_estimate ? String(l.estimate_note ?? '').trim().slice(0, 300) || null : null,
+    /* Whose money the line is (migration 210) — only when given, so a
+       quote from a partner who never sends it writes exactly what it did. */
+    ...(SOURCES.has(l.source) ? { source: l.source } : {}),
   })) : null
   if (lines) {
     if (lines.some(l => !l.description)) return res.status(400).json({ error: 'Every line needs a description.' })
@@ -169,6 +188,7 @@ export default async function handler(req, res) {
       exclusions: list(body.exclusions),
       quote_valid_until: validUntil,
       notes: String(body.notes ?? '').trim().slice(0, 4000) || null,
+      ...(proposal ? { proposal } : {}),
       customer_amount_paise: customerAmountPaise,
       platform_fee_rate: feeRate,
       platform_fee_paise: platformFeePaise,

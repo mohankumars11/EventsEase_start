@@ -35,7 +35,12 @@ test('catalogue: 18 categories, 438 unique occasions, 34 trades, full matrix', (
   assert.equal(E.CATEGORIES.length, 18)
   assert.equal(new Set(E.OCCASIONS.map(o => o.id)).size, 438)
   assert.equal(E.TRADE_ORDER.length, 34)
-  assert.deepEqual([...E.TRADE_ORDER].sort(), E.TRADES.map(t => t.id).sort())
+  /* The 360° matrix predates trade #35 (Restaurant & Dining, 2026-11-11):
+     every matrix trade is a customer trade, and the only customer trade
+     outside the matrix is the restaurant, which the blueprints place. */
+  const ids = E.TRADES.map(t => t.id)
+  for (const t of E.TRADE_ORDER) assert.ok(ids.includes(t), `matrix trade ${t} is not a customer trade`)
+  assert.deepEqual(ids.filter(t => !E.TRADE_ORDER.includes(t)), ['restaurant'])
   assert.equal(Object.keys(E.BASELINE).length, 438)
   for (const o of E.OCCASIONS) {
     const codes = E.BASELINE[o.id]

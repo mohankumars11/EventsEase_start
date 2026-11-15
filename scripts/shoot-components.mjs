@@ -126,6 +126,24 @@ await esbuild.build({
       VITE_SURFACE: 'partner', MODE: 'production', DEV: false, PROD: true,
     }),
   },
+  /* ── import.meta.glob ──────────────────────────────────────────────
+     Vite's, not JavaScript's: esbuild cannot compile it, and a scene
+     that imports anything reaching data/art.js dies before mounting
+     with "(intermediate value).glob is not a function". The glob there
+     collects the occasion artwork by filename; a harness has no bundler
+     to resolve those URLs anyway, so it becomes an empty map and the
+     art falls back to its tone, exactly as it does for an occasion that
+     has no picture yet. */
+  plugins: [{
+    name: 'strip-import-meta-glob',
+    setup(b) {
+      b.onLoad({ filter: /\.jsx?$/ }, async args => {
+        const src = readFileSync(args.path, 'utf8')
+        if (!src.includes('import.meta.glob')) return null
+        return { contents: src.replace(/import\.meta\.glob\([^)]*\)/g, '({})'), loader: 'jsx' }
+      })
+    },
+  }],
   absWorkingDir: ROOT,
   /* The entry is written to a temp dir, so esbuild would look for
      node_modules beside THAT and find nothing. Resolution follows the

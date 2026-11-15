@@ -69,7 +69,7 @@ const sample = (r, xs, n) => { const a = [...xs]; const out = []; while (a.lengt
  * Real partners are untouched: these rows hang off synthetic vendors only. */
 const LICENCES = {
   bar_beverages: ['FSSAI'], catering_food: ['FSSAI'], power_cooling: ['ELECTRICAL'], security_services: ['PSARA'],
-  valet_parking: ['DL'], venue: ['PROPERTY'],
+  valet_parking: ['DL'], venue: ['PROPERTY'], restaurant: ['FSSAI'],
   medium_large_goods_vehicle: ['RC', 'INSURANCE', 'DL'], mini_truck_pickup: ['RC', 'INSURANCE', 'DL'], passenger_transport: ['RC', 'INSURANCE', 'DL'],
 }
 async function acceptLicences(vendorId, c) {
@@ -173,7 +173,7 @@ function numberFor(r, q, c) {
 const realOptions = (q, c) => (q.options ?? []).filter(o => !/^other/i.test(o.id) && !/^other/i.test(o.label ?? '') && o.id !== 'none'
   && !(q.id === 'service_type' && c.redirects && o.id in c.redirects))
 function textFor(r, q, p) {
-  if (/venue_name|display_name|business_name/.test(q.id)) return p.name
+  if (/venue_name|restaurant_name|display_name|business_name/.test(q.id)) return p.name
   if (/registration/.test(q.id)) return `KA-0${1 + Math.floor(r() * 5)}-${pick(r, ['AB', 'MN', 'EF', 'HJ'])}-${1000 + Math.floor(r() * 8999)}`
   if (/damage/.test(q.id)) return 'Damage beyond normal wear is charged at repair cost, assessed together at pickup.'
   if (/routes/.test(q.id)) return 'Across Bengaluru; outstation within 300 km on request.'
@@ -202,7 +202,7 @@ function answer(r, q, c, p, price) {
 
 const RULE = { TIME_PERFORMER: 'hour', PERSONAL_SERVICE: 'per_person', STAFFING: 'per_staff_hour', PER_GUEST_FOOD: 'per_guest',
   TRIP_VEHICLE: 'per_trip', STORAGE_CAPACITY: 'capacity_period', PROJECT_QUOTE: 'fixed' }
-const PRICE_FIELDS = ['price', 'unit_price', 'rate', 'fee', 'per_piece', 'base_rate']
+const PRICE_FIELDS = ['price', 'unit_price', 'rate', 'fee', 'per_piece', 'base_rate', 'price_per_person']
 
 function listingFor(c, p, r) {
   const t = TRADES[c.id]

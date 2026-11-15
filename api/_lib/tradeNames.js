@@ -13,7 +13,7 @@ export const TRADE_NAMES = Object.freeze({
   E12: 'Transportation', E13: 'Event Lighting', E14: 'Cake & Desserts', E15: 'Mehendi Artist',
   E16: 'Anchor & MC', E17: 'Sound & AV', E18: 'Valet Parking', E19: 'Security Services',
   E20: 'Bar & Beverages', E21: 'Guest Services', E22: 'Power & Cooling', E23: 'Safety & Facilities',
-  E24: 'Priest & Rituals', E25: 'Gifts & Favours', E26: 'Trousseau & Gift Packing',
+  E24: 'Priest & Rituals', E25: 'Gifts & Favours', E26: 'Trousseau & Gift Packing', E27: 'Restaurant & Dining',
   L01: 'Mini Truck / Pickup', L02: 'Medium / Large Goods Vehicle', L03: 'Passenger Transport',
   L04: 'Event Equipment Rental', L05: 'Loading & Unloading Crew', L06: 'Warehouse / Storage',
   L07: 'Event Materials Supplier', L08: 'End-to-End Event Logistics',

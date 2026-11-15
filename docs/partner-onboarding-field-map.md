@@ -5,12 +5,12 @@ Do not edit by hand — re-run the script after changing a trade spec.
 
 ## Totals
 
-- Trades: **34**
-- Onboarding questions (profile screens): **381**
-- Catalogue sub-form fields (repeating items): **250**
-- Required questions: **158**
-- Conditional questions: **17**
-- Trades with a catalogue sub-form: **24**
+- Trades: **35**
+- Onboarding questions (profile screens): **401**
+- Catalogue sub-form fields (repeating items): **259**
+- Required questions: **166**
+- Conditional questions: **20**
+- Trades with a catalogue sub-form: **25**
 
 ## Where answers live today
 
@@ -123,11 +123,12 @@ onboarding answers.
 
 ### catering_food
 
-`catering_food.js` · 12 profile questions · no catalogue
+`catering_food.js` · 13 profile questions · no catalogue
 
 | Section | Field key | Label | Type | SQL | Req | Validation | Conditional |
 |---|---|---|---|---|---|---|---|
 | profile | `services` | What catering services do you provide? | multi | `TEXT[]` | yes | allows "other" |  |
+| profile | `kitchen_type` | What kind of food business are you? | multi | `TEXT[]` |  |  |  |
 | profile | `prep_location` | Where is your food prepared? | single | `TEXT` | yes |  |  |
 | profile | `service_styles` | How do you serve food? | multi | `TEXT[]` | yes | allows "other" |  |
 | profile | `service_area` | Where can you provide catering? | single | `TEXT` |  |  |  |
@@ -619,6 +620,41 @@ onboarding answers.
 | catalogue/ceremonies | `priests` | Priests needed | number | `NUMERIC` | yes | min 1, max 20 |  |
 | catalogue/ceremonies | `fee` | Dakshina / fee | money | `BIGINT` | yes |  |  |
 | catalogue/ceremonies | `materials_fee` | Materials (shown separately) | money | `BIGINT` |  |  |  |
+
+### restaurant
+
+`restaurant.js` · 19 profile questions · 9 catalogue fields
+
+| Section | Field key | Label | Type | SQL | Req | Validation | Conditional |
+|---|---|---|---|---|---|---|---|
+| profile | `restaurant_name` | Restaurant name | text | `TEXT` | yes | max 80 |  |
+| profile | `cuisines` | Cuisines you serve | multi | `TEXT[]` | yes | allows "other" |  |
+| profile | `diet` | Food you serve | single | `TEXT` | yes |  |  |
+| profile | `dining_modes` | How can a celebration book you? | multi | `TEXT[]` | yes |  |  |
+| profile | `meal_formats` | What can you offer a group? | multi | `TEXT[]` | yes | allows "other" |  |
+| profile | `events` | Celebrations you host | multi | `TEXT[]` |  | allows "other" |  |
+| profile | `photos` | Photos of the restaurant and the food | photos | `TEXT[]` | yes | min 3, max 30 |  |
+| profile | `seating_capacity` | Seats in the restaurant | number | `NUMERIC` | yes | min 4, max 5000, unit seats |  |
+| profile | `private_room_capacity` | Private room / hall capacity | number | `NUMERIC` |  | min 0, max 2000, unit guests | dining_modes includes private_dining_room |
+| profile | `delivery_radius_km` | Bulk orders delivered within | number | `NUMERIC` |  | min 1, max 100, unit km | dining_modes includes bulk_order_delivered |
+| profile | `min_order_guests` | Minimum guests for a bulk order | number | `NUMERIC` |  | min 1, max 5000 | dining_modes includes bulk_order_delivered |
+| profile | `open_hours` | Opening hours | text | `TEXT` |  | max 60 |  |
+| profile | `facilities` | Facilities | multi | `TEXT[]` |  | allows "other" |  |
+| profile | `alcohol` | Alcohol served (licensed) | toggle | `BOOLEAN` |  |  |  |
+| rules | `advance_notice_hours` | Notice you need for a group booking | number | `NUMERIC` | yes | min 1, max 240, unit hours |  |
+| rules | `outside_cake` | Guests may bring their own cake | toggle | `BOOLEAN` |  |  |  |
+| rules | `decor_allowed` | Guests may decorate the table or room | toggle | `BOOLEAN` |  |  |  |
+| rules | `music_allowed` | Guests may play their own music | toggle | `BOOLEAN` |  |  |  |
+| rules | `max_hours` | Longest a group may hold the table or room | number | `NUMERIC` |  | min 1, max 12, unit hours |  |
+| catalogue/packages | `name` | Package name | text | `TEXT` | yes | max 60 |  |
+| catalogue/packages | `format` | Format | single | `TEXT` | yes |  |  |
+| catalogue/packages | `diet` | Diet | single | `TEXT` | yes |  |  |
+| catalogue/packages | `courses` | Courses | number | `NUMERIC` |  | min 1, max 12 |  |
+| catalogue/packages | `includes` | What it includes | textarea | `TEXT` |  | max 400 |  |
+| catalogue/packages | `price_per_person` | Price per person | money | `BIGINT` | yes |  |  |
+| catalogue/packages | `min_guests` | Minimum guests | number | `NUMERIC` | yes | min 1, max 5000 |  |
+| catalogue/packages | `max_guests` | Maximum guests | number | `NUMERIC` |  | min 1, max 5000 |  |
+| catalogue/packages | `photos` | Photos | photos | `TEXT[]` |  | min 0, max 8 |  |
 
 ### safety_facilities
 

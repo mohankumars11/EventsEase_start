@@ -193,6 +193,12 @@ export default async function handler(req, res) {
     const line = { id: booked.line_id }
 
     await db.from('sambramo_quote_responses').update({ status: 'ACCEPTED' }).eq('id', response.id)
+    /* A planner's proposal (migration 210): accepting it opens the
+       engagement, pending until the planning fee is paid — the trigger on
+       booking_lines then makes the planner the event's planner. Not a
+       planner brief → the function returns null and nothing happens. */
+    await db.rpc('sambramo_open_planner_engagement', { p_quote_request_id: request.id, p_response_id: response.id,
+      p_booking_line_id: booked?.line_id ?? null }).then(() => {}, () => {})
     /* The customer's approval of the final menu (migration 200 — until it is
        pasted these writes fail quietly; the booking itself is unaffected). */
     const menu = demand.menu
