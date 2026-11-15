@@ -19,18 +19,37 @@ export async function authHeaders() {
 }
 
 /** @returns {Promise<{ok:boolean, error?:string, dismissed?:boolean, external?:boolean}>} */
-export async function payLines({ lineIds, part = 'advance', description = 'Your booking' }) {
+/**
+ * What each paid line still owes (part 'balance'), as the server works it
+ * out — price, less any offer, less what escrow holds. Opens no order.
+ * @returns {Promise<Record<string, number>>} line id → paise
+ */
+export async function owedOn(lineIds) {
+  if (!lineIds?.length) return {}
+  const uid = (await supabase.auth.getUser()).data.user?.id
+  if (!uid) return {}
+  const res = await fetch(apiUrl('/api/create-booking-payment'), {
+    method: 'POST', headers: await authHeaders(),
+    body: JSON.stringify({ customerId: uid, lineIds, part: 'balance', preview: true }),
+  }).catch(() => null)
+  const body = res?.ok ? await res.json().catch(() => null) : null
+  return Object.fromEntries((body?.lines ?? []).map(l => [l.id, Number(l.due) || 0]))
+}
+
+export async function payLines({ lineIds, part = 'advance', description = 'Your booking', voucherId = null, full = false, token = false }) {
   const uid = (await supabase.auth.getUser()).data.user?.id
   if (!uid) return { ok: false, error: 'Please sign in again to pay.' }
 
   const res = await fetch(apiUrl('/api/create-booking-payment'), {
     method: 'POST', headers: await authHeaders(),
-    body: JSON.stringify({ customerId: uid, lineIds, part }),
+    // voucherId: the server checks it and takes the saving off the order (migration 193).
+    // token: block the date with 10% — the server decides the amount (listPrice.canToken).
+    body: JSON.stringify({ customerId: uid, lineIds, part, ...(voucherId ? { voucherId } : {}), ...(full ? { full: true } : {}), ...(token && !full ? { token: true } : {}) }),
   })
   const raw = await res.text()
   let body
   try { body = JSON.parse(raw) } catch { return { ok: false, error: `Payment service error (${res.status}).` } }
-  if (!res.ok) return { ok: false, error: body.error ?? body.detail ?? 'Could not start the payment.' }
+  if (!res.ok) return { ok: false, error: body.error ?? body.detail ?? 'Could not start the payment.', code: body.code ?? null }
 
   if (body.provider === 'mock' && body.mockSettleUrl) {
     await fetch(body.mockSettleUrl, { method: 'POST' })

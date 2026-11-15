@@ -1,0 +1,213 @@
+/**
+ * The customer app.
+ *
+ * Built on the partner branch (6c450a8) and reading only what the partner
+ * app publishes. The previous customer screens (pages/HomeScreen, /plan,
+ * /celebrate, /services…) are not used on this surface: App.jsx sends
+ * every customer path here except the shared doors listed in
+ * LEGACY_PATHS — sign-in, the auth callback, the payment bridge, and the
+ * partner and operator routes, which keep working on any host exactly as
+ * before.
+ *
+ * Four tabs (Home, Services, My Bookings, Account). The plan bar floats above them
+ * whenever a partner has been picked; focused screens (an occasion, a
+ * partner, checkout) hide the tabs and carry their own action bar.
+ */
+import { installExternalLinks } from './lib/share'
+import { installPressHaptics } from './lib/haptic'
+import { lazy, Suspense, useEffect, useState } from 'react'
+import { Navigate, Route, Routes, useLocation, useSearchParams } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
+import { PlanProvider } from './state/PlanContext'
+import { PlanBar, TabBar } from './ui/kit'
+import Home from './screens/Home'
+import Onboarding, { forgetOnboarding, onboardFlags } from './screens/Onboarding'
+import { forgetWhere, savedWhere } from './lib/where'
+import { loadRules } from './lib/eventPlans'
+import { setActiveRules } from './lib/recommend360'
+import { flushConsent } from './lib/rewards'
+import './cx.css'
+
+/* Screens load on their own, but never on the tap: right after Home has
+   painted, each screen's code is fetched in the background, one after
+   another in idle time, most-visited first. Once a screen's module is in,
+   `screen()` renders it directly — no Suspense fallback, no spinner flash —
+   so every tap opens its page in the same frame. */
+const PRELOAD = []
+function screen(factory, pick = m => m.default) {
+  let Comp = null
+  const load = () => factory().then(m => { Comp = pick(m); return m })
+  const Lazy = lazy(() => load().then(() => ({ default: Comp })))
+  /* Decided once per mount: a page that opened through Lazy stays on it, so
+     the module arriving mid-visit never swaps the component and wipes the page. */
+  function Screen(props) { const [Direct] = useState(() => Comp); return Direct ? <Direct {...props} /> : <Lazy {...props} /> }
+  PRELOAD.push(load)
+  return Screen
+}
+const Search = screen(() => import('./screens/Search'))
+const Trade = screen(() => import('./screens/Trade'))
+/* One screen for the event and its plan, then live matching (2026-11-01).
+   Occasion.jsx and Recommend.jsx stay for their exports; their routes moved here. */
+const EventFlow = screen(() => import('./screens/EventFlow'))
+const LiveMatch = screen(() => import('./screens/LiveMatch'))
+const EventPlan = screen(() => import('./screens/EventPlan'))
+const Preferences = screen(() => import('./screens/Preferences'))
+const Venues = screen(() => import('./screens/Venues'))
+const Restaurants = screen(() => import('./screens/Restaurants'))
+const EventBoard = screen(() => import('./screens/EventBoard'))
+const MenuStudio = screen(() => import('./screens/MenuStudio'))
+const Services = screen(() => import('./screens/Small'), m => m.Services)
+const Plans = screen(() => import('./screens/Plans'))
+const Account = screen(() => import('./screens/Account'))
+const Category = screen(() => import('./screens/Category'))
+const Needs = screen(() => import('./screens/Needs'))
+const Brief = screen(() => import('./screens/Brief'))
+const SoloBrief = screen(() => import('./screens/SoloBrief'))
+/* Book a service: with an occasion the brief is that occasion's; without
+   one it first asks what the day is, then asks the same occasion-aware
+   questions a celebration would (Mohan, 2026-11-13). */
+function BriefGate() { const [q] = useSearchParams(); return q.get('o') ? <Brief /> : <SoloBrief /> }
+const Match = screen(() => import('./screens/Match'))
+const Partner = screen(() => import('./screens/Partner'))
+const InvitesList = screen(() => import('./screens/Invites'), m => m.InvitesList)
+const InviteNew = screen(() => import('./screens/InviteNew'))
+const InviteHost = screen(() => import('./screens/InviteHost'))
+const InviteEdit = screen(() => import('./screens/Invites'), m => m.InviteEdit)
+const Explore = screen(() => import('./screens/Explore'))
+const Family = screen(() => import('./screens/Family'))
+const Notifications = screen(() => import('./screens/Small'), m => m.Notifications)
+const Saved = screen(() => import('./screens/Small'), m => m.Saved)
+const Help = screen(() => import('./screens/Help'))
+const Wallet = screen(() => import('./screens/Wallet'))
+const Negotiate = screen(() => import('./screens/Negotiate'))
+const PlannerBrief = screen(() => import('./screens/PlannerBrief'))
+const PlannerProposals = screen(() => import('./screens/PlannerProposals'))
+const Refer = screen(() => import('./screens/Refer'))
+const Legal = screen(() => import('./screens/Legal'))
+const Rsvp = screen(() => import('./screens/Rsvp'))
+const CircleWelcome = screen(() => import('./screens/CircleWelcome'))
+
+/* One module per idle slot, so warming never competes with a scroll or a tap. */
+function warmScreens() {
+  const idle = window.requestIdleCallback ?? (f => setTimeout(() => f({ timeRemaining: () => 8 }), 120))
+  let i = 0
+  const step = () => { if (i >= PRELOAD.length) return; PRELOAD[i++]().catch(() => {}).finally(() => idle(step, { timeout: 1500 })) }
+  setTimeout(() => idle(step, { timeout: 1500 }), 600)
+}
+
+/** Paths that stay on the shared routes on every surface. */
+export const LEGACY_PATHS = ['/partner', '/dashboard/vendor', '/dashboard/admin', '/admin', '/login', '/signup', '/auth', '/pay']
+export const isLegacyPath = p => p === '/dashboard' || LEGACY_PATHS.some(x => p === x || p.startsWith(`${x}/`))
+
+const TAB_ROUTES = p => p === '/' || p.startsWith('/c/') || p === '/s' || p.startsWith('/s/') || p.startsWith('/plans') || p.startsWith('/me') || p === '/explore' || p.startsWith('/f/')
+const BAR_ROUTES = p => p === '/' || p.startsWith('/c/') || p === '/s' || p.startsWith('/plans') || p.startsWith('/me')
+
+function Loading() {
+  return <div className="grid min-h-[60dvh] place-items-center"><span className="h-8 w-8 animate-spin rounded-full border-[3px] border-[var(--brand)] border-t-transparent" /></div>
+}
+
+/* A partner or operator who opens the customer host lands on their own
+   work, as RootScreen did. Customers and visitors get Celebrate. */
+function Root() {
+  const { profile, loading } = useAuth()
+  if (loading) return null
+  if (profile?.role === 'vendor') return <Navigate to="/dashboard/vendor" replace />
+  if (profile?.role === 'admin') return <Navigate to="/dashboard/admin" replace />
+  return <Home />
+}
+
+/* First run: location → sign in → notifications → the welcome scratch
+   cards (25% off + free RSVP), before any screen of the app
+   (screens/Onboarding.jsx). A signed-out customer always lands on sign-in
+   again; location, the alerts ask and the cards happen once per device.
+   The alerts ask had dropped out of this chain on 28 Oct; Mohan wants it
+   (2026-10-31). */
+function useOnboarding() {
+  const { user, loading } = useAuth()
+  const [, bump] = useState(0)
+  /* A fresh install whose storage came back from somewhere else — Android's
+     backup restored it on reinstall, so the location and welcome screens
+     were skipped and the phone never showed its precise / approximate
+     prompt (Mohan, 2026-10-31). On the phone, a saved place this install
+     never asked permission for is not trusted: first run starts again. */
+  useEffect(() => {
+    if (!window.Capacitor?.isNativePlatform?.() || !savedWhere()) return
+    import('@capacitor/geolocation').then(({ Geolocation }) => Geolocation.checkPermissions())
+      .then(p => { if (p?.location === 'prompt' && p?.coarseLocation === 'prompt') { forgetWhere(); forgetOnboarding(); bump(n => n + 1) } })
+      .catch(() => {})
+  }, [])
+  if (loading) return { step: 'loading' }
+  const f = onboardFlags()
+  const step = !savedWhere() ? 'where' : !user ? 'signin' : !f.alerts ? 'alerts' : !f.rewards ? 'rewards' : null
+  return { step, next: () => bump(n => n + 1) }
+}
+
+export default function CustomerApp() {
+  /* The published 360° rule set, if one exists; the bundled rules until then. */
+  useEffect(() => { loadRules().then(setActiveRules).catch(() => {}) }, [])
+  // installExternalLinks: on the phone, WhatsApp / Maps / outside links open through the system (lib/share.js).
+  useEffect(() => { warmScreens(); flushConsent().catch(() => {}); installExternalLinks() }, [])
+  useEffect(() => installPressHaptics(), [])
+  const { pathname } = useLocation()
+  const { step, next } = useOnboarding()
+  /* A guest opening their RSVP link needs no sign-in, location or alerts. */
+  if (pathname.startsWith('/rsvp/')) {
+    return <div className="cx" data-customer-app><Suspense fallback={<Loading />}><Routes><Route path="/rsvp/circle/:join" element={<CircleWelcome />} /><Route path="/rsvp/:token" element={<Rsvp />} /></Routes></Suspense></div>
+  }
+  if (step === 'loading') return <div className="cx" data-customer-app><Loading /></div>
+  if (step) return <PlanProvider><div className="cx" data-customer-app><Onboarding step={step} onDone={next} /></div></PlanProvider>
+  return (
+    <PlanProvider>
+      <div className="cx" data-customer-app>
+        <Suspense fallback={<Loading />}>
+          <Routes>
+            <Route path="/" element={<Root />} />
+            <Route path="/search" element={<Search />} />
+            <Route path="/c/:categoryId" element={<Category />} />
+            <Route path="/o/:occasionId" element={<EventFlow />} />
+            <Route path="/o/:occasionId/plan" element={<EventPlan />} />
+            <Route path="/o/:occasionId/prefs" element={<Preferences />} />
+            <Route path="/o/:occasionId/venues" element={<Venues />} />
+            <Route path="/o/:occasionId/restaurants" element={<Restaurants />} />
+            <Route path="/o/:occasionId/live" element={<LiveMatch />} />
+            <Route path="/o/:occasionId/board" element={<EventBoard />} />
+            <Route path="/o/:occasionId/planner" element={<PlannerBrief />} />
+            <Route path="/o/:occasionId/planners" element={<PlannerProposals />} />
+            <Route path="/o/:occasionId/menu" element={<MenuStudio />} />
+            <Route path="/o/:occasionId/needs" element={<Needs />} />
+            <Route path="/brief/:tradeId" element={<BriefGate />} />
+            <Route path="/board" element={<EventBoard />} />
+            <Route path="/o/:occasionId/match" element={<Match />} />
+            <Route path="/s" element={<Services />} />
+            <Route path="/s/:tradeId" element={<Trade />} />
+            <Route path="/p/:serviceId" element={<Partner />} />
+            <Route path="/negotiate/:serviceId" element={<Negotiate />} />
+            {/* The old pick-and-pay checkout is retired (Mohan, 2026-11-14): everything books through the live checkout. */}
+            <Route path="/plan" element={<Navigate to="/board" replace />} />
+            <Route path="/checkout" element={<Navigate to="/board" replace />} />
+            <Route path="/plans" element={<Plans />} />
+            <Route path="/me" element={<Account />} />
+            <Route path="/saved" element={<Saved />} />
+            <Route path="/notifications" element={<Notifications />} />
+            <Route path="/explore" element={<Explore />} />
+            <Route path="/f/:familyId" element={<Family />} />
+            <Route path="/help" element={<Help />} />
+            <Route path="/wallet" element={<Wallet />} />
+            <Route path="/invites" element={<InvitesList />} />
+            <Route path="/invites/new" element={<InviteNew />} />
+            <Route path="/invites/:id" element={<InviteHost />} />
+            <Route path="/invites/:id/edit" element={<InviteEdit />} />
+            <Route path="/refer" element={<Refer />} />
+            <Route path="/rewards" element={<Wallet />} />
+            <Route path="/legal" element={<Legal />} />
+            <Route path="/legal/:doc" element={<Legal />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
+        <div className="pointer-events-none fixed inset-x-0 top-0 z-[160] bg-white" style={{ height: 'env(safe-area-inset-top, 0px)' }} aria-hidden />
+        {BAR_ROUTES(pathname) && <PlanBar />}
+        {TAB_ROUTES(pathname) && <TabBar />}
+      </div>
+    </PlanProvider>
+  )
+}

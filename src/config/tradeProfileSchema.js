@@ -656,6 +656,14 @@ export const TRADE_PROFILE_SCHEMA = {
         "form": "multi"
       },
       {
+        "k": "kitchen_type",
+        "key": "kitchen_type",
+        "label": "What kind of food business are you?",
+        "type": "TEXT[]",
+        "screen": "profile",
+        "form": "multi"
+      },
+      {
         "k": "prep_location",
         "key": "prep_location",
         "label": "Where is your food prepared?",
@@ -3986,6 +3994,275 @@ export const TRADE_PROFILE_SCHEMA = {
         "label": "Materials (shown separately)",
         "type": "BIGINT",
         "form": "money"
+      }
+    ]
+  },
+  "restaurant": {
+    "screens": [
+      {
+        "id": "profile",
+        "title": "Your restaurant",
+        "sub": "What you serve and how guests can book you."
+      },
+      {
+        "id": "rules",
+        "title": "House rules for celebrations",
+        "sub": "What a host must know before they book."
+      }
+    ],
+    "catalogue": {
+      "key": "packages",
+      "title": "Your set menus & party packages",
+      "noun": "package",
+      "nounPlural": "packages"
+    },
+    "table": "partner_restaurant_profiles",
+    "itemsTable": "partner_restaurant_items",
+    "columns": [
+      {
+        "k": "restaurant_name",
+        "key": "restaurant_name",
+        "label": "Restaurant name",
+        "type": "TEXT",
+        "req": true,
+        "screen": "profile",
+        "form": "text"
+      },
+      {
+        "k": "cuisines",
+        "key": "cuisines",
+        "label": "Cuisines you serve",
+        "type": "TEXT[]",
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
+      },
+      {
+        "k": "diet",
+        "key": "diet",
+        "label": "Food you serve",
+        "type": "TEXT",
+        "req": true,
+        "screen": "profile",
+        "form": "single"
+      },
+      {
+        "k": "dining_modes",
+        "key": "dining_modes",
+        "label": "How can a celebration book you?",
+        "type": "TEXT[]",
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
+      },
+      {
+        "k": "meal_formats",
+        "key": "meal_formats",
+        "label": "What can you offer a group?",
+        "type": "TEXT[]",
+        "req": true,
+        "screen": "profile",
+        "form": "multi"
+      },
+      {
+        "k": "events",
+        "key": "events",
+        "label": "Celebrations you host",
+        "type": "TEXT[]",
+        "screen": "profile",
+        "form": "multi"
+      },
+      {
+        "k": "photos",
+        "key": "photos",
+        "label": "Photos of the restaurant and the food",
+        "type": "TEXT[]",
+        "req": true,
+        "screen": "profile",
+        "form": "photos"
+      },
+      {
+        "k": "seating_capacity",
+        "key": "seating_capacity",
+        "label": "Seats in the restaurant",
+        "type": "NUMERIC",
+        "req": true,
+        "screen": "profile",
+        "form": "number"
+      },
+      {
+        "k": "private_room_capacity",
+        "key": "private_room_capacity",
+        "label": "Private room / hall capacity",
+        "type": "NUMERIC",
+        "screen": "profile",
+        "cond": "dining_modes includes private_dining_room",
+        "showWhen": {
+          "q": "dining_modes",
+          "includes": "private_dining_room"
+        },
+        "form": "number"
+      },
+      {
+        "k": "delivery_radius_km",
+        "key": "delivery_radius_km",
+        "label": "Bulk orders delivered within",
+        "type": "NUMERIC",
+        "screen": "profile",
+        "cond": "dining_modes includes bulk_order_delivered",
+        "showWhen": {
+          "q": "dining_modes",
+          "includes": "bulk_order_delivered"
+        },
+        "form": "number"
+      },
+      {
+        "k": "min_order_guests",
+        "key": "min_order_guests",
+        "label": "Minimum guests for a bulk order",
+        "type": "NUMERIC",
+        "screen": "profile",
+        "cond": "dining_modes includes bulk_order_delivered",
+        "showWhen": {
+          "q": "dining_modes",
+          "includes": "bulk_order_delivered"
+        },
+        "form": "number"
+      },
+      {
+        "k": "open_hours",
+        "key": "open_hours",
+        "label": "Opening hours",
+        "type": "TEXT",
+        "screen": "profile",
+        "form": "text"
+      },
+      {
+        "k": "facilities",
+        "key": "facilities",
+        "label": "Facilities",
+        "type": "TEXT[]",
+        "screen": "profile",
+        "form": "multi"
+      },
+      {
+        "k": "alcohol",
+        "key": "alcohol",
+        "label": "Alcohol served (licensed)",
+        "type": "BOOLEAN",
+        "screen": "profile",
+        "form": "toggle"
+      },
+      {
+        "k": "advance_notice_hours",
+        "key": "advance_notice_hours",
+        "label": "Notice you need for a group booking",
+        "type": "NUMERIC",
+        "req": true,
+        "screen": "rules",
+        "form": "number"
+      },
+      {
+        "k": "outside_cake",
+        "key": "outside_cake",
+        "label": "Guests may bring their own cake",
+        "type": "BOOLEAN",
+        "screen": "rules",
+        "form": "toggle"
+      },
+      {
+        "k": "decor_allowed",
+        "key": "decor_allowed",
+        "label": "Guests may decorate the table or room",
+        "type": "BOOLEAN",
+        "screen": "rules",
+        "form": "toggle"
+      },
+      {
+        "k": "music_allowed",
+        "key": "music_allowed",
+        "label": "Guests may play their own music",
+        "type": "BOOLEAN",
+        "screen": "rules",
+        "form": "toggle"
+      },
+      {
+        "k": "max_hours",
+        "key": "max_hours",
+        "label": "Longest a group may hold the table or room",
+        "type": "NUMERIC",
+        "screen": "rules",
+        "form": "number"
+      }
+    ],
+    "itemColumns": [
+      {
+        "k": "name",
+        "key": "name",
+        "label": "Package name",
+        "type": "TEXT",
+        "req": true,
+        "form": "text"
+      },
+      {
+        "k": "format",
+        "key": "format",
+        "label": "Format",
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
+      },
+      {
+        "k": "diet",
+        "key": "diet",
+        "label": "Diet",
+        "type": "TEXT",
+        "req": true,
+        "form": "single"
+      },
+      {
+        "k": "courses",
+        "key": "courses",
+        "label": "Courses",
+        "type": "NUMERIC",
+        "form": "number"
+      },
+      {
+        "k": "includes",
+        "key": "includes",
+        "label": "What it includes",
+        "type": "TEXT",
+        "form": "textarea"
+      },
+      {
+        "k": "price_per_person",
+        "key": "price_per_person",
+        "label": "Price per person",
+        "type": "BIGINT",
+        "req": true,
+        "form": "money"
+      },
+      {
+        "k": "min_guests",
+        "key": "min_guests",
+        "label": "Minimum guests",
+        "type": "NUMERIC",
+        "req": true,
+        "form": "number"
+      },
+      {
+        "k": "max_guests",
+        "key": "max_guests",
+        "label": "Maximum guests",
+        "type": "NUMERIC",
+        "form": "number"
+      },
+      {
+        "k": "photos",
+        "key": "photos",
+        "label": "Photos",
+        "type": "TEXT[]",
+        "form": "photos"
       }
     ]
   },

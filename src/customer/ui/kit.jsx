@@ -1,0 +1,302 @@
+/**
+ * The customer app's small parts. Everything here is shared by at least
+ * two screens; anything used once lives with its screen.
+ */
+import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { ArrowLeft, ArrowRight, CalendarDays, House, LayoutGrid, ScanSearch, Search, Star, UserRound, X, Zap } from 'lucide-react'
+import { usePlan } from '../state/PlanContext'
+import { rupees, plural } from '../lib/format'
+import { planFloor } from '../lib/estimate'
+
+/* ── A photograph that never shows a broken-image icon ─────────────── */
+export function Photo({ src, alt = '', className = '', eager = false }) {
+  const [ok, setOk] = useState(true)
+  if (!src || !ok) return null
+  return <img src={src} alt={alt} loading={eager ? 'eager' : 'lazy'} decoding="async" className={className} onError={() => setOk(false)} />
+}
+
+/* ── The navigation (Mohan, 2026-10-26) ─────────────────────────────
+ * Home · My Bookings · search · Services · Account, on a white pill that
+ * floats off the bottom edge. The centre is search: the one thing that
+ * gets anyone anywhere in the app, and the search hub holds everything
+ * else (book again, help, policies).
+ *
+ * It is ALWAYS on screen (Mohan, 2026-11-15: "bottom nav bar is not
+ * visible sometimes"). It used to slide away while the page scrolled; on
+ * a phone a slow read or a long fling kept it gone most of the time, and
+ * an Android WebView could leave the translated layer off-screen. So: no
+ * hiding, and no transform on the bar at all — plain position: fixed. */
+const TABS = [
+  { to: '/', label: 'Home', icon: House, match: p => p === '/' || p.startsWith('/c/') || p === '/explore' },
+  { to: '/plans', label: 'My Bookings', icon: CalendarDays, match: p => p.startsWith('/plans') },
+  null,
+  { to: '/s', label: 'Services', icon: LayoutGrid, match: p => p === '/s' || p.startsWith('/s/') || p.startsWith('/f/') },
+  { to: '/me', label: 'Account', icon: UserRound, match: p => p.startsWith('/me') },
+]
+
+export function TabBar() {
+  const { pathname } = useLocation()
+  const navigate = useNavigate()
+  const { bookings } = usePlan()
+  /* The live checkout stays in view while anything is in flight (Mohan,
+     2026-11-13: "the checkout should be recurring till he finds a master"):
+     a strip above the bar, until every request is a fortnight old. */
+  const inflight = (bookings ?? []).filter(b => (b.lineId || b.quoteRequestId) && Date.now() - (b.at ?? 0) < 14 * 86400000)
+  const strip = inflight.length > 0 && !pathname.endsWith('/board')
+  return (
+    <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-[150]" aria-label="Main" data-tabbar="shown">
+      {strip && (
+        <Link to="/board" className="cx-solid cx-press pointer-events-auto mx-3 mb-2 flex h-11 max-w-[540px] items-center gap-2.5 rounded-full bg-gradient-to-r from-[#1C1033] to-[#4C1D95] pl-2 pr-3 text-white shadow-[0_16px_30px_-16px_rgba(28,16,51,.8)]" data-checkout-strip>
+          <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white/15"><span className="cx-live-dot h-2 w-2 rounded-full bg-[#4ADE80]" /></span>
+          <span className="min-w-0 flex-1 truncate text-[12.5px] font-extrabold">Live checkout · {inflight.length} {inflight.length === 1 ? 'request' : 'requests'} with masters</span>
+          <span className="shrink-0 text-[11.5px] font-black text-[#F4D99A]">Track &amp; pay ›</span>
+        </Link>
+      )}
+      <div className="pointer-events-auto relative grid grid-cols-5 items-center border-t border-[#EEEAF4] bg-white px-1 pt-1.5" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 6px)' }} data-tabbar-ground>
+        {TABS.map((t, i) => t ? (
+          <Link key={t.to} to={t.to} className="cx-press relative flex flex-col items-center gap-0.5" aria-current={t.match(pathname) ? 'page' : undefined} data-tab={t.label}>
+            <span className={'grid h-7 w-12 place-items-center transition-colors duration-300 ' + (t.match(pathname) ? 'text-[#5B21B6]' : 'text-[#6B6880]')}>
+              <t.icon size={23} strokeWidth={t.match(pathname) ? 2.4 : 1.9} className={t.match(pathname) && t.to === '/' ? 'fill-current' : ''} />
+            </span>
+            <span className={'whitespace-nowrap text-[11px] font-extrabold tracking-[-0.01em] ' + (t.match(pathname) ? 'text-[#5B21B6]' : 'text-[#6B6880]')}>{t.label}</span>
+            <span className={'mt-0.5 h-[3px] w-7 rounded-full ' + (t.match(pathname) ? 'bg-[#5B21B6]' : 'bg-transparent')} />
+          </Link>
+        ) : (
+          <div key={i} className="relative flex justify-center"><SearchOrb onClick={() => navigate('/search')} /></div>
+        ))}
+      </div>
+    </nav>
+  )
+}
+
+/* The bar is pure white, like the head above it (Mohan, 2026-11-11:
+   "the navigation bar also should match … pure white"). */
+/* ── The search orb ─────────────────────────────────────────────────
+ * Just search, and constant (Mohan, 2026-10-27/28): the magnifier alone,
+ * still, always in full view, no tags. Marigold for someone who has not
+ * booked yet, peacock teal once they have. */
+function SearchOrb({ onClick }) {
+  const { bookings } = usePlan()
+  const back = (bookings?.length ?? 0) > 0
+  return (
+    <>
+      <button type="button" onClick={onClick} aria-label="Search" data-orb={back ? 'back' : 'new'}
+        className="cx-solid cx-solid-flat cx-press grid h-[52px] w-[52px] place-items-center rounded-full bg-[#5B16D6] text-white shadow-[0_8px_18px_-8px_rgba(91,22,214,.8)]">
+        <ScanSearch size={25} strokeWidth={2.2} />
+      </button>
+    </>
+  )
+}
+
+/* ── The plan bar: what is chosen, what it comes to, one tap to review ── */
+export function PlanBar({ withTabs = true }) {
+  const { basket, event } = usePlan()
+  const navigate = useNavigate()
+  if (!basket.length) return null
+  const { paise: total } = planFloor(basket, event)
+  const instant = basket.filter(l => l.instant).length
+  return (
+    <div className="pointer-events-none fixed inset-x-0 z-[140] px-3" style={{ bottom: withTabs ? 'calc(env(safe-area-inset-bottom, 0px) + 88px)' : 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}>
+      <button type="button" onClick={() => navigate('/board')} data-plan-bar
+        className="cx-press cx-pop cx-cta pointer-events-auto mx-auto flex w-full max-w-[540px] items-center gap-3 rounded-[22px] p-2 pr-2.5 text-left text-white shadow-[0_18px_36px_-16px_rgba(58,18,144,.85)]">
+        <span className="flex shrink-0 -space-x-3 pl-1">
+          {basket.slice(0, 3).map(l => (
+            <span key={l.key} className="relative h-9 w-9 overflow-hidden rounded-[13px] bg-white ring-2 ring-[#5B21B6]">
+              <Photo src={l.cover} className="h-full w-full object-cover" />
+            </span>
+          ))}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-[13.5px] font-extrabold">{plural(basket.length, 'service')} picked</span>
+          <span className="block truncate text-[12px] font-bold text-white/80">
+            {total ? <><span className="cx-num">{rupees(total)}</span> onwards</> : 'Quotes on the way'}{instant ? ` · ${instant} instant` : ''}
+          </span>
+        </span>
+        <span className="flex shrink-0 items-center gap-1 rounded-full bg-white px-3.5 py-2 text-[13px] font-extrabold text-[#4C1D95] shadow-[0_4px_10px_-6px_rgba(0,0,0,.4)]">Checkout <ArrowRight size={15} /></span>
+      </button>
+    </div>
+  )
+}
+
+/* ── Sheets render into <body>, never inside a page that might animate ── */
+export function Sheet({ open, onClose, title, children, footer = null }) {
+  const [mounted, setMounted] = useState(open)
+  const [shown, setShown] = useState(false)
+  useEffect(() => {
+    if (open) { setMounted(true); const r = requestAnimationFrame(() => requestAnimationFrame(() => setShown(true))); return () => cancelAnimationFrame(r) }
+    setShown(false)
+    const t = setTimeout(() => setMounted(false), 320)
+    return () => clearTimeout(t)
+  }, [open])
+  useEffect(() => {
+    if (!open) return
+    const k = e => e.key === 'Escape' && onClose?.()
+    window.addEventListener('keydown', k)
+    return () => window.removeEventListener('keydown', k)
+  }, [open, onClose])
+  if (!mounted) return null
+  return createPortal(
+    <div className="cx">
+      <div className="cx-sheet-back" data-open={shown} onClick={onClose} />
+      <section className="cx-sheet" data-open={shown} role="dialog" aria-modal="true" aria-label={title}>
+        <div className="sticky top-0 z-10 bg-white/95 px-5 pb-3 pt-3">
+          <div className="mx-auto mb-3 h-1.5 w-11 rounded-full bg-[#E3DEEE]" />
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-[19px] font-extrabold tracking-[-0.02em]">{title}</h2>
+            <button type="button" onClick={onClose} aria-label="Close" className="cx-press cx-btn grid h-9 w-9 place-items-center rounded-full"><X size={18} /></button>
+          </div>
+        </div>
+        <div className="px-5">{children}</div>
+        {footer && <div className="sticky bottom-0 mt-4 bg-white px-5 pt-3">{footer}</div>}
+      </section>
+    </div>,
+    document.body,
+  )
+}
+
+/* ── A header for every screen below the tabs ──────────────────────── */
+export function BackHeader({ title, sub = null, right = null, onBack, transparent = false, home = true }) {
+  const navigate = useNavigate()
+  const back = onBack ?? (() => (window.history.length > 1 ? navigate(-1) : navigate('/')))
+  const homeBtn = home ? <Link to="/" aria-label="Home" className={'cx-press grid h-11 w-11 shrink-0 place-items-center rounded-full ' + (transparent ? 'cx-glass-light' : 'cx-btn')} data-go-home><House size={19} /></Link> : null
+  return (
+    <header className={'cx-safe-top sticky top-0 z-[120] px-3 pb-2 ' + (transparent ? '' : 'bg-white')}>
+      <div className="flex min-h-[44px] items-center gap-2">
+        <button type="button" onClick={back} aria-label="Back" className={'cx-press grid h-11 w-11 shrink-0 place-items-center rounded-full ' + (transparent ? 'cx-glass-light' : 'cx-btn')}><ArrowLeft size={20} /></button>
+        <div className="min-w-0 flex-1 px-1">
+          {title && <h1 className="truncate text-[17px] font-extrabold tracking-[-0.02em]">{title}</h1>}
+          {sub && <p className="truncate text-[12px] font-semibold text-[var(--ink-3)]">{sub}</p>}
+        </div>
+        {right}
+        {homeBtn}
+      </div>
+    </header>
+  )
+}
+
+export function SectionHead({ title, sub = null, action = null, className = '' }) {
+  return (
+    <div className={'flex items-end justify-between gap-3 px-4 pb-3 ' + className}>
+      <div className="min-w-0">
+        <h2 className="text-[20px] font-extrabold tracking-[-0.03em]">{title}</h2>
+        {sub && <p className="mt-0.5 text-[12.5px] font-semibold text-[var(--ink-3)]">{sub}</p>}
+      </div>
+      {action}
+    </div>
+  )
+}
+
+export function InstantBadge({ glass = true, className = '' }) {
+  return (
+    <span className={'inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-extrabold ' + (glass ? 'cx-glass ' : 'bg-[#FFF4DA] text-[#7A4B00] ') + className}>
+      <Zap size={12} className="fill-[var(--gold)] text-[var(--gold)]" />Instant
+    </span>
+  )
+}
+
+export function RatingChip({ rating, reviews, glass = true }) {
+  if (!rating) return <span className={'rounded-full px-2 py-1 text-[11px] font-extrabold ' + (glass ? 'cx-glass' : 'bg-[var(--soft)]')}>New</span>
+  return (
+    <span className={'inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-extrabold ' + (glass ? 'cx-glass' : 'bg-[var(--soft)] text-[var(--ink)]')}>
+      <Star size={11} className="fill-[var(--gold)] text-[var(--gold)]" />
+      <span className="cx-num">{rating.toFixed(1)}</span>
+      {reviews ? <span className="cx-num font-bold opacity-75">({reviews})</span> : null}
+    </span>
+  )
+}
+
+export function Chip({ on, children, onClick, className = '' }) {
+  return (
+    <button type="button" onClick={onClick} aria-pressed={on}
+      className={'cx-press shrink-0 whitespace-nowrap rounded-full px-3.5 py-2 text-[13px] font-bold transition ' +
+        (on ? 'bg-[var(--brand-deep)] text-white' : 'cx-btn') + ' ' + className}>
+      {children}
+    </button>
+  )
+}
+
+export function Segmented({ options, value, onChange }) {
+  return (
+    <div className="relative grid rounded-[18px] bg-[var(--soft)] p-1" style={{ gridTemplateColumns: `repeat(${options.length}, 1fr)` }} role="tablist">
+      <span className="absolute bottom-1 top-1 rounded-[14px] bg-white shadow-[0_6px_16px_-8px_rgba(43,14,102,.35)] transition-all duration-300"
+        style={{ left: `calc(${(100 / options.length) * options.findIndex(o => o.value === value)}% + 4px)`, width: `calc(${100 / options.length}% - 8px)` }} />
+      {options.map(o => (
+        <button key={o.value} type="button" role="tab" aria-selected={o.value === value} onClick={() => onChange(o.value)}
+          className={'relative z-10 flex items-center justify-center gap-1.5 rounded-[14px] py-2.5 text-[13.5px] font-extrabold transition ' + (o.value === value ? 'text-[var(--ink)]' : 'text-[var(--ink-3)]')}>
+          {o.icon && <o.icon size={16} />}{o.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+export function Skeleton({ className = '' }) {
+  return <div className={'cx-shimmer rounded-[22px] ' + className} />
+}
+
+export function Empty({ title, body, action = null }) {
+  return (
+    <div className="mx-4 rounded-[24px] bg-[var(--soft)] px-5 py-8 text-center">
+      <p className="text-[16px] font-extrabold tracking-[-0.02em]">{title}</p>
+      {body && <p className="mx-auto mt-1.5 max-w-[300px] text-[13px] font-semibold leading-relaxed text-[var(--ink-2)]">{body}</p>}
+      {action && <div className="mt-4">{action}</div>}
+    </div>
+  )
+}
+
+/** The pinned primary action at the foot of a focused screen. */
+export function ActionBar({ children, note = null }) {
+  return (
+    <div className="fixed inset-x-0 bottom-0 z-[130] border-t border-[var(--line)] bg-white/95 px-4 pt-3" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}>
+      <div className="mx-auto max-w-[540px]">
+        {children}
+        {note && <p className="mt-2 text-center text-[11.5px] font-semibold text-[var(--ink-3)]">{note}</p>}
+      </div>
+    </div>
+  )
+}
+
+/* ── The journey strip ───────────────────────────────────────────────
+ * Where the customer is in the booking, at the top of every step: done
+ * steps turn green with a tick, the current one is amethyst and pulses,
+ * the rest wait in grey. A celebration is five steps; one service skips
+ * the plan. `at` is the 0-based current step; `at` past the end = all done. */
+const JOURNEYS = {
+  celebration: ['Details', 'Plan', 'Needs', 'Masters', 'Pay', 'Done'],
+  service: ['Needs', 'Masters', 'Details', 'Pay', 'Done'],
+}
+/* Where each finished step goes back to. Only steps before the current one
+   link — the rail never jumps forward past an unfinished step. */
+const STEP_ROUTES = {
+  celebration: (o) => o ? [`/o/${o}?step=when`, `/o/${o}/plan`, `/o/${o}/needs`, `/o/${o}/match`, '/checkout', null] : [],
+  service: (o, t) => t ? [`/brief/${t}`, `/brief/${t}`, '/board', '/board', null] : [],
+}
+export function Journey({ flow = 'celebration', at = 0, className = '', occasionId = null, tradeId = null }) {
+  const steps = JOURNEYS[flow]
+  const routes = STEP_ROUTES[flow](occasionId, tradeId)
+  return (
+    <ol className={'flex items-center px-4 py-2 ' + className} aria-label={`Step ${Math.min(at + 1, steps.length)} of ${steps.length}`} data-journey={at}>
+      {steps.map((s, i) => {
+        const done = i < at, now = i === at
+        const to = done ? routes[i] : null
+        const dot = (
+          <span className="flex flex-col items-center gap-1">
+            <span className={'grid h-6 w-6 place-items-center rounded-full text-[11px] font-black transition-all duration-500 ' +
+              (done ? 'bg-[#0C831F] text-white' : now ? 'bg-[var(--brand)] text-white ring-4 ring-[#EDE4FF]' : 'bg-[#F1EEF6] text-[#A49DB8]')}>
+              {done ? <svg viewBox="0 0 12 12" className="h-3 w-3"><path d="M2.5 6.2 5 8.6 9.5 3.6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg> : i + 1}
+            </span>
+            <span className={'whitespace-nowrap text-[9.5px] font-extrabold ' + (done ? 'text-[#0C831F]' : now ? 'text-[var(--brand)]' : 'text-[#A49DB8]')}>{s}</span>
+          </span>
+        )
+        return (
+          <li key={s} className="flex min-w-0 flex-1 items-center last:flex-none">
+            {to ? <Link to={to} className="cx-press -m-1 rounded-[12px] p-1" aria-label={`Back to ${s}`} data-journey-back={i}>{dot}</Link> : <span aria-current={now ? 'step' : undefined}>{dot}</span>}
+            {i < steps.length - 1 && <span className={'mx-1 mb-4 h-[2px] flex-1 rounded-full transition-colors duration-500 ' + (done ? 'bg-[#0C831F]' : 'bg-[#ECE8F2]')} />}
+          </li>
+        )
+      })}
+    </ol>
+  )
+}

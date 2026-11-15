@@ -43,7 +43,7 @@ import { createClient } from '@supabase/supabase-js'
 import { cors } from './_lib/cors.js'
 import { OFFER_WINDOW_SECONDS, WAVES, MAX_RADIUS_KM } from './_lib/pricing.bundle.js'
 import { sweepCalendarCoverage } from './_lib/calendarSweep.js'
-import { notifyPartners } from './_lib/fcm.js'
+import { notifyCustomer, notifyPartners } from './_lib/fcm.js'
 
 const url = process.env.VITE_SUPABASE_URL
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -87,6 +87,29 @@ export default async function handler(req, res) {
   // whose window has just closed is picked up on this pass rather than
   // the next one.
   const { data: expired } = await db.rpc('expire_stale_offers')
+
+  /* Requests (migration 197). A lapsed one has already hopped to the next
+     master in its queue inside the database — which cannot send a push.
+     So here: tell every master who was just asked, and on a hop tell the
+     customer who is being asked now. Until 197 is pasted this finds
+     nothing and costs one failed select. */
+  await db.rpc('sweep_request_timeouts').then(() => {}, () => {})
+  const { data: asked } = await db.from('sambramo_request_queue')
+    .select('id, line_id, vendor_id, position, service_name, reply_by, booking_lines(booking_requests(customer_id, event_date, area_label))')
+    .eq('status', 'asked').is('notified_at', null).limit(50).then(x => x, () => ({ data: null }))
+  for (const q of asked ?? []) {
+    const req0 = q.booking_lines?.booking_requests
+    const by = q.reply_by ? new Date(q.reply_by).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata' }) : null
+    await notifyPartners(db, { vendorIds: [q.vendor_id], lineId: q.line_id, url: '/dashboard/vendor',
+      title: `New request: ${q.service_name ?? 'a booking'} — only you have it`,
+      body: `${req0?.event_date ?? ''}${req0?.area_label ? ` · ${req0.area_label}` : ''}. ${by ? `Accept by ${by}; ` : ''}the customer pays once you accept.` }).catch(() => {})
+    if (q.position > 0 && req0?.customer_id) {
+      await notifyCustomer(db, { customerId: req0.customer_id, lineId: q.line_id, url: '/plans',
+        title: 'We asked your next master',
+        body: `Your first choice couldn’t take it, so ${q.service_name ?? 'your backup'} has your request now${by ? ` (replies by ${by})` : ''}. Same price you saw.` }).catch(() => {})
+    }
+    await db.from('sambramo_request_queue').update({ notified_at: new Date().toISOString() }).eq('id', q.id).then(() => {}, () => {})
+  }
 
   const { data: due, error } = await db.rpc('lines_awaiting_next_wave', { p_limit: 50 })
   if (error) return res.status(500).json({ error: `lines_awaiting_next_wave: ${error.message}` })

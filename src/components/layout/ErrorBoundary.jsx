@@ -129,6 +129,12 @@ export default class ErrorBoundary extends Component {
 
           {/* Developer detail, collapsed. Real users skip past it; whoever
               is debugging gets the message and stack without a console. */}
+          {/* A short code a customer can screenshot — the message only, never data. */}
+          {!import.meta.env.DEV && this.state.error && (
+            <p className="mt-6 text-[11px] text-gray-400 break-words" data-error-code>
+              Error: {String(this.state.error?.message ?? this.state.error).slice(0, 140)}
+            </p>
+          )}
           {(import.meta.env.DEV || import.meta.env.VITE_DEV_AUTH_BYPASS === 'true') && (
             <details className="mt-8 text-left">
               <summary className="text-xs text-gray-500 cursor-pointer hover:text-gray-600">

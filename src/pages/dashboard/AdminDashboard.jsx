@@ -16,6 +16,7 @@ import PartnerDirectory from '../../components/admin/PartnerDirectory'
 import OnboardingReview from '../../components/admin/OnboardingReview'
 import MediaLibrary from '../../components/admin/MediaLibrary'
 import FoodCatalogueReview from '../../components/admin/FoodCatalogueReview'
+import MenuCatalogueAdmin from '../../components/admin/MenuCatalogueAdmin'
 import OrdersConsole from '../../components/admin/OrdersConsole'
 import RevenueConsole from '../../components/admin/RevenueConsole'
 import InquiriesConsole from '../../components/admin/InquiriesConsole'
@@ -66,7 +67,8 @@ export default function AdminDashboard() {
     : activeNav === 'trade-workspaces' ? <TradeWorkspaces />
     : activeNav === 'directory' ? <PartnerDirectory />
     : activeNav === 'onboarding-review' ? <OnboardingReview />
-    : activeNav === 'food-catalogue' ? <FoodCatalogueReview />
+    : activeNav === 'food-catalogue' ? <FoodCatalogueReview onNavigate={go} />
+    : activeNav === 'menu-catalogue' ? <MenuCatalogueAdmin />
     : activeNav === 'media' ? <MediaLibrary />
     : activeNav === 'orders' ? <OrdersConsole />
     : activeNav === 'revenue' ? <RevenueConsole />

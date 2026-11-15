@@ -3,7 +3,7 @@
  *
  * `TRADE_CONFIGS[i]` is the registry entry (id, code, name, archetype,
  * tiers…) merged with that trade's own file. Anchor & MC is #1 and points
- * at its existing flow through `legacyFlow`; the other 33 are rendered by
+ * at its existing flow through `legacyFlow`; the other 34 are rendered by
  * the shared ListingOnboardingFlow.
  */
 import { TRADE_REGISTRY, tradeOf } from './registry'
@@ -31,6 +31,7 @@ import passenger_transport from './passenger_transport'
 import photography from './photography'
 import power_cooling from './power_cooling'
 import priest_rituals from './priest_rituals'
+import restaurant from './restaurant'
 import safety_facilities from './safety_facilities'
 import security_services from './security_services'
 import sound_av from './sound_av'
@@ -48,7 +49,7 @@ const FILES = {
   decoration_floral, end_to_end_event_logistics, event_equipment_rental, event_lighting,
   event_materials_supplier, gifts_favours, guest_services, invitation_printing, live_entertainment,
   loading_unloading_crew, medium_large_goods_vehicle, mehendi_artist, mini_truck_pickup,
-  passenger_transport, photography, power_cooling, priest_rituals, safety_facilities,
+  passenger_transport, photography, power_cooling, priest_rituals, restaurant, safety_facilities,
   security_services, sound_av, tent_furniture, transportation, trousseau_gift_packing,
   valet_parking, venue, videography, warehouse_storage, wedding_planning,
 }

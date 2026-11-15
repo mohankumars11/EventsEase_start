@@ -19,6 +19,7 @@ import Earnings from '../../components/vendor/Earnings'
 import PricingTab from '../../components/vendor/pricing/PricingTab'
 import { usePublishedPricing } from '../../hooks/usePublishedPricing'
 import CustomQuoteInbox from '../../components/vendor/CustomQuoteInbox'
+import PlannerWorkspace from '../../components/vendor/PlannerWorkspace'
 import JobsHeader from '../../components/partner/JobsHeader'
 import ReviewCountdown from '../../components/partner/ReviewCountdown'
 import JobsStats from '../../components/partner/JobsStats'
@@ -790,6 +791,8 @@ export default function VendorDashboard() {
                 <p className="mb-2 type-overline text-ink-mute">Custom work</p>
                 <CustomQuoteInbox vendorId={vendor.id} />
               </div>
+              {/* Mode B (210): renders only for a planner with an engaged event. */}
+              <PlannerWorkspace vendorId={vendor.id} />
 
               {/* Seven days, three rows. Between the expiring offers and
                   the full job list because it answers the morning

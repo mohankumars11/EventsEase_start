@@ -88,7 +88,12 @@
      at exactly 50% reads as low; both reference splashes sit a little
      above the middle. The tagline carries the same offset so the two
      move as one. */
-  transform: translateY(-3.5vh);
+  /* `translate`, not `transform`: .app-splash-word animates `transform`
+     (scale), and a later `transform` silently replaced this lift — the
+     word sat 3.5vh low while the tagline kept its lift and rode up INTO
+     it on tall phones (Mohan's screenshot, 2026-10-28). The two
+     properties compose, so the lockup now moves as one. */
+  translate: 0 -3.5vh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -249,3 +254,39 @@
   .app-splash-wordmark { font-size: 36px; letter-spacing: .04em; }
   .app-splash-tagline { font-size: 15px; }
 }
+
+/* ── One word, bold, all at once (2026-10-28) ────────────────────────── */
+.app-splash-word {
+  font-weight: 900;
+  letter-spacing: .06em;
+  opacity: 0;
+  transform: scale(.86);
+  filter: blur(8px);
+  animation: app-splash-word-in 700ms cubic-bezier(.16, 1, .3, 1) 120ms forwards;
+}
+@keyframes app-splash-word-in {
+  0%   { opacity: 0; transform: scale(.86); filter: blur(8px); }
+  60%  { opacity: 1; transform: scale(1.035); filter: blur(0); }
+  100% { opacity: 1; transform: scale(1); filter: blur(0); }
+}
+/* The tagline's lead words, lit like a highlighter stroke — the stroke
+   is drawn across them once the name has landed. */
+.app-splash-hl {
+  position: relative;
+  display: inline-block;
+  font-weight: 900;
+  color: #1A0838;
+  padding: 0 .28em;
+  border-radius: .35em;
+  background: linear-gradient(100deg, #FDE68A 0%, #F9A8D4 100%) no-repeat 0 0 / 0% 100%;
+  box-shadow: 0 6px 18px -6px rgba(249, 168, 212, 0);
+  color: #fff;
+  animation: app-splash-hl-in 560ms cubic-bezier(.65, 0, .35, 1) 900ms forwards;
+}
+@keyframes app-splash-hl-in {
+  0%   { background-size: 0% 100%; color: #fff; box-shadow: 0 6px 18px -6px rgba(249, 168, 212, 0); }
+  55%  { color: #1A0838; }
+  100% { background-size: 100% 100%; color: #1A0838; box-shadow: 0 6px 18px -6px rgba(249, 168, 212, .8); }
+}
+@media (prefers-reduced-motion: reduce) { .app-splash-hl { animation: none; background-size: 100% 100%; color: #1A0838; } }
+@media (prefers-reduced-motion: reduce) { .app-splash-word { animation: none; opacity: 1; transform: none; filter: none; } }

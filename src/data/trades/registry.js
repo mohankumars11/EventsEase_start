@@ -65,6 +65,9 @@ export const TRADE_REGISTRY = [
   t(32, 'videography', 'E03', 'Videography', 'TIME_PERFORMER', { tiers: true }),
   t(33, 'warehouse_storage', 'L06', 'Warehouse / Storage', 'STORAGE_CAPACITY'),
   t(34, 'wedding_planning', 'E09', 'Wedding Planning', 'PROJECT_QUOTE', { tiers: true }),
+  /* #35 (Mohan, 2026-11-11): a restaurant books tables, rooms and bulk
+     orders per person — not a caterer who delivers. */
+  t(35, 'restaurant', 'E27', 'Restaurant & Dining', 'PER_GUEST_FOOD', { tiers: true, regulated: true }),
 ]
 
 export const TRADE_BY_ID = Object.fromEntries(TRADE_REGISTRY.map(x => [x.id, x]))

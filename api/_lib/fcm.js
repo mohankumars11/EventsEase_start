@@ -390,3 +390,80 @@ export async function notifyForWave(db, wave, { eventDate, areaLabel, city }) {
 
   return { sent, perLine }
 }
+
+/**
+ * Tell a customer, on every device signed in to the customer app.
+ *
+ * News, not a race: an hour-long TTL (a partner's job alert is 120 s for
+ * the opposite reason). Dead tokens are removed. Never throws — every
+ * caller sends this AFTER its own write has committed, and a failed push
+ * must not undo a quote, an acceptance or a payment.
+ */
+export async function notifyCustomer(db, { customerId, title, body, url = '/plans', lineId }) {
+  try {
+    if (!pushConfigured() || !customerId) return { sent: 0, skipped: 'not_configured' }
+    const { data: tokens } = await db.from('push_tokens').select('token, platform')
+      .eq('profile_id', customerId).eq('app', 'customer').lt('failure_count', 5)
+    if (!tokens?.length) return { sent: 0, skipped: 'no_device' }
+    let sent = 0
+    const dead = []
+    await Promise.all(tokens.map(async t => {
+      const r = await sendPush({ token: t.token, platform: t.platform, title, body, url, lineId, ttlSeconds: 3600 })
+      if (r.ok) sent++
+      else if (r.reason === 'dead_token') dead.push(t.token)
+    }))
+    if (dead.length) await db.from('push_tokens').delete().in('token', dead)
+    return { sent, of: tokens.length }
+  } catch (e) {
+    return { sent: 0, error: e?.message ?? String(e) }
+  }
+}
+
+/** "You're confirmed" for every customer whose lines a capture just paid. */
+export async function notifyCustomersPaid(db, lineIds = []) {
+  try {
+    if (!pushConfigured() || !lineIds.length) return { sent: 0 }
+    const { data: lines } = await db.from('booking_lines')
+      .select('id, service_name, booking_requests!inner(customer_id, event_date)').in('id', lineIds)
+    const by = {}
+    for (const l of lines ?? []) (by[l.booking_requests.customer_id] ??= []).push(l)
+    let sent = 0
+    for (const [customerId, ls] of Object.entries(by)) {
+      const one = ls.length === 1
+      const r = await notifyCustomer(db, {
+        customerId, lineId: ls[0].id, url: '/plans',
+        title: one ? `${ls[0].service_name} is confirmed` : `${ls.length} partners confirmed`,
+        body: one ? 'Your date is blocked. Your partner will call you before the day.' : `${ls.map(l => l.service_name).slice(0, 3).join(', ')} — your date is blocked.`,
+      })
+      sent += r.sent ?? 0
+    }
+    return { sent }
+  } catch (e) {
+    return { sent: 0, error: e?.message ?? String(e) }
+  }
+}
+
+/** "Payment received — it is confirmed" for the partner of every line a capture just paid. */
+export async function notifyPartnersPaid(db, lineIds = []) {
+  try {
+    if (!pushConfigured() || !lineIds.length) return { sent: 0 }
+    const { data: lines } = await db.from('booking_lines').select('id, service_id, service_name, booking_requests!inner(event_date)').in('id', lineIds)
+    const sids = [...new Set((lines ?? []).map(l => l.service_id).filter(Boolean))]
+    if (!sids.length) return { sent: 0 }
+    const { data: svcs } = await db.from('vendor_services').select('id, vendor_id').in('id', sids)
+    const vendorOf = Object.fromEntries((svcs ?? []).map(x => [x.id, x.vendor_id]))
+    let sent = 0
+    for (const l of lines ?? []) {
+      const v = vendorOf[l.service_id]
+      if (!v) continue
+      const d = l.booking_requests?.event_date
+      const r = await notifyPartners(db, { vendorIds: [v], lineId: l.id, url: `/partner/jobs/${l.id}`,
+        title: `Paid: ${l.service_name}`,
+        body: `${d ? `${new Date(`${d}T00:00:00`).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })} is confirmed. ` : ''}The customer's number is now on the job.` })
+      sent += r.sent ?? 0
+    }
+    return { sent }
+  } catch (e) {
+    return { sent: 0, error: e?.message ?? String(e) }
+  }
+}

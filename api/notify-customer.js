@@ -116,7 +116,8 @@ export default async function handler(req, res) {
       platform: t.platform,
       title,
       body,
-      url: '/track',
+      // The customer app's Plans tab (src/customer). '/track' was the old app.
+      url: '/plans',
       lineId,
       // Not 120 seconds. A customer's notification is not racing a
       // 45-second offer window — it is news, and news an hour late is

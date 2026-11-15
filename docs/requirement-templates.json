@@ -1,0 +1,6515 @@
+[
+  {
+    "trade_id": "anchor_mc",
+    "fields": [
+      {
+        "key": "$tier",
+        "title": "Choose the experience",
+        "kind": "single",
+        "group": "experience",
+        "required": false,
+        "options": [
+          {
+            "value": "ESSENTIAL",
+            "label": "Host the Key Moments"
+          },
+          {
+            "value": "SIGNATURE",
+            "label": "Run the Whole Show"
+          },
+          {
+            "value": "VIP",
+            "label": "Signature Host"
+          }
+        ]
+      }
+    ],
+    "required_keys": [],
+    "source_fingerprint": "90252cffac875aa0"
+  },
+  {
+    "trade_id": "bar_beverages",
+    "fields": [
+      {
+        "key": "service_lines",
+        "title": "Which of these do they need?",
+        "kind": "multi",
+        "group": "choose",
+        "required": true,
+        "options": [
+          {
+            "value": "beverage_counters",
+            "label": "Beverage counters"
+          },
+          {
+            "value": "mobile_beverage_bar",
+            "label": "Mobile beverage bar"
+          },
+          {
+            "value": "tea_and_coffee_service",
+            "label": "Tea and coffee service"
+          },
+          {
+            "value": "juice_and_soft_drinks",
+            "label": "Juice and soft drinks"
+          },
+          {
+            "value": "mocktails",
+            "label": "Mocktails"
+          },
+          {
+            "value": "milkshakes_and_smoothies",
+            "label": "Milkshakes and smoothies"
+          },
+          {
+            "value": "traditional_drinks",
+            "label": "Traditional drinks"
+          },
+          {
+            "value": "packaged_water_supply",
+            "label": "Packaged water supply"
+          },
+          {
+            "value": "ice_cream_counter",
+            "label": "Ice cream counter"
+          },
+          {
+            "value": "softy_soft_serve_machine",
+            "label": "Softy / soft-serve machine"
+          },
+          {
+            "value": "kulfi_cart",
+            "label": "Kulfi cart"
+          },
+          {
+            "value": "live_ice_cream_station",
+            "label": "Live ice cream station"
+          },
+          {
+            "value": "ice_cream_tubs_and_family_packs",
+            "label": "Ice cream tubs and family packs"
+          },
+          {
+            "value": "falooda_and_sundae_counter",
+            "label": "Falooda and sundae counter"
+          },
+          {
+            "value": "ice_supply",
+            "label": "Ice supply"
+          },
+          {
+            "value": "dry_ice",
+            "label": "Dry ice"
+          },
+          {
+            "value": "freezer_unit_hire",
+            "label": "Freezer unit hire"
+          },
+          {
+            "value": "chiller_cold_room_hire",
+            "label": "Chiller / cold room hire"
+          },
+          {
+            "value": "refrigerated_vehicle",
+            "label": "Refrigerated vehicle"
+          },
+          {
+            "value": "cold_storage_at_your_own_facility",
+            "label": "Cold storage at your own facility"
+          }
+        ]
+      },
+      {
+        "key": "glassware_included",
+        "title": "Are glasses, cups or bowls included?",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "ice_included",
+        "title": "Is ice included?",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "garnish_included",
+        "title": "Are garnishes or toppings included?",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "setup_teardown_included",
+        "title": "Is setup and teardown included?",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      }
+    ],
+    "required_keys": [
+      "service_lines"
+    ],
+    "source_fingerprint": "81a252f9c76c7c78"
+  },
+  {
+    "trade_id": "bridal_makeup_hair",
+    "fields": [
+      {
+        "key": "$tier",
+        "title": "Choose the experience",
+        "kind": "single",
+        "group": "experience",
+        "required": false,
+        "options": [
+          {
+            "value": "ESSENTIAL",
+            "label": "Elegant Essentials"
+          },
+          {
+            "value": "SIGNATURE",
+            "label": "Signature Look"
+          },
+          {
+            "value": "VIP",
+            "label": "Luxury Glam"
+          }
+        ]
+      },
+      {
+        "key": "services_offered",
+        "title": "Which looks do you need?",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "bridal_makeup",
+            "label": "Bridal makeup"
+          },
+          {
+            "value": "bridal_hairstyle",
+            "label": "Bridal hairstyle"
+          },
+          {
+            "value": "bridal_makeup_and_hair_combo",
+            "label": "Bridal makeup and hair combo"
+          },
+          {
+            "value": "engagement_pre_wedding_look",
+            "label": "Engagement / pre-wedding look"
+          },
+          {
+            "value": "reception_look",
+            "label": "Reception look"
+          },
+          {
+            "value": "mehendi_haldi_day_look",
+            "label": "Mehendi / haldi day look"
+          },
+          {
+            "value": "bridesmaid_family_makeup",
+            "label": "Bridesmaid / family makeup"
+          },
+          {
+            "value": "guest_makeup",
+            "label": "Guest makeup"
+          },
+          {
+            "value": "hairstyling",
+            "label": "Hairstyling"
+          },
+          {
+            "value": "saree_dupatta_draping",
+            "label": "Saree / dupatta draping"
+          },
+          {
+            "value": "groom_makeup",
+            "label": "Groom makeup"
+          },
+          {
+            "value": "groom_grooming",
+            "label": "Groom grooming"
+          },
+          {
+            "value": "groom_hairstyling",
+            "label": "Groom hairstyling"
+          },
+          {
+            "value": "family_group_booking",
+            "label": "Family / group booking"
+          },
+          {
+            "value": "touch_up_service",
+            "label": "Touch-up service"
+          },
+          {
+            "value": "trial_session",
+            "label": "Trial session"
+          },
+          {
+            "value": "extra_look",
+            "label": "Extra look"
+          },
+          {
+            "value": "custom_package",
+            "label": "Custom package"
+          }
+        ]
+      },
+      {
+        "key": "styles",
+        "title": "Which makeup style?",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "traditional",
+            "label": "Traditional"
+          },
+          {
+            "value": "natural",
+            "label": "Natural"
+          },
+          {
+            "value": "glam",
+            "label": "Glam"
+          },
+          {
+            "value": "hd",
+            "label": "HD"
+          },
+          {
+            "value": "airbrush",
+            "label": "Airbrush"
+          },
+          {
+            "value": "editorial",
+            "label": "Editorial"
+          }
+        ]
+      },
+      {
+        "key": "who",
+        "title": "Who needs a look?",
+        "kind": "multi",
+        "group": "choose",
+        "required": true,
+        "options": [
+          {
+            "value": "bride",
+            "label": "Bride"
+          },
+          {
+            "value": "groom",
+            "label": "Groom"
+          },
+          {
+            "value": "family",
+            "label": "Family"
+          },
+          {
+            "value": "guests",
+            "label": "Guests"
+          }
+        ]
+      },
+      {
+        "key": "travels_to_venue",
+        "title": "Should they travel to the customer's venue?",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "trial_available",
+        "title": "Should they provide a trial session?",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      }
+    ],
+    "required_keys": [
+      "who"
+    ],
+    "source_fingerprint": "96fc2165bcab7fcc"
+  },
+  {
+    "trade_id": "cake_desserts",
+    "fields": [
+      {
+        "key": "product_types",
+        "title": "What are you ordering?",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "celebration_cake",
+            "label": "Celebration cake"
+          },
+          {
+            "value": "wedding_cake",
+            "label": "Wedding cake"
+          },
+          {
+            "value": "bento_mini_cake",
+            "label": "Bento / mini cake"
+          },
+          {
+            "value": "photo_cake",
+            "label": "Photo cake"
+          },
+          {
+            "value": "fondant_cake",
+            "label": "Fondant cake"
+          },
+          {
+            "value": "pull_me_up_cake",
+            "label": "Pull-me-up cake"
+          },
+          {
+            "value": "tiered_cake",
+            "label": "Tiered cake"
+          },
+          {
+            "value": "cupcakes",
+            "label": "Cupcakes"
+          },
+          {
+            "value": "jar_cakes",
+            "label": "Jar cakes"
+          },
+          {
+            "value": "brownies",
+            "label": "Brownies"
+          },
+          {
+            "value": "pastries",
+            "label": "Pastries"
+          },
+          {
+            "value": "cheesecake",
+            "label": "Cheesecake"
+          },
+          {
+            "value": "dessert_jars",
+            "label": "Dessert jars"
+          },
+          {
+            "value": "cookies",
+            "label": "Cookies"
+          },
+          {
+            "value": "macarons",
+            "label": "Macarons"
+          },
+          {
+            "value": "donuts",
+            "label": "Donuts"
+          },
+          {
+            "value": "muffins",
+            "label": "Muffins"
+          },
+          {
+            "value": "tarts",
+            "label": "Tarts"
+          },
+          {
+            "value": "chocolates",
+            "label": "Chocolates"
+          },
+          {
+            "value": "indian_sweets_mithai",
+            "label": "Indian sweets / mithai"
+          },
+          {
+            "value": "dessert_tables",
+            "label": "Dessert tables"
+          },
+          {
+            "value": "hampers",
+            "label": "Hampers"
+          }
+        ]
+      },
+      {
+        "key": "flavours",
+        "title": "Favourite flavour?",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "chocolate",
+            "label": "Chocolate"
+          },
+          {
+            "value": "dark_chocolate",
+            "label": "Dark chocolate"
+          },
+          {
+            "value": "truffle",
+            "label": "Truffle"
+          },
+          {
+            "value": "vanilla",
+            "label": "Vanilla"
+          },
+          {
+            "value": "red_velvet",
+            "label": "Red velvet"
+          },
+          {
+            "value": "butterscotch",
+            "label": "Butterscotch"
+          },
+          {
+            "value": "black_forest",
+            "label": "Black forest"
+          },
+          {
+            "value": "white_forest",
+            "label": "White forest"
+          },
+          {
+            "value": "pineapple",
+            "label": "Pineapple"
+          },
+          {
+            "value": "mango",
+            "label": "Mango"
+          },
+          {
+            "value": "strawberry",
+            "label": "Strawberry"
+          },
+          {
+            "value": "blueberry",
+            "label": "Blueberry"
+          },
+          {
+            "value": "coffee",
+            "label": "Coffee"
+          },
+          {
+            "value": "caramel",
+            "label": "Caramel"
+          },
+          {
+            "value": "dry_fruit",
+            "label": "Dry fruit"
+          },
+          {
+            "value": "tender_coconut",
+            "label": "Tender coconut"
+          },
+          {
+            "value": "rasmalai",
+            "label": "Rasmalai"
+          },
+          {
+            "value": "nutella_hazelnut",
+            "label": "Nutella / hazelnut"
+          },
+          {
+            "value": "lotus_biscoff",
+            "label": "Lotus Biscoff"
+          },
+          {
+            "value": "oreo",
+            "label": "Oreo"
+          },
+          {
+            "value": "cheesecake",
+            "label": "Cheesecake"
+          },
+          {
+            "value": "fruit_mixed_fruit",
+            "label": "Fruit / mixed fruit"
+          }
+        ]
+      },
+      {
+        "key": "sizes",
+        "title": "What size?",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "0_5_kg",
+            "label": "0.5 kg"
+          },
+          {
+            "value": "1_kg",
+            "label": "1 kg"
+          },
+          {
+            "value": "1_5_kg",
+            "label": "1.5 kg"
+          },
+          {
+            "value": "2_kg",
+            "label": "2 kg"
+          },
+          {
+            "value": "3_kg",
+            "label": "3 kg"
+          },
+          {
+            "value": "5_kg",
+            "label": "5 kg"
+          },
+          {
+            "value": "above_5_kg",
+            "label": "Above 5 kg"
+          },
+          {
+            "value": "tiered",
+            "label": "Tiered"
+          },
+          {
+            "value": "single_servings",
+            "label": "Single servings"
+          },
+          {
+            "value": "box_of_6",
+            "label": "Box of 6"
+          },
+          {
+            "value": "box_of_12",
+            "label": "Box of 12"
+          },
+          {
+            "value": "per_tray",
+            "label": "Per tray"
+          }
+        ]
+      },
+      {
+        "key": "dietary",
+        "title": "Any dietary needs?",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "eggless",
+            "label": "Eggless"
+          },
+          {
+            "value": "vegan",
+            "label": "Vegan"
+          },
+          {
+            "value": "gluten_free_where_safely_supported",
+            "label": "Gluten-free, where safely supported"
+          },
+          {
+            "value": "sugar_reduced",
+            "label": "Sugar-reduced"
+          }
+        ]
+      },
+      {
+        "key": "design_choice",
+        "title": "Can customers choose a design or theme?",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "reference_upload",
+        "title": "Can they upload reference images?",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "name_message",
+        "title": "Can they add a name or message?",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "figurines",
+        "title": "Are figurines or special decorations available?",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "tasting",
+        "title": "Is a tasting session available?",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      }
+    ],
+    "required_keys": [],
+    "source_fingerprint": "fc0a22b6960b2766"
+  },
+  {
+    "trade_id": "catering_food",
+    "fields": [
+      {
+        "key": "$diet",
+        "title": "What should the menu be?",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "veg",
+            "label": "Pure vegetarian"
+          },
+          {
+            "value": "non_veg",
+            "label": "Non-vegetarian"
+          },
+          {
+            "value": "mixed",
+            "label": "Veg + non-veg"
+          },
+          {
+            "value": "vegan",
+            "label": "Vegan"
+          },
+          {
+            "value": "jain",
+            "label": "Jain"
+          }
+        ]
+      },
+      {
+        "key": "$cuisine",
+        "title": "Which food style?",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "karnataka",
+            "label": "Karnataka"
+          },
+          {
+            "value": "tamil_nadu",
+            "label": "Tamil Nadu"
+          },
+          {
+            "value": "andhra_telangana",
+            "label": "Andhra Pradesh & Telangana"
+          },
+          {
+            "value": "kerala",
+            "label": "Kerala"
+          },
+          {
+            "value": "north_india",
+            "label": "North India"
+          },
+          {
+            "value": "west_india",
+            "label": "Western India"
+          },
+          {
+            "value": "east_northeast",
+            "label": "Eastern & Northeastern India"
+          },
+          {
+            "value": "other_indian",
+            "label": "Other Indian food styles"
+          },
+          {
+            "value": "international",
+            "label": "International"
+          },
+          {
+            "value": "specialized",
+            "label": "Specialized food styles"
+          }
+        ]
+      },
+      {
+        "key": "$dishes",
+        "title": "Dishes you must have",
+        "kind": "dishes",
+        "group": "choose",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "services",
+        "title": "What kind of catering?",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "wedding_catering",
+            "label": "Wedding catering"
+          },
+          {
+            "value": "corporate_catering",
+            "label": "Corporate catering"
+          },
+          {
+            "value": "home_functions",
+            "label": "Home functions"
+          },
+          {
+            "value": "birthday_parties",
+            "label": "Birthday parties"
+          },
+          {
+            "value": "religious_ceremonies",
+            "label": "Religious ceremonies"
+          },
+          {
+            "value": "traditional_wedding_meals",
+            "label": "Traditional wedding meals"
+          },
+          {
+            "value": "breakfast_catering",
+            "label": "Breakfast catering"
+          },
+          {
+            "value": "lunch_or_dinner_catering",
+            "label": "Lunch or dinner catering"
+          },
+          {
+            "value": "buffet_catering",
+            "label": "Buffet catering"
+          },
+          {
+            "value": "plated_meals",
+            "label": "Plated meals"
+          },
+          {
+            "value": "packed_meals",
+            "label": "Packed meals"
+          },
+          {
+            "value": "live_food_counters",
+            "label": "Live food counters"
+          },
+          {
+            "value": "dessert_catering",
+            "label": "Dessert catering"
+          },
+          {
+            "value": "beverage_catering",
+            "label": "Beverage catering"
+          },
+          {
+            "value": "institutional_or_bulk_catering",
+            "label": "Institutional or bulk catering"
+          }
+        ]
+      },
+      {
+        "key": "kitchen_type",
+        "title": "What kind of food business are they?",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "catering_service",
+            "label": "Catering service"
+          },
+          {
+            "value": "restaurant_or_cloud_kitchen_we_deliver_bulk_orders_ourselves",
+            "label": "Restaurant or cloud kitchen — we deliver bulk orders ourselves"
+          },
+          {
+            "value": "cook_or_chef_i_cook_at_the_customer_s_place",
+            "label": "Cook or chef — I cook at the customer’s place"
+          }
+        ]
+      },
+      {
+        "key": "service_styles",
+        "title": "How should it be served?",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "buffet",
+            "label": "Buffet"
+          },
+          {
+            "value": "traditional_banana_leaf_meal",
+            "label": "Traditional banana-leaf meal"
+          },
+          {
+            "value": "seated_plated_service",
+            "label": "Seated / plated service"
+          },
+          {
+            "value": "family_style_serving",
+            "label": "Family-style serving"
+          },
+          {
+            "value": "packed_meals",
+            "label": "Packed meals"
+          },
+          {
+            "value": "food_counters",
+            "label": "Food counters"
+          },
+          {
+            "value": "live_cooking",
+            "label": "Live cooking"
+          },
+          {
+            "value": "mixed_service_styles",
+            "label": "Mixed service styles"
+          }
+        ]
+      }
+    ],
+    "required_keys": [],
+    "source_fingerprint": "749c5101c53faf59"
+  },
+  {
+    "trade_id": "dj_music",
+    "fields": [
+      {
+        "key": "$tier",
+        "title": "Choose the experience",
+        "kind": "single",
+        "group": "experience",
+        "required": false,
+        "options": [
+          {
+            "value": "ESSENTIAL",
+            "label": "Essential Beats"
+          },
+          {
+            "value": "SIGNATURE",
+            "label": "Party Experience"
+          },
+          {
+            "value": "VIP",
+            "label": "Premium Production"
+          }
+        ]
+      },
+      {
+        "key": "performance_kinds",
+        "title": "What kind of music act?",
+        "kind": "multi",
+        "group": "choose",
+        "required": true,
+        "options": [
+          {
+            "value": "dj",
+            "label": "DJ"
+          },
+          {
+            "value": "live_musician",
+            "label": "Live musician"
+          },
+          {
+            "value": "dj_with_live_musician",
+            "label": "DJ with live musician"
+          },
+          {
+            "value": "ceremony_music",
+            "label": "Ceremony music"
+          },
+          {
+            "value": "background_music",
+            "label": "Background music"
+          },
+          {
+            "value": "live_band",
+            "label": "Live band"
+          },
+          {
+            "value": "baraat_dj_on_a_vehicle",
+            "label": "Baraat DJ (on a vehicle)"
+          },
+          {
+            "value": "dhol_with_dj",
+            "label": "Dhol with DJ"
+          },
+          {
+            "value": "sangeet_night",
+            "label": "Sangeet night"
+          },
+          {
+            "value": "karaoke_night",
+            "label": "Karaoke night"
+          },
+          {
+            "value": "silent_disco",
+            "label": "Silent disco"
+          }
+        ]
+      },
+      {
+        "key": "styles",
+        "title": "Music that gets your crowd dancing",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "bollywood",
+            "label": "Bollywood"
+          },
+          {
+            "value": "punjabi",
+            "label": "Punjabi"
+          },
+          {
+            "value": "kannada_south_indian",
+            "label": "Kannada / South Indian"
+          },
+          {
+            "value": "retro",
+            "label": "Retro"
+          },
+          {
+            "value": "edm",
+            "label": "EDM"
+          },
+          {
+            "value": "house",
+            "label": "House"
+          },
+          {
+            "value": "hip_hop",
+            "label": "Hip-hop"
+          },
+          {
+            "value": "sufi",
+            "label": "Sufi"
+          },
+          {
+            "value": "instrumental",
+            "label": "Instrumental"
+          },
+          {
+            "value": "western_pop",
+            "label": "Western pop"
+          },
+          {
+            "value": "tamil",
+            "label": "Tamil"
+          },
+          {
+            "value": "telugu",
+            "label": "Telugu"
+          },
+          {
+            "value": "malayalam",
+            "label": "Malayalam"
+          },
+          {
+            "value": "marathi",
+            "label": "Marathi"
+          },
+          {
+            "value": "gujarati_garba",
+            "label": "Gujarati / Garba"
+          },
+          {
+            "value": "bhangra",
+            "label": "Bhangra"
+          },
+          {
+            "value": "90s_bollywood",
+            "label": "90s Bollywood"
+          },
+          {
+            "value": "techno",
+            "label": "Techno"
+          },
+          {
+            "value": "commercial",
+            "label": "Commercial"
+          },
+          {
+            "value": "lounge_chill",
+            "label": "Lounge / chill"
+          },
+          {
+            "value": "jazz",
+            "label": "Jazz"
+          },
+          {
+            "value": "classical_fusion",
+            "label": "Classical fusion"
+          },
+          {
+            "value": "devotional",
+            "label": "Devotional"
+          },
+          {
+            "value": "arabic",
+            "label": "Arabic"
+          }
+        ]
+      },
+      {
+        "key": "own_equipment",
+        "title": "Should they bring the sound & lights?",
+        "kind": "single",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "sound_and_lighting",
+            "label": "Sound and lighting"
+          },
+          {
+            "value": "sound_only",
+            "label": "Sound only"
+          },
+          {
+            "value": "lighting_only",
+            "label": "Lighting only"
+          },
+          {
+            "value": "neither",
+            "label": "Neither"
+          }
+        ]
+      },
+      {
+        "key": "settings",
+        "title": "Where will they play?",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "indoor_hall",
+            "label": "Indoor hall"
+          },
+          {
+            "value": "open_lawn",
+            "label": "Open lawn"
+          },
+          {
+            "value": "rooftop",
+            "label": "Rooftop"
+          },
+          {
+            "value": "poolside",
+            "label": "Poolside"
+          },
+          {
+            "value": "hotel_ballroom",
+            "label": "Hotel ballroom"
+          },
+          {
+            "value": "farmhouse",
+            "label": "Farmhouse"
+          },
+          {
+            "value": "moving_baraat_vehicle",
+            "label": "Moving baraat vehicle"
+          },
+          {
+            "value": "club_lounge",
+            "label": "Club / lounge"
+          }
+        ]
+      },
+      {
+        "key": "languages",
+        "title": "Languages they can host and take requests in",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "english",
+            "label": "English"
+          },
+          {
+            "value": "kannada",
+            "label": "Kannada"
+          },
+          {
+            "value": "hindi",
+            "label": "Hindi"
+          },
+          {
+            "value": "tamil",
+            "label": "Tamil"
+          },
+          {
+            "value": "telugu",
+            "label": "Telugu"
+          },
+          {
+            "value": "malayalam",
+            "label": "Malayalam"
+          },
+          {
+            "value": "marathi",
+            "label": "Marathi"
+          },
+          {
+            "value": "bengali",
+            "label": "Bengali"
+          },
+          {
+            "value": "gujarati",
+            "label": "Gujarati"
+          },
+          {
+            "value": "urdu",
+            "label": "Urdu"
+          },
+          {
+            "value": "punjabi",
+            "label": "Punjabi"
+          },
+          {
+            "value": "tulu",
+            "label": "Tulu"
+          },
+          {
+            "value": "konkani",
+            "label": "Konkani"
+          }
+        ]
+      },
+      {
+        "key": "emcee",
+        "title": "They can also host / emcee the night",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "formats",
+        "title": "Performance format",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "solo_dj_set",
+            "label": "Solo DJ set"
+          },
+          {
+            "value": "dj_percussionist",
+            "label": "DJ + percussionist"
+          },
+          {
+            "value": "dj_singer",
+            "label": "DJ + singer"
+          },
+          {
+            "value": "live_band_set",
+            "label": "Live band set"
+          },
+          {
+            "value": "acoustic_set",
+            "label": "Acoustic set"
+          },
+          {
+            "value": "dj_saxophonist",
+            "label": "DJ + saxophonist"
+          },
+          {
+            "value": "dj_violinist",
+            "label": "DJ + violinist"
+          },
+          {
+            "value": "dj_dhol",
+            "label": "DJ + dhol"
+          },
+          {
+            "value": "back_to_back_djs",
+            "label": "Back-to-back DJs"
+          }
+        ]
+      },
+      {
+        "key": "duration_options",
+        "title": "How long should they play?",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "1_hour",
+            "label": "1 hour"
+          },
+          {
+            "value": "2_hours",
+            "label": "2 hours"
+          },
+          {
+            "value": "3_hours",
+            "label": "3 hours"
+          },
+          {
+            "value": "4_hours",
+            "label": "4 hours"
+          },
+          {
+            "value": "5_hours",
+            "label": "5 hours"
+          },
+          {
+            "value": "6_hours",
+            "label": "6 hours"
+          },
+          {
+            "value": "8_hours",
+            "label": "8 hours"
+          },
+          {
+            "value": "10_hours",
+            "label": "10 hours"
+          },
+          {
+            "value": "full_night",
+            "label": "Full night"
+          }
+        ]
+      },
+      {
+        "key": "song_requests",
+        "title": "Takes playlist / custom song requests",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      }
+    ],
+    "required_keys": [
+      "performance_kinds"
+    ],
+    "source_fingerprint": "82dc9c0291e22fe7"
+  },
+  {
+    "trade_id": "decoration_floral",
+    "fields": [
+      {
+        "key": "$tier",
+        "title": "Choose the experience",
+        "kind": "single",
+        "group": "experience",
+        "required": false,
+        "options": [
+          {
+            "value": "ESSENTIAL",
+            "label": "Beautiful Basics"
+          },
+          {
+            "value": "SIGNATURE",
+            "label": "Signature Styling"
+          },
+          {
+            "value": "VIP",
+            "label": "Grand Celebration"
+          }
+        ]
+      },
+      {
+        "key": "services",
+        "title": "What should be decorated?",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "mandap_mantap_decoration",
+            "label": "Mandap / mantap decoration"
+          },
+          {
+            "value": "stage_decoration",
+            "label": "Stage decoration"
+          },
+          {
+            "value": "reception_stage",
+            "label": "Reception stage"
+          },
+          {
+            "value": "backdrop",
+            "label": "Backdrop"
+          },
+          {
+            "value": "haldi_decoration",
+            "label": "Haldi decoration"
+          },
+          {
+            "value": "mehendi_decoration",
+            "label": "Mehendi decoration"
+          },
+          {
+            "value": "sangeet_decoration",
+            "label": "Sangeet decoration"
+          },
+          {
+            "value": "engagement_decoration",
+            "label": "Engagement decoration"
+          },
+          {
+            "value": "naming_ceremony_naamkarana",
+            "label": "Naming ceremony (naamkarana)"
+          },
+          {
+            "value": "seemantha_baby_shower",
+            "label": "Seemantha / baby shower"
+          },
+          {
+            "value": "housewarming_gruhapravesha",
+            "label": "Housewarming (gruhapravesha)"
+          },
+          {
+            "value": "pooja_homa_setup",
+            "label": "Pooja / homa setup"
+          },
+          {
+            "value": "temple_decoration",
+            "label": "Temple decoration"
+          },
+          {
+            "value": "entrance_arch",
+            "label": "Entrance arch"
+          },
+          {
+            "value": "gate_decoration",
+            "label": "Gate decoration"
+          },
+          {
+            "value": "welcome_board_nameplate",
+            "label": "Welcome board / nameplate"
+          },
+          {
+            "value": "pathway_aisle_decoration",
+            "label": "Pathway / aisle decoration"
+          },
+          {
+            "value": "torana_and_banana_stems",
+            "label": "Torana and banana stems"
+          },
+          {
+            "value": "rangoli",
+            "label": "Rangoli"
+          },
+          {
+            "value": "flower_shower_arrangement",
+            "label": "Flower shower arrangement"
+          },
+          {
+            "value": "car_decoration",
+            "label": "Car decoration"
+          },
+          {
+            "value": "palanquin_doli_decoration",
+            "label": "Palanquin / doli decoration"
+          },
+          {
+            "value": "complete_venue_decoration",
+            "label": "Complete venue decoration"
+          },
+          {
+            "value": "ceiling_decoration_and_drapes",
+            "label": "Ceiling decoration and drapes"
+          },
+          {
+            "value": "pillar_decoration",
+            "label": "Pillar decoration"
+          },
+          {
+            "value": "table_styling",
+            "label": "Table styling"
+          },
+          {
+            "value": "centrepieces",
+            "label": "Centrepieces"
+          },
+          {
+            "value": "chair_covers_and_sashes",
+            "label": "Chair covers and sashes"
+          },
+          {
+            "value": "lounge_sofa_setup",
+            "label": "Lounge / sofa setup"
+          },
+          {
+            "value": "photo_booth_selfie_point",
+            "label": "Photo booth / selfie point"
+          },
+          {
+            "value": "flower_wall",
+            "label": "Flower wall"
+          },
+          {
+            "value": "balloon_decoration",
+            "label": "Balloon decoration"
+          },
+          {
+            "value": "theme_props_and_cutouts",
+            "label": "Theme props and cutouts"
+          },
+          {
+            "value": "led_letters_and_neon_signs",
+            "label": "LED letters and neon signs"
+          },
+          {
+            "value": "candle_and_lantern_styling",
+            "label": "Candle and lantern styling"
+          },
+          {
+            "value": "birthday_decoration",
+            "label": "Birthday decoration"
+          },
+          {
+            "value": "anniversary_decoration",
+            "label": "Anniversary decoration"
+          },
+          {
+            "value": "corporate_stage_and_backdrop",
+            "label": "Corporate stage and backdrop"
+          },
+          {
+            "value": "exhibition_retail_display",
+            "label": "Exhibition / retail display"
+          },
+          {
+            "value": "festival_decoration",
+            "label": "Festival decoration"
+          },
+          {
+            "value": "fresh_flower_garlands",
+            "label": "Fresh flower garlands"
+          },
+          {
+            "value": "floral_jewellery",
+            "label": "Floral jewellery"
+          },
+          {
+            "value": "bouquets_and_bunches",
+            "label": "Bouquets and bunches"
+          },
+          {
+            "value": "dismantling_and_clearing",
+            "label": "Dismantling and clearing"
+          }
+        ]
+      },
+      {
+        "key": "themes",
+        "title": "Which look do you love?",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "traditional_south_indian",
+            "label": "Traditional South Indian"
+          },
+          {
+            "value": "temple_style",
+            "label": "Temple style"
+          },
+          {
+            "value": "mysore_royal",
+            "label": "Mysore royal"
+          },
+          {
+            "value": "north_indian_traditional",
+            "label": "North Indian traditional"
+          },
+          {
+            "value": "royal_regal",
+            "label": "Royal / regal"
+          },
+          {
+            "value": "contemporary",
+            "label": "Contemporary"
+          },
+          {
+            "value": "minimal",
+            "label": "Minimal"
+          },
+          {
+            "value": "pastel",
+            "label": "Pastel"
+          },
+          {
+            "value": "floral_heavy",
+            "label": "Floral-heavy"
+          },
+          {
+            "value": "marigold_heavy",
+            "label": "Marigold-heavy"
+          },
+          {
+            "value": "white_and_green",
+            "label": "White and green"
+          },
+          {
+            "value": "monochrome",
+            "label": "Monochrome"
+          },
+          {
+            "value": "metallic_and_gold",
+            "label": "Metallic and gold"
+          },
+          {
+            "value": "boho",
+            "label": "Boho"
+          },
+          {
+            "value": "rustic",
+            "label": "Rustic"
+          },
+          {
+            "value": "vintage",
+            "label": "Vintage"
+          },
+          {
+            "value": "garden",
+            "label": "Garden"
+          },
+          {
+            "value": "tropical",
+            "label": "Tropical"
+          },
+          {
+            "value": "beach_destination",
+            "label": "Beach / destination"
+          },
+          {
+            "value": "fairy_light",
+            "label": "Fairy-light"
+          },
+          {
+            "value": "floral_tunnel",
+            "label": "Floral tunnel"
+          },
+          {
+            "value": "bollywood",
+            "label": "Bollywood"
+          },
+          {
+            "value": "cartoon_character_for_children",
+            "label": "Cartoon / character (for children)"
+          },
+          {
+            "value": "corporate_brand_led",
+            "label": "Corporate / brand-led"
+          }
+        ]
+      },
+      {
+        "key": "flowers",
+        "title": "Fresh or artificial flowers?",
+        "kind": "single",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "fresh",
+            "label": "Fresh"
+          },
+          {
+            "value": "artificial",
+            "label": "Artificial"
+          },
+          {
+            "value": "both",
+            "label": "Both"
+          }
+        ]
+      },
+      {
+        "key": "flower_types",
+        "title": "Favourite flowers",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "rose",
+            "label": "Rose"
+          },
+          {
+            "value": "marigold_chendu_hoovu",
+            "label": "Marigold (chendu hoovu)"
+          },
+          {
+            "value": "jasmine_mallige",
+            "label": "Jasmine (mallige)"
+          },
+          {
+            "value": "kanakambara",
+            "label": "Kanakambara"
+          },
+          {
+            "value": "tuberose_rajnigandha",
+            "label": "Tuberose (rajnigandha)"
+          },
+          {
+            "value": "chrysanthemum_sevanthige",
+            "label": "Chrysanthemum (sevanthige)"
+          },
+          {
+            "value": "carnation",
+            "label": "Carnation"
+          },
+          {
+            "value": "gerbera",
+            "label": "Gerbera"
+          },
+          {
+            "value": "orchid",
+            "label": "Orchid"
+          },
+          {
+            "value": "lily",
+            "label": "Lily"
+          },
+          {
+            "value": "anthurium",
+            "label": "Anthurium"
+          },
+          {
+            "value": "hydrangea",
+            "label": "Hydrangea"
+          },
+          {
+            "value": "bird_of_paradise",
+            "label": "Bird of paradise"
+          },
+          {
+            "value": "lotus",
+            "label": "Lotus"
+          },
+          {
+            "value": "banana_stems_and_leaves",
+            "label": "Banana stems and leaves"
+          },
+          {
+            "value": "mango_leaves_and_torana",
+            "label": "Mango leaves and torana"
+          },
+          {
+            "value": "imported_flowers",
+            "label": "Imported flowers"
+          },
+          {
+            "value": "dried_and_preserved_flowers",
+            "label": "Dried and preserved flowers"
+          },
+          {
+            "value": "artificial_flowers",
+            "label": "Artificial flowers"
+          }
+        ]
+      },
+      {
+        "key": "props",
+        "title": "What should the décor include?",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "drapes_and_fabric",
+            "label": "Drapes and fabric"
+          },
+          {
+            "value": "truss_and_framework",
+            "label": "Truss and framework"
+          },
+          {
+            "value": "mirror_panels",
+            "label": "Mirror panels"
+          },
+          {
+            "value": "acrylic_panels",
+            "label": "Acrylic panels"
+          },
+          {
+            "value": "mdf_cutouts",
+            "label": "MDF cutouts"
+          },
+          {
+            "value": "thermocol_foam_carving",
+            "label": "Thermocol / foam carving"
+          },
+          {
+            "value": "flower_walls_and_panels",
+            "label": "Flower walls and panels"
+          },
+          {
+            "value": "led_letters",
+            "label": "LED letters"
+          },
+          {
+            "value": "neon_signs",
+            "label": "Neon signs"
+          },
+          {
+            "value": "fairy_lights",
+            "label": "Fairy lights"
+          },
+          {
+            "value": "festoon_lights",
+            "label": "Festoon lights"
+          },
+          {
+            "value": "candles",
+            "label": "Candles"
+          },
+          {
+            "value": "lanterns",
+            "label": "Lanterns"
+          },
+          {
+            "value": "balloons_latex",
+            "label": "Balloons — latex"
+          },
+          {
+            "value": "balloons_foil_and_chrome",
+            "label": "Balloons — foil and chrome"
+          },
+          {
+            "value": "carpets_and_runners",
+            "label": "Carpets and runners"
+          },
+          {
+            "value": "pedestals_and_pots",
+            "label": "Pedestals and pots"
+          },
+          {
+            "value": "umbrellas_and_chhatris",
+            "label": "Umbrellas and chhatris"
+          },
+          {
+            "value": "swings_jhoola",
+            "label": "Swings / jhoola"
+          },
+          {
+            "value": "furniture_and_lounge_seating",
+            "label": "Furniture and lounge seating"
+          },
+          {
+            "value": "fog_and_cold_pyro",
+            "label": "Fog and cold pyro"
+          }
+        ]
+      },
+      {
+        "key": "custom_designs",
+        "title": "Should they offer custom designs?",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "setup_dismantle",
+        "title": "Should they handle setup and dismantling?",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "site_visit",
+        "title": "Should they do a site visit before the event?",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "design_mockup",
+        "title": "Should they share a design or mock-up before the day?",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "venues",
+        "title": "Where is it?",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "kalyana_mantapa",
+            "label": "Kalyana mantapa"
+          },
+          {
+            "value": "community_hall",
+            "label": "Community hall"
+          },
+          {
+            "value": "banquet_hall",
+            "label": "Banquet hall"
+          },
+          {
+            "value": "hotel",
+            "label": "Hotel"
+          },
+          {
+            "value": "resort",
+            "label": "Resort"
+          },
+          {
+            "value": "convention_centre",
+            "label": "Convention centre"
+          },
+          {
+            "value": "open_ground",
+            "label": "Open ground"
+          },
+          {
+            "value": "farmhouse",
+            "label": "Farmhouse"
+          },
+          {
+            "value": "private_home",
+            "label": "Private home"
+          },
+          {
+            "value": "apartment_clubhouse",
+            "label": "Apartment clubhouse"
+          },
+          {
+            "value": "temple",
+            "label": "Temple"
+          },
+          {
+            "value": "beach",
+            "label": "Beach"
+          },
+          {
+            "value": "palace_heritage_property",
+            "label": "Palace / heritage property"
+          },
+          {
+            "value": "corporate_office",
+            "label": "Corporate office"
+          },
+          {
+            "value": "exhibition_centre",
+            "label": "Exhibition centre"
+          }
+        ]
+      },
+      {
+        "key": "overnight_install",
+        "title": "Can they install overnight?",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "same_day_turnaround",
+        "title": "Can they set up and clear on the same day?",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "outstation",
+        "title": "Should they take outstation and destination events?",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      }
+    ],
+    "required_keys": [],
+    "source_fingerprint": "e58faab9b7ad191f"
+  },
+  {
+    "trade_id": "end_to_end_event_logistics",
+    "fields": [
+      {
+        "key": "scope",
+        "title": "What parts of event logistics can they manage?",
+        "kind": "multi",
+        "group": "choose",
+        "required": true,
+        "options": [
+          {
+            "value": "loading_unloading_coordination",
+            "label": "Loading / unloading coordination"
+          },
+          {
+            "value": "material_transport",
+            "label": "Material transport"
+          },
+          {
+            "value": "storage",
+            "label": "Storage"
+          },
+          {
+            "value": "equipment_delivery",
+            "label": "Equipment delivery"
+          },
+          {
+            "value": "setup_coordination",
+            "label": "Setup coordination"
+          },
+          {
+            "value": "vendor_scheduling",
+            "label": "Vendor scheduling"
+          },
+          {
+            "value": "on_site_logistics_management",
+            "label": "On-site logistics management"
+          },
+          {
+            "value": "return_logistics",
+            "label": "Return logistics"
+          },
+          {
+            "value": "multi_location_coordination",
+            "label": "Multi-location coordination"
+          },
+          {
+            "value": "complete_logistics_management",
+            "label": "Complete logistics management"
+          },
+          {
+            "value": "setup_and_teardown_crews",
+            "label": "Setup & teardown crews"
+          },
+          {
+            "value": "generator_and_power_logistics",
+            "label": "Generator & power logistics"
+          },
+          {
+            "value": "guest_luggage_handling",
+            "label": "Guest luggage handling"
+          },
+          {
+            "value": "exhibition_stall_logistics",
+            "label": "Exhibition stall logistics"
+          },
+          {
+            "value": "inventory_tracking",
+            "label": "Inventory tracking"
+          },
+          {
+            "value": "last_mile_delivery",
+            "label": "Last-mile delivery"
+          },
+          {
+            "value": "waste_removal_and_cleanup",
+            "label": "Waste removal & cleanup"
+          }
+        ]
+      },
+      {
+        "key": "vehicle_types",
+        "title": "Vehicles they can deploy",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "mini_truck",
+            "label": "Mini truck"
+          },
+          {
+            "value": "14_17_ft_truck",
+            "label": "14–17 ft truck"
+          },
+          {
+            "value": "19_24_ft_truck",
+            "label": "19–24 ft truck"
+          },
+          {
+            "value": "32_ft_container",
+            "label": "32 ft container"
+          },
+          {
+            "value": "tempo_traveller",
+            "label": "Tempo Traveller"
+          },
+          {
+            "value": "two_wheeler",
+            "label": "Two-wheeler"
+          }
+        ]
+      },
+      {
+        "key": "overnight_setup",
+        "title": "Overnight setup and teardown",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "transit_insurance",
+        "title": "Goods-in-transit insurance",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      }
+    ],
+    "required_keys": [
+      "scope"
+    ],
+    "source_fingerprint": "0c15275d32714d15"
+  },
+  {
+    "trade_id": "event_equipment_rental",
+    "fields": [
+      {
+        "key": "equipment_types",
+        "title": "Which equipment types are available?",
+        "kind": "multi",
+        "group": "choose",
+        "required": true,
+        "options": [
+          {
+            "value": "tables_chairs",
+            "label": "Tables / chairs"
+          },
+          {
+            "value": "staging",
+            "label": "Staging"
+          },
+          {
+            "value": "audio_equipment",
+            "label": "Audio equipment"
+          },
+          {
+            "value": "lighting",
+            "label": "Lighting"
+          },
+          {
+            "value": "screens_projectors",
+            "label": "Screens / projectors"
+          },
+          {
+            "value": "power_equipment",
+            "label": "Power equipment"
+          },
+          {
+            "value": "cooling_equipment",
+            "label": "Cooling equipment"
+          },
+          {
+            "value": "decorative_equipment",
+            "label": "Decorative equipment"
+          },
+          {
+            "value": "stage_and_truss",
+            "label": "Stage & truss"
+          },
+          {
+            "value": "barricades",
+            "label": "Barricades"
+          },
+          {
+            "value": "led_screens",
+            "label": "LED screens"
+          },
+          {
+            "value": "mist_fans_coolers",
+            "label": "Mist fans / coolers"
+          },
+          {
+            "value": "heaters",
+            "label": "Heaters"
+          },
+          {
+            "value": "catering_equipment",
+            "label": "Catering equipment"
+          },
+          {
+            "value": "kids_zone_inflatables",
+            "label": "Kids zone / inflatables"
+          },
+          {
+            "value": "photo_booth",
+            "label": "Photo booth"
+          },
+          {
+            "value": "red_carpet_and_stanchions",
+            "label": "Red carpet & stanchions"
+          },
+          {
+            "value": "podiums_and_lecterns",
+            "label": "Podiums & lecterns"
+          },
+          {
+            "value": "display_stands",
+            "label": "Display stands"
+          },
+          {
+            "value": "umbrellas_and_canopies",
+            "label": "Umbrellas & canopies"
+          }
+        ]
+      },
+      {
+        "key": "same_day",
+        "title": "Same-day delivery possible",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "setup_offered",
+        "title": "They offer setup and dismantling",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      }
+    ],
+    "required_keys": [
+      "equipment_types"
+    ],
+    "source_fingerprint": "fa853ba14cebf235"
+  },
+  {
+    "trade_id": "event_lighting",
+    "fields": [
+      {
+        "key": "service_types",
+        "title": "Which lighting services do they need?",
+        "kind": "multi",
+        "group": "choose",
+        "required": true,
+        "options": [
+          {
+            "value": "basic_event_lighting",
+            "label": "Basic event lighting"
+          },
+          {
+            "value": "stage_lighting",
+            "label": "Stage lighting"
+          },
+          {
+            "value": "decorative_lighting",
+            "label": "Decorative lighting"
+          },
+          {
+            "value": "moving_lights",
+            "label": "Moving lights"
+          },
+          {
+            "value": "architectural_venue_lighting",
+            "label": "Architectural / venue lighting"
+          },
+          {
+            "value": "outdoor_lighting",
+            "label": "Outdoor lighting"
+          },
+          {
+            "value": "custom_lighting_design",
+            "label": "Custom lighting design"
+          },
+          {
+            "value": "mandap_lighting",
+            "label": "Mandap lighting"
+          },
+          {
+            "value": "fairy_string_lights",
+            "label": "Fairy / string lights"
+          },
+          {
+            "value": "uplighting",
+            "label": "Uplighting"
+          },
+          {
+            "value": "pixel_led_effects",
+            "label": "Pixel / LED effects"
+          },
+          {
+            "value": "laser_show",
+            "label": "Laser show"
+          },
+          {
+            "value": "projection_mapping",
+            "label": "Projection mapping"
+          },
+          {
+            "value": "tree_and_garden_lighting",
+            "label": "Tree & garden lighting"
+          },
+          {
+            "value": "chandeliers",
+            "label": "Chandeliers"
+          },
+          {
+            "value": "facade_lighting",
+            "label": "Facade lighting"
+          },
+          {
+            "value": "dance_floor_lighting",
+            "label": "Dance-floor lighting"
+          },
+          {
+            "value": "pathway_and_entrance_lighting",
+            "label": "Pathway & entrance lighting"
+          }
+        ]
+      },
+      {
+        "key": "suitability",
+        "title": "Indoor / outdoor",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "indoor",
+            "label": "Indoor"
+          },
+          {
+            "value": "outdoor",
+            "label": "Outdoor"
+          }
+        ]
+      },
+      {
+        "key": "rigging",
+        "title": "They handle rigging (truss, hanging)",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "controllers",
+        "title": "Controller / console options",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "dmx_console",
+            "label": "DMX console"
+          },
+          {
+            "value": "pre_programmed",
+            "label": "Pre-programmed"
+          },
+          {
+            "value": "wireless_control",
+            "label": "Wireless control"
+          },
+          {
+            "value": "timecode_show",
+            "label": "Timecode show"
+          }
+        ]
+      },
+      {
+        "key": "operator",
+        "title": "Operator available",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "setup_dismantle",
+        "title": "Setup and dismantling included",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      }
+    ],
+    "required_keys": [
+      "service_types"
+    ],
+    "source_fingerprint": "c71f1509e84ebcdc"
+  },
+  {
+    "trade_id": "event_materials_supplier",
+    "fields": [
+      {
+        "key": "supplies",
+        "title": "What supplies do they sell or supply for events?",
+        "kind": "multi",
+        "group": "choose",
+        "required": true,
+        "options": [
+          {
+            "value": "disposable_serving_items",
+            "label": "Disposable serving items"
+          },
+          {
+            "value": "decorations",
+            "label": "Decorations"
+          },
+          {
+            "value": "event_consumables",
+            "label": "Event consumables"
+          },
+          {
+            "value": "signage_materials",
+            "label": "Signage materials"
+          },
+          {
+            "value": "packaging",
+            "label": "Packaging"
+          },
+          {
+            "value": "table_accessories",
+            "label": "Table accessories"
+          },
+          {
+            "value": "gift_materials",
+            "label": "Gift materials"
+          },
+          {
+            "value": "balloons_and_party_supplies",
+            "label": "Balloons & party supplies"
+          },
+          {
+            "value": "pooja_materials",
+            "label": "Pooja materials"
+          },
+          {
+            "value": "water_bottles_and_cups",
+            "label": "Water bottles & cups"
+          },
+          {
+            "value": "tissues_and_napkins",
+            "label": "Tissues & napkins"
+          },
+          {
+            "value": "candles_and_diyas",
+            "label": "Candles & diyas"
+          },
+          {
+            "value": "fabric_and_drapes",
+            "label": "Fabric & drapes"
+          },
+          {
+            "value": "artificial_flowers",
+            "label": "Artificial flowers"
+          },
+          {
+            "value": "stationery_and_name_cards",
+            "label": "Stationery & name cards"
+          },
+          {
+            "value": "cleaning_and_hygiene_supplies",
+            "label": "Cleaning & hygiene supplies"
+          },
+          {
+            "value": "foil_and_cling_film",
+            "label": "Foil & cling film"
+          },
+          {
+            "value": "garbage_bags",
+            "label": "Garbage bags"
+          }
+        ]
+      },
+      {
+        "key": "same_day",
+        "title": "Same-day orders possible",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      }
+    ],
+    "required_keys": [
+      "supplies"
+    ],
+    "source_fingerprint": "7090095cdd2f9a1c"
+  },
+  {
+    "trade_id": "gifts_favours",
+    "fields": [
+      {
+        "key": "gift_types",
+        "title": "What types of gifts or favours would they like?",
+        "kind": "multi",
+        "group": "choose",
+        "required": true,
+        "options": [
+          {
+            "value": "guest_favours",
+            "label": "Guest favours"
+          },
+          {
+            "value": "welcome_gifts",
+            "label": "Welcome gifts"
+          },
+          {
+            "value": "return_gifts",
+            "label": "Return gifts"
+          },
+          {
+            "value": "corporate_gifts",
+            "label": "Corporate gifts"
+          },
+          {
+            "value": "gift_hampers",
+            "label": "Gift hampers"
+          },
+          {
+            "value": "personalized_items",
+            "label": "Personalized items"
+          },
+          {
+            "value": "tambula_pooja_return_gifts",
+            "label": "Tambula / pooja return gifts"
+          },
+          {
+            "value": "sweets_and_dry_fruit_boxes",
+            "label": "Sweets & dry-fruit boxes"
+          },
+          {
+            "value": "chocolate_boxes",
+            "label": "Chocolate boxes"
+          },
+          {
+            "value": "plants_and_eco_gifts",
+            "label": "Plants & eco gifts"
+          },
+          {
+            "value": "handicrafts",
+            "label": "Handicrafts"
+          },
+          {
+            "value": "silver_and_brass_gifts",
+            "label": "Silver & brass gifts"
+          },
+          {
+            "value": "customised_mugs_and_frames",
+            "label": "Customised mugs & frames"
+          },
+          {
+            "value": "kids_party_favours",
+            "label": "Kids party favours"
+          },
+          {
+            "value": "baby_shower_favours",
+            "label": "Baby shower favours"
+          }
+        ]
+      },
+      {
+        "key": "personalisation_methods",
+        "title": "Personalisation they can do",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "name_printing",
+            "label": "Name printing"
+          },
+          {
+            "value": "laser_engraving",
+            "label": "Laser engraving"
+          },
+          {
+            "value": "embroidery",
+            "label": "Embroidery"
+          },
+          {
+            "value": "photo_printing",
+            "label": "Photo printing"
+          },
+          {
+            "value": "custom_tags",
+            "label": "Custom tags"
+          },
+          {
+            "value": "hand_painted",
+            "label": "Hand-painted"
+          }
+        ]
+      },
+      {
+        "key": "message_card",
+        "title": "They add a printed message card",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "packaging_personalisation",
+        "title": "Can customers choose packaging and personalization?",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      }
+    ],
+    "required_keys": [
+      "gift_types"
+    ],
+    "source_fingerprint": "f06655c395ef0ae0"
+  },
+  {
+    "trade_id": "guest_services",
+    "fields": [
+      {
+        "key": "roles",
+        "title": "Which services do they need?",
+        "kind": "multi",
+        "group": "choose",
+        "required": true,
+        "options": [
+          {
+            "value": "guest_reception",
+            "label": "Guest reception"
+          },
+          {
+            "value": "registration_desk",
+            "label": "Registration desk"
+          },
+          {
+            "value": "ushers",
+            "label": "Ushers"
+          },
+          {
+            "value": "guest_guidance",
+            "label": "Guest guidance"
+          },
+          {
+            "value": "queue_management",
+            "label": "Queue management"
+          },
+          {
+            "value": "gift_distribution",
+            "label": "Gift distribution"
+          },
+          {
+            "value": "hospitality_desk",
+            "label": "Hospitality desk"
+          },
+          {
+            "value": "guest_coordination",
+            "label": "Guest coordination"
+          },
+          {
+            "value": "welcome_and_aarti_team",
+            "label": "Welcome & aarti team"
+          },
+          {
+            "value": "luggage_desk",
+            "label": "Luggage desk"
+          },
+          {
+            "value": "hotel_check_in_desk",
+            "label": "Hotel check-in desk"
+          },
+          {
+            "value": "airport_station_pickup_desk",
+            "label": "Airport / station pickup desk"
+          },
+          {
+            "value": "shoe_stand_and_cloakroom",
+            "label": "Shoe stand & cloakroom"
+          },
+          {
+            "value": "vip_protocol_escort",
+            "label": "VIP / protocol escort"
+          },
+          {
+            "value": "kids_zone_attendants",
+            "label": "Kids-zone attendants"
+          },
+          {
+            "value": "elderly_assistance",
+            "label": "Elderly assistance"
+          },
+          {
+            "value": "event_concierge",
+            "label": "Event concierge"
+          },
+          {
+            "value": "hostesses",
+            "label": "Hostesses"
+          }
+        ]
+      },
+      {
+        "key": "languages",
+        "title": "Languages their staff speak",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "english",
+            "label": "English"
+          },
+          {
+            "value": "kannada",
+            "label": "Kannada"
+          },
+          {
+            "value": "hindi",
+            "label": "Hindi"
+          },
+          {
+            "value": "tamil",
+            "label": "Tamil"
+          },
+          {
+            "value": "telugu",
+            "label": "Telugu"
+          },
+          {
+            "value": "malayalam",
+            "label": "Malayalam"
+          },
+          {
+            "value": "marathi",
+            "label": "Marathi"
+          },
+          {
+            "value": "bengali",
+            "label": "Bengali"
+          },
+          {
+            "value": "gujarati",
+            "label": "Gujarati"
+          },
+          {
+            "value": "urdu",
+            "label": "Urdu"
+          },
+          {
+            "value": "punjabi",
+            "label": "Punjabi"
+          },
+          {
+            "value": "tulu",
+            "label": "Tulu"
+          },
+          {
+            "value": "konkani",
+            "label": "Konkani"
+          }
+        ]
+      },
+      {
+        "key": "attire",
+        "title": "Attire they can provide",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "formal_suits",
+            "label": "Formal suits"
+          },
+          {
+            "value": "traditional_saree_kurta",
+            "label": "Traditional (saree / kurta)"
+          },
+          {
+            "value": "branded_t_shirts",
+            "label": "Branded T-shirts"
+          },
+          {
+            "value": "blazers",
+            "label": "Blazers"
+          },
+          {
+            "value": "to_the_event_theme",
+            "label": "To the event theme"
+          }
+        ]
+      }
+    ],
+    "required_keys": [
+      "roles"
+    ],
+    "source_fingerprint": "d6875aba62cccd87"
+  },
+  {
+    "trade_id": "invitation_printing",
+    "fields": [
+      {
+        "key": "products",
+        "title": "Which of these do they need?",
+        "kind": "multi",
+        "group": "choose",
+        "required": true,
+        "options": [
+          {
+            "value": "printed_invitations",
+            "label": "Printed invitations"
+          },
+          {
+            "value": "digital_invitations",
+            "label": "Digital invitations"
+          },
+          {
+            "value": "custom_graphic_design",
+            "label": "Custom graphic design"
+          },
+          {
+            "value": "save_the_date_cards",
+            "label": "Save-the-date cards"
+          },
+          {
+            "value": "rsvp_materials",
+            "label": "RSVP materials"
+          },
+          {
+            "value": "signage",
+            "label": "Signage"
+          },
+          {
+            "value": "menus",
+            "label": "Menus"
+          },
+          {
+            "value": "event_programmes",
+            "label": "Event programmes"
+          },
+          {
+            "value": "labels_and_tags",
+            "label": "Labels and tags"
+          },
+          {
+            "value": "boxed_wedding_cards",
+            "label": "Boxed wedding cards"
+          },
+          {
+            "value": "scroll_invitations",
+            "label": "Scroll invitations"
+          },
+          {
+            "value": "video_invitations",
+            "label": "Video invitations"
+          },
+          {
+            "value": "e_invites_with_an_rsvp_page",
+            "label": "E-invites with an RSVP page"
+          },
+          {
+            "value": "caricature_invites",
+            "label": "Caricature invites"
+          },
+          {
+            "value": "thank_you_cards",
+            "label": "Thank-you cards"
+          },
+          {
+            "value": "welcome_boards",
+            "label": "Welcome boards"
+          },
+          {
+            "value": "seating_charts",
+            "label": "Seating charts"
+          },
+          {
+            "value": "itinerary_booklets",
+            "label": "Itinerary booklets"
+          },
+          {
+            "value": "place_cards",
+            "label": "Place cards"
+          },
+          {
+            "value": "photo_booth_props",
+            "label": "Photo-booth props"
+          }
+        ]
+      },
+      {
+        "key": "languages",
+        "title": "Languages / scripts they can typeset",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "english",
+            "label": "English"
+          },
+          {
+            "value": "kannada",
+            "label": "Kannada"
+          },
+          {
+            "value": "hindi",
+            "label": "Hindi"
+          },
+          {
+            "value": "tamil",
+            "label": "Tamil"
+          },
+          {
+            "value": "telugu",
+            "label": "Telugu"
+          },
+          {
+            "value": "malayalam",
+            "label": "Malayalam"
+          },
+          {
+            "value": "sanskrit",
+            "label": "Sanskrit"
+          },
+          {
+            "value": "marathi",
+            "label": "Marathi"
+          },
+          {
+            "value": "gujarati",
+            "label": "Gujarati"
+          },
+          {
+            "value": "bengali",
+            "label": "Bengali"
+          },
+          {
+            "value": "urdu",
+            "label": "Urdu"
+          },
+          {
+            "value": "punjabi",
+            "label": "Punjabi"
+          },
+          {
+            "value": "tulu",
+            "label": "Tulu"
+          },
+          {
+            "value": "konkani",
+            "label": "Konkani"
+          }
+        ]
+      },
+      {
+        "key": "card_styles",
+        "title": "Card styles they make",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "traditional",
+            "label": "Traditional"
+          },
+          {
+            "value": "modern_minimal",
+            "label": "Modern minimal"
+          },
+          {
+            "value": "royal_rajasthani",
+            "label": "Royal / Rajasthani"
+          },
+          {
+            "value": "south_indian_temple",
+            "label": "South Indian temple"
+          },
+          {
+            "value": "floral",
+            "label": "Floral"
+          },
+          {
+            "value": "laser_cut",
+            "label": "Laser-cut"
+          },
+          {
+            "value": "boxed_gift_box",
+            "label": "Boxed / gift box"
+          },
+          {
+            "value": "acrylic",
+            "label": "Acrylic"
+          },
+          {
+            "value": "eco_seed_paper",
+            "label": "Eco / seed paper"
+          },
+          {
+            "value": "caricature",
+            "label": "Caricature"
+          }
+        ]
+      },
+      {
+        "key": "home_delivery",
+        "title": "They deliver the printed cards to the family",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "guest_distribution",
+        "title": "They can courier or hand-deliver cards to guests",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      }
+    ],
+    "required_keys": [
+      "products"
+    ],
+    "source_fingerprint": "a3fcaa97def78ad3"
+  },
+  {
+    "trade_id": "live_entertainment",
+    "fields": [
+      {
+        "key": "$tier",
+        "title": "Choose the experience",
+        "kind": "single",
+        "group": "experience",
+        "required": false,
+        "options": [
+          {
+            "value": "ESSENTIAL",
+            "label": "One Act"
+          },
+          {
+            "value": "SIGNATURE",
+            "label": "Full Show"
+          },
+          {
+            "value": "VIP",
+            "label": "Headline Show"
+          }
+        ]
+      },
+      {
+        "key": "act_types",
+        "title": "What would you love on stage?",
+        "kind": "multi",
+        "group": "choose",
+        "required": true,
+        "options": [
+          {
+            "value": "singer",
+            "label": "Singer"
+          },
+          {
+            "value": "band",
+            "label": "Band"
+          },
+          {
+            "value": "instrumentalist",
+            "label": "Instrumentalist"
+          },
+          {
+            "value": "dance_troupe",
+            "label": "Dance troupe"
+          },
+          {
+            "value": "comedian",
+            "label": "Comedian"
+          },
+          {
+            "value": "magician",
+            "label": "Magician"
+          },
+          {
+            "value": "emcee_supported_act",
+            "label": "Emcee-supported act"
+          },
+          {
+            "value": "traditional_performance",
+            "label": "Traditional performance"
+          },
+          {
+            "value": "specialty_act",
+            "label": "Specialty act"
+          },
+          {
+            "value": "folk_dance_dollu_kunitha_yakshagana",
+            "label": "Folk dance (Dollu Kunitha, Yakshagana…)"
+          },
+          {
+            "value": "classical_dance_bharatanatyam_kathak",
+            "label": "Classical dance (Bharatanatyam, Kathak…)"
+          },
+          {
+            "value": "bollywood_dance",
+            "label": "Bollywood dance"
+          },
+          {
+            "value": "nadaswaram_shehnai",
+            "label": "Nadaswaram / shehnai"
+          },
+          {
+            "value": "chenda_melam_dhol_troupe",
+            "label": "Chenda melam / dhol troupe"
+          },
+          {
+            "value": "ghazal_sufi_singer",
+            "label": "Ghazal / sufi singer"
+          },
+          {
+            "value": "qawwali_group",
+            "label": "Qawwali group"
+          },
+          {
+            "value": "playback_celebrity_singer",
+            "label": "Playback / celebrity singer"
+          },
+          {
+            "value": "stand_up_comedy",
+            "label": "Stand-up comedy"
+          },
+          {
+            "value": "mimicry",
+            "label": "Mimicry"
+          },
+          {
+            "value": "mentalist",
+            "label": "Mentalist"
+          },
+          {
+            "value": "puppet_show",
+            "label": "Puppet show"
+          },
+          {
+            "value": "fire_led_act",
+            "label": "Fire / LED act"
+          },
+          {
+            "value": "acrobats_aerial_act",
+            "label": "Acrobats / aerial act"
+          },
+          {
+            "value": "caricature_artist",
+            "label": "Caricature artist"
+          },
+          {
+            "value": "kids_entertainer",
+            "label": "Kids entertainer"
+          },
+          {
+            "value": "bartender_flair_show",
+            "label": "Bartender flair show"
+          }
+        ]
+      },
+      {
+        "key": "own_sound",
+        "title": "They bring their own sound system",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      }
+    ],
+    "required_keys": [
+      "act_types"
+    ],
+    "source_fingerprint": "218cb8cfdb1b508c"
+  },
+  {
+    "trade_id": "loading_unloading_crew",
+    "fields": [
+      {
+        "key": "work",
+        "title": "Loading, unloading or both?",
+        "kind": "multi",
+        "group": "choose",
+        "required": true,
+        "options": [
+          {
+            "value": "loading",
+            "label": "Loading"
+          },
+          {
+            "value": "unloading",
+            "label": "Unloading"
+          }
+        ]
+      },
+      {
+        "key": "access",
+        "title": "Access they can work with",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "ground_floor",
+            "label": "Ground floor"
+          },
+          {
+            "value": "lift",
+            "label": "Lift"
+          },
+          {
+            "value": "stairs",
+            "label": "Stairs"
+          },
+          {
+            "value": "long_carry_50_m",
+            "label": "Long carry (50 m+)"
+          },
+          {
+            "value": "basement",
+            "label": "Basement"
+          },
+          {
+            "value": "narrow_lanes_no_truck_entry",
+            "label": "Narrow lanes (no truck entry)"
+          }
+        ]
+      },
+      {
+        "key": "packing",
+        "title": "They pack and wrap items",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "assembly",
+        "title": "They assemble and dismantle furniture and stages",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "same_day",
+        "title": "Same-day crew possible",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "supervisor",
+        "title": "Supervisor available",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      }
+    ],
+    "required_keys": [
+      "work"
+    ],
+    "source_fingerprint": "9e06354c42c3a7bc"
+  },
+  {
+    "trade_id": "medium_large_goods_vehicle",
+    "fields": [
+      {
+        "key": "loads",
+        "title": "Which loads do their trucks move?",
+        "kind": "multi",
+        "group": "choose",
+        "required": true,
+        "options": [
+          {
+            "value": "event_equipment",
+            "label": "Event equipment"
+          },
+          {
+            "value": "furniture",
+            "label": "Furniture"
+          },
+          {
+            "value": "staging_and_truss",
+            "label": "Staging & truss"
+          },
+          {
+            "value": "generators",
+            "label": "Generators"
+          },
+          {
+            "value": "decor",
+            "label": "Decor"
+          },
+          {
+            "value": "bulk_materials",
+            "label": "Bulk materials"
+          },
+          {
+            "value": "machinery",
+            "label": "Machinery"
+          },
+          {
+            "value": "tents_and_shamiana",
+            "label": "Tents & shamiana"
+          },
+          {
+            "value": "exhibition_stalls",
+            "label": "Exhibition stalls"
+          },
+          {
+            "value": "catering_equipment",
+            "label": "Catering equipment"
+          },
+          {
+            "value": "chairs_and_tables_in_bulk",
+            "label": "Chairs & tables in bulk"
+          },
+          {
+            "value": "cold_chain_food",
+            "label": "Cold-chain food"
+          },
+          {
+            "value": "household_shifting",
+            "label": "Household shifting"
+          }
+        ]
+      },
+      {
+        "key": "part_load",
+        "title": "They take part loads (shared truck)",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "night_movement",
+        "title": "They run at night when city entry is restricted by day",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "loading_crew",
+        "title": "They can send a loading crew",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "transit_insurance",
+        "title": "Goods-in-transit insurance",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      }
+    ],
+    "required_keys": [
+      "loads"
+    ],
+    "source_fingerprint": "c3c5a211c2b68493"
+  },
+  {
+    "trade_id": "mehendi_artist",
+    "fields": [
+      {
+        "key": "$tier",
+        "title": "Choose the experience",
+        "kind": "single",
+        "group": "experience",
+        "required": false,
+        "options": [
+          {
+            "value": "ESSENTIAL",
+            "label": "Simple & Elegant"
+          },
+          {
+            "value": "SIGNATURE",
+            "label": "Signature Designs"
+          },
+          {
+            "value": "VIP",
+            "label": "Bridal Masterpiece"
+          }
+        ]
+      },
+      {
+        "key": "who",
+        "title": "Mehendi for whom?",
+        "kind": "multi",
+        "group": "choose",
+        "required": true,
+        "options": [
+          {
+            "value": "bridal",
+            "label": "Bridal"
+          },
+          {
+            "value": "family_guest",
+            "label": "Family / guest"
+          },
+          {
+            "value": "casual",
+            "label": "Casual"
+          }
+        ]
+      },
+      {
+        "key": "styles",
+        "title": "Which design style?",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "rajasthani",
+            "label": "Rajasthani"
+          },
+          {
+            "value": "arabic",
+            "label": "Arabic"
+          },
+          {
+            "value": "indo_arabic",
+            "label": "Indo-Arabic"
+          },
+          {
+            "value": "moroccan",
+            "label": "Moroccan"
+          },
+          {
+            "value": "portrait_figure",
+            "label": "Portrait / figure"
+          },
+          {
+            "value": "minimal",
+            "label": "Minimal"
+          },
+          {
+            "value": "glitter",
+            "label": "Glitter"
+          },
+          {
+            "value": "mughlai",
+            "label": "Mughlai"
+          },
+          {
+            "value": "pakistani",
+            "label": "Pakistani"
+          },
+          {
+            "value": "indo_western",
+            "label": "Indo-Western"
+          },
+          {
+            "value": "bride_and_groom_portrait",
+            "label": "Bride & groom portrait"
+          },
+          {
+            "value": "jewellery_style",
+            "label": "Jewellery style"
+          },
+          {
+            "value": "shaded",
+            "label": "Shaded"
+          },
+          {
+            "value": "mandala",
+            "label": "Mandala"
+          },
+          {
+            "value": "floral_and_leafy",
+            "label": "Floral & leafy"
+          },
+          {
+            "value": "white_henna",
+            "label": "White henna"
+          },
+          {
+            "value": "jagua",
+            "label": "Jagua"
+          },
+          {
+            "value": "kids_designs",
+            "label": "Kids designs"
+          },
+          {
+            "value": "traditional_karnataka",
+            "label": "Traditional Karnataka"
+          }
+        ]
+      },
+      {
+        "key": "coverage",
+        "title": "How much coverage?",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "full_hand",
+            "label": "Full hand"
+          },
+          {
+            "value": "half_hand",
+            "label": "Half hand"
+          },
+          {
+            "value": "front_only",
+            "label": "Front only"
+          },
+          {
+            "value": "back_only",
+            "label": "Back only"
+          },
+          {
+            "value": "feet",
+            "label": "Feet"
+          },
+          {
+            "value": "up_to_elbow",
+            "label": "Up to elbow"
+          },
+          {
+            "value": "full_arms",
+            "label": "Full arms"
+          },
+          {
+            "value": "feet_up_to_knee",
+            "label": "Feet up to knee"
+          }
+        ]
+      },
+      {
+        "key": "intricate_bridal",
+        "title": "Intricate bridal work available",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "trial_designs",
+        "title": "Trial designs available",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "references",
+        "title": "Customers can share design references",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "home_visit",
+        "title": "Home visits",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "aftercare",
+        "title": "They give aftercare for a deep colour",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      }
+    ],
+    "required_keys": [
+      "who"
+    ],
+    "source_fingerprint": "c1197e9c87dea2d0"
+  },
+  {
+    "trade_id": "mini_truck_pickup",
+    "fields": [
+      {
+        "key": "loads",
+        "title": "What do their mini trucks usually carry?",
+        "kind": "multi",
+        "group": "choose",
+        "required": true,
+        "options": [
+          {
+            "value": "event_equipment",
+            "label": "Event equipment"
+          },
+          {
+            "value": "furniture",
+            "label": "Furniture"
+          },
+          {
+            "value": "decor",
+            "label": "Decor"
+          },
+          {
+            "value": "cartons",
+            "label": "Cartons"
+          },
+          {
+            "value": "food_supplies",
+            "label": "Food supplies"
+          },
+          {
+            "value": "household",
+            "label": "Household"
+          },
+          {
+            "value": "catering_vessels",
+            "label": "Catering vessels"
+          },
+          {
+            "value": "flowers",
+            "label": "Flowers"
+          },
+          {
+            "value": "sound_and_lighting_gear",
+            "label": "Sound & lighting gear"
+          },
+          {
+            "value": "return_gifts",
+            "label": "Return gifts"
+          },
+          {
+            "value": "water_cans_and_beverages",
+            "label": "Water cans & beverages"
+          },
+          {
+            "value": "chairs_and_tables",
+            "label": "Chairs & tables"
+          }
+        ]
+      },
+      {
+        "key": "helpers",
+        "title": "They can send helpers for loading",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "same_day",
+        "title": "They take same-day, on-demand trips",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "night_trips",
+        "title": "Night trips (after 10 pm)",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "multi_stop",
+        "title": "Multi-stop trips (pick up from several shops)",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "outstation",
+        "title": "Outstation trips",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "fragile",
+        "title": "They handle fragile loads (glass, cakes, decor)",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      }
+    ],
+    "required_keys": [
+      "loads"
+    ],
+    "source_fingerprint": "3bea3e0964e0452d"
+  },
+  {
+    "trade_id": "passenger_transport",
+    "fields": [
+      {
+        "key": "vehicle_services",
+        "title": "What do they need?",
+        "kind": "multi",
+        "group": "choose",
+        "required": true,
+        "options": [
+          {
+            "value": "cars",
+            "label": "Cars"
+          },
+          {
+            "value": "premium_cars",
+            "label": "Premium cars"
+          },
+          {
+            "value": "suvs",
+            "label": "SUVs"
+          },
+          {
+            "value": "vans",
+            "label": "Vans"
+          },
+          {
+            "value": "mini_buses",
+            "label": "Mini-buses"
+          },
+          {
+            "value": "buses",
+            "label": "Buses"
+          },
+          {
+            "value": "shuttle_service",
+            "label": "Shuttle service"
+          },
+          {
+            "value": "multi_vehicle_guest_transport",
+            "label": "Multi-vehicle guest transport"
+          },
+          {
+            "value": "decorated_wedding_cars",
+            "label": "Decorated wedding cars"
+          },
+          {
+            "value": "vintage_classic_cars",
+            "label": "Vintage / classic cars"
+          },
+          {
+            "value": "luxury_cars",
+            "label": "Luxury cars"
+          },
+          {
+            "value": "airport_and_station_transfers",
+            "label": "Airport & station transfers"
+          },
+          {
+            "value": "electric_cars",
+            "label": "Electric cars"
+          },
+          {
+            "value": "tempo_travellers",
+            "label": "Tempo Travellers"
+          },
+          {
+            "value": "luxury_coaches",
+            "label": "Luxury coaches"
+          }
+        ]
+      },
+      {
+        "key": "airport_station",
+        "title": "Flight / train coordination",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "languages",
+        "title": "Languages their drivers speak",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "english",
+            "label": "English"
+          },
+          {
+            "value": "kannada",
+            "label": "Kannada"
+          },
+          {
+            "value": "hindi",
+            "label": "Hindi"
+          },
+          {
+            "value": "tamil",
+            "label": "Tamil"
+          },
+          {
+            "value": "telugu",
+            "label": "Telugu"
+          },
+          {
+            "value": "malayalam",
+            "label": "Malayalam"
+          },
+          {
+            "value": "marathi",
+            "label": "Marathi"
+          },
+          {
+            "value": "bengali",
+            "label": "Bengali"
+          },
+          {
+            "value": "gujarati",
+            "label": "Gujarati"
+          },
+          {
+            "value": "urdu",
+            "label": "Urdu"
+          },
+          {
+            "value": "punjabi",
+            "label": "Punjabi"
+          },
+          {
+            "value": "tulu",
+            "label": "Tulu"
+          },
+          {
+            "value": "konkani",
+            "label": "Konkani"
+          }
+        ]
+      },
+      {
+        "key": "uniformed",
+        "title": "Drivers in uniform",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "outstation",
+        "title": "Outstation trips",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "late_night",
+        "title": "Late-night pickups (after 11 pm)",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      }
+    ],
+    "required_keys": [
+      "vehicle_services"
+    ],
+    "source_fingerprint": "5c16fff012b13719"
+  },
+  {
+    "trade_id": "photography",
+    "fields": [
+      {
+        "key": "$tier",
+        "title": "Choose the experience",
+        "kind": "single",
+        "group": "experience",
+        "required": false,
+        "options": [
+          {
+            "value": "ESSENTIAL",
+            "label": "Important Moments"
+          },
+          {
+            "value": "SIGNATURE",
+            "label": "Complete Story"
+          },
+          {
+            "value": "VIP",
+            "label": "Cinematic Experience"
+          }
+        ]
+      },
+      {
+        "key": "specialties",
+        "title": "What should they shoot?",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "candid",
+            "label": "Candid"
+          },
+          {
+            "value": "traditional",
+            "label": "Traditional"
+          },
+          {
+            "value": "pre_wedding",
+            "label": "Pre-wedding"
+          },
+          {
+            "value": "portrait",
+            "label": "Portrait"
+          },
+          {
+            "value": "product",
+            "label": "Product"
+          },
+          {
+            "value": "corporate",
+            "label": "Corporate"
+          },
+          {
+            "value": "fashion",
+            "label": "Fashion"
+          },
+          {
+            "value": "maternity_newborn",
+            "label": "Maternity / newborn"
+          },
+          {
+            "value": "haldi_and_mehendi",
+            "label": "Haldi & mehendi"
+          },
+          {
+            "value": "engagement",
+            "label": "Engagement"
+          },
+          {
+            "value": "baby_and_kids",
+            "label": "Baby & kids"
+          },
+          {
+            "value": "birthday",
+            "label": "Birthday"
+          },
+          {
+            "value": "event_conference",
+            "label": "Event / conference"
+          },
+          {
+            "value": "food",
+            "label": "Food"
+          },
+          {
+            "value": "real_estate_venue",
+            "label": "Real estate / venue"
+          },
+          {
+            "value": "drone_photography",
+            "label": "Drone photography"
+          }
+        ]
+      },
+      {
+        "key": "styles",
+        "title": "Which photo style do you love?",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "documentary",
+            "label": "Documentary"
+          },
+          {
+            "value": "editorial",
+            "label": "Editorial"
+          },
+          {
+            "value": "fine_art",
+            "label": "Fine art"
+          },
+          {
+            "value": "classic_posed",
+            "label": "Classic posed"
+          },
+          {
+            "value": "cinematic_stills",
+            "label": "Cinematic stills"
+          },
+          {
+            "value": "photojournalistic",
+            "label": "Photojournalistic"
+          },
+          {
+            "value": "bright_and_airy",
+            "label": "Bright & airy"
+          },
+          {
+            "value": "dark_and_moody",
+            "label": "Dark & moody"
+          },
+          {
+            "value": "vintage_film",
+            "label": "Vintage film"
+          },
+          {
+            "value": "black_and_white",
+            "label": "Black & white"
+          }
+        ]
+      },
+      {
+        "key": "equipment",
+        "title": "Gear that matters to you",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "full_frame_bodies",
+            "label": "Full-frame bodies"
+          },
+          {
+            "value": "backup_body",
+            "label": "Backup body"
+          },
+          {
+            "value": "prime_lenses",
+            "label": "Prime lenses"
+          },
+          {
+            "value": "zoom_lenses",
+            "label": "Zoom lenses"
+          },
+          {
+            "value": "off_camera_flash",
+            "label": "Off-camera flash"
+          },
+          {
+            "value": "studio_lights",
+            "label": "Studio lights"
+          },
+          {
+            "value": "drone_licensed",
+            "label": "Drone (licensed)"
+          }
+        ]
+      },
+      {
+        "key": "formats",
+        "title": "How do you want the photos?",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "online_gallery",
+            "label": "Online gallery"
+          },
+          {
+            "value": "pen_drive",
+            "label": "Pen drive"
+          },
+          {
+            "value": "printed_album",
+            "label": "Printed album"
+          },
+          {
+            "value": "prints",
+            "label": "Prints"
+          },
+          {
+            "value": "raw_files",
+            "label": "RAW files"
+          },
+          {
+            "value": "cloud_download_link",
+            "label": "Cloud download link"
+          },
+          {
+            "value": "hard_drive",
+            "label": "Hard drive"
+          },
+          {
+            "value": "photo_book",
+            "label": "Photo book"
+          },
+          {
+            "value": "framed_prints",
+            "label": "Framed prints"
+          },
+          {
+            "value": "social_media_edits",
+            "label": "Social-media edits"
+          }
+        ]
+      },
+      {
+        "key": "languages",
+        "title": "Languages they speak with families",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "english",
+            "label": "English"
+          },
+          {
+            "value": "kannada",
+            "label": "Kannada"
+          },
+          {
+            "value": "hindi",
+            "label": "Hindi"
+          },
+          {
+            "value": "tamil",
+            "label": "Tamil"
+          },
+          {
+            "value": "telugu",
+            "label": "Telugu"
+          },
+          {
+            "value": "malayalam",
+            "label": "Malayalam"
+          },
+          {
+            "value": "marathi",
+            "label": "Marathi"
+          },
+          {
+            "value": "bengali",
+            "label": "Bengali"
+          },
+          {
+            "value": "gujarati",
+            "label": "Gujarati"
+          },
+          {
+            "value": "urdu",
+            "label": "Urdu"
+          },
+          {
+            "value": "punjabi",
+            "label": "Punjabi"
+          },
+          {
+            "value": "tulu",
+            "label": "Tulu"
+          },
+          {
+            "value": "konkani",
+            "label": "Konkani"
+          }
+        ]
+      },
+      {
+        "key": "same_day_edit",
+        "title": "Same-day slideshow at the reception",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "outstation",
+        "title": "Will travel for a destination shoot",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "$years",
+        "title": "Experience",
+        "kind": "single",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "3",
+            "label": "3+ years"
+          },
+          {
+            "value": "5",
+            "label": "5+ years"
+          },
+          {
+            "value": "10",
+            "label": "10+ years"
+          }
+        ]
+      }
+    ],
+    "required_keys": [],
+    "source_fingerprint": "9e8762aa6e6f317c"
+  },
+  {
+    "trade_id": "power_cooling",
+    "fields": [
+      {
+        "key": "services",
+        "title": "What do they need?",
+        "kind": "multi",
+        "group": "choose",
+        "required": true,
+        "options": [
+          {
+            "value": "generators",
+            "label": "Generators"
+          },
+          {
+            "value": "backup_power",
+            "label": "Backup power"
+          },
+          {
+            "value": "power_distribution",
+            "label": "Power distribution"
+          },
+          {
+            "value": "temporary_cooling",
+            "label": "Temporary cooling"
+          },
+          {
+            "value": "air_conditioning",
+            "label": "Air-conditioning"
+          },
+          {
+            "value": "fans_air_coolers",
+            "label": "Fans / air coolers"
+          },
+          {
+            "value": "setup_and_on_site_support",
+            "label": "Setup & on-site support"
+          },
+          {
+            "value": "silent_dg_sets",
+            "label": "Silent DG sets"
+          },
+          {
+            "value": "mobile_inverters_battery",
+            "label": "Mobile inverters / battery"
+          },
+          {
+            "value": "solar_power",
+            "label": "Solar power"
+          },
+          {
+            "value": "lighting_towers",
+            "label": "Lighting towers"
+          },
+          {
+            "value": "heaters",
+            "label": "Heaters"
+          },
+          {
+            "value": "misting_systems",
+            "label": "Misting systems"
+          },
+          {
+            "value": "cable_laying_and_panels",
+            "label": "Cable laying & panels"
+          },
+          {
+            "value": "fuel_supply",
+            "label": "Fuel supply"
+          }
+        ]
+      },
+      {
+        "key": "operators",
+        "title": "They supply operators / technicians",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "parallel",
+        "title": "They can run generators in sync (parallel)",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "silent_canopy",
+        "title": "CPCB-compliant silent canopies",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      }
+    ],
+    "required_keys": [
+      "services"
+    ],
+    "source_fingerprint": "c3c3f09f2a84130d"
+  },
+  {
+    "trade_id": "priest_rituals",
+    "fields": [
+      {
+        "key": "ceremonies",
+        "title": "Which ceremony?",
+        "kind": "multi",
+        "group": "choose",
+        "required": true,
+        "options": [
+          {
+            "value": "engagement",
+            "label": "Engagement"
+          },
+          {
+            "value": "wedding",
+            "label": "Wedding"
+          },
+          {
+            "value": "housewarming",
+            "label": "Housewarming"
+          },
+          {
+            "value": "naming_ceremony",
+            "label": "Naming ceremony"
+          },
+          {
+            "value": "blessing",
+            "label": "Blessing"
+          },
+          {
+            "value": "anniversary",
+            "label": "Anniversary"
+          },
+          {
+            "value": "memorial",
+            "label": "Memorial"
+          },
+          {
+            "value": "upanayana_thread_ceremony",
+            "label": "Upanayana / thread ceremony"
+          },
+          {
+            "value": "seemantha_baby_shower",
+            "label": "Seemantha / baby shower"
+          },
+          {
+            "value": "annaprashana",
+            "label": "Annaprashana"
+          },
+          {
+            "value": "ayushya_homa_first_birthday",
+            "label": "Ayushya homa (first birthday)"
+          },
+          {
+            "value": "ganapathi_homa",
+            "label": "Ganapathi homa"
+          },
+          {
+            "value": "navagraha_shanti",
+            "label": "Navagraha shanti"
+          },
+          {
+            "value": "satyanarayana_puja",
+            "label": "Satyanarayana puja"
+          },
+          {
+            "value": "lakshmi_puja",
+            "label": "Lakshmi puja"
+          },
+          {
+            "value": "vastu_shanti",
+            "label": "Vastu shanti"
+          },
+          {
+            "value": "bhoomi_puja",
+            "label": "Bhoomi puja"
+          },
+          {
+            "value": "rudrabhisheka",
+            "label": "Rudrabhisheka"
+          },
+          {
+            "value": "chandi_homa",
+            "label": "Chandi homa"
+          },
+          {
+            "value": "shashtiabdapurthi_60th_birthday",
+            "label": "Shashtiabdapurthi (60th birthday)"
+          },
+          {
+            "value": "shraddha_tithi",
+            "label": "Shraddha / tithi"
+          },
+          {
+            "value": "shop_office_opening",
+            "label": "Shop / office opening"
+          },
+          {
+            "value": "vehicle_puja",
+            "label": "Vehicle puja"
+          }
+        ]
+      },
+      {
+        "key": "traditions",
+        "title": "Which tradition does your family follow?",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "vedic",
+            "label": "Vedic"
+          },
+          {
+            "value": "smarta",
+            "label": "Smarta"
+          },
+          {
+            "value": "vaishnava",
+            "label": "Vaishnava"
+          },
+          {
+            "value": "shaiva",
+            "label": "Shaiva"
+          },
+          {
+            "value": "madhwa",
+            "label": "Madhwa"
+          },
+          {
+            "value": "arya_samaj",
+            "label": "Arya Samaj"
+          },
+          {
+            "value": "jain",
+            "label": "Jain"
+          },
+          {
+            "value": "christian",
+            "label": "Christian"
+          },
+          {
+            "value": "islamic",
+            "label": "Islamic"
+          },
+          {
+            "value": "sikh",
+            "label": "Sikh"
+          },
+          {
+            "value": "sri_vaishnava",
+            "label": "Sri Vaishnava"
+          },
+          {
+            "value": "lingayat_veerashaiva",
+            "label": "Lingayat / Veerashaiva"
+          },
+          {
+            "value": "kerala_tantric",
+            "label": "Kerala tantric"
+          },
+          {
+            "value": "north_indian_pandit",
+            "label": "North Indian (pandit)"
+          },
+          {
+            "value": "bengali_purohit",
+            "label": "Bengali (purohit)"
+          },
+          {
+            "value": "buddhist",
+            "label": "Buddhist"
+          }
+        ]
+      },
+      {
+        "key": "languages",
+        "title": "Mantras and guidance in which language?",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "sanskrit",
+            "label": "Sanskrit"
+          },
+          {
+            "value": "kannada",
+            "label": "Kannada"
+          },
+          {
+            "value": "telugu",
+            "label": "Telugu"
+          },
+          {
+            "value": "tamil",
+            "label": "Tamil"
+          },
+          {
+            "value": "hindi",
+            "label": "Hindi"
+          },
+          {
+            "value": "english",
+            "label": "English"
+          },
+          {
+            "value": "malayalam",
+            "label": "Malayalam"
+          },
+          {
+            "value": "marathi",
+            "label": "Marathi"
+          },
+          {
+            "value": "tulu",
+            "label": "Tulu"
+          },
+          {
+            "value": "konkani",
+            "label": "Konkani"
+          },
+          {
+            "value": "gujarati",
+            "label": "Gujarati"
+          },
+          {
+            "value": "bengali",
+            "label": "Bengali"
+          },
+          {
+            "value": "odia",
+            "label": "Odia"
+          },
+          {
+            "value": "punjabi",
+            "label": "Punjabi"
+          }
+        ]
+      },
+      {
+        "key": "customisation",
+        "title": "They customise rituals to family tradition",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "muhurta",
+        "title": "They fix muhurta (auspicious time)",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "assistants",
+        "title": "Assistant priests available",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "online_puja",
+        "title": "Online / video-call puja for families abroad",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "horoscope",
+        "title": "Horoscope matching",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "prasadam_cook",
+        "title": "They can arrange a cook for prasadam",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "$years",
+        "title": "Experience",
+        "kind": "single",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "3",
+            "label": "3+ years"
+          },
+          {
+            "value": "5",
+            "label": "5+ years"
+          },
+          {
+            "value": "10",
+            "label": "10+ years"
+          }
+        ]
+      }
+    ],
+    "required_keys": [
+      "ceremonies"
+    ],
+    "source_fingerprint": "803c0d161fc3e464"
+  },
+  {
+    "trade_id": "safety_facilities",
+    "fields": [
+      {
+        "key": "kit",
+        "title": "Equipment",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "fire_extinguishers",
+            "label": "Fire extinguishers"
+          },
+          {
+            "value": "first_aid_kits",
+            "label": "First-aid kits"
+          },
+          {
+            "value": "barricades",
+            "label": "Barricades"
+          },
+          {
+            "value": "signage",
+            "label": "Signage"
+          },
+          {
+            "value": "portable_toilets",
+            "label": "Portable toilets"
+          },
+          {
+            "value": "hand_wash_stations",
+            "label": "Hand-wash stations"
+          },
+          {
+            "value": "radios",
+            "label": "Radios"
+          },
+          {
+            "value": "fire_blankets",
+            "label": "Fire blankets"
+          },
+          {
+            "value": "aed_defibrillator",
+            "label": "AED / defibrillator"
+          },
+          {
+            "value": "stretchers",
+            "label": "Stretchers"
+          },
+          {
+            "value": "emergency_lighting",
+            "label": "Emergency lighting"
+          },
+          {
+            "value": "megaphones_and_pa",
+            "label": "Megaphones & PA"
+          },
+          {
+            "value": "sanitiser_stations",
+            "label": "Sanitiser stations"
+          },
+          {
+            "value": "waste_bins_and_liners",
+            "label": "Waste bins & liners"
+          }
+        ]
+      },
+      {
+        "key": "setup_included",
+        "title": "Setup included",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "emergency_response",
+        "title": "Emergency response capability",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "ambulance",
+        "title": "Ambulance on standby available",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "medical_staff",
+        "title": "Paramedic or nurse on site available",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "permissions_help",
+        "title": "They help with fire and police permissions",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      }
+    ],
+    "required_keys": [],
+    "source_fingerprint": "5e619dc76f44c416"
+  },
+  {
+    "trade_id": "security_services",
+    "fields": [
+      {
+        "key": "services",
+        "title": "Services",
+        "kind": "multi",
+        "group": "choose",
+        "required": true,
+        "options": [
+          {
+            "value": "guest_access_control",
+            "label": "Guest access control"
+          },
+          {
+            "value": "entry_exit_management",
+            "label": "Entry / exit management"
+          },
+          {
+            "value": "queue_management",
+            "label": "Queue management"
+          },
+          {
+            "value": "site_security",
+            "label": "Site security"
+          },
+          {
+            "value": "parking_security",
+            "label": "Parking security"
+          },
+          {
+            "value": "supervision",
+            "label": "Supervision"
+          },
+          {
+            "value": "bouncers",
+            "label": "Bouncers"
+          },
+          {
+            "value": "vip_close_protection",
+            "label": "VIP / close protection"
+          },
+          {
+            "value": "lady_guards",
+            "label": "Lady guards"
+          },
+          {
+            "value": "bag_screening",
+            "label": "Bag screening"
+          },
+          {
+            "value": "crowd_control",
+            "label": "Crowd control"
+          },
+          {
+            "value": "gift_and_cash_counter_guarding",
+            "label": "Gift & cash counter guarding"
+          },
+          {
+            "value": "night_patrol",
+            "label": "Night patrol"
+          },
+          {
+            "value": "cctv_monitoring",
+            "label": "CCTV monitoring"
+          },
+          {
+            "value": "fire_marshals",
+            "label": "Fire marshals"
+          }
+        ]
+      },
+      {
+        "key": "venues",
+        "title": "Venue types",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "banquet_halls",
+            "label": "Banquet halls"
+          },
+          {
+            "value": "open_grounds",
+            "label": "Open grounds"
+          },
+          {
+            "value": "hotels",
+            "label": "Hotels"
+          },
+          {
+            "value": "corporate",
+            "label": "Corporate"
+          },
+          {
+            "value": "residences",
+            "label": "Residences"
+          },
+          {
+            "value": "exhibitions",
+            "label": "Exhibitions"
+          }
+        ]
+      },
+      {
+        "key": "police_liaison",
+        "title": "They coordinate with local police for the event",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "uniform",
+        "title": "Uniform",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "standard_uniform",
+            "label": "Standard uniform"
+          },
+          {
+            "value": "formal_suited",
+            "label": "Formal / suited"
+          },
+          {
+            "value": "bouncer",
+            "label": "Bouncer"
+          },
+          {
+            "value": "black_suits_with_earpieces",
+            "label": "Black suits with earpieces"
+          },
+          {
+            "value": "traditional_attire",
+            "label": "Traditional attire"
+          },
+          {
+            "value": "branded_t_shirts",
+            "label": "Branded T-shirts"
+          }
+        ]
+      },
+      {
+        "key": "ex_servicemen",
+        "title": "Ex-servicemen on their team",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "equipment",
+        "title": "Equipment",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "metal_detectors",
+            "label": "Metal detectors"
+          },
+          {
+            "value": "radios",
+            "label": "Radios"
+          },
+          {
+            "value": "torches",
+            "label": "Torches"
+          },
+          {
+            "value": "barricades",
+            "label": "Barricades"
+          },
+          {
+            "value": "body_cameras",
+            "label": "Body cameras"
+          }
+        ]
+      },
+      {
+        "key": "briefing",
+        "title": "Pre-event briefing included",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "relief",
+        "title": "Break relief guards provided",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      }
+    ],
+    "required_keys": [
+      "services"
+    ],
+    "source_fingerprint": "e5004125b783b2b5"
+  },
+  {
+    "trade_id": "sound_av",
+    "fields": [
+      {
+        "key": "groups",
+        "title": "Equipment groups",
+        "kind": "multi",
+        "group": "choose",
+        "required": true,
+        "options": [
+          {
+            "value": "speakers",
+            "label": "Speakers"
+          },
+          {
+            "value": "mixers",
+            "label": "Mixers"
+          },
+          {
+            "value": "microphones",
+            "label": "Microphones"
+          },
+          {
+            "value": "wireless_systems",
+            "label": "Wireless systems"
+          },
+          {
+            "value": "projectors_and_screens",
+            "label": "Projectors & screens"
+          },
+          {
+            "value": "video_conferencing",
+            "label": "Video-conferencing"
+          },
+          {
+            "value": "led_walls_video",
+            "label": "LED walls / video"
+          },
+          {
+            "value": "stage_monitors",
+            "label": "Stage monitors"
+          },
+          {
+            "value": "cables_and_stands",
+            "label": "Cables & stands"
+          },
+          {
+            "value": "operators",
+            "label": "Operators"
+          },
+          {
+            "value": "line_arrays",
+            "label": "Line arrays"
+          },
+          {
+            "value": "subwoofers",
+            "label": "Subwoofers"
+          },
+          {
+            "value": "dj_setup",
+            "label": "DJ setup"
+          },
+          {
+            "value": "podium_mics",
+            "label": "Podium mics"
+          },
+          {
+            "value": "interpretation_booths",
+            "label": "Interpretation booths"
+          },
+          {
+            "value": "teleprompters",
+            "label": "Teleprompters"
+          },
+          {
+            "value": "intercom_talk_back",
+            "label": "Intercom / talk-back"
+          },
+          {
+            "value": "stage_timers",
+            "label": "Stage timers"
+          }
+        ]
+      },
+      {
+        "key": "capabilities",
+        "title": "They can also handle",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "recording",
+            "label": "Recording"
+          },
+          {
+            "value": "live_streaming",
+            "label": "Live streaming"
+          },
+          {
+            "value": "multi_zone_audio",
+            "label": "Multi-zone audio"
+          },
+          {
+            "value": "simultaneous_interpretation",
+            "label": "Simultaneous interpretation"
+          },
+          {
+            "value": "hybrid_virtual_events",
+            "label": "Hybrid / virtual events"
+          },
+          {
+            "value": "live_band_audio",
+            "label": "Live-band audio"
+          },
+          {
+            "value": "silent_disco_headphones",
+            "label": "Silent-disco headphones"
+          },
+          {
+            "value": "webcasting",
+            "label": "Webcasting"
+          }
+        ]
+      },
+      {
+        "key": "backup",
+        "title": "A backup mixer and mics stay on site",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      }
+    ],
+    "required_keys": [
+      "groups"
+    ],
+    "source_fingerprint": "f7d6b8b32fb2f338"
+  },
+  {
+    "trade_id": "tent_furniture",
+    "fields": [
+      {
+        "key": "groups",
+        "title": "What do they supply?",
+        "kind": "multi",
+        "group": "choose",
+        "required": true,
+        "options": [
+          {
+            "value": "tents_canopies",
+            "label": "Tents / canopies"
+          },
+          {
+            "value": "tables",
+            "label": "Tables"
+          },
+          {
+            "value": "chairs",
+            "label": "Chairs"
+          },
+          {
+            "value": "sofas_lounge",
+            "label": "Sofas / lounge"
+          },
+          {
+            "value": "stage_platform",
+            "label": "Stage / platform"
+          },
+          {
+            "value": "dining_furniture",
+            "label": "Dining furniture"
+          },
+          {
+            "value": "counters",
+            "label": "Counters"
+          },
+          {
+            "value": "partitioning",
+            "label": "Partitioning"
+          },
+          {
+            "value": "german_hangars",
+            "label": "German hangars"
+          },
+          {
+            "value": "pagoda_tents",
+            "label": "Pagoda tents"
+          },
+          {
+            "value": "shamiana",
+            "label": "Shamiana"
+          },
+          {
+            "value": "mandap_structures",
+            "label": "Mandap structures"
+          },
+          {
+            "value": "carpets_and_flooring",
+            "label": "Carpets & flooring"
+          },
+          {
+            "value": "bar_counters",
+            "label": "Bar counters"
+          },
+          {
+            "value": "cocktail_tables",
+            "label": "Cocktail tables"
+          },
+          {
+            "value": "lounge_seating",
+            "label": "Lounge seating"
+          },
+          {
+            "value": "stage_thrones",
+            "label": "Stage thrones"
+          },
+          {
+            "value": "buffet_tables",
+            "label": "Buffet tables"
+          },
+          {
+            "value": "chair_covers_and_sashes",
+            "label": "Chair covers & sashes"
+          },
+          {
+            "value": "kids_furniture",
+            "label": "Kids furniture"
+          }
+        ]
+      },
+      {
+        "key": "surfaces",
+        "title": "Surfaces they can install on",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "lawn",
+            "label": "Lawn"
+          },
+          {
+            "value": "concrete",
+            "label": "Concrete"
+          },
+          {
+            "value": "sand",
+            "label": "Sand"
+          },
+          {
+            "value": "terrace",
+            "label": "Terrace"
+          },
+          {
+            "value": "indoor_hall",
+            "label": "Indoor hall"
+          },
+          {
+            "value": "gravel",
+            "label": "Gravel"
+          },
+          {
+            "value": "paved_interlock",
+            "label": "Paved / interlock"
+          }
+        ]
+      },
+      {
+        "key": "fire_retardant",
+        "title": "Fire-retardant fabric",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "ac_tents",
+        "title": "Air-conditioned tents available",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "weatherproof",
+        "title": "Weather-proof tents available",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      }
+    ],
+    "required_keys": [
+      "groups"
+    ],
+    "source_fingerprint": "118485e7d8cc5d31"
+  },
+  {
+    "trade_id": "transportation",
+    "fields": [
+      {
+        "key": "service_type",
+        "title": "Service type",
+        "kind": "single",
+        "group": "choose",
+        "required": true,
+        "options": [
+          {
+            "value": "guest_transport_coordination",
+            "label": "Guest transport coordination"
+          },
+          {
+            "value": "item_movement",
+            "label": "Item movement"
+          },
+          {
+            "value": "scheduled_shuttle_coordination",
+            "label": "Scheduled shuttle coordination"
+          },
+          {
+            "value": "i_run_mini_trucks_pickups",
+            "label": "I run mini trucks / pickups"
+          },
+          {
+            "value": "i_run_medium_large_goods_vehicles",
+            "label": "I run medium / large goods vehicles"
+          },
+          {
+            "value": "i_run_cars_buses_for_passengers",
+            "label": "I run cars / buses for passengers"
+          },
+          {
+            "value": "other",
+            "label": "Other"
+          }
+        ]
+      },
+      {
+        "key": "vehicle_types",
+        "title": "Vehicle types they can arrange",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "cars",
+            "label": "Cars"
+          },
+          {
+            "value": "suvs",
+            "label": "SUVs"
+          },
+          {
+            "value": "tempo_travellers",
+            "label": "Tempo Travellers"
+          },
+          {
+            "value": "buses",
+            "label": "Buses"
+          },
+          {
+            "value": "mini_trucks",
+            "label": "Mini trucks"
+          },
+          {
+            "value": "goods_trucks",
+            "label": "Goods trucks"
+          },
+          {
+            "value": "two_wheeler_delivery",
+            "label": "Two-wheeler delivery"
+          }
+        ]
+      },
+      {
+        "key": "live_tracking",
+        "title": "Live vehicle tracking shared with the customer",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      }
+    ],
+    "required_keys": [
+      "service_type"
+    ],
+    "source_fingerprint": "3ba6809a310a54c9"
+  },
+  {
+    "trade_id": "trousseau_gift_packing",
+    "fields": [
+      {
+        "key": "types",
+        "title": "What do they pack?",
+        "kind": "multi",
+        "group": "choose",
+        "required": true,
+        "options": [
+          {
+            "value": "wedding_trousseau",
+            "label": "Wedding trousseau"
+          },
+          {
+            "value": "gift_boxes",
+            "label": "Gift boxes"
+          },
+          {
+            "value": "return_favours",
+            "label": "Return favours"
+          },
+          {
+            "value": "hampers",
+            "label": "Hampers"
+          },
+          {
+            "value": "jewellery_packaging",
+            "label": "Jewellery packaging"
+          },
+          {
+            "value": "premium_decorative_packing",
+            "label": "Premium decorative packing"
+          },
+          {
+            "value": "corporate_gifts",
+            "label": "Corporate gifts"
+          },
+          {
+            "value": "saree_trays",
+            "label": "Saree trays"
+          },
+          {
+            "value": "dry_fruit_platters",
+            "label": "Dry-fruit platters"
+          },
+          {
+            "value": "sweet_boxes",
+            "label": "Sweet boxes"
+          },
+          {
+            "value": "coconut_and_tambula_decoration",
+            "label": "Coconut & tambula decoration"
+          },
+          {
+            "value": "suitcase_seer_decoration",
+            "label": "Suitcase / seer decoration"
+          },
+          {
+            "value": "ring_platters",
+            "label": "Ring platters"
+          },
+          {
+            "value": "haldi_and_mehendi_kits",
+            "label": "Haldi & mehendi kits"
+          },
+          {
+            "value": "baby_shower_baskets",
+            "label": "Baby shower baskets"
+          }
+        ]
+      },
+      {
+        "key": "customisation",
+        "title": "Customisation",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "ribbons",
+            "label": "Ribbons"
+          },
+          {
+            "value": "name_tags",
+            "label": "Name tags"
+          },
+          {
+            "value": "monogram",
+            "label": "Monogram"
+          },
+          {
+            "value": "theme_colours",
+            "label": "Theme colours"
+          },
+          {
+            "value": "fresh_flowers",
+            "label": "Fresh flowers"
+          },
+          {
+            "value": "couple_names_initials",
+            "label": "Couple names / initials"
+          },
+          {
+            "value": "photos",
+            "label": "Photos"
+          },
+          {
+            "value": "bead_and_stone_work",
+            "label": "Bead & stone work"
+          },
+          {
+            "value": "embroidery",
+            "label": "Embroidery"
+          },
+          {
+            "value": "peacock_temple_motifs",
+            "label": "Peacock / temple motifs"
+          }
+        ]
+      },
+      {
+        "key": "customer_materials",
+        "title": "They pack customer-supplied items",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "proof",
+        "title": "They share a sample / photo proof before the full order",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "rental_trays",
+        "title": "Returnable rental trays and baskets",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "venue_display",
+        "title": "They arrange the trousseau display at the venue",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      }
+    ],
+    "required_keys": [
+      "types"
+    ],
+    "source_fingerprint": "61c83a112b3c7ac1"
+  },
+  {
+    "trade_id": "valet_parking",
+    "fields": [
+      {
+        "key": "services",
+        "title": "Services",
+        "kind": "multi",
+        "group": "choose",
+        "required": true,
+        "options": [
+          {
+            "value": "valet_drivers",
+            "label": "Valet drivers"
+          },
+          {
+            "value": "parking_management",
+            "label": "Parking management"
+          },
+          {
+            "value": "signage",
+            "label": "Signage"
+          },
+          {
+            "value": "marshals",
+            "label": "Marshals"
+          },
+          {
+            "value": "supervisors",
+            "label": "Supervisors"
+          },
+          {
+            "value": "digital_app_ticketing",
+            "label": "Digital / app ticketing"
+          },
+          {
+            "value": "paper_ticketing",
+            "label": "Paper ticketing"
+          }
+        ]
+      },
+      {
+        "key": "insurance",
+        "title": "Vehicle damage insurance",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "luxury_trained",
+        "title": "Drivers trained for luxury, automatic and EV cars",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "key_tracking",
+        "title": "Digital key tracking (token or app)",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "remote_shuttle",
+        "title": "Shuttle from a remote parking lot",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      }
+    ],
+    "required_keys": [
+      "services"
+    ],
+    "source_fingerprint": "62175dcc09d92fe4"
+  },
+  {
+    "trade_id": "venue",
+    "fields": [
+      {
+        "key": "venue_type",
+        "title": "What kind of venue?",
+        "kind": "single",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "banquet_hall",
+            "label": "Banquet hall"
+          },
+          {
+            "value": "convention_centre",
+            "label": "Convention centre"
+          },
+          {
+            "value": "lawn_garden",
+            "label": "Lawn / garden"
+          },
+          {
+            "value": "resort",
+            "label": "Resort"
+          },
+          {
+            "value": "hotel",
+            "label": "Hotel"
+          },
+          {
+            "value": "farmhouse",
+            "label": "Farmhouse"
+          },
+          {
+            "value": "rooftop",
+            "label": "Rooftop"
+          },
+          {
+            "value": "community_hall",
+            "label": "Community hall"
+          },
+          {
+            "value": "temple_hall",
+            "label": "Temple hall"
+          },
+          {
+            "value": "kalyana_mantapa",
+            "label": "Kalyana mantapa"
+          },
+          {
+            "value": "party_hall",
+            "label": "Party hall"
+          },
+          {
+            "value": "heritage_property_palace",
+            "label": "Heritage property / palace"
+          },
+          {
+            "value": "beach_property",
+            "label": "Beach property"
+          },
+          {
+            "value": "club_house",
+            "label": "Club house"
+          },
+          {
+            "value": "restaurant_private_dining",
+            "label": "Restaurant / private dining"
+          },
+          {
+            "value": "auditorium",
+            "label": "Auditorium"
+          },
+          {
+            "value": "open_air_amphitheatre",
+            "label": "Open-air amphitheatre"
+          },
+          {
+            "value": "villa",
+            "label": "Villa"
+          }
+        ]
+      },
+      {
+        "key": "accessibility",
+        "title": "Accessibility",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "step_free_entry",
+            "label": "Step-free entry"
+          },
+          {
+            "value": "lift",
+            "label": "Lift"
+          },
+          {
+            "value": "accessible_toilet",
+            "label": "Accessible toilet"
+          },
+          {
+            "value": "wheelchair_available",
+            "label": "Wheelchair available"
+          }
+        ]
+      },
+      {
+        "key": "facilities",
+        "title": "Must-have facilities",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "furniture",
+            "label": "Furniture"
+          },
+          {
+            "value": "power_backup",
+            "label": "Power backup"
+          },
+          {
+            "value": "air_conditioning",
+            "label": "Air-conditioning"
+          },
+          {
+            "value": "bridal_room",
+            "label": "Bridal room"
+          },
+          {
+            "value": "kitchen",
+            "label": "Kitchen"
+          },
+          {
+            "value": "basic_sound",
+            "label": "Basic sound"
+          },
+          {
+            "value": "stage",
+            "label": "Stage"
+          },
+          {
+            "value": "valet_parking",
+            "label": "Valet parking"
+          },
+          {
+            "value": "changing_rooms",
+            "label": "Changing rooms"
+          },
+          {
+            "value": "dining_hall",
+            "label": "Dining hall"
+          },
+          {
+            "value": "lift",
+            "label": "Lift"
+          },
+          {
+            "value": "wi_fi",
+            "label": "Wi-Fi"
+          },
+          {
+            "value": "projector_and_screen",
+            "label": "Projector & screen"
+          },
+          {
+            "value": "cctv",
+            "label": "CCTV"
+          },
+          {
+            "value": "drinking_water",
+            "label": "Drinking water"
+          }
+        ]
+      },
+      {
+        "key": "early_muhurtha",
+        "title": "Early-morning muhurtha bookings (before 6 am)",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "overnight_stay",
+        "title": "Guests can stay overnight",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "catering_rule",
+        "title": "Bringing your own caterer?",
+        "kind": "single",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "in_house_only",
+            "label": "In-house only"
+          },
+          {
+            "value": "outside_caterers_allowed",
+            "label": "Outside caterers allowed"
+          },
+          {
+            "value": "outside_allowed_with_a_fee",
+            "label": "Outside allowed with a fee"
+          },
+          {
+            "value": "approved_list_only",
+            "label": "Approved list only"
+          }
+        ]
+      },
+      {
+        "key": "decor_rule",
+        "title": "Bringing your own decorator?",
+        "kind": "single",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "any_decorator",
+            "label": "Any decorator"
+          },
+          {
+            "value": "approved_list_only",
+            "label": "Approved list only"
+          },
+          {
+            "value": "in_house_only",
+            "label": "In-house only"
+          }
+        ]
+      },
+      {
+        "key": "alcohol",
+        "title": "Alcohol permitted",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      }
+    ],
+    "required_keys": [],
+    "source_fingerprint": "ca0b1bf520d2b414"
+  },
+  {
+    "trade_id": "videography",
+    "fields": [
+      {
+        "key": "$tier",
+        "title": "Choose the experience",
+        "kind": "single",
+        "group": "experience",
+        "required": false,
+        "options": [
+          {
+            "value": "ESSENTIAL",
+            "label": "Highlights Film"
+          },
+          {
+            "value": "SIGNATURE",
+            "label": "Full Film"
+          },
+          {
+            "value": "VIP",
+            "label": "Cinematic Film"
+          }
+        ]
+      },
+      {
+        "key": "specialties",
+        "title": "What kind of film?",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "wedding_films",
+            "label": "Wedding films"
+          },
+          {
+            "value": "corporate",
+            "label": "Corporate"
+          },
+          {
+            "value": "music_video",
+            "label": "Music video"
+          },
+          {
+            "value": "documentary",
+            "label": "Documentary"
+          },
+          {
+            "value": "ads_brand",
+            "label": "Ads / brand"
+          },
+          {
+            "value": "live_events",
+            "label": "Live events"
+          },
+          {
+            "value": "pre_wedding_film",
+            "label": "Pre-wedding film"
+          },
+          {
+            "value": "save_the_date_video",
+            "label": "Save-the-date video"
+          },
+          {
+            "value": "reels_and_short_form",
+            "label": "Reels & short-form"
+          },
+          {
+            "value": "drone_films",
+            "label": "Drone films"
+          },
+          {
+            "value": "event_aftermovie",
+            "label": "Event aftermovie"
+          },
+          {
+            "value": "interviews_and_testimonials",
+            "label": "Interviews & testimonials"
+          }
+        ]
+      },
+      {
+        "key": "equipment",
+        "title": "Gear that matters to you",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "cinema_cameras",
+            "label": "Cinema cameras"
+          },
+          {
+            "value": "mirrorless",
+            "label": "Mirrorless"
+          },
+          {
+            "value": "gimbals",
+            "label": "Gimbals"
+          },
+          {
+            "value": "sliders",
+            "label": "Sliders"
+          },
+          {
+            "value": "wireless_audio",
+            "label": "Wireless audio"
+          },
+          {
+            "value": "lights",
+            "label": "Lights"
+          },
+          {
+            "value": "drone_licensed",
+            "label": "Drone (licensed)"
+          },
+          {
+            "value": "streaming_encoder",
+            "label": "Streaming encoder"
+          }
+        ]
+      },
+      {
+        "key": "deliverables",
+        "title": "What should the film include?",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "teaser_about_1_min",
+            "label": "Teaser (about 1 min)"
+          },
+          {
+            "value": "highlight_film",
+            "label": "Highlight film"
+          },
+          {
+            "value": "full_length_film",
+            "label": "Full-length film"
+          },
+          {
+            "value": "instagram_reels",
+            "label": "Instagram reels"
+          },
+          {
+            "value": "save_the_date_video",
+            "label": "Save-the-date video"
+          },
+          {
+            "value": "raw_footage",
+            "label": "Raw footage"
+          },
+          {
+            "value": "drone_shots",
+            "label": "Drone shots"
+          },
+          {
+            "value": "live_stream_link",
+            "label": "Live stream link"
+          },
+          {
+            "value": "same_day_edit",
+            "label": "Same-day edit"
+          }
+        ]
+      },
+      {
+        "key": "languages",
+        "title": "Languages they speak with families",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "english",
+            "label": "English"
+          },
+          {
+            "value": "kannada",
+            "label": "Kannada"
+          },
+          {
+            "value": "hindi",
+            "label": "Hindi"
+          },
+          {
+            "value": "tamil",
+            "label": "Tamil"
+          },
+          {
+            "value": "telugu",
+            "label": "Telugu"
+          },
+          {
+            "value": "malayalam",
+            "label": "Malayalam"
+          },
+          {
+            "value": "marathi",
+            "label": "Marathi"
+          },
+          {
+            "value": "bengali",
+            "label": "Bengali"
+          },
+          {
+            "value": "gujarati",
+            "label": "Gujarati"
+          },
+          {
+            "value": "urdu",
+            "label": "Urdu"
+          },
+          {
+            "value": "punjabi",
+            "label": "Punjabi"
+          },
+          {
+            "value": "tulu",
+            "label": "Tulu"
+          },
+          {
+            "value": "konkani",
+            "label": "Konkani"
+          }
+        ]
+      },
+      {
+        "key": "same_day_edit",
+        "title": "Same-day edit shown at the reception",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "outstation",
+        "title": "They travel for destination / outstation shoots",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "$years",
+        "title": "Experience",
+        "kind": "single",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "3",
+            "label": "3+ years"
+          },
+          {
+            "value": "5",
+            "label": "5+ years"
+          },
+          {
+            "value": "10",
+            "label": "10+ years"
+          }
+        ]
+      }
+    ],
+    "required_keys": [],
+    "source_fingerprint": "385fb924f099fcfb"
+  },
+  {
+    "trade_id": "warehouse_storage",
+    "fields": [
+      {
+        "key": "item_types",
+        "title": "Item types accepted",
+        "kind": "multi",
+        "group": "choose",
+        "required": true,
+        "options": [
+          {
+            "value": "event_equipment",
+            "label": "Event equipment"
+          },
+          {
+            "value": "furniture",
+            "label": "Furniture"
+          },
+          {
+            "value": "decor",
+            "label": "Decor"
+          },
+          {
+            "value": "cartons",
+            "label": "Cartons"
+          },
+          {
+            "value": "pallets",
+            "label": "Pallets"
+          },
+          {
+            "value": "exhibition_stands",
+            "label": "Exhibition stands"
+          },
+          {
+            "value": "vehicles",
+            "label": "Vehicles"
+          }
+        ]
+      },
+      {
+        "key": "storage_kind",
+        "title": "Storage",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "indoor",
+            "label": "Indoor"
+          },
+          {
+            "value": "covered",
+            "label": "Covered"
+          },
+          {
+            "value": "open_yard",
+            "label": "Open yard"
+          },
+          {
+            "value": "air_conditioned",
+            "label": "Air-conditioned"
+          },
+          {
+            "value": "cold_storage",
+            "label": "Cold storage"
+          },
+          {
+            "value": "racked_shelved",
+            "label": "Racked / shelved"
+          },
+          {
+            "value": "secure_cage",
+            "label": "Secure cage"
+          }
+        ]
+      },
+      {
+        "key": "climate",
+        "title": "Climate-controlled area",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "hazardous_excluded",
+        "title": "Hazardous goods are refused",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "security",
+        "title": "Security",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "24_7_guard",
+            "label": "24×7 guard"
+          },
+          {
+            "value": "cctv",
+            "label": "CCTV"
+          },
+          {
+            "value": "fire_system",
+            "label": "Fire system"
+          },
+          {
+            "value": "insurance",
+            "label": "Insurance"
+          },
+          {
+            "value": "access_control",
+            "label": "Access control"
+          },
+          {
+            "value": "alarm_system",
+            "label": "Alarm system"
+          },
+          {
+            "value": "pest_control",
+            "label": "Pest control"
+          }
+        ]
+      },
+      {
+        "key": "truck_access",
+        "title": "A truck can reach the loading door",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "round_clock_access",
+        "title": "Access at any hour",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "inventory_online",
+        "title": "Inventory list and photos shared online",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "equipment",
+        "title": "Loading equipment",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "forklift",
+            "label": "Forklift"
+          },
+          {
+            "value": "pallet_jack",
+            "label": "Pallet jack"
+          },
+          {
+            "value": "loading_dock",
+            "label": "Loading dock"
+          },
+          {
+            "value": "ramp",
+            "label": "Ramp"
+          }
+        ]
+      },
+      {
+        "key": "inspection",
+        "title": "Inbound inspection & photo log",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "collection",
+        "title": "They collect and deliver",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      }
+    ],
+    "required_keys": [
+      "item_types"
+    ],
+    "source_fingerprint": "8c23af96dc3cbbcb"
+  },
+  {
+    "trade_id": "wedding_planning",
+    "fields": [
+      {
+        "key": "services",
+        "title": "How much planning do you need?",
+        "kind": "multi",
+        "group": "choose",
+        "required": true,
+        "options": [
+          {
+            "value": "full_planning",
+            "label": "Full planning"
+          },
+          {
+            "value": "partial_planning",
+            "label": "Partial planning"
+          },
+          {
+            "value": "day_of_coordination",
+            "label": "Day-of coordination"
+          },
+          {
+            "value": "destination_weddings",
+            "label": "Destination weddings"
+          },
+          {
+            "value": "vendor_coordination",
+            "label": "Vendor coordination"
+          },
+          {
+            "value": "guest_coordination",
+            "label": "Guest coordination"
+          },
+          {
+            "value": "budget_management",
+            "label": "Budget management"
+          },
+          {
+            "value": "design_theme",
+            "label": "Design / theme"
+          },
+          {
+            "value": "ceremony_and_reception_management",
+            "label": "Ceremony & reception management"
+          },
+          {
+            "value": "mehendi_and_sangeet_planning",
+            "label": "Mehendi & sangeet planning"
+          },
+          {
+            "value": "guest_hospitality_and_travel",
+            "label": "Guest hospitality & travel"
+          },
+          {
+            "value": "invitation_and_rsvp_management",
+            "label": "Invitation & RSVP management"
+          },
+          {
+            "value": "bridal_entry_and_choreography",
+            "label": "Bridal entry & choreography"
+          },
+          {
+            "value": "wedding_website",
+            "label": "Wedding website"
+          },
+          {
+            "value": "trousseau_and_gift_management",
+            "label": "Trousseau & gift management"
+          },
+          {
+            "value": "religious_ceremony_coordination",
+            "label": "Religious ceremony coordination"
+          },
+          {
+            "value": "honeymoon_planning",
+            "label": "Honeymoon planning"
+          }
+        ]
+      },
+      {
+        "key": "budget_band",
+        "title": "Your wedding budget",
+        "kind": "single",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "under_10_l",
+            "label": "Under ₹10 L"
+          },
+          {
+            "value": "10_25_l",
+            "label": "₹10–25 L"
+          },
+          {
+            "value": "25_50_l",
+            "label": "₹25–50 L"
+          },
+          {
+            "value": "50_l_1_cr",
+            "label": "₹50 L–1 Cr"
+          },
+          {
+            "value": "above_1_cr",
+            "label": "Above ₹1 Cr"
+          }
+        ]
+      },
+      {
+        "key": "wedding_styles",
+        "title": "Wedding traditions they plan",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "south_indian",
+            "label": "South Indian"
+          },
+          {
+            "value": "north_indian",
+            "label": "North Indian"
+          },
+          {
+            "value": "bengali",
+            "label": "Bengali"
+          },
+          {
+            "value": "marwari",
+            "label": "Marwari"
+          },
+          {
+            "value": "gujarati",
+            "label": "Gujarati"
+          },
+          {
+            "value": "christian",
+            "label": "Christian"
+          },
+          {
+            "value": "muslim_nikah",
+            "label": "Muslim / Nikah"
+          },
+          {
+            "value": "sikh_anand_karaj",
+            "label": "Sikh / Anand Karaj"
+          },
+          {
+            "value": "inter_faith",
+            "label": "Inter-faith"
+          },
+          {
+            "value": "intimate_under_100_guests",
+            "label": "Intimate (under 100 guests)"
+          },
+          {
+            "value": "grand_1_000_guests",
+            "label": "Grand (1,000+ guests)"
+          }
+        ]
+      },
+      {
+        "key": "languages",
+        "title": "Languages their team works in",
+        "kind": "multi",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "english",
+            "label": "English"
+          },
+          {
+            "value": "kannada",
+            "label": "Kannada"
+          },
+          {
+            "value": "hindi",
+            "label": "Hindi"
+          },
+          {
+            "value": "tamil",
+            "label": "Tamil"
+          },
+          {
+            "value": "telugu",
+            "label": "Telugu"
+          },
+          {
+            "value": "malayalam",
+            "label": "Malayalam"
+          },
+          {
+            "value": "marathi",
+            "label": "Marathi"
+          },
+          {
+            "value": "bengali",
+            "label": "Bengali"
+          },
+          {
+            "value": "gujarati",
+            "label": "Gujarati"
+          },
+          {
+            "value": "urdu",
+            "label": "Urdu"
+          },
+          {
+            "value": "punjabi",
+            "label": "Punjabi"
+          },
+          {
+            "value": "tulu",
+            "label": "Tulu"
+          },
+          {
+            "value": "konkani",
+            "label": "Konkani"
+          }
+        ]
+      },
+      {
+        "key": "vendor_network",
+        "title": "They bring their own trusted vendor network",
+        "kind": "toggle",
+        "group": "must",
+        "required": false,
+        "options": []
+      },
+      {
+        "key": "$years",
+        "title": "Experience",
+        "kind": "single",
+        "group": "choose",
+        "required": false,
+        "options": [
+          {
+            "value": "3",
+            "label": "3+ years"
+          },
+          {
+            "value": "5",
+            "label": "5+ years"
+          },
+          {
+            "value": "10",
+            "label": "10+ years"
+          }
+        ]
+      }
+    ],
+    "required_keys": [
+      "services"
+    ],
+    "source_fingerprint": "7cbf920bcac17d23"
+  }
+]

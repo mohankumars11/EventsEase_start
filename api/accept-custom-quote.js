@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { cors } from './_lib/cors.js'
 import { authenticatedUser } from './_lib/auth.js'
 import { tradeNameFor, PLATFORM_FEE_RATE } from './_lib/tradeNames.js'
+import { loadMarginOverrides, marginPct, toListAt } from './_lib/listPrice.js'
 
 const url = process.env.VITE_SUPABASE_URL
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -38,10 +39,20 @@ export default async function handler(req, res) {
   if (!['VENDOR_QUOTE', 'QUOTE_ACTION_REQUIRED'].includes(request.state)) return res.status(409).json({ error: 'Quote request is already resolved' })
   if (!request.booking_request_id) return res.status(409).json({ error: 'Quote request has no booking container' })
 
+  /* A partner who changed the customer's menu is not booked until the
+     customer has seen and approved exactly those changes — never silently. */
+  const menuChanges = Array.isArray(response.partner_components?.menu?.changes) ? response.partner_components.menu.changes : []
+  if (menuChanges.length && req.body?.approveChanges !== true) {
+    return res.status(409).json({ error: 'This partner changed your menu. Review the changes and approve them to accept.', needsApproval: true, changes: menuChanges })
+  }
+
   // Calendar is the final eligibility gate for a quote as well as an instant book.
   // A partner can become unavailable in the minutes between receiving a quote and
   // the customer accepting it. Re-run the same matcher used for dispatch so a
   // stale quote can never reserve an unavailable partner/date.
+  const { data: quoting } = await db.from('vendors').select('is_synthetic').eq('id', response.vendor_id).maybeSingle()
+  const synthetic = quoting?.is_synthetic === true
+
   async function partnerStillEligible() {
     const loc = request.service_location ?? {}
     const lat = Number(loc.lat)
@@ -56,7 +67,10 @@ export default async function handler(req, res) {
       p_point: pointWkt,
       p_radius_m: 100000,
       p_date: request.event_date,
-      p_allow_synthetic: false,
+      /* A synthetic partner (seed data, deleted at launch) is matchable only
+         for its own quote — so test quotes can be accepted end to end and a
+         real customer's real quote never reaches a seeded business. */
+      p_allow_synthetic: synthetic,
       p_limit: 25,
       p_exclude: [],
     })
@@ -100,6 +114,14 @@ export default async function handler(req, res) {
   try {
     const quoted = Math.max(1, Math.round(Number(response.customer_amount_paise)))
     const fee = Math.max(0, Math.round(Number(response.platform_fee_paise)))
+    /* The customer pays the Sambramo price of the partner's quote, at the
+       margin the request was made at (api/_lib/listPrice.js) — the same
+       figure their quote card showed. quoted/fee/partner stay the partner's. */
+    await loadMarginOverrides(db)
+    const demandMargin = Number(request.canonical_demand?.margin_pct)
+    const MARGIN = demandMargin >= 0 && demandMargin <= 1 && request.canonical_demand?.margin_pct != null
+      ? demandMargin : marginPct(request.trade_id, request.service_location?.city)
+    const LIST = toListAt(quoted, MARGIN)
     const partner = Math.max(1, quoted - fee)
     const now = new Date().toISOString()
     const demand = request.canonical_demand ?? {}
@@ -147,8 +169,11 @@ export default async function handler(req, res) {
              carry none and are paid in full, as before. */
           ...(/^(anchor|trades)-engine/.test(String(demand.engine ?? '')) && Number(demand.advance_pct) > 0 && Number(demand.advance_pct) < 100
             ? { advance_pct: Number(demand.advance_pct),
-                advance_paise: Math.min(quoted, Math.round((quoted * Number(demand.advance_pct)) / 100 / 10) * 10) }
+                advance_paise: Math.min(quoted, Math.round((quoted * Number(demand.advance_pct)) / 100 / 10) * 10),
+                list_advance_paise: Math.min(LIST, Math.round((LIST * Number(demand.advance_pct)) / 100 / 100) * 100) }
             : {}),
+          list_paise: LIST,
+          margin_pct: MARGIN,
         },
         policy_version: VERSION,
       },
@@ -168,6 +193,21 @@ export default async function handler(req, res) {
     const line = { id: booked.line_id }
 
     await db.from('sambramo_quote_responses').update({ status: 'ACCEPTED' }).eq('id', response.id)
+    /* A planner's proposal (migration 210): accepting it opens the
+       engagement, pending until the planning fee is paid — the trigger on
+       booking_lines then makes the planner the event's planner. Not a
+       planner brief → the function returns null and nothing happens. */
+    await db.rpc('sambramo_open_planner_engagement', { p_quote_request_id: request.id, p_response_id: response.id,
+      p_booking_line_id: booked?.line_id ?? null }).then(() => {}, () => {})
+    /* The customer's approval of the final menu (migration 200 — until it is
+       pasted these writes fail quietly; the booking itself is unaffected). */
+    const menu = demand.menu
+    if (menu) {
+      await db.from('sambramo_menu_approvals').insert({ customer_id: authn.user.id, quote_request_id: request.id, response_id: response.id,
+        menu_id: menu.menuId ?? null, changes: menuChanges })
+      if (menu.menuId) await db.from('sambramo_customer_menus').update({ status: 'approved', approved_response_id: response.id, updated_at: now })
+        .eq('id', menu.menuId).eq('customer_id', authn.user.id)
+    }
     const { data: groupRequests } = request.quote_group_id
       ? await db.from('sambramo_quote_requests').select('id').eq('quote_group_id', request.quote_group_id)
       : { data: [] }
@@ -178,9 +218,15 @@ export default async function handler(req, res) {
         .eq('status', 'SUBMITTED')
         .in('quote_request_id', ids)
         .neq('id', response.id)
+      /* The masters not chosen stop seeing it as open: their requests close
+         (UNAVAILABLE), so nobody prices a job that is already taken. */
+      await db.from('sambramo_quote_requests')
+        .update({ state: 'UNAVAILABLE', updated_at: new Date().toISOString() })
+        .in('id', ids.filter(x => x !== request.id))
+        .in('state', ['VENDOR_QUOTE', 'QUOTE_ACTION_REQUIRED'])
     }
 
-    return res.status(200).json({ ok: true, lineId: line.id, bookingRequestId: request.booking_request_id, quoteResponseId: response.id, amountPaise: quoted })
+    return res.status(200).json({ ok: true, lineId: line.id, bookingRequestId: request.booking_request_id, quoteResponseId: response.id, amountPaise: LIST })
   } catch (e) {
     await db.from('sambramo_quote_requests')
       .update({ state: request.state, updated_at: new Date().toISOString() })

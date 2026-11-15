@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { cors } from './_lib/cors.js'
 import { tradeNameFor, PLATFORM_FEE_RATE } from './_lib/tradeNames.js'
 import { authenticatedUser } from './_lib/auth.js'
+import { notifyCustomer } from './_lib/fcm.js'
 
 const url = process.env.VITE_SUPABASE_URL
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -16,6 +17,8 @@ const money = value => {
 }
 const list = value => Array.isArray(value) ? value.map(x => String(x).trim()).filter(Boolean).slice(0, 50) : []
 
+const SOURCES = new Set(['planner_fee', 'sambramo_partner', 'planner_sourced'])
+
 export default async function handler(req, res) {
   if (cors(req, res)) return
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
@@ -26,6 +29,20 @@ export default async function handler(req, res) {
   if (authn.error) return res.status(401).json({ error: 'Authentication required' })
 
   const body = req.body ?? {}
+  /* A planner's structured proposal (migration 210): shapes, not free text,
+     so two planners can be compared side by side. Absent for every other
+     quote — and then nothing about the response changes. */
+  const txt = (v, n) => (typeof v === 'string' && v.trim() ? v.trim().slice(0, n) : null)
+  const rows = (v, n) => (Array.isArray(v) ? v.slice(0, n) : [])
+  const proposal = body.proposal && typeof body.proposal === 'object' ? {
+    approach: txt(body.proposal.approach, 1000), vendor_approach: txt(body.proposal.vendor_approach, 500),
+    staffing: txt(body.proposal.staffing, 300), responsibilities: txt(body.proposal.responsibilities, 500),
+    cancellation: txt(body.proposal.cancellation, 500),
+    timeline: rows(body.proposal.timeline, 12).map(t => ({ when: txt(t?.when, 40), what: txt(t?.what, 120) })).filter(t => t.when && t.what),
+    payment_schedule: rows(body.proposal.payment_schedule, 6).map(t => ({ when: txt(t?.when, 40), pct: Math.max(0, Math.min(100, Math.round(Number(t?.pct) || 0))) })).filter(t => t.when && t.pct),
+    assumptions: rows(body.proposal.assumptions, 10).map(a => txt(a, 160)).filter(Boolean),
+  } : null
+  if (proposal && proposal.payment_schedule.reduce((n, t) => n + t.pct, 0) > 100) return res.status(400).json({ error: 'The payment schedule adds up to more than 100%.' })
   const quoteRequestId = String(body.quoteRequestId ?? '')
 
   /* Line items, when sent, ARE the quote: the total is computed here from
@@ -43,6 +60,9 @@ export default async function handler(req, res) {
     is_estimate: !!l.is_estimate,
     is_discount: !!l.is_discount,
     estimate_note: l.is_estimate ? String(l.estimate_note ?? '').trim().slice(0, 300) || null : null,
+    /* Whose money the line is (migration 210) — only when given, so a
+       quote from a partner who never sends it writes exactly what it did. */
+    ...(SOURCES.has(l.source) ? { source: l.source } : {}),
   })) : null
   if (lines) {
     if (lines.some(l => !l.description)) return res.status(400).json({ error: 'Every line needs a description.' })
@@ -56,7 +76,7 @@ export default async function handler(req, res) {
 
   const { data: vendor } = await db
     .from('vendors')
-    .select('id, profile_id, is_verified, verification_status')
+    .select('id, profile_id, business_name, is_verified, verification_status')
     .eq('profile_id', authn.user.id)
     .maybeSingle()
   if (!vendor?.id) return res.status(403).json({ error: 'Partner account not found.' })
@@ -64,7 +84,7 @@ export default async function handler(req, res) {
 
   const { data: request } = await db
     .from('sambramo_quote_requests')
-    .select('id, vendor_id, trade_id, event_date, service_location, state, expires_at, quote_group_id, canonical_demand')
+    .select('id, customer_id, service_name, vendor_id, trade_id, event_date, service_location, state, expires_at, quote_group_id, canonical_demand')
     .eq('id', quoteRequestId)
     .eq('vendor_id', vendor.id)
     .maybeSingle()
@@ -77,6 +97,9 @@ export default async function handler(req, res) {
   if (body.decline === true) {
     await db.from('sambramo_quote_requests').update({ state: 'UNAVAILABLE', updated_at: new Date().toISOString() })
       .eq('id', request.id).eq('vendor_id', vendor.id)
+    await notifyCustomer(db, { customerId: request.customer_id, url: '/plans',
+      title: `${vendor.business_name ?? 'The partner'} can't take this one`,
+      body: `Your ${String(request.service_name ?? 'request').toLowerCase()} request was declined. Other partners are one tap away.` })
     return res.status(200).json({ ok: true, declined: true })
   }
 
@@ -128,9 +151,31 @@ export default async function handler(req, res) {
   }
   const customerAmountPaise = Math.max(partnerAmountPaise + 100, Math.round(partnerAmountPaise / (1 - feeRate)))
   const platformFeePaise = customerAmountPaise - partnerAmountPaise
+  /* A reply to a Menu Studio menu (canonical_demand.menu): whether the
+     partner quotes it as asked or with changes, their per-plate price and
+     minimum, how long the quote holds, and every dish they would change.
+     A quote that changes the menu cannot be accepted until the customer
+     approves those changes (accept-custom-quote). */
+  const reply = body.menuReply && typeof body.menuReply === 'object' && request.canonical_demand?.menu ? body.menuReply : null
+  const changes = reply && Array.isArray(reply.changes) ? reply.changes.slice(0, 40).map(c => ({
+    action: ['swap', 'remove', 'add', 'note'].includes(c?.action) ? c.action : 'note',
+    section_id: String(c?.section_id ?? '').slice(0, 20) || null,
+    from_dish_id: String(c?.from_dish_id ?? '').slice(0, 60) || null, from_name: String(c?.from_name ?? '').trim().slice(0, 80) || null,
+    to_dish_id: String(c?.to_dish_id ?? '').slice(0, 60) || null, to_name: String(c?.to_name ?? '').trim().slice(0, 80) || null,
+    note: String(c?.note ?? '').trim().slice(0, 300) || null,
+  })).filter(c => c.from_name || c.to_name || c.note) : []
+  const menuReply = reply ? {
+    kind: changes.length ? 'with_changes' : 'as_asked',
+    perPlatePaise: Math.max(0, Math.round(Number(reply.perPlatePaise) || 0)) || null,
+    minGuests: Math.max(0, Math.min(100000, Math.round(Number(reply.minGuests) || 0))) || null,
+    validDays: Math.max(1, Math.min(14, Math.round(Number(reply.validDays) || 2))),
+    changes,
+  } : null
   // A directed quote is for a planned event: give the customer two days, not minutes.
-  const acceptMinutes = directed ? 48 * 60 : CUSTOMER_ACCEPT_MINUTES
-  const validUntil = new Date(Date.now() + acceptMinutes * 60 * 1000).toISOString()
+  const acceptMinutes = menuReply ? menuReply.validDays * 24 * 60 : directed ? 48 * 60 : CUSTOMER_ACCEPT_MINUTES
+  /* Never valid past the event itself. */
+  const eventEnd = request.event_date ? new Date(`${request.event_date}T23:59:59+05:30`).getTime() : Infinity
+  const validUntil = new Date(Math.min(Date.now() + acceptMinutes * 60 * 1000, eventEnd)).toISOString()
 
   const { data, error } = await db
     .from('sambramo_quote_responses')
@@ -138,11 +183,12 @@ export default async function handler(req, res) {
       quote_request_id: quoteRequestId,
       vendor_id: vendor.id,
       partner_amount_paise: partnerAmountPaise,
-      partner_components: lines ? { lines } : (body.partnerComponents && typeof body.partnerComponents === 'object' ? body.partnerComponents : {}),
+      partner_components: { ...(lines ? { lines } : (body.partnerComponents && typeof body.partnerComponents === 'object' ? body.partnerComponents : {})), ...(menuReply ? { menu: menuReply } : {}) },
       inclusions: list(body.inclusions),
       exclusions: list(body.exclusions),
       quote_valid_until: validUntil,
       notes: String(body.notes ?? '').trim().slice(0, 4000) || null,
+      ...(proposal ? { proposal } : {}),
       customer_amount_paise: customerAmountPaise,
       platform_fee_rate: feeRate,
       platform_fee_paise: platformFeePaise,
@@ -160,7 +206,15 @@ export default async function handler(req, res) {
       .eq('quote_request_id', quoteRequestId).order('quote_version', { ascending: false }).limit(1)
     const version = (prev?.[0]?.quote_version ?? 0) + 1
     await db.from('sambramo_quote_line_items').insert(lines.map(l => ({ ...l, quote_request_id: quoteRequestId, vendor_id: vendor.id, quote_version: version })))
+    /* The proposed changes, one row each (migration 200; until it is pasted
+       they live only in partner_components.menu, which the app reads). */
+    if (changes.length) await db.from('sambramo_quote_menu_changes').insert(changes.map(c => ({ ...c, quote_request_id: quoteRequestId, vendor_id: vendor.id, quote_version: version })))
   }
+
+  /* After the write: the customer hears about the quote while it is still open. */
+  await notifyCustomer(db, { customerId: request.customer_id, url: '/plans',
+    title: `${vendor.business_name ?? 'Your partner'} sent you a quote${menuReply?.kind === 'with_changes' ? ' with menu changes' : ''}`,
+    body: `₹${Math.round(Number(data.customer_amount_paise) / 100).toLocaleString('en-IN')} for ${request.service_name ?? 'your request'} · tap to accept` })
 
   return res.status(200).json({
     ok: true,

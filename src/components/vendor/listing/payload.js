@@ -134,6 +134,8 @@ const RESOURCE_SOURCES = {
   mehendi_artist: a => [STAFF(a.artists, 'Artists')],
   photography: a => [STAFF(a.team, 'Photographers', a.travel_buffer_minutes)],
   priest_rituals: a => [STAFF(1, 'You', a.prep_minutes)],
+  /* A restaurant reserves seats: the bigger of the floor and the private room (trade #35, 2026-11-11). */
+  restaurant: a => [{ kind: 'capacity', key: 'guests', label: 'Seats for a group', qty: Math.max(Number(a.seating_capacity) || 0, Number(a.private_room_capacity) || 0), unit: 'guest' }],
   safety_facilities: a => [STAFF(a.staff, 'Staff')],
   security_services: a => [STAFF(a.guards, 'Guards')],
   transportation: a => [{ kind: 'vehicle', key: 'fleet', label: 'Vehicles you can arrange', qty: a.vehicles, unit: 'vehicle' }],

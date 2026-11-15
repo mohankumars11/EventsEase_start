@@ -51,6 +51,12 @@ const colName = key => (RESERVED.has(key) ? `${key}_value` : key)
 
 const BATCH = 6                       // trades per migration part
 const START_NUMBER = 173              // 172 is the highest written so far
+/* --only <trade> --number <n>: one trade added after parts 1–6 were applied
+   (the restaurant, #35, 2026-11-11) gets its own numbered file, and the
+   applied parts are left exactly as they were pasted. */
+const argv = process.argv.slice(2)
+const ONLY = argv.includes('--only') ? argv[argv.indexOf('--only') + 1] : null
+const NUMBER = argv.includes('--number') ? Number(argv[argv.indexOf('--number') + 1]) : null
 
 const banner = (n, title) => `-- ══════════════════════════════════════════════════════════════════════
 -- ${n} · ${title}
@@ -148,14 +154,15 @@ function rls(table) {
 
 // ── emit ─────────────────────────────────────────────────────────────
 mkdirSync(OUT, { recursive: true })
-for (const f of readdirSync(OUT)) {
+if (!ONLY) for (const f of readdirSync(OUT)) {
   if (/^\d+_trade_profiles_part\d+\.sql$/.test(f)) unlinkSync(join(OUT, f))
 }
 
-const trades = MAP.trades.filter(t => t.rows.some(r => r.section_kind === 'screen'))
+const trades = MAP.trades.filter(t => t.rows.some(r => r.section_kind === 'screen')).filter(t => !ONLY || t.id === ONLY)
+if (ONLY && !trades.length) { console.error(`--only ${ONLY}: no such trade in the field map (run build-onboarding-field-map.mjs first)`); process.exit(1) }
 const skipped = MAP.trades.filter(t => !t.rows.some(r => r.section_kind === 'screen')).map(t => t.id)
 
-let n = START_NUMBER, part = 1, written = []
+let n = ONLY ? NUMBER ?? START_NUMBER : START_NUMBER, part = 1, written = []
 for (let i = 0; i < trades.length; i += BATCH) {
   const slice = trades.slice(i, i + BATCH)
   const blocks = []
@@ -164,9 +171,9 @@ for (let i = 0; i < trades.length; i += BATCH) {
     const p = profileTable(t); blocks.push(p.sql); made.push(p.table)
     const c = catalogueTable(t); if (c) { blocks.push(c.sql); made.push(c.table) }
   }
-  const file = `${n}_trade_profiles_part${part}.sql`
+  const file = ONLY ? `${n}_trade_profile_${ONLY}.sql` : `${n}_trade_profiles_part${part}.sql`
   const body = [
-    banner(n, `Typed trade profiles — part ${part} of ${Math.ceil(trades.length / BATCH)}`),
+    banner(n, ONLY ? `Typed trade profile — ${ONLY} (trade added after parts 1–6)` : `Typed trade profiles — part ${part} of ${Math.ceil(trades.length / BATCH)}`),
     `-- Trades in this part: ${slice.map(t => t.id).join(', ')}`,
     `--`,
     `-- Re-runnable. Creates ${made.length} tables. Verification at the end.`,

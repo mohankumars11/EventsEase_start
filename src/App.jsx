@@ -1,7 +1,8 @@
 import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
-import { isPartnerSurface, isAdminSurface, homeFor, SURFACE } from './config/surface'
+import { isPartnerSurface, isAdminSurface, homeFor, SURFACE, currentSurface } from './config/surface'
+import { isLegacyPath } from './customer/CustomerApp'
 import { usePartnerStage } from './hooks/usePartnerStage'
 import { CartProvider } from './context/CartContext'
 import { CityProvider } from './context/CityContext'
@@ -24,7 +25,7 @@ import { isPartnerSurface as _isPartner } from './config/surface'
 // The landing page is the entry point for essentially all first-time
 // traffic, so it stays in the main bundle — code-splitting it would only
 // add a round-trip before anything renders.
-import HomeScreen from './pages/HomeScreen'
+import CustomerHomeExperience from './pages/CustomerHomeExperience'
 import PayBridge from './pages/PayBridge'
 
 // Everything else is split per route. Previously all 25 pages shipped in
@@ -98,6 +99,8 @@ const BusinessPreview       = lazy(() => import('./pages/partner/BusinessPreview
 const VendorDashboard  = lazy(() => import('./pages/dashboard/VendorDashboard'))
 const AdminDashboard   = lazy(() => import('./pages/dashboard/AdminDashboard'))
 const BusinessSubmissionReview = lazy(() => import('./pages/dashboard/BusinessSubmissionReview'))
+/* The customer app (src/customer). Lazy, so the partner APK never downloads it. */
+const CustomerApp = lazy(() => import('./customer/CustomerApp'))
 
 function PageLoader() {
   return (
@@ -208,7 +211,7 @@ function RootScreen() {
     return <Navigate to={homeFor(SURFACE.admin, { signedIn: !!profile, role: profile?.role ?? null })} replace />
   }
 
-  if (!isPartnerSurface()) return <ScreenShell><HomeScreen /></ScreenShell>
+  if (!isPartnerSurface()) return <ScreenShell><CustomerHomeExperience /></ScreenShell>
 
   return <Navigate to={homeFor(SURFACE.partner, { signedIn: !!profile, role: profile?.role ?? null })} replace />
 }
@@ -374,7 +377,7 @@ function AppRoutes() {
           planner, listed celebration types, pushed the shop and ran a festival
           rail — the same four things in two layouts. Signing in replaced the
           app you had just learned with another one doing the same job.
-          HomeScreen changes its contents by auth state instead.
+          The customer-specific shell now owns the first-paint experience.
 
           /dashboard/customer stays routed rather than redirecting: it is in
           the wild in the tab bar, in post-login redirects, in the profile menu
@@ -512,7 +515,7 @@ function AppRoutes() {
       {/* ── Customer ───────────────────────────────── */}
       <Route path="/dashboard/customer" element={
         <ProtectedRoute allowedRoles={['customer']}>
-          <ScreenShell><HomeScreen /></ScreenShell>
+          <ScreenShell><CustomerHomeExperience /></ScreenShell>
         </ProtectedRoute>
       } />
       {/* /dashboard/customer/browse, /vendors/:id, /vendors/:id/quote and
@@ -798,6 +801,28 @@ function AppRoutes() {
   )
 }
 
+/**
+ * Which app renders. On the customer surface every path belongs to the
+ * customer app in src/customer except the shared doors (isLegacyPath):
+ * sign-in, the auth callback, the payment bridge, and the partner and
+ * operator routes. The partner and admin surfaces are unchanged.
+ */
+function Surfaces() {
+  const { pathname } = useLocation()
+  if (currentSurface() === SURFACE.customer && !isLegacyPath(pathname)) {
+    return <Suspense fallback={<PageLoader />}><CustomerApp /></Suspense>
+  }
+  return (
+    <>
+      <AppRoutes />
+      <BottomNav />
+      {/* The offer to go back to unfinished work, on the old customer
+          home. Only reachable on the shared routes now. */}
+      <ResumePrompt />
+    </>
+  )
+}
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -815,15 +840,7 @@ export default function App() {
                   customer in the middle of something?" — see lib/journey. It
                   renders nothing and writes to sessionStorage only. */}
               <JourneyTracker />
-              <AppRoutes />
-              <BottomNav />
-              {/* The offer to go back to unfinished work. It shows itself only
-                  on home, which is where an interrupted customer lands, and
-                  only when there is genuinely something to return to. Mounted
-                  here rather than inside HomeScreen because `/` and
-                  /dashboard/customer are two routes onto one screen and the
-                  card belongs to neither of them in particular. */}
-              <ResumePrompt />
+              <Surfaces />
               {/* The mark, once, on a device's first open. An overlay over a
                   mounted app rather than a gate in front of one — mounted
                   last so it paints above everything, and dismissible by tap
