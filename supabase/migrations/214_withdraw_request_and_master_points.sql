@@ -20,9 +20,14 @@
 -- 2. public_listing_points(trade)
 --    public_listings returns each master's DISTANCE, not where they are, so
 --    the matching map placed pins at the true distance on a guessed
---    bearing. This returns each LIVE, verified master's point ROUNDED TO
---    TWO DECIMALS (about 1.1 km) — the neighbourhood, never the door. The
---    area name is already public on the listing; this is no more precise.
+--    bearing. Mohan, 2026-11-15: "precise, with the coordinates, like
+--    Rapido, Zomato, Swiggy". A VENUE or a RESTAURANT is a business the
+--    customer travels to, so its point is EXACT (precise = true). Every
+--    other master is a person, often working from home, and this function
+--    is readable without signing in — so their point is rounded to two
+--    decimals (about 1.1 km) until they accept a booking; their exact LIVE
+--    position is shown on the event-day tracking map, as Rapido shows a
+--    driver, never a home. To show every master exactly, drop the round().
 
 BEGIN;
 
@@ -70,16 +75,18 @@ REVOKE ALL ON FUNCTION public.customer_withdraw_quote(uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.customer_withdraw_quote(uuid) TO authenticated;
 
 -- ── 2 · approximate points for the map ──────────────────────────────
+DROP FUNCTION IF EXISTS public.public_listing_points(text);
 CREATE OR REPLACE FUNCTION public.public_listing_points(p_trade text)
-RETURNS TABLE (vendor_service_id uuid, lat numeric, lng numeric)
+RETURNS TABLE (vendor_service_id uuid, lat numeric, lng numeric, precise boolean)
 LANGUAGE sql
 STABLE
 SECURITY DEFINER
 SET search_path = public, extensions
 AS $$
   SELECT s.id,
-         round(ST_Y(v.location::geometry)::numeric, 2),
-         round(ST_X(v.location::geometry)::numeric, 2)
+         CASE WHEN lv.trade_id IN ('venue', 'restaurant') THEN round(ST_Y(v.location::geometry)::numeric, 6) ELSE round(ST_Y(v.location::geometry)::numeric, 2) END,
+         CASE WHEN lv.trade_id IN ('venue', 'restaurant') THEN round(ST_X(v.location::geometry)::numeric, 6) ELSE round(ST_X(v.location::geometry)::numeric, 2) END,
+         lv.trade_id IN ('venue', 'restaurant')
     FROM public.sambramo_listing_versions lv
     JOIN public.vendor_services s ON s.id = lv.vendor_service_id
     JOIN public.vendors v ON v.id = s.vendor_id
@@ -95,8 +102,9 @@ COMMIT;
 
 -- ── verify ───────────────────────────────────────────────────────────
 -- Expect: the constraint mentions CUSTOMER_WITHDRAWN; both functions exist;
--- and a handful of photographers come back as points to two decimals.
+-- photographers come back to two decimals, venues exact (precise = true).
 SELECT pg_get_constraintdef(oid) LIKE '%CUSTOMER_WITHDRAWN%' AS withdraw_state
   FROM pg_constraint WHERE conname = 'sambramo_quote_requests_state_check';
 SELECT proname FROM pg_proc WHERE proname IN ('customer_withdraw_quote', 'public_listing_points') ORDER BY 1;
-SELECT * FROM public.public_listing_points('Photography') LIMIT 5;
+SELECT * FROM public.public_listing_points('Photography') LIMIT 3;
+SELECT * FROM public.public_listing_points('Venue') LIMIT 3;
