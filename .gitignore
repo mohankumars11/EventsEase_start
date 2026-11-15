@@ -157,3 +157,9 @@ Live_API_Key
 
 # Generated test reports (validation matrix, Selenium)
 reports/
+
+# Local build outputs and scratch, never pushed (15 Nov): APKs are ~26 MB each,
+# generated-images is 360 MB, and tmp/ holds screenshots and login sessions.
+/*.apk
+/generated-images/
+/tmp/
