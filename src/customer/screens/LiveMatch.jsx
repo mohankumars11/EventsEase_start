@@ -332,8 +332,8 @@ export default function LiveMatch() {
           {/* The map, edge to edge, the masters on it. */}
           <div className="mt-2">
             <LiveMap full height={300} place={place} searching={phase === 'matching'} count={near || null}
-              masters={list.flatMap(({ t, r }) => (r.board?.masters ?? []).map(m => ({ id: m.partner.serviceId, name: m.partner.name, cover: m.partner.avatar ?? m.partner.cover, distanceKm: m.partner.distanceKm, lat: m.partner.lat, lng: m.partner.lng, tradeId: t }))
-                .concat(r.match?.line ? [{ id: r.match.line.serviceId, name: r.match.line.name, cover: r.match.line.cover, distanceKm: r.match.line.distanceKm, tradeId: t }] : []))} />
+              masters={list.flatMap(({ t, r }) => (r.board?.masters ?? []).map(m => ({ id: m.partner.serviceId, tradeId: t }))
+                .concat(r.match?.line ? [{ id: r.match.line.serviceId, tradeId: t }] : []))} />
           </div>
           {/* The sheet rising over it: what is happening, and a bar that moves while it does. */}
           <section className="relative z-[2] -mt-6 rounded-t-[26px] bg-white px-4 pb-1 pt-2.5 text-center shadow-[0_-14px_30px_-22px_rgba(28,16,51,.55)]" data-match-sheet>

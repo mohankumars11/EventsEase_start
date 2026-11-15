@@ -167,10 +167,6 @@ export function partnersFor(tradeId, { lat = BLR.lat, lng = BLR.lng, limit = 40 
         type: x.attributes?.product_type ?? null, leadDays: num(x.attributes?.lead_days),
       })
     }
-    /* Each master's neighbourhood (migration 214, rounded to ~1 km), for the
-       live map. Before 214 is pasted the call fails and pins fall back to
-       their distance alone. */
-    const points = await supabase.rpc('public_listing_points', { p_trade: t.name }).then(r => (r.error ? {} : Object.fromEntries((r.data ?? []).map(x => [x.vendor_service_id, { lat: Number(x.lat), lng: Number(x.lng), precise: x.precise === true }]))), () => ({}))
     const addons = {}
     for (const x of ad?.data ?? []) if (Number(x.customer_paise) > 0) (addons[x.listing_version_id] ??= []).push({ id: x.addon_id, label: x.label, unit: x.unit, paise: toList(x.customer_paise, tradeId) })
     return rows.map(r => {
@@ -183,7 +179,6 @@ export function partnersFor(tradeId, { lat = BLR.lat, lng = BLR.lng, limit = 40 
       p.spaces = v ? spaces[v.id] ?? [] : []
       p.addons = v ? addons[v.id] ?? [] : []
       p.products = v ? products[v.id] ?? [] : []
-      if (points[r.vendor_service_id]) Object.assign(p, points[r.vendor_service_id])
       if (TRADE[tradeId]?.archetype === 'TRIP_VEHICLE' && v && firstItem[v.id]) p.fromRef = { ...(p.fromRef ?? { type: 'rule', key: null }), vehicle: firstItem[v.id] }
       /* What the master told us in onboarding, for matching a customer's
          requirements (lib/needs.js). Only the keys a requirement reads are

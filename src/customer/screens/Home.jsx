@@ -225,7 +225,7 @@ export default function Home() {
         <div className={'relative mx-3 grid grid-cols-2 rounded-[13px] p-[2px] shadow-[0_0_0_1px_rgba(255,255,255,.5)] transition-[height,margin] duration-300 ' + (compact ? 'mt-1.5 h-[34px]' : 'h-[37px]')}
           style={{ background: TRACK }} role="tablist" data-door-bar>
           <span aria-hidden className={'absolute bottom-[2px] left-[2px] top-[2px] w-[calc(50%-2px)] rounded-[11px] bg-white shadow-[0_4px_12px_-8px_rgba(0,0,0,.5)] transition-transform duration-300 ease-out ' + ((celebrate && !nudge) ? 'translate-x-0' : 'translate-x-full') + (nudge ? ' duration-700' : '')} />
-          {nudge && <span className="cx-pop pointer-events-none absolute -bottom-9 right-1 z-20 flex items-center gap-1 rounded-full bg-[#FFC21A] px-2.5 py-1 text-[11px] font-extrabold text-[#1C1033] shadow-[0_8px_18px_-8px_rgba(0,0,0,.6)]" data-door-nudge><Zap size={11} className="fill-current" />Just one service? 35 here — tap to switch</span>}
+
           {[['occasions', 'Celebrations'], ['services', 'Book a Service']].map(([id, t]) => (
             <button key={id} type="button" role="tab" aria-selected={door === id} onClick={() => choose(id)} data-door={t}
               className={'relative z-10 rounded-[11px] font-extrabold tracking-[-0.02em] transition-[color,font-size] duration-300 ' + (compact ? 'text-[13px] ' : 'text-[14px] ') + ((nudge ? id === 'services' : door === id) ? 'text-[#0C49B8]' : 'text-white')}>{t}</button>
@@ -237,7 +237,9 @@ export default function Home() {
           <div className={'flex items-center gap-2.5 rounded-[13px] bg-white pl-3 pr-1 shadow-[0_6px_16px_-12px_rgba(0,0,0,.45)] transition-[height] duration-300 ' + (compact ? 'h-[36px]' : 'h-[40px]')} data-sticky-search>
             <button type="button" onClick={() => navigate('/search')} className="flex min-w-0 flex-1 items-center gap-2 text-left" data-search>
               <Search size={17} className="shrink-0 text-[#1C1033]" strokeWidth={2.4} />
-              <span className="flex min-w-0 flex-1 items-center gap-1 text-[13.5px] font-medium text-[#6B6880]">Search<Rotator items={hints.map((h, k) => <span className="font-extrabold" style={{ color: HINT_INK[k % HINT_INK.length] }}>“{h}”</span>)} every={1900} /></span>
+              {nudge
+                ? <span className="cx-rise flex min-w-0 flex-1 items-center gap-1 truncate text-[13px] font-extrabold text-[#1C1033]" data-door-nudge><Zap size={13} className="shrink-0 fill-[#FFC21A] text-[#B45309]" /><span className="truncate">Just one service? 35 are up here ↑</span></span>
+                : <span className="flex min-w-0 flex-1 items-center gap-1 text-[13.5px] font-medium text-[#6B6880]">Search<Rotator items={hints.map((h, k) => <span className="font-extrabold" style={{ color: HINT_INK[k % HINT_INK.length] }}>“{h}”</span>)} every={1900} /></span>}
             </button>
             <span className="h-5 w-px shrink-0 bg-[#E7E2EE]" /><button type="button" onClick={canListen() ? voice : () => navigate('/search')} aria-label="Search by voice" className="cx-press grid h-8 w-8 shrink-0 place-items-center rounded-full text-[#1C1033]" data-mic><Mic size={17} /></button>
           </div>

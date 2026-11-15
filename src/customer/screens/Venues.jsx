@@ -144,7 +144,6 @@ export default function Venues() {
                     <span className="block truncate text-[18px] font-black leading-tight tracking-[-0.025em]">{p.name}</span>
                     <span className="flex items-center gap-2 text-[11.5px] font-bold text-white/90">
                       <span className="flex items-center gap-1"><MapPin size={11} />{p.area ?? 'Bengaluru'}{p.distanceKm != null ? ` · ${p.distanceKm.toFixed(1)} km` : ''}</span>
-                      {p.precise && <button type="button" onClick={e => { e.preventDefault(); e.stopPropagation(); window.open(`https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}`, '_blank', 'noopener') }} className="pointer-events-auto underline underline-offset-2" data-directions>Directions</button>}
                       {cap > 0 && <span className="flex items-center gap-1"><Users size={11} />Holds {cap.toLocaleString('en-IN')}</span>}
                     </span>
                   </span>

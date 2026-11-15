@@ -147,7 +147,7 @@ export default function Restaurants() {
                 {p.instant && <span className="absolute right-2 top-2 rounded-full bg-[#FFD84A] px-1.5 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-[#5E3500]">Instant</span>}
                 <span className="absolute inset-x-2 bottom-2 flex items-end justify-between gap-1 text-white">
                   {p.rating ? <span className="flex items-center gap-0.5 rounded-[8px] bg-[#16A34A] px-1.5 py-0.5 text-[11.5px] font-black"><Star size={10} className="fill-current" />{p.rating.toFixed(1)}</span> : <span />}
-                  {p.distanceKm != null && (p.precise ? <button type="button" onClick={e => { e.preventDefault(); e.stopPropagation(); window.open(`https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}`, '_blank', 'noopener') }} className="rounded-full bg-black/35 px-1.5 text-[10.5px] font-extrabold underline-offset-2" data-directions>{p.distanceKm.toFixed(1)} km · Map</button> : <span className="text-[10.5px] font-extrabold">{p.distanceKm.toFixed(1)} km</span>)}
+                  {p.distanceKm != null && <span className="text-[10.5px] font-extrabold">{p.distanceKm.toFixed(1)} km</span>}
                 </span>
               </Link>
               <div className="flex flex-1 flex-col p-2.5">
