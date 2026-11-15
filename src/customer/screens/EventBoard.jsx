@@ -18,7 +18,7 @@
  * screen. Supabase realtime + a quiet 15-second re-read keep it live.
  */
 import { useCallback, useEffect, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { createPortal } from 'react-dom'
 import { BadgeCheck, Bell, Check, ChevronDown, CreditCard, HandCoins, Loader2, Lock, Maximize2, MessageCircle, Radar, Scale, TriangleAlert } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
@@ -156,9 +156,16 @@ export default function EventBoard() {
   useEffect(() => { const t = setInterval(() => setTick(k => k + 1), 1000); return () => clearInterval(t) }, [])
   const [askAlerts, setAskAlerts] = useState(false)
   const [alertsOn, setAlertsOn] = useState(null)
+  /* Straight after "Ask all masters live" (?asked=N) the moment is always
+     shown (Mohan, 2026-11-15: "I'm not seeing this screen") — as the ask
+     when alerts are off, as a one-button confirmation when they are on.
+     The flag leaves the URL, so a reload does not show it again. */
+  const [params, setParams] = useSearchParams()
+  const justAsked = params.has('asked')
   useEffect(() => {
     alertsGranted().then(ok => {
       setAlertsOn(ok)
+      if (justAsked) { setAskAlerts(true); setParams(p => { p.delete('asked'); return p }, { replace: true }); return }
       if (ok || !sent.length) return
       try { if (sessionStorage.getItem(ALERTS_ASKED)) return; sessionStorage.setItem(ALERTS_ASKED, '1') } catch { /* private mode: ask anyway */ }
       setAskAlerts(true)
@@ -290,7 +297,11 @@ export default function EventBoard() {
       <ReplySheet x={detail} busy={busy} onClose={() => setDetail(null)} onAccept={x => accept(x, true)} />
       <SignInSheet open={signIn} onClose={() => setSignIn(false)} onDone={() => { setSignIn(false); load() }} why="to pay and lock your date" />
       <AlertsAsk open={askAlerts} place={place} masters={mapMasters}
-        onAllow={() => { setAskAlerts(false); if (user?.id) enableAlerts({ profileId: user.id, app: 'customer' }).then(() => alertsGranted().then(setAlertsOn)).catch(() => {}) }}
+        {...(alertsOn ? {
+          body: `Alerts are on. The moment one of your ${plural(items.length || 1, 'master')} replies or says yes, Sambramo pings you — and on the day, as each one heads your way.`,
+          allowLabel: 'Got it', laterLabel: null,
+        } : {})}
+        onAllow={() => { setAskAlerts(false); if (!alertsOn && user?.id) enableAlerts({ profileId: user.id, app: 'customer' }).then(() => alertsGranted().then(setAlertsOn)).catch(() => {}) }}
         onLater={() => setAskAlerts(false)} />
       {mapFull && createPortal(
         <div className="cx cx-ask-fade fixed inset-0 z-[420] bg-[#EEF0F3]" role="dialog" aria-label="Live map" data-map-full>

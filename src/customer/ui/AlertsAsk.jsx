@@ -55,6 +55,7 @@ export function Bell({ className = '' }) {
 export default function AlertsAsk({ open, place, masters = [], onAllow, onLater, title = 'Keep your phone away — we’ll ping you',
   body = 'The moment a master says yes, Sambramo pings you. On the day, you’ll know as each one heads your way. Only your bookings — never spam, and you can switch it off any time.',
   allowLabel = 'Yes, ping me', laterLabel = 'Maybe later', busy = false, note = null }) {
+  /* laterLabel null: a confirmation, one button (alerts are already on). */
   if (!open) return null
   const mapH = Math.round((typeof window !== 'undefined' ? window.innerHeight : 800) * 0.4)
   return createPortal(
@@ -78,7 +79,7 @@ export default function AlertsAsk({ open, place, masters = [], onAllow, onLater,
             className="cx-solid flex h-[56px] w-full items-center justify-center gap-2 rounded-[16px] bg-gradient-to-b from-[#2563EB] to-[#0F4FC4] text-[17px] font-extrabold text-white shadow-[0_14px_26px_-14px_rgba(15,79,196,.9)] disabled:opacity-80" data-alerts-allow>
             {busy && <Loader2 size={18} className="animate-spin" />}{allowLabel}
           </button>
-          <button type="button" onClick={onLater} className="mt-1 flex h-[56px] w-full items-center justify-center rounded-[12px] text-[16px] font-bold text-[#0F4FC4]" data-alerts-later>{laterLabel}</button>
+          {laterLabel && <button type="button" onClick={onLater} className="mt-1 flex h-[56px] w-full items-center justify-center rounded-[12px] text-[16px] font-bold text-[#0F4FC4]" data-alerts-later>{laterLabel}</button>}
         </div>
       </section>
     </div>,
