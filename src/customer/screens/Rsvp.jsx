@@ -148,7 +148,7 @@ export default function Rsvp() {
           )}
 
           {err && <p className="rounded-[14px] bg-[#FFF1F2] px-3 py-2.5 text-[13px] font-bold text-[#9B1A2A]">{err}</p>}
-          <button type="button" disabled={!canSend || busy} onClick={send} className="cx-press flex h-14 w-full items-center justify-center gap-2 rounded-[18px] bg-[#0C831F] text-[16px] font-extrabold text-white shadow-[0_12px_24px_-12px_rgba(12,131,31,.9)] disabled:opacity-40" data-rsvp-send>
+          <button type="button" disabled={!canSend || busy} onClick={send} className="cx-solid cx-solid-flat cx-press flex h-14 w-full items-center justify-center gap-2 rounded-[18px] bg-[#0C831F] text-[16px] font-extrabold text-white shadow-[0_12px_24px_-12px_rgba(12,131,31,.9)] disabled:opacity-40" data-rsvp-send>
             {busy && <Loader2 size={18} className="animate-spin" />}Send my RSVP
           </button>
           {inv.rsvp_by && <p className="text-center text-[12px] font-bold text-[var(--ink-3)]">Please reply by {fmtDate(inv.rsvp_by)}</p>}

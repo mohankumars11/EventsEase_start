@@ -225,7 +225,7 @@ export function CircleChat({ circle, messages, members = [], inviteTitle, onSend
       <div className="mt-3 flex items-center gap-2">
         <button type="button" onClick={() => setLook(l => (l ? null : { outfit: null, colors: [] }))} aria-label="Share my outfit" aria-pressed={!!look} className={'cx-press grid h-12 w-12 shrink-0 place-items-center rounded-full ' + (look ? 'bg-[#DB2777] text-white' : 'bg-[#FDF2F8] text-[#DB2777]')} data-look-toggle><Shirt size={19} /></button>
         <input value={text} onChange={e => setText(e.target.value)} onKeyDown={e => e.key === 'Enter' && (text.trim() || look) && !busy && send()} maxLength={1000} placeholder={look ? 'Add a note (optional)' : 'Message the circle…'} className="h-12 min-w-0 flex-1 rounded-full bg-[#F4F1F8] px-4 text-[14px] font-semibold outline-none focus:ring-2 focus:ring-[#C4B5FD]" data-chat-input />
-        <button type="button" disabled={busy || (!text.trim() && !(look && (look.outfit || look.colors?.length)))} onClick={send} aria-label="Send" className="cx-press grid h-12 w-12 shrink-0 place-items-center rounded-full bg-[#1C1033] text-white disabled:opacity-30" data-chat-send>{busy ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}</button>
+        <button type="button" disabled={busy || (!text.trim() && !(look && (look.outfit || look.colors?.length)))} onClick={send} aria-label="Send" className="cx-solid cx-solid-flat shadow-[0_8px_18px_-10px_rgba(20,10,40,.55)] cx-press grid h-12 w-12 shrink-0 place-items-center rounded-full bg-[#1C1033] text-white disabled:opacity-30" data-chat-send>{busy ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}</button>
       </div>
     </div>
   )

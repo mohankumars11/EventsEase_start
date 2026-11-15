@@ -56,6 +56,7 @@ import { useProgress } from '../lib/progress'
 import SignInSheet from './SignInSheet'
 import InviteShare from '../ui/InviteShare'
 import LiveMap from '../ui/LiveMap'
+import AlertsAsk from '../ui/AlertsAsk'
 
 const spring = { type: 'spring', stiffness: 420, damping: 34 }
 /* Are notifications already allowed? Native first, then the browser. */
@@ -358,7 +359,7 @@ export default function LiveMatch() {
                 <span className="block text-[13.5px] font-black leading-tight text-[#2E1065]">No need to wait here</span>
                 <span className="block text-[11.5px] font-semibold leading-snug text-[#5B4A7A]">We notify you the moment a master replies or accepts. Meanwhile add anything else your {o.name.toLowerCase()} needs.</span>
               </span>
-              <Link to={`/o/${o.id}/plan`} className="cx-press flex h-10 shrink-0 items-center gap-1 rounded-full bg-[#1C1033] px-3 text-[12px] font-extrabold text-white" data-add-more-live><Plus size={14} />Add more</Link>
+              <Link to={`/o/${o.id}/plan`} className="cx-solid cx-solid-flat shadow-[0_8px_18px_-10px_rgba(20,10,40,.55)] cx-press flex h-10 shrink-0 items-center gap-1 rounded-full bg-[#1C1033] px-3 text-[12px] font-extrabold text-white" data-add-more-live><Plus size={14} />Add more</Link>
             </div>
           )}
 
@@ -470,19 +471,11 @@ export default function LiveMatch() {
         event={ev} place={boardPlace} needs={boardFor ? plan.needsOf(o.id, boardFor) : {}} initial={boardFor ? rows[boardFor]?.board : null} focus={master}
         onChoose={(offer, partner, backups) => chooseOffer(boardFor, offer, partner, backups)} />
       <SignInSheet open={signIn} onClose={() => setSignIn(false)} onDone={() => setSignIn(false)} why="to send your requests" />
-      {/* "Put your phone away and relax" — asked right after sending, when it means something. */}
-      <Sheet open={askAlerts} onClose={() => setAskAlerts(false)} title="">
-        <div className="pb-4" data-ask-alerts>
-          <span className="relative mb-4 grid h-[88px] w-[88px] place-items-center rounded-[26px] bg-gradient-to-br from-[#EDE3FF] to-[#D8C7FF]">
-            <Bell size={46} strokeWidth={2} className="cx-bell-ring fill-[#7C3AED] text-[#5B21B6]" />
-            <span className="absolute -right-1 -top-1 grid h-7 w-7 place-items-center rounded-full bg-[#16A34A] text-[12px] font-black text-white ring-[3px] ring-white">{Math.max(1, sent?.requested?.length ?? sent?.results?.length ?? 1)}</span>
-          </span>
-          <h3 className="text-[30px] font-black leading-[1.05] tracking-[-0.04em] text-[#1C1033]">Put your phone away and relax</h3>
-          <p className="mt-2 text-[14.5px] font-semibold leading-snug text-[var(--ink-2)]">Allow notifications and we’ll tell you the moment a master accepts — and, on the day, when each one is on the way. You can turn them off any time in Settings.</p>
-          <button type="button" onClick={() => { setAskAlerts(false); if (profile?.id) enableAlerts({ profileId: profile.id, app: 'customer' }).catch(() => {}) }} className="cx-press cx-cta mt-5 flex h-[54px] w-full items-center justify-center rounded-[16px] text-[16px] font-extrabold" data-alerts-allow>Allow</button>
-          <button type="button" onClick={() => setAskAlerts(false)} className="cx-press mt-1.5 flex h-12 w-full items-center justify-center rounded-[16px] text-[15px] font-extrabold text-[#1C1033]" data-alerts-later>Not now</button>
-        </div>
-      </Sheet>
+      {/* "Keep your phone away — we’ll ping you" — asked right after sending, when it means something. */}
+      <AlertsAsk open={askAlerts} place={place}
+        masters={(sent?.results ?? []).filter(x => x.serviceId).map(x => ({ id: x.serviceId, tradeId: x.tradeId }))}
+        onAllow={() => { setAskAlerts(false); if (profile?.id) enableAlerts({ profileId: profile.id, app: 'customer' }).catch(() => {}) }}
+        onLater={() => setAskAlerts(false)} />
     </main>
   )
 }

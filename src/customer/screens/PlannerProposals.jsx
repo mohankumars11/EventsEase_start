@@ -73,7 +73,7 @@ function Proposal({ x, onAccept, busy }) {
           <input value={q} onChange={e => { setQ(e.target.value.slice(0, 1000)); setSent(false) }} placeholder={sent ? 'Sent — they’ll reply here' : 'Ask a question'}
             className="h-10 min-w-0 flex-1 rounded-full bg-[#FAF8FD] px-3.5 text-[13px] font-semibold shadow-[inset_0_0_0_1px_#EEE9F5] outline-none" data-ask />
           <button type="button" onClick={ask} className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#F4EEFF] text-[var(--brand)]" aria-label="Send question"><MessageCircle size={16} /></button>
-          {x.status === 'proposal' && <button type="button" disabled={busy} onClick={() => onAccept(x)} className="cx-press h-10 shrink-0 rounded-full bg-[var(--brand)] px-4 text-[12.5px] font-extrabold text-white" data-accept>Choose</button>}
+          {x.status === 'proposal' && <button type="button" disabled={busy} onClick={() => onAccept(x)} className="cx-solid cx-solid-flat shadow-[0_8px_18px_-10px_rgba(20,10,40,.55)] cx-press h-10 shrink-0 rounded-full bg-[var(--brand)] px-4 text-[12.5px] font-extrabold text-white" data-accept>Choose</button>}
         </div>
       )}
     </article>

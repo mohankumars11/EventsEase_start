@@ -155,7 +155,7 @@ export function WhenBody({ w }) {
               <p className="mt-0.5 text-[13px] font-semibold text-[var(--ink-3)]">{countdown(ask) === 'today' ? 'That’s today' : countdown(ask) === 'tomorrow' ? 'That’s tomorrow' : `That’s ${countdown(ask)}`} · go ahead with this date?</p>
               <div className="mt-4 grid grid-cols-[1fr_1.4fr] gap-2">
                 <button type="button" onClick={() => setAsk(null)} className="cx-press h-12 rounded-[16px] bg-[#F4F1F8] text-[14px] font-extrabold text-[var(--ink-2)]">Change</button>
-                <button type="button" onClick={() => { setD(ask); setAsk(null); setStage('time') }} className="cx-press h-12 rounded-[16px] bg-[#0C831F] text-[14px] font-extrabold text-white" data-confirm-yes>Yes, pick the time</button>
+                <button type="button" onClick={() => { setD(ask); setAsk(null); setStage('time') }} className="cx-solid cx-solid-flat shadow-[0_8px_18px_-10px_rgba(20,10,40,.55)] cx-press h-12 rounded-[16px] bg-[#0C831F] text-[14px] font-extrabold text-white" data-confirm-yes>Yes, pick the time</button>
               </div>
             </div>
           </div>

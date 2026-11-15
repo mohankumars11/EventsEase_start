@@ -448,7 +448,7 @@ function StepFunctions({ occ, inv, fns, setFns }) {
       </div>
       <div className="mt-2 flex gap-2">
         <input value={own} onChange={e => setOwn(e.target.value)} maxLength={80} placeholder="Add another — e.g. Sangeet night" className="h-12 min-w-0 flex-1 rounded-[14px] bg-[#F6F3FA] px-3.5 text-[14px] font-bold outline-none" />
-        <button type="button" disabled={!own.trim()} onClick={() => { toggle(own.trim()); setOwn('') }} className="cx-press grid h-12 w-12 place-items-center rounded-[14px] bg-[#1C1033] text-white disabled:opacity-30" aria-label="Add function"><Plus size={18} /></button>
+        <button type="button" disabled={!own.trim()} onClick={() => { toggle(own.trim()); setOwn('') }} className="cx-solid cx-solid-flat shadow-[0_8px_18px_-10px_rgba(20,10,40,.55)] cx-press grid h-12 w-12 place-items-center rounded-[14px] bg-[#1C1033] text-white disabled:opacity-30" aria-label="Add function"><Plus size={18} /></button>
       </div>
       {fns.length > 0 && (
         <div className="mt-4 space-y-2">
@@ -605,7 +605,7 @@ function StepGuests({ invId, added, onAdded, onDone }) {
         <div className="mt-4 space-y-2">
           <input value={name} onChange={e => setName(e.target.value)} maxLength={100} placeholder="Name" className="h-[54px] w-full rounded-[16px] bg-[#F6F3FA] px-4 text-[16px] font-extrabold outline-none focus:ring-2 focus:ring-[#C4B5FD]" data-guest-name />
           <input value={phone} onChange={e => setPhone(e.target.value)} inputMode="tel" maxLength={16} placeholder="WhatsApp number" className="h-[54px] w-full rounded-[16px] bg-[#F6F3FA] px-4 text-[16px] font-extrabold outline-none focus:ring-2 focus:ring-[#C4B5FD]" />
-          <button type="button" disabled={name.trim().length < 2} onClick={() => { setFound(f => [...f, { name: name.trim(), phone: phone.trim() || null }]); setName(''); setPhone('') }} className="cx-press flex h-12 w-full items-center justify-center gap-1.5 rounded-[16px] bg-[#1C1033] text-[14.5px] font-extrabold text-white disabled:opacity-30"><Plus size={17} />Add to the list</button>
+          <button type="button" disabled={name.trim().length < 2} onClick={() => { setFound(f => [...f, { name: name.trim(), phone: phone.trim() || null }]); setName(''); setPhone('') }} className="cx-solid cx-solid-flat shadow-[0_8px_18px_-10px_rgba(20,10,40,.55)] cx-press flex h-12 w-full items-center justify-center gap-1.5 rounded-[16px] bg-[#1C1033] text-[14.5px] font-extrabold text-white disabled:opacity-30"><Plus size={17} />Add to the list</button>
         </div>
       )}
 

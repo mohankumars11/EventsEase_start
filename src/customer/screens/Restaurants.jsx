@@ -130,7 +130,7 @@ export default function Restaurants() {
           <div className="col-span-2 rounded-[20px] bg-white p-5 text-center shadow-[0_0_0_1px_#EEE8F8]">
             <p className="text-[15px] font-black">{all.length ? 'No restaurant matches those filters yet' : 'No restaurant partner near here yet'}</p>
             <p className="mt-1 text-[12.5px] font-semibold text-[var(--ink-2)]">{all.length ? 'Loosen a filter to see every restaurant.' : 'Restaurants are joining Sambramo now. A caterer can deliver the same food to your place meanwhile.'}</p>
-            {all.length > 0 && <button type="button" onClick={() => setF({})} className="cx-press mt-3 rounded-full bg-[#1C1033] px-4 py-2 text-[12.5px] font-extrabold text-white">Show every restaurant</button>}
+            {all.length > 0 && <button type="button" onClick={() => setF({})} className="cx-solid cx-solid-flat shadow-[0_8px_18px_-10px_rgba(20,10,40,.55)] cx-press mt-3 rounded-full bg-[#1C1033] px-4 py-2 text-[12.5px] font-extrabold text-white">Show every restaurant</button>}
           </div>
         )}
         {/* Two a row (Mohan, 2026-11-14): the photo, the diet mark, the rating, the price per person, one Book. */}

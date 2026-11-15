@@ -41,7 +41,7 @@ export default function InviteReady({ occasion: o, where = 'checkout', className
         </div>
       </div>
       <div className="mt-3 grid grid-cols-2 gap-2">
-        <Link to={`/invites/new?o=${o.id}&step=review`} className="cx-press flex h-11 items-center justify-center gap-1.5 rounded-[14px] bg-[#DB2777] text-[13px] font-extrabold text-white shadow-[0_10px_20px_-12px_rgba(219,39,119,.9)]" data-invite-share>
+        <Link to={`/invites/new?o=${o.id}&step=review`} className="cx-solid cx-solid-flat cx-press flex h-11 items-center justify-center gap-1.5 rounded-[14px] bg-[#DB2777] text-[13px] font-extrabold text-white shadow-[0_10px_20px_-12px_rgba(219,39,119,.9)]" data-invite-share>
           <Share2 size={15} />Share with friends
         </Link>
         <Link to={`/invites/new?o=${o.id}`} className="cx-press flex h-11 items-center justify-center gap-1.5 rounded-[14px] bg-white text-[13px] font-extrabold text-[#5B21A8] shadow-[inset_0_0_0_1.5px_#E3D5FA]" data-invite-design>

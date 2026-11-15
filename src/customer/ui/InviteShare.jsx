@@ -84,7 +84,7 @@ export default function InviteShare({ o, className = '' }) {
       </ul>
 
       <div className="mt-4 grid grid-cols-2 gap-2">
-        <button type="button" onClick={share} disabled={busy} className="cx-press flex h-12 items-center justify-center gap-1.5 rounded-[14px] bg-[#DB2777] text-[13.5px] font-extrabold text-white shadow-[0_10px_20px_-12px_rgba(219,39,119,.9)] disabled:opacity-60" data-invite-share-now>
+        <button type="button" onClick={share} disabled={busy} className="cx-solid cx-solid-flat cx-press flex h-12 items-center justify-center gap-1.5 rounded-[14px] bg-[#DB2777] text-[13.5px] font-extrabold text-white shadow-[0_10px_20px_-12px_rgba(219,39,119,.9)] disabled:opacity-60" data-invite-share-now>
           {busy ? <Loader2 size={16} className="animate-spin" /> : <Share2 size={16} />}{invId ? 'Share again' : 'Share invitation'}
         </button>
         <button type="button" onClick={edit} className="cx-press flex h-12 items-center justify-center gap-1.5 rounded-[14px] bg-white text-[13.5px] font-extrabold text-[#5B21A8] shadow-[inset_0_0_0_1.5px_#E3D5FA]" data-invite-edit>

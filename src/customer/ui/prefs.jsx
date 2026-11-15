@@ -268,7 +268,7 @@ function StudioEntry({ o, cur, onClose }) {
   const open = () => { onClose(); navigate(`/o/${o.id}/menu${st ? '?s=edit' : ''}`) }
   return (
     <button type="button" onClick={open} data-studio-entry={st ? 'chosen' : 'new'}
-      className="cx-press flex w-full items-center gap-3 overflow-hidden rounded-[20px] bg-gradient-to-br from-[#2A124F] to-[#5B21B6] p-4 text-left text-white">
+      className="cx-solid shadow-[0_8px_18px_-10px_rgba(20,10,40,.55)] cx-press flex w-full items-center gap-3 overflow-hidden rounded-[20px] bg-gradient-to-br from-[#2A124F] to-[#5B21B6] p-4 text-left text-white">
       <span className="min-w-0 flex-1">
         <span className="block text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#F4D99A]">{st ? 'Your menu' : 'Menu Studio'}</span>
         <span className="mt-0.5 block truncate text-[17px] font-extrabold">{st ? st.name : 'Create your menu'}</span>

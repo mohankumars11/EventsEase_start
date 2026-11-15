@@ -187,7 +187,7 @@ export default function Brief() {
       <div className="fixed inset-x-0 bottom-0 z-[130] border-t border-[#F1E9DF] bg-white/95 px-3 pt-3" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}>
         <div className="mx-auto flex max-w-[540px] gap-2">
           <button type="button" onClick={() => setPicks({})} disabled={!n} className="cx-press flex h-14 shrink-0 items-center gap-1.5 rounded-[18px] bg-[#F6F1EA] px-4 text-[13.5px] font-extrabold text-[var(--ink-2)] disabled:opacity-40" data-clear><RotateCcw size={16} />Clear</button>
-          <button type="button" onClick={done} className="cx-press flex h-14 flex-1 items-center justify-center gap-2 rounded-[18px] bg-[#0C831F] text-[15.5px] font-extrabold text-white shadow-[0_12px_24px_-12px_rgba(12,131,31,.9)] disabled:bg-[#CFE9D7] disabled:shadow-none" data-show-masters>
+          <button type="button" onClick={done} className="cx-solid cx-solid-flat cx-press flex h-14 flex-1 items-center justify-center gap-2 rounded-[18px] bg-[#0C831F] text-[15.5px] font-extrabold text-white shadow-[0_12px_24px_-12px_rgba(12,131,31,.9)] disabled:bg-[#CFE9D7] disabled:shadow-none" data-show-masters>
             {!n ? `Show all ${shown?.length ?? ''} masters`.replace('  ', ' ') : !shown ? 'Finding masters…' : picks.$any ? `Done · all ${shown.length} masters` : fit.exact ? `Done · ${plural(shown.length, 'master')} match` : `Done · ${shown.length} closest`}
           </button>
         </div>
@@ -361,13 +361,13 @@ function TypeIt({ typed = [], onTyped, hint, quiet = false }) {
     <div className="mt-2.5">
       {!quiet && typed.length > 0 && (
         <div className="mb-2 flex flex-wrap gap-1.5">
-          {typed.map(x => <button key={x} type="button" onClick={() => onTyped(typed.filter(y => y !== x))} className="flex items-center gap-1 rounded-full bg-[#1C1033] py-1.5 pl-3 pr-2 text-[12px] font-bold text-white">{x}<X size={13} /></button>)}
+          {typed.map(x => <button key={x} type="button" onClick={() => onTyped(typed.filter(y => y !== x))} className="cx-solid cx-solid-flat shadow-[0_8px_18px_-10px_rgba(20,10,40,.55)] flex items-center gap-1 rounded-full bg-[#1C1033] py-1.5 pl-3 pr-2 text-[12px] font-bold text-white">{x}<X size={13} /></button>)}
         </div>
       )}
       <label className="flex h-10 items-center gap-2 rounded-[12px] border border-dashed border-[#D9CFC2] bg-white px-3 focus-within:border-solid focus-within:border-[#16A34A]">
         <input value={text} onChange={e => setText(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder={hint} maxLength={80}
           className="h-full min-w-0 flex-1 bg-transparent text-[12.5px] font-semibold outline-none placeholder:text-[#A39C8F]" data-type-it />
-        {text.trim() && <button type="button" onClick={add} className="shrink-0 rounded-full bg-[#0C831F] px-3 py-1 text-[11.5px] font-extrabold text-white">Add</button>}
+        {text.trim() && <button type="button" onClick={add} className="cx-solid cx-solid-flat shadow-[0_8px_18px_-10px_rgba(20,10,40,.55)] shrink-0 rounded-full bg-[#0C831F] px-3 py-1 text-[11.5px] font-extrabold text-white">Add</button>}
       </label>
     </div>
   )

@@ -33,7 +33,7 @@ const BLR = { lat: 12.9716, lng: 77.5946 }
 const ZOOM = 15
 const hash = s => { let h = 7; for (let i = 0; i < String(s).length; i++) h = (h * 31 + String(s).charCodeAt(i)) >>> 0; return h }
 
-export default function LiveMap({ place, masters = [], searching = false, height = 250, count = null, full = false }) {
+export default function LiveMap({ place, masters = [], searching = false, height = 250, count = null, full = false, bare = false }) {
   const box = useRef(null)
   const [width, setWidth] = useState(360)
   useEffect(() => {
@@ -70,7 +70,7 @@ export default function LiveMap({ place, masters = [], searching = false, height
 
       {/* The masters: the app's service figures, drifting — never a photo, never a place. */}
       {figures.map(f => (
-        <span key={f.id} className="cx-blip pointer-events-none absolute" style={{ left: mid.x + f.dx, top: mid.y + f.dy, translate: '-50% -50%', animationDelay: `${f.delay}s` }} data-map-figure={f.tradeId}>
+        <span key={f.id} className="cx-blip pointer-events-none absolute" style={{ left: Math.min(width - 30, Math.max(30, mid.x + f.dx)), top: Math.min(height - 30, Math.max(30, mid.y + f.dy)), translate: '-50% -50%', animationDelay: `${f.delay}s` }} data-map-figure={f.tradeId}>
           <span className={`cx-drift-${f.drift} block`} style={{ animationDelay: `${f.delay}s` }}>
             <span className="block h-11 w-11 overflow-hidden rounded-full bg-white shadow-[0_6px_14px_-6px_rgba(28,16,51,.55),0_0_0_2px_#FFFFFF]">
               <ArtFill art={serviceArt(f.tradeId)} tone="#FFFFFF" className="h-full w-full" inset="6%" />
@@ -86,10 +86,10 @@ export default function LiveMap({ place, masters = [], searching = false, height
       </span>
       <span className="pointer-events-none absolute rounded-full bg-white px-2 py-[2px] text-[10.5px] font-extrabold text-[#1C1033] shadow-sm" style={{ left: mid.x, top: mid.y + 8, translate: '-50% 0' }}>{place?.area ?? 'You'}</span>
 
-      <span className="pointer-events-none absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 text-[10.5px] font-black uppercase tracking-[0.12em] text-[#1C1033] shadow-[0_4px_12px_-6px_rgba(0,0,0,.35)]">
+      {!bare && <span className="pointer-events-none absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 text-[10.5px] font-black uppercase tracking-[0.12em] text-[#1C1033] shadow-[0_4px_12px_-6px_rgba(0,0,0,.35)]">
         <span className={'h-2 w-2 rounded-full bg-[#16A34A] ' + (searching ? 'cx-live-dot' : '')} />{searching ? 'Finding masters' : 'Masters near you'}
-      </span>
-      {count != null && <span className="pointer-events-none absolute right-3 top-3 rounded-full bg-[#1C1033] px-2.5 py-1 text-[11px] font-black text-white shadow-sm" data-map-count>{count} {count === 1 ? 'master' : 'masters'}</span>}
+      </span>}
+      {!bare && count != null && <span className="pointer-events-none absolute right-3 top-3 rounded-full bg-[#1C1033] px-2.5 py-1 text-[11px] font-black text-white shadow-sm" data-map-count>{count} {count === 1 ? 'master' : 'masters'}</span>}
       <span className="pointer-events-none absolute bottom-1 right-2 text-[8.5px] font-semibold text-[#4B5563]/80">{ATTRIBUTION}</span>
     </div>
   )

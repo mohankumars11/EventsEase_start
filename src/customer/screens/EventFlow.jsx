@@ -241,7 +241,7 @@ export default function EventFlow() {
                     <button type="button" onClick={() => set({ hours: Math.max(1, f.hours - 1) })} aria-label="Fewer hours" className="cx-press grid h-9 w-9 place-items-center rounded-full bg-[#F4EEFF] text-[#5B21B6]"><Minus size={16} /></button>
                     <input inputMode="numeric" value={f.hours} onChange={e => set({ hours: Math.min(72, Math.max(1, Number(e.target.value.replace(/\D/g, '')) || 1)) })} aria-label="Hours"
                       className="cx-num w-12 bg-transparent text-center text-[18px] font-black text-[var(--ink)] outline-none" data-hours-input />
-                    <button type="button" onClick={() => set({ hours: Math.min(72, f.hours + 1) })} aria-label="More hours" className="cx-press grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-[#7C3AED] to-[#5B21B6] text-white"><Plus size={16} /></button>
+                    <button type="button" onClick={() => set({ hours: Math.min(72, f.hours + 1) })} aria-label="More hours" className="cx-solid shadow-[0_8px_18px_-10px_rgba(20,10,40,.55)] cx-press grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-[#7C3AED] to-[#5B21B6] text-white"><Plus size={16} /></button>
                   </span>
                 </div>
               )}
@@ -420,7 +420,7 @@ function Guests({ value, onChange, picks = GUEST_PICKS }) {
             className="cx-num w-[120px] bg-transparent text-center text-[40px] font-black leading-none tracking-[-0.04em] text-[#2E1065] outline-none" />
           <p className="text-[11px] font-black uppercase tracking-[0.14em] text-[#7C5BC7]">guests</p>
         </div>
-        <button type="button" onClick={() => onChange(clamp(value + step(value)))} aria-label="More guests" className="cx-press grid h-12 w-12 place-items-center rounded-[15px] bg-gradient-to-br from-[#7C3AED] to-[#5B21B6] text-white shadow-[0_8px_16px_-8px_rgba(91,33,182,.95)]"><Plus size={20} strokeWidth={2.6} /></button>
+        <button type="button" onClick={() => onChange(clamp(value + step(value)))} aria-label="More guests" className="cx-solid cx-press grid h-12 w-12 place-items-center rounded-[15px] bg-gradient-to-br from-[#7C3AED] to-[#5B21B6] text-white shadow-[0_8px_16px_-8px_rgba(91,33,182,.95)]"><Plus size={20} strokeWidth={2.6} /></button>
       </div>
       <input type="range" min="1" max="500" value={Math.min(value, 500)} onChange={e => onChange(Number(e.target.value))} aria-label="Guests slider" className="cx-range mt-4 w-full" />
       <div className="mt-3 grid grid-cols-6 gap-1.5">

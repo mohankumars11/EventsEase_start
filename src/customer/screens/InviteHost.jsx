@@ -109,7 +109,7 @@ export default function InviteHost() {
             <ChevronRight size={20} className="shrink-0" />
           </button>
         ) : guests.length > 0 && t.pending > 0 && remindUp ? (
-          <button type="button" onClick={() => sendTo(remindUp)} className="cx-press flex h-[60px] w-full items-center gap-3 rounded-[20px] bg-[#1C1033] px-4 text-left text-white" data-remind-next>
+          <button type="button" onClick={() => sendTo(remindUp)} className="cx-solid cx-solid-flat shadow-[0_8px_18px_-10px_rgba(20,10,40,.55)] cx-press flex h-[60px] w-full items-center gap-3 rounded-[20px] bg-[#1C1033] px-4 text-left text-white" data-remind-next>
             <MessageCircle size={22} className="shrink-0" />
             <span className="min-w-0 flex-1"><span className="block text-[16px] font-black tracking-[-0.02em]">Remind {remindUp.name}</span><span className="block text-[12px] font-bold text-white/75">{t.pending} haven’t replied yet</span></span>
             <ChevronRight size={20} className="shrink-0" />

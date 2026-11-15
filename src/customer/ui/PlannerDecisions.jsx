@@ -37,7 +37,7 @@ export default function PlannerDecisions({ userId, occasionId, context }) {
             <div key={r.id} className="flex items-center gap-2 rounded-[14px] bg-white p-2.5" data-proposed={r.requirement_code}>
               <span className="min-w-0 flex-1 text-[13px] font-extrabold">{TRADE[r.trade_id]?.label ?? r.trade_id}<span className="block text-[11px] font-semibold text-[var(--ink-3)]">{r.requirement_code}</span></span>
               <button type="button" disabled={busy === r.id} onClick={() => decide(r, false)} className="h-8 rounded-full bg-[#F4F1F8] px-3 text-[11.5px] font-extrabold text-[var(--ink-2)]">Not now</button>
-              <button type="button" disabled={busy === r.id} onClick={() => decide(r, true)} className="h-8 rounded-full bg-[var(--brand)] px-3 text-[11.5px] font-extrabold text-white" data-approve>Approve</button>
+              <button type="button" disabled={busy === r.id} onClick={() => decide(r, true)} className="cx-solid cx-solid-flat shadow-[0_8px_18px_-10px_rgba(20,10,40,.55)] h-8 rounded-full bg-[var(--brand)] px-3 text-[11.5px] font-extrabold text-white" data-approve>Approve</button>
             </div>
           ))}
         </div>

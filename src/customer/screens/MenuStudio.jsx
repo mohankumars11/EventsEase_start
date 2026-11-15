@@ -267,7 +267,7 @@ function MenuCard({ cat, o, title, family, diet, serve, meal, guests, sections, 
           const open = !shut[s.id]
           return (
             <section key={s.id} className="mt-2.5" data-card-section={s.id}>
-              <button type="button" onClick={() => setShut(x => ({ ...x, [s.id]: open }))} className="flex w-full items-center justify-between rounded-full bg-[#3B1670] px-3.5 py-1.5 text-left text-white">
+              <button type="button" onClick={() => setShut(x => ({ ...x, [s.id]: open }))} className="cx-solid cx-solid-flat shadow-[0_8px_18px_-10px_rgba(20,10,40,.55)] flex w-full items-center justify-between rounded-full bg-[#3B1670] px-3.5 py-1.5 text-left text-white">
                 <span className="text-[11.5px] font-extrabold uppercase tracking-[0.14em]">{sectionName(cat, s.id)}</span>
                 <span className="flex items-center gap-1 text-[11px] font-bold text-white/75">{s.items.length}<ChevronDown size={14} className={open ? '' : '-rotate-90'} /></span>
               </button>

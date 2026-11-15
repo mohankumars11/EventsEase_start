@@ -202,6 +202,7 @@ export default function Booked({ tab = 'all' }) {
       {[...due, ...live].map((l, k) => (
         <div key={l.id}>
           <BookingCard line={l} />
+          <Tracker stage={LINE_STAGE[l.status]} />
           {l.status === 'dispatching' && <RequestTimer lineId={l.id} />}
           {['pending', 'dispatching', 'accepted', 'paid'].includes(l.status) && (
             <button type="button" onClick={() => setCancelFor(l)} className="cx-press ml-2 mt-1.5 flex items-center gap-1 rounded-full bg-[#FFF1F0] px-3 py-1.5 text-[12px] font-extrabold text-[#B42318]" data-cancel-open><XCircle size={13} />{l.status === 'dispatching' ? 'Withdraw request' : 'Cancel booking'}</button>
@@ -222,6 +223,7 @@ export default function Booked({ tab = 'all' }) {
             </div>
             {q.response && <span className="cx-num shrink-0 text-[15px] font-extrabold">{rupees(q.response.customer_amount_paise)}</span>}
           </div>
+          <Tracker stage={q.response ? 1 : 0} quote={!!q.response} flat />
           {!q.response && (
             <button type="button" disabled={busy === `w:${q.id}`} onClick={() => withdraw(q)} className="cx-press mt-2 flex items-center gap-1 rounded-full bg-[#FFF1F0] px-3 py-1.5 text-[12px] font-extrabold text-[#B42318]" data-withdraw-quote={q.id}>
               {busy === `w:${q.id}` ? <Loader2 size={13} className="animate-spin" /> : <XCircle size={13} />}{askW === q.id ? 'Tap again to withdraw' : 'Withdraw request'}
@@ -258,6 +260,45 @@ export default function Booked({ tab = 'all' }) {
   )
 }
 
+/*
+ * Every booking is tracked the same way, celebration or a single service
+ * (Mohan, 2026-11-15: "track is not happening for Book a Service —
+ * everything should be tracked"): five steps, the one it is on pulsing,
+ * and Track live to the live board. On the day, the board follows each
+ * master on the way (the one place a partner's movement is shown).
+ */
+const STEPS = ['Requested', 'Accepted', 'Confirmed', 'On the day', 'Done']
+const LINE_STAGE = { pending: 0, dispatching: 0, accepted: 1, paid: 2, in_progress: 3, delivered: 4, settled: 4 }
+function Tracker({ stage, quote = false, flat = false }) {
+  if (stage == null) return null
+  const steps = quote ? ['Requested', 'Quote in', 'Confirmed', 'On the day', 'Done'] : STEPS
+  const pct = (stage / (steps.length - 1)) * 100
+  return (
+    <div className={flat ? 'mt-3' : 'relative mx-2 -mt-3 rounded-b-[20px] bg-[#FAF8FD] px-3 pb-2.5 pt-5 shadow-[0_0_0_1px_#EEE6FA]'} data-tracker={stage}>
+      <div className="relative h-[18px]">
+        <span className="absolute inset-x-[10%] top-1/2 h-[3px] -translate-y-1/2 rounded-full bg-[#E9E3F3]" />
+        <span className="absolute left-[10%] top-1/2 h-[3px] -translate-y-1/2 rounded-full bg-gradient-to-r from-[#16A34A] to-[#7C3AED] transition-[width] duration-700" style={{ width: `${pct * 0.8}%` }} />
+        {steps.map((x, i) => (
+          <span key={x} className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ left: `${10 + i * 20}%` }}>
+            {i === stage && stage < steps.length - 1 && <span className="absolute -inset-1.5 animate-ping rounded-full bg-[#7C3AED]/30" />}
+            <span className={'relative grid h-[18px] w-[18px] place-items-center rounded-full ' + (i < stage || stage === steps.length - 1 ? 'bg-[#16A34A] text-white' : i === stage ? 'bg-[#7C3AED] text-white ring-[3px] ring-[#EDE4FF]' : 'bg-white ring-2 ring-[#E1DAEE]')}>
+              {(i < stage || stage === steps.length - 1) && <CheckCircle2 size={12} strokeWidth={3} />}
+            </span>
+          </span>
+        ))}
+      </div>
+      <div className="mt-1.5 grid grid-cols-5 text-center">
+        {steps.map((x, i) => <span key={x} className={'truncate text-[9.5px] font-extrabold ' + (i === stage ? 'text-[#5B21B6]' : i < stage ? 'text-[#0F7A3D]' : 'text-[#A49DB5]')}>{x}</span>)}
+      </div>
+      {stage < steps.length - 1 && (
+        <Link to="/board" className="mt-2 flex items-center justify-center gap-1.5 rounded-full bg-white py-2 text-[12px] font-extrabold text-[#5B21B6] shadow-[inset_0_0_0_1px_#E4DAF8]" data-track-live>
+          <span className="h-2 w-2 rounded-full bg-[#16A34A] cx-live-dot" />{stage === 3 ? 'Track your masters live' : 'Track live'}<ChevronRight size={14} />
+        </Link>
+      )}
+    </div>
+  )
+}
+
 /* booking_lines.trade holds the registry NAME ("Cake & Desserts"), not the id. */
 const tradeOf = v => TRADE[v] ?? TRADES.find(t => t.name === v) ?? null
 
@@ -267,7 +308,7 @@ function BookingCard({ line: l }) {
   const st = LINE_STATE[l.status] ?? { label: l.status, tone: 'wait' }
   const t = tradeOf(l.trade)
   return (
-    <Link to={`/p/${l.service_id}?t=${t?.id ?? ''}`} className="cx-press flex gap-3 rounded-[22px] bg-white p-2.5 shadow-[0_0_0_1px_#EEE6FA,0_12px_26px_-22px_rgba(58,18,144,.7)]" data-booking={l.status}>
+    <Link to={`/p/${l.service_id}?t=${t?.id ?? ''}`} className="cx-press relative z-[1] flex gap-3 rounded-[22px] bg-white p-2.5 shadow-[0_0_0_1px_#EEE6FA,0_12px_26px_-22px_rgba(58,18,144,.7)]" data-booking={l.status}>
       <div className="relative w-[112px] shrink-0 overflow-hidden rounded-[16px]">
         <ArtFill art={t ? serviceArt(t.id) : null} tone="#F6F1FF" className="h-full min-h-[108px] w-full" inset="10%" />
         <span className={'absolute bottom-1.5 left-1.5 flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-extrabold shadow-sm ' + TONE[st.tone]}>
@@ -339,7 +380,7 @@ function BookAgain({ line: l }) {
         ))}
       </div>
       <div className="mt-3.5 grid grid-cols-[1.3fr_1fr] gap-2">
-        <Link to={to} className="cx-press flex h-12 items-center justify-center gap-2 rounded-[16px] bg-gradient-to-r from-[#6D28D9] to-[#8B5CF6] text-[14px] font-extrabold text-white shadow-[0_10px_22px_-12px_rgba(109,40,217,.9)]" data-rebook><RotateCcw size={17} />Book again</Link>
+        <Link to={to} className="cx-solid cx-press flex h-12 items-center justify-center gap-2 rounded-[16px] bg-gradient-to-r from-[#6D28D9] to-[#8B5CF6] text-[14px] font-extrabold text-white shadow-[0_10px_22px_-12px_rgba(109,40,217,.9)]" data-rebook><RotateCcw size={17} />Book again</Link>
         <Link to={to} className="cx-press flex h-12 items-center justify-center gap-1.5 rounded-[16px] bg-white text-[13.5px] font-extrabold text-[var(--am-ink)] ring-1 ring-[#D6C2FF]"><FileText size={16} />View details</Link>
       </div>
     </section>
@@ -377,7 +418,7 @@ function CancelSheet({ line, onClose, onDone }) {
     <Sheet open={!!line} onClose={onClose} title="Cancel this booking?"
       footer={current ? (
         <div className="grid gap-2">
-          <button type="button" disabled={busy} onClick={go} className="cx-press h-12 w-full rounded-[16px] bg-[#B42318] text-[14.5px] font-extrabold text-white disabled:opacity-60" data-cancel-confirm>
+          <button type="button" disabled={busy} onClick={go} className="cx-solid cx-solid-flat shadow-[0_8px_18px_-10px_rgba(20,10,40,.55)] cx-press h-12 w-full rounded-[16px] bg-[#B42318] text-[14.5px] font-extrabold text-white disabled:opacity-60" data-cancel-confirm>
             {busy ? <Loader2 size={17} className="mx-auto animate-spin" /> : (q.refund_paise > 0 ? `Cancel · ${rupees(q.refund_paise)} back to you` : 'Cancel booking')}
           </button>
           <button type="button" onClick={onClose} className="h-11 w-full rounded-[16px] text-[13.5px] font-extrabold text-[var(--brand)]">Keep my booking</button>

@@ -84,15 +84,21 @@ export default function OccasionPicker({ value = null, typed = '', onPick, onTyp
 
   return (
     <>
-      {/* Closed: one field that reads like a select. */}
+      {/* Closed: one field, ringed by a slow ring of light until a day is chosen
+          (Mohan, 2026-11-15: "occasion is not visible … clean, futuristic").
+          The words are short enough never to cut off at phone width. */}
       <button type="button" onClick={() => { setOpen(true); setTimeout(() => input.current?.focus(), 250) }} data-occ-dropdown
-        className="cx-press flex h-[64px] w-full items-center gap-3 rounded-[18px] bg-white px-3 text-left shadow-[inset_0_0_0_2px_#7C3AED,0_14px_28px_-20px_rgba(91,33,182,.7)]">
-        {o ? <OccasionLogo occasion={o} size={42} /> : <span className="grid h-[42px] w-[42px] shrink-0 place-items-center rounded-[13px] bg-[#F1EAFF] text-[#6D28D9]"><Search size={20} /></span>}
-        <span className="min-w-0 flex-1">
-          <span className="block text-[10.5px] font-black uppercase tracking-[0.14em] text-[#7C3AED]">The occasion</span>
-          <span className={'block truncate text-[16px] font-black tracking-[-0.02em] ' + (o || typed ? 'text-[#1C1033]' : 'text-[#8E869E]')}>{typed || o?.name || `Choose from ${OCCASIONS.length} occasions`}</span>
+        className="cx-press relative block w-full overflow-hidden rounded-[20px] p-[2px] text-left shadow-[0_18px_34px_-22px_rgba(91,33,182,.75)]">
+        <span aria-hidden className={(o || typed ? '' : 'cx-live-ring ') + 'absolute left-1/2 top-1/2 aspect-square w-[160%]'}
+          style={{ background: o || typed ? '#7C3AED' : 'conic-gradient(from 0deg, #7C3AED, #3B82F6, #22D3EE, #A855F7, #7C3AED)', translate: o || typed ? '-50% -50%' : undefined }} />
+        <span className="relative flex h-[64px] items-center gap-3 rounded-[18px] bg-white px-3">
+          {o ? <OccasionLogo occasion={o} size={42} /> : <span className="grid h-[42px] w-[42px] shrink-0 place-items-center rounded-[13px] bg-gradient-to-br from-[#EDE4FF] to-[#DCEBFF] text-[#5B21B6]"><Search size={20} strokeWidth={2.5} /></span>}
+          <span className="min-w-0 flex-1">
+            <span className="block text-[10.5px] font-black uppercase tracking-[0.16em] text-[#7C3AED]">Occasion</span>
+            <span className={'block truncate text-[16.5px] font-extrabold tracking-[-0.02em] ' + (o || typed ? 'text-[#1C1033]' : 'text-[#6B6880]')}>{typed || o?.name || `Search ${OCCASIONS.length} occasions`}</span>
+          </span>
+          <span className="flex h-8 shrink-0 items-center gap-1 rounded-full bg-[#F4EEFF] pl-2.5 pr-1.5 text-[11.5px] font-extrabold text-[#5B21B6]">{o || typed ? 'Change' : 'Browse'}<ChevronDown size={16} strokeWidth={2.6} /></span>
         </span>
-        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#F4EEFF] text-[#5B21B6]"><ChevronDown size={20} strokeWidth={2.6} /></span>
       </button>
 
       {open && createPortal(
@@ -172,7 +178,7 @@ export default function OccasionPicker({ value = null, typed = '', onPick, onTyp
                 <label className="flex h-12 items-center gap-2 rounded-[14px] bg-white px-3 shadow-[inset_0_0_0_2px_#F59E0B]">
                   <PenLine size={15} className="shrink-0 text-[#B45309]" />
                   <input autoFocus value={ownText} onChange={e => setOwnText(e.target.value.slice(0, 60))} onKeyDown={e => e.key === 'Enter' && typeOwn()} placeholder="Tell us the occasion" className="min-w-0 flex-1 bg-transparent text-[14px] font-semibold outline-none" data-occ-own-input />
-                  <button type="button" disabled={!ownText.trim()} onClick={typeOwn} className="rounded-full bg-[#1C1033] px-3 py-1.5 text-[12px] font-extrabold text-white disabled:opacity-40">Use it</button>
+                  <button type="button" disabled={!ownText.trim()} onClick={typeOwn} className="cx-solid cx-solid-flat shadow-[0_8px_18px_-10px_rgba(20,10,40,.55)] rounded-full bg-[#1C1033] px-3 py-1.5 text-[12px] font-extrabold text-white disabled:opacity-40">Use it</button>
                 </label>
               ) : (
                 <button type="button" onClick={() => setOwn(true)} className="flex w-full items-center gap-2.5 text-left">

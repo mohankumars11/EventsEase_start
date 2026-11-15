@@ -136,7 +136,7 @@ export default function MenuPick({ o, ev, place, needs, set, answers = {} }) {
           <div className="px-4 py-3">
             <p className="text-[12.5px] font-semibold leading-snug text-[#5A4A1E]">{studio.sections.flatMap(s => s.items.map(i => i.name)).slice(0, 7).join(' · ')}{dishCount(studio) > 7 ? ` · and ${dishCount(studio) - 7} more` : ''}</p>
             <div className="mt-3 grid grid-cols-2 gap-2">
-              <button type="button" onClick={openChosen} className="cx-press flex h-11 items-center justify-center gap-1.5 rounded-[14px] bg-gradient-to-r from-[#7C3AED] to-[#5B21B6] text-[13px] font-extrabold text-white" data-menu-open><Pencil size={14} />Open menu card</button>
+              <button type="button" onClick={openChosen} className="cx-solid shadow-[0_8px_18px_-10px_rgba(20,10,40,.55)] cx-press flex h-11 items-center justify-center gap-1.5 rounded-[14px] bg-gradient-to-r from-[#7C3AED] to-[#5B21B6] text-[13px] font-extrabold text-white" data-menu-open><Pencil size={14} />Open menu card</button>
               <button type="button" onClick={() => setStage('menus')} className="cx-press flex h-11 items-center justify-center gap-1.5 rounded-[14px] bg-white text-[13px] font-extrabold text-[#5B21B6] shadow-[inset_0_0_0_1.5px_#E3D5FA]" data-menu-change>Change menu</button>
             </div>
           </div>

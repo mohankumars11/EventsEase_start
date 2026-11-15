@@ -21,9 +21,13 @@ export function Photo({ src, alt = '', className = '', eager = false }) {
  * Home · My Bookings · search · Services · Account, on a white pill that
  * floats off the bottom edge. The centre is search: the one thing that
  * gets anyone anywhere in the app, and the search hub holds everything
- * else (book again, help, policies). It slides away while the page
- * scrolls and comes back the moment scrolling stops, so the content has
- * the whole screen while it moves. */
+ * else (book again, help, policies).
+ *
+ * It is ALWAYS on screen (Mohan, 2026-11-15: "bottom nav bar is not
+ * visible sometimes"). It used to slide away while the page scrolled; on
+ * a phone a slow read or a long fling kept it gone most of the time, and
+ * an Android WebView could leave the translated layer off-screen. So: no
+ * hiding, and no transform on the bar at all — plain position: fixed. */
 const TABS = [
   { to: '/', label: 'Home', icon: House, match: p => p === '/' || p.startsWith('/c/') || p === '/explore' },
   { to: '/plans', label: 'My Bookings', icon: CalendarDays, match: p => p.startsWith('/plans') },
@@ -32,38 +36,9 @@ const TABS = [
   { to: '/me', label: 'Account', icon: UserRound, match: p => p.startsWith('/me') },
 ]
 
-/**
- * Should the bars step aside? Yes the moment the page moves DOWN; no the
- * moment it moves up, and 120 ms after it stops. Read on the scroll
- * frame itself (no React render per pixel), so it reacts within a frame.
- */
-export function useScrolling() {
-  const [hide, setHide] = useState(false)
-  useEffect(() => {
-    let lastY = window.scrollY, t, raf = 0, cur = false
-    const set = v => { if (v !== cur) { cur = v; setHide(v) } }
-    const on = () => {
-      if (raf) return
-      raf = requestAnimationFrame(() => {
-        raf = 0
-        const y = window.scrollY, dy = y - lastY
-        lastY = y
-        if (y < 40) set(false)
-        else if (dy > 2) set(true)
-        else if (dy < -2) set(false)
-        clearTimeout(t); t = setTimeout(() => set(false), 120)
-      })
-    }
-    window.addEventListener('scroll', on, { passive: true })
-    return () => { window.removeEventListener('scroll', on); clearTimeout(t); cancelAnimationFrame(raf) }
-  }, [])
-  return hide
-}
-
 export function TabBar() {
   const { pathname } = useLocation()
   const navigate = useNavigate()
-  const hidden = useScrolling()
   const { bookings } = usePlan()
   /* The live checkout stays in view while anything is in flight (Mohan,
      2026-11-13: "the checkout should be recurring till he finds a master"):
@@ -71,10 +46,9 @@ export function TabBar() {
   const inflight = (bookings ?? []).filter(b => (b.lineId || b.quoteRequestId) && Date.now() - (b.at ?? 0) < 14 * 86400000)
   const strip = inflight.length > 0 && !pathname.endsWith('/board')
   return (
-    <nav className={'pointer-events-none fixed inset-x-0 bottom-0 z-[150] transition-transform duration-200 ease-out will-change-transform ' + (hidden ? 'translate-y-[130%]' : 'translate-y-0')}
-      aria-label="Main" data-tabbar={hidden ? 'hidden' : 'shown'}>
+    <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-[150]" aria-label="Main" data-tabbar="shown">
       {strip && (
-        <Link to="/board" className="cx-press pointer-events-auto mx-3 mb-2 flex h-11 max-w-[540px] items-center gap-2.5 rounded-full bg-gradient-to-r from-[#1C1033] to-[#4C1D95] pl-2 pr-3 text-white shadow-[0_16px_30px_-16px_rgba(28,16,51,.8)]" data-checkout-strip>
+        <Link to="/board" className="cx-solid cx-press pointer-events-auto mx-3 mb-2 flex h-11 max-w-[540px] items-center gap-2.5 rounded-full bg-gradient-to-r from-[#1C1033] to-[#4C1D95] pl-2 pr-3 text-white shadow-[0_16px_30px_-16px_rgba(28,16,51,.8)]" data-checkout-strip>
           <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white/15"><span className="cx-live-dot h-2 w-2 rounded-full bg-[#4ADE80]" /></span>
           <span className="min-w-0 flex-1 truncate text-[12.5px] font-extrabold">Live checkout · {inflight.length} {inflight.length === 1 ? 'request' : 'requests'} with masters</span>
           <span className="shrink-0 text-[11.5px] font-black text-[#F4D99A]">Track &amp; pay ›</span>
@@ -109,7 +83,7 @@ function SearchOrb({ onClick }) {
   return (
     <>
       <button type="button" onClick={onClick} aria-label="Search" data-orb={back ? 'back' : 'new'}
-        className="cx-press grid h-[52px] w-[52px] place-items-center rounded-full bg-[#5B16D6] text-white shadow-[0_8px_18px_-8px_rgba(91,22,214,.8)]">
+        className="cx-solid cx-solid-flat cx-press grid h-[52px] w-[52px] place-items-center rounded-full bg-[#5B16D6] text-white shadow-[0_8px_18px_-8px_rgba(91,22,214,.8)]">
         <ScanSearch size={25} strokeWidth={2.2} />
       </button>
     </>
@@ -119,13 +93,12 @@ function SearchOrb({ onClick }) {
 /* ── The plan bar: what is chosen, what it comes to, one tap to review ── */
 export function PlanBar({ withTabs = true }) {
   const { basket, event } = usePlan()
-  const moving = useScrolling()
   const navigate = useNavigate()
   if (!basket.length) return null
   const { paise: total } = planFloor(basket, event)
   const instant = basket.filter(l => l.instant).length
   return (
-    <div className="pointer-events-none fixed inset-x-0 z-[140] px-3 transition-[bottom] duration-200 ease-out" style={{ bottom: withTabs && !moving ? 'calc(env(safe-area-inset-bottom, 0px) + 88px)' : 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}>
+    <div className="pointer-events-none fixed inset-x-0 z-[140] px-3" style={{ bottom: withTabs ? 'calc(env(safe-area-inset-bottom, 0px) + 88px)' : 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}>
       <button type="button" onClick={() => navigate('/board')} data-plan-bar
         className="cx-press cx-pop cx-cta pointer-events-auto mx-auto flex w-full max-w-[540px] items-center gap-3 rounded-[22px] p-2 pr-2.5 text-left text-white shadow-[0_18px_36px_-16px_rgba(58,18,144,.85)]">
         <span className="flex shrink-0 -space-x-3 pl-1">

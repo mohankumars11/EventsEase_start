@@ -73,19 +73,42 @@
 .cx-card { background: #fff; border-radius: 24px; box-shadow: 0 0 0 1px var(--line), 0 18px 36px -28px rgba(43, 14, 102, .5); }
 .cx-hair { box-shadow: 0 0 0 1px var(--line); }
 
-.cx-press { transition: transform .12s cubic-bezier(.2, .8, .2, 1), background-color .12s, box-shadow .12s; }
-.cx-press:active { transform: scale(.965); }
-
-/* The primary action: light amethyst, lifted, with deep-amethyst words. */
-.cx-cta {
-  background: linear-gradient(180deg, #5B21B6 0%, #3F0F8F 100%); color: #fff;
-  box-shadow: 0 14px 28px -14px rgba(63, 15, 143, .85), inset 0 1px 0 rgba(255, 255, 255, .14);
+/*
+ * How every button in the app feels (Mohan, 2026-11-15: "every button …
+ * premium, like Rapido, Swiggy"). One press physics for all of them: it
+ * sinks quickly under the finger and springs back with a small overshoot
+ * when the finger lifts. It uses the `scale` property, not `transform`,
+ * so a button that is positioned with a translate never jumps.
+ */
+.cx :is(button, a[href], [role='button']):not(:disabled) {
+  transition-property: scale, background-color, color, border-color, box-shadow, opacity, filter;
+  transition-duration: .22s;
+  transition-timing-function: cubic-bezier(.3, 1.7, .5, 1);
 }
-.cx-cta:active { background: linear-gradient(180deg, #4C1D95 0%, #33097A 100%); }
+.cx :is(button, a[href], [role='button']):not(:disabled):active { scale: .965; transition-duration: .08s; transition-timing-function: ease-out; }
+.cx-press:active { scale: .965; }
+
+/* The primary action: deep amethyst with a lit top edge, a darker lip at
+   the bottom and a soft coloured lift — a button you can feel. */
+.cx-cta {
+  background: linear-gradient(180deg, #6D2BD9 0%, #5418C2 52%, #4410A6 100%); color: #fff;
+  font-weight: 800; letter-spacing: -0.01em;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .28), inset 0 -3px 0 rgba(30, 6, 80, .32), 0 12px 24px -12px rgba(84, 24, 194, .75), 0 2px 4px -2px rgba(30, 6, 80, .35);
+}
+.cx-cta:active { background: linear-gradient(180deg, #5A20BC 0%, #4612A8 100%); box-shadow: inset 0 2px 4px rgba(20, 4, 60, .35), 0 4px 10px -6px rgba(84, 24, 194, .6); }
 .cx-cta:disabled { background: #F3F1F8; color: #B7B1C8; box-shadow: 0 0 0 1px #ECE9F3; }
-/* Every other button. */
-.cx-btn { background: var(--am-100); color: var(--am-ink); }
-.cx-btn:active { background: var(--am-200); }
+/* Every other button: light amethyst, hairline-edged, lit from above. */
+.cx-btn { background: linear-gradient(180deg, #F6F0FF 0%, var(--am-100) 100%); color: var(--am-ink); box-shadow: inset 0 0 0 1px rgba(91, 33, 182, .10), inset 0 1px 0 #FFFFFF, 0 3px 8px -5px rgba(58, 18, 144, .35); }
+.cx-btn:active { background: var(--am-200); box-shadow: inset 0 0 0 1px rgba(91, 33, 182, .16); }
+
+/* Any solid, dark-ground button (tagged by class): the same lit edge and
+   lip as the primary action, added on top of its own colour and shadow. */
+.cx .cx-solid {
+  --tw-ring-offset-shadow: inset 0 1px 0 rgba(255, 255, 255, .24), inset 0 -3px 0 rgba(0, 0, 0, .2);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow, 0 0 #0000);
+}
+.cx .cx-solid-flat { background-image: linear-gradient(180deg, rgba(255, 255, 255, .16) 0%, rgba(255, 255, 255, 0) 55%, rgba(0, 0, 0, .1) 100%); }
+.cx .cx-solid:active { filter: brightness(.92); --tw-ring-offset-shadow: inset 0 2px 4px rgba(0, 0, 0, .28); }
 
 /* A photo square: hairline + violet-tinted lift, the words live below it. */
 .cx-frame { background: var(--tone, #EDE7F8); box-shadow: 0 0 0 1px rgba(43, 14, 102, .06), 0 14px 26px -20px rgba(43, 14, 102, .55); }
@@ -426,10 +449,32 @@
 @media (prefers-reduced-motion: reduce) { .cx-progress-run, .cx-pin-bob, .cx-bell-ring { animation: none } }
 
 /* The Instant Booking split-flap (Home.jsx InstantPill). */
-@keyframes cx-flap-in { 0% { transform: rotateX(-92deg) translateY(4px); opacity: .15 } 62% { transform: rotateX(14deg); opacity: 1 } 82% { transform: rotateX(-5deg) } 100% { transform: rotateX(0) } }
-@keyframes cx-flap-out { 0% { transform: rotateX(0); opacity: 1 } 100% { transform: rotateX(92deg) translateY(-4px); opacity: 0 } }
-@keyframes cx-flap-glint { 0%, 30% { transform: translateX(0) } 100% { transform: translateX(400%) } }
-.cx-flap-in { transform-origin: 50% 50%; animation: cx-flap-in .62s cubic-bezier(.2, .9, .3, 1) both; }
-.cx-flap-out { transform-origin: 50% 50%; animation: cx-flap-out .32s cubic-bezier(.5, 0, .9, .4) both; }
-.cx-flap-glint { animation: cx-flap-glint .9s ease-out .25s both; }
-@media (prefers-reduced-motion: reduce) { .cx-flap-in, .cx-flap-out, .cx-flap-glint { animation: none } .cx-flap-out { display: none } }
+/* The Instant tile rolls vertically: the old face slides up and out as the
+   new one rises in under it, settling with a small overshoot. Flat — no
+   3D fold, no hinge line (Mohan, 2026-11-15: "remove that dividing line,
+   let it be plain") — so the two faces never overlap mid-turn. */
+@keyframes cx-flap-in { 0% { transform: translateY(105%) } 70% { transform: translateY(-5%) } 100% { transform: translateY(0) } }
+@keyframes cx-flap-out { 0% { transform: translateY(0); opacity: 1 } 100% { transform: translateY(-105%); opacity: 0 } }
+.cx-flap-in { animation: cx-flap-in .5s cubic-bezier(.25, .9, .35, 1) both; }
+.cx-flap-out { animation: cx-flap-out .4s cubic-bezier(.5, 0, .75, .4) both; }
+@media (prefers-reduced-motion: reduce) { .cx-flap-in, .cx-flap-out { animation: none } .cx-flap-out { display: none } }
+
+/* The notifications ask: the sheet rises over the live map, the bell
+   swings once and settles. */
+@keyframes cx-ask-rise { from { transform: translateY(100%) } to { transform: translateY(0) } }
+@keyframes cx-ask-fade { from { opacity: 0 } to { opacity: 1 } }
+@keyframes cx-ask-bell { 0% { transform: rotate(0) } 15% { transform: rotate(14deg) } 30% { transform: rotate(-11deg) } 45% { transform: rotate(7deg) } 60% { transform: rotate(-4deg) } 75%, 100% { transform: rotate(0) } }
+.cx-ask-rise { animation: cx-ask-rise .5s cubic-bezier(.2, .9, .25, 1) both; }
+.cx-ask-fade { animation: cx-ask-fade .35s ease-out both; }
+.cx-ask-bell { transform-origin: 50% 8%; animation: cx-ask-bell 1.4s ease-in-out .55s both; }
+@media (prefers-reduced-motion: reduce) { .cx-ask-rise, .cx-ask-fade, .cx-ask-bell { animation: none } }
+
+/* The temple bell's two arcs of sound breathe while the ask is open. */
+@keyframes cx-ask-waves { 0%, 100% { opacity: .35 } 50% { opacity: 1 } }
+.cx-ask-waves { animation: cx-ask-waves 1.6s ease-in-out .5s infinite; }
+@media (prefers-reduced-motion: reduce) { .cx-ask-waves { animation: none } }
+
+/* A gentle shake when a required pick is missing (the date rail on Book a service). */
+@keyframes cx-shake { 0%, 100% { translate: 0 } 20% { translate: -6px } 40% { translate: 5px } 60% { translate: -3px } 80% { translate: 2px } }
+.cx-shake { animation: cx-shake .45s ease-in-out; }
+@media (prefers-reduced-motion: reduce) { .cx-shake { animation: none } }

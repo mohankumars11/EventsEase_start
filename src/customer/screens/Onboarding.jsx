@@ -24,11 +24,12 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowRight, BellRing, Check, Loader2, LocateFixed, Mail, MapPin, Search, Settings2, ShieldCheck } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { alertsAvailability, enableAlerts } from '../../lib/push'
+import AlertsAsk from '../ui/AlertsAsk'
 import { openDeviceSettings } from '../../lib/partnerLocation'
 import { validateField, normalise, SEVERITY } from '../../lib/validation/fieldRules'
 import { BENGALURU_AREAS } from '../../data/bengaluruAreas'
 import { artFor } from '../data/art'
-import { locate, saveWhere, km } from '../lib/where'
+import { locate, saveWhere, savedWhere, km } from '../lib/where'
 import { claimWelcome, recordConsent, welcomeFine } from '../lib/rewards'
 import { AgreeLine, PolicyDoc } from './Legal'
 import { POLICIES } from '../data/policies'
@@ -227,6 +228,7 @@ function SignIn() {
 }
 
 /* ── 3. Notifications ─────────────────────────────────────────────── */
+const GLIMPSE = ['photography', 'catering_food', 'decoration_floral', 'cake_desserts', 'bridal_makeup_hair', 'dj_music'].map(t => ({ id: t, tradeId: t }))
 function Alerts({ onDone }) {
   const { profile } = useAuth()
   const [state, setState] = useState('idle') // idle | asking | on | off
@@ -251,26 +253,17 @@ function Alerts({ onDone }) {
     return () => clearTimeout(t)
   }, [profile?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  /* The same screen as the matching moment (ui/AlertsAsk): the customer's
+     own spot on the map, with the app's service figures around it. */
   return (
-    <section className="flex flex-1 flex-col">
-      <Hero id="cat-special">
-        <span className={'absolute right-5 top-5 grid h-12 w-12 place-items-center rounded-full text-white shadow-lg ' + (state === 'on' ? 'cx-pop bg-[var(--ok)]' : 'bg-[var(--brand)]')}>
-          {state === 'on' ? <Check size={22} strokeWidth={3} /> : <BellRing size={22} className={state === 'asking' ? 'animate-bounce' : ''} />}
-        </span>
-      </Hero>
-      <Title eyebrow="Step 3 · Stay in the loop" title={state === 'on' ? 'You will hear it first' : 'Know the moment a master replies'}
-        sub="Quotes, accepted offers, confirmed bookings and the day-of updates — straight to your phone, never spam." />
-      <div className="mt-auto px-5 pb-[calc(env(safe-area-inset-bottom,0px)+20px)] pt-6">
-        {state === 'off' && <p className="mb-2 text-center text-[12.5px] font-bold text-[var(--ink-3)]">Notifications are off. You can allow them from Settings any time.</p>}
-        <button type="button" disabled={state === 'asking' || state === 'on'} onClick={state === 'off' ? () => openDeviceSettings('app') : ask}
-          className="cx-press cx-cta flex h-14 w-full items-center justify-center gap-2 rounded-[18px] text-[15px] font-extrabold" data-alerts>
-          {state === 'asking' ? <Loader2 size={18} className="animate-spin" /> : <BellRing size={18} />}{state === 'off' ? 'Open settings' : 'Allow notifications'}
-        </button>
-        <button type="button" onClick={() => finish(state === 'on' ? 'on' : 'later')} className="mt-2 h-11 w-full text-[13.5px] font-extrabold text-[var(--ink-3)]" data-skip-alerts>
-          {state === 'off' ? 'Continue' : 'Not now'}
-        </button>
-      </div>
-    </section>
+    <AlertsAsk open place={savedWhere()} masters={GLIMPSE}
+      title={state === 'on' ? 'You’ll hear it first' : 'Never miss a yes'}
+      body="Keep your phone away — Sambramo pings you when a master replies, the moment one says yes, and on the day as each heads your way. Only your bookings, never spam."
+      allowLabel={state === 'on' ? 'Alerts are on' : state === 'off' ? 'Open settings' : 'Yes, ping me'} busy={state === 'asking'}
+      note={state === 'off' ? 'Notifications are off. You can allow them from Settings any time.' : null}
+      laterLabel={state === 'off' ? 'Continue' : 'Maybe later'}
+      onAllow={state === 'on' ? () => finish('on') : state === 'off' ? () => openDeviceSettings('app') : ask}
+      onLater={() => finish(state === 'on' ? 'on' : 'later')} />
   )
 }
 

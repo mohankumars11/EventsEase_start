@@ -183,7 +183,7 @@ function Question({ o, t, q, ev, place, cur, set, answers }) {
   switch (q.type) {
     case 'menu': return <MenuPick o={o} ev={ev} place={place} needs={cur} set={set} answers={answers} />
     case 'venue': return (
-      <Link to={`/o/${o.id}/venues`} className="cx-press flex items-center gap-3 overflow-hidden rounded-[20px] bg-gradient-to-br from-[#5B21B6] to-[#8B5CF6] p-3 text-white" data-venue-entry>
+      <Link to={`/o/${o.id}/venues`} className="cx-solid shadow-[0_8px_18px_-10px_rgba(20,10,40,.55)] cx-press flex items-center gap-3 overflow-hidden rounded-[20px] bg-gradient-to-br from-[#5B21B6] to-[#8B5CF6] p-3 text-white" data-venue-entry>
         <Glyph3D id="venue" size={52} lift />
         <span className="min-w-0 flex-1">
           <span className="block text-[10px] font-black uppercase tracking-[0.16em] text-[#FFE071]">Verified venue partners</span>
@@ -420,7 +420,7 @@ function Stepper({ value, min, max, step, unit, onChange, icon: Icon = Clock3 })
           className="cx-num w-[72px] bg-transparent text-center text-[26px] font-black leading-none tracking-[-0.03em] text-[#2E1065] outline-none" />
         <span className="text-[12px] font-black uppercase tracking-[0.1em] text-[#7C5BC7]">{unit}</span>
       </span>
-      <button type="button" onClick={() => onChange(clamp(value + step))} aria-label="More" className="cx-press grid h-11 w-11 place-items-center rounded-[14px] bg-gradient-to-br from-[#7C3AED] to-[#5B21B6] text-white shadow-[0_8px_16px_-8px_rgba(91,33,182,.95)]"><Plus size={18} strokeWidth={2.6} /></button>
+      <button type="button" onClick={() => onChange(clamp(value + step))} aria-label="More" className="cx-solid cx-press grid h-11 w-11 place-items-center rounded-[14px] bg-gradient-to-br from-[#7C3AED] to-[#5B21B6] text-white shadow-[0_8px_16px_-8px_rgba(91,33,182,.95)]"><Plus size={18} strokeWidth={2.6} /></button>
     </div>
   )
 }

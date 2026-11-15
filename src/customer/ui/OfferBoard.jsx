@@ -68,7 +68,7 @@ function PackageLine({ o, vs = null, picked, onPick, onChoose, negotiate }) {
           {picked ? <Check size={12} strokeWidth={3} /> : <Scale size={12} />}Compare
         </button>
         {negotiate && <Link to={negotiate} className="flex h-8 items-center gap-1 rounded-full bg-[#F4EEFF] px-2.5 text-[11.5px] font-extrabold text-[#4C1D95]" data-negotiate><HandCoins size={12} />Negotiate</Link>}
-        <button type="button" onClick={onChoose} className="cx-press ml-auto h-8 rounded-full bg-[var(--brand)] px-3.5 text-[12px] font-extrabold text-white" data-choose>Choose</button>
+        <button type="button" onClick={onChoose} className="cx-solid cx-solid-flat shadow-[0_8px_18px_-10px_rgba(20,10,40,.55)] cx-press ml-auto h-8 rounded-full bg-[var(--brand)] px-3.5 text-[12px] font-extrabold text-white" data-choose>Choose</button>
       </div>
     </div>
   )

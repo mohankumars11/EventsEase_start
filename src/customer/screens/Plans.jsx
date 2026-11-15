@@ -124,7 +124,7 @@ export default function Plans() {
       <Sheet open={!!removing} onClose={() => setRemoving(null)} title="Remove this plan?">
         <p className="text-[13.5px] font-semibold leading-relaxed text-[var(--ink-2)]">Your choices for <b>{OCCASION[removing]?.name}</b> are cleared from this phone. Anything already sent to a master stays on your live checkout, where you can cancel it on the policy you agreed to.</p>
         <div className="mt-4 grid gap-2 pb-3">
-          <button type="button" onClick={() => removePlan(removing)} className="cx-press h-12 w-full rounded-[16px] bg-[#B42318] text-[14.5px] font-extrabold text-white" data-plan-remove-confirm>Remove plan</button>
+          <button type="button" onClick={() => removePlan(removing)} className="cx-solid cx-solid-flat shadow-[0_8px_18px_-10px_rgba(20,10,40,.55)] cx-press h-12 w-full rounded-[16px] bg-[#B42318] text-[14.5px] font-extrabold text-white" data-plan-remove-confirm>Remove plan</button>
           <button type="button" onClick={() => setRemoving(null)} className="h-11 w-full rounded-[16px] text-[13.5px] font-extrabold text-[var(--brand)]">Keep it</button>
         </div>
       </Sheet>

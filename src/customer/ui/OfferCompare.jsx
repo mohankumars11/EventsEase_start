@@ -42,7 +42,7 @@ export default function OfferCompare({ open, onClose, items, onChoose }) {
               <td className="sticky left-0 bg-white" />
               {items.map(x => (
                 <td key={`${x.offer.serviceId}:${x.offer.packageId}:go`} className="px-2 pt-3">
-                  <button type="button" onClick={() => onChoose(x.m, x.offer)} className="cx-press h-9 w-full rounded-full bg-[var(--brand)] text-[12px] font-extrabold text-white" data-compare-choose>Choose</button>
+                  <button type="button" onClick={() => onChoose(x.m, x.offer)} className="cx-solid cx-solid-flat shadow-[0_8px_18px_-10px_rgba(20,10,40,.55)] cx-press h-9 w-full rounded-full bg-[var(--brand)] text-[12px] font-extrabold text-white" data-compare-choose>Choose</button>
                 </td>
               ))}
             </tr>

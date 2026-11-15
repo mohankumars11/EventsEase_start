@@ -84,7 +84,7 @@ export default function Spotlight({ title = 'In the spotlight', items }) {
         <p key={cur.id} className="cx-rise text-[30px] leading-[1.05] tracking-[-0.02em] text-[#2E1065]" style={DISPLAY} data-spotlight-title>{cur.title}</p>
         <p className="mt-2 text-[15px] font-semibold text-[#6B6480]">{cur.hook}</p>
         {/* Book, not plan (Mohan, 2026-11-14): the tap opens the occasion and books it. */}
-        <Link to={cur.to} className="cx-press mx-auto mt-4 flex h-[52px] w-fit items-center gap-2 rounded-full bg-gradient-to-r from-[#5B21B6] to-[#6D28D9] px-8 text-[17px] font-extrabold text-white shadow-[0_14px_26px_-14px_rgba(91,33,182,.9)]" data-spotlight-book>
+        <Link to={cur.to} className="cx-solid cx-press mx-auto mt-4 flex h-[52px] w-fit items-center gap-2 rounded-full bg-gradient-to-r from-[#5B21B6] to-[#6D28D9] px-8 text-[17px] font-extrabold text-white shadow-[0_14px_26px_-14px_rgba(91,33,182,.9)]" data-spotlight-book>
           Book now<ChevronRight size={19} strokeWidth={3} />
         </Link>
         <div className="mt-4 flex justify-center gap-1.5" aria-hidden>

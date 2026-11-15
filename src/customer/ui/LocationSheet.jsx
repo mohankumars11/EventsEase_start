@@ -174,7 +174,7 @@ function NotifyMe({ city, lat = null, lng = null }) {
     <div className="mt-3 flex gap-2">
       <input value={contact} onChange={e => setContact(e.target.value)} maxLength={120} placeholder="Phone or email" className="h-11 min-w-0 flex-1 rounded-[12px] bg-white px-3 text-[13.5px] font-bold outline-none ring-1 ring-[#E7E1F0]" />
       <button type="button" disabled={state === 'busy'} onClick={async () => { setState('busy'); await registerInterest({ city, contact: contact.trim() || null, lat, lng }).catch(() => {}); setState('done') }}
-        className="cx-press flex h-11 shrink-0 items-center gap-1.5 rounded-[12px] bg-[#1C1033] px-3.5 text-[13px] font-extrabold text-white" data-notify-me><Bell size={15} />Notify me</button>
+        className="cx-solid cx-solid-flat shadow-[0_8px_18px_-10px_rgba(20,10,40,.55)] cx-press flex h-11 shrink-0 items-center gap-1.5 rounded-[12px] bg-[#1C1033] px-3.5 text-[13px] font-extrabold text-white" data-notify-me><Bell size={15} />Notify me</button>
     </div>
   )
 }

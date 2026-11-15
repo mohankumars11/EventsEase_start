@@ -49,7 +49,7 @@ export default function CircleWelcome() {
                   <input value={phone} onChange={e => setPhone(e.target.value)} inputMode="tel" maxLength={16} placeholder="WhatsApp number (so the host can reach you)" className="h-12 w-full rounded-[14px] bg-[#FAF8FD] px-4 text-[14px] font-semibold outline-none ring-1 ring-[#E7E1F0] focus:ring-[var(--brand)]" />
                 </div>
                 {err && <p className="mt-2 text-[12.5px] font-bold text-[#9B1A2A]">{err}</p>}
-                <button type="button" disabled={name.trim().length < 2 || busy} onClick={enter} className="cx-press mt-4 flex h-14 w-full items-center justify-center gap-2 rounded-[18px] bg-gradient-to-r from-[#DB2777] to-[#7C3AED] text-[16px] font-extrabold text-white shadow-[0_14px_28px_-14px_rgba(219,39,119,.9)] disabled:opacity-40" data-circle-enter>
+                <button type="button" disabled={name.trim().length < 2 || busy} onClick={enter} className="cx-solid cx-press mt-4 flex h-14 w-full items-center justify-center gap-2 rounded-[18px] bg-gradient-to-r from-[#DB2777] to-[#7C3AED] text-[16px] font-extrabold text-white shadow-[0_14px_28px_-14px_rgba(219,39,119,.9)] disabled:opacity-40" data-circle-enter>
                   {busy && <Loader2 size={18} className="animate-spin" />}Join the circle & RSVP
                 </button>
                 <p className="mt-2 text-[11.5px] font-semibold text-[var(--ink-3)]">{w.invitation.title}{w.invitation.hosts ? ` — ${w.invitation.hosts}` : ''}</p>

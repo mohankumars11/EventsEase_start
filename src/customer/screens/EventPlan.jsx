@@ -475,7 +475,7 @@ function Journey({ o, ev, needed, timeline }) {
     <section className="mx-3 mt-6 rounded-[24px] bg-gradient-to-br from-[#FBF8FF] to-[#F3ECFF] p-3 shadow-[0_0_0_1px_#EEE6FB]" data-journey-rail>
       <div className="flex items-center justify-between gap-2 px-1">
         <h2 className="flex items-center gap-2 text-[18px] font-black tracking-[-0.03em] text-[#1C1033]"><Route size={19} className="text-[#7C3AED]" />Your Event Journey</h2>
-        <button type="button" onClick={play} className="cx-press flex shrink-0 items-center gap-1 rounded-full bg-gradient-to-r from-[#7C3AED] to-[#5B21B6] px-3 py-1.5 text-[11.5px] font-extrabold text-white shadow-[0_8px_16px_-10px_rgba(91,33,182,.95)]" data-journey-play>
+        <button type="button" onClick={play} className="cx-solid cx-press flex shrink-0 items-center gap-1 rounded-full bg-gradient-to-r from-[#7C3AED] to-[#5B21B6] px-3 py-1.5 text-[11.5px] font-extrabold text-white shadow-[0_8px_16px_-10px_rgba(91,33,182,.95)]" data-journey-play>
           <Play size={11} className="fill-current" />Play journey
         </button>
       </div>

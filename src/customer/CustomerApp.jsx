@@ -14,6 +14,7 @@
  * partner, checkout) hide the tabs and carry their own action bar.
  */
 import { installExternalLinks } from './lib/share'
+import { installPressHaptics } from './lib/haptic'
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { Navigate, Route, Routes, useLocation, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
@@ -146,6 +147,7 @@ export default function CustomerApp() {
   useEffect(() => { loadRules().then(setActiveRules).catch(() => {}) }, [])
   // installExternalLinks: on the phone, WhatsApp / Maps / outside links open through the system (lib/share.js).
   useEffect(() => { warmScreens(); flushConsent().catch(() => {}); installExternalLinks() }, [])
+  useEffect(() => installPressHaptics(), [])
   const { pathname } = useLocation()
   const { step, next } = useOnboarding()
   /* A guest opening their RSVP link needs no sign-in, location or alerts. */

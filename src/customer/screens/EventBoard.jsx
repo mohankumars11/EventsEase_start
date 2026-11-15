@@ -246,7 +246,7 @@ export default function EventBoard() {
                         <span className="flex shrink-0 gap-1.5">
                           <button type="button" onClick={() => setDetail(x)} className="cx-press flex h-8 items-center gap-1 rounded-full bg-white px-2.5 text-[11.5px] font-extrabold text-[#4C1D95] shadow-[inset_0_0_0_1.5px_#E3D5FA]" data-review><FileText size={12} />Review</button>
                           <Link to={`/negotiate/${x.b.serviceId}?t=${x.b.tradeId}${x.b.occasionId ? `&o=${x.b.occasionId}` : ''}`} className="cx-press flex h-8 items-center rounded-full bg-[#F4EEFF] px-2.5 text-[11.5px] font-extrabold text-[#4C1D95]" data-negotiate>Negotiate</Link>
-                          <button type="button" disabled={!!busy} onClick={() => accept(x)} className="cx-press flex h-8 items-center gap-1 rounded-full bg-[#7C3AED] px-2.5 text-[11.5px] font-extrabold text-white" data-accept>
+                          <button type="button" disabled={!!busy} onClick={() => accept(x)} className="cx-solid cx-solid-flat shadow-[0_8px_18px_-10px_rgba(20,10,40,.55)] cx-press flex h-8 items-center gap-1 rounded-full bg-[#7C3AED] px-2.5 text-[11.5px] font-extrabold text-white" data-accept>
                             {busy === x.quote.response.id ? <Loader2 size={13} className="animate-spin" /> : null}Accept
                           </button>
                         </span>

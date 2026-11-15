@@ -131,7 +131,7 @@ export default function Needs() {
             <p className="text-[13.5px] font-semibold text-[var(--ink-2)]">It comes off your plan. You can add it back from the plan screen any time.</p>
             <div className="mt-4 grid grid-cols-2 gap-2">
               <button type="button" onClick={() => setRemoving(null)} className="cx-press cx-btn h-12 rounded-[16px] text-[14px] font-extrabold">Keep it</button>
-              <button type="button" onClick={() => { sambu(`${TRADE[removing].label} is off your plan — add it back any time.`); plan.setPick(o.id, removing, 'skip'); setRemoving(null) }} className="cx-press h-12 rounded-[16px] bg-[#1C1033] text-[14px] font-extrabold text-white" data-confirm-remove>Remove</button>
+              <button type="button" onClick={() => { sambu(`${TRADE[removing].label} is off your plan — add it back any time.`); plan.setPick(o.id, removing, 'skip'); setRemoving(null) }} className="cx-solid cx-solid-flat shadow-[0_8px_18px_-10px_rgba(20,10,40,.55)] cx-press h-12 rounded-[16px] bg-[#1C1033] text-[14px] font-extrabold text-white" data-confirm-remove>Remove</button>
             </div>
           </div>
         )}

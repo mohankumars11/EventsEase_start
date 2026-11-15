@@ -102,11 +102,11 @@ export default function Buddy({ id = 'buddy', lines = [], cheer = null, action =
           <span className="block text-[13px] font-bold leading-snug text-[#1C1033]">{msg.text}</span>
           {(msg.act || skip) && (
             <span className="mt-2 flex flex-wrap items-center gap-1.5">
-              {msg.act && <button type="button" onClick={() => { setMsg(null); msg.act.onClick() }} className="cx-press rounded-full bg-[#1C1033] px-3 py-1.5 text-[12px] font-extrabold text-white" data-buddy-action>{msg.act.label}</button>}
+              {msg.act && <button type="button" onClick={() => { setMsg(null); msg.act.onClick() }} className="cx-solid cx-solid-flat shadow-[0_8px_18px_-10px_rgba(20,10,40,.55)] cx-press rounded-full bg-[#1C1033] px-3 py-1.5 text-[12px] font-extrabold text-white" data-buddy-action>{msg.act.label}</button>}
               {skip && <button type="button" onClick={() => { setMsg(null); skip.onClick() }} className="cx-press rounded-full bg-[#F3ECFF] px-3 py-1.5 text-[12px] font-extrabold text-[#5B21B6]" data-buddy-skip>{skip.label}</button>}
             </span>
           )}
-          <button type="button" onClick={turnOff} aria-label="Turn Sambu off" className="absolute -right-2 -top-2 grid h-6 w-6 place-items-center rounded-full bg-[#1C1033] text-white shadow"><X size={12} strokeWidth={3} /></button>
+          <button type="button" onClick={turnOff} aria-label="Turn Sambu off" className="cx-solid cx-solid-flat absolute -right-2 -top-2 grid h-6 w-6 place-items-center rounded-full bg-[#1C1033] text-white shadow"><X size={12} strokeWidth={3} /></button>
         </div>
       )}
     </div>

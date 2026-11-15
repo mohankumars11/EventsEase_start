@@ -178,7 +178,7 @@ export function MastersPanel({ tradeId, occasionId = null, guests = null, onCoun
       <Sheet open={sheet === 'filters'} onClose={() => setSheet(null)} title="Filters"
         footer={<div className="flex gap-2">
           <button type="button" onClick={() => setF(NONE)} className="cx-press h-[52px] rounded-[16px] bg-[#F4F1F8] px-5 text-[14px] font-extrabold text-[var(--ink-2)]">Reset</button>
-          <button type="button" onClick={() => setSheet(null)} className="cx-press flex h-[52px] flex-1 items-center justify-center rounded-[16px] bg-[#0C831F] text-[15px] font-extrabold text-white" data-filters-done>Show {plural(list?.length ?? 0, 'master')}</button>
+          <button type="button" onClick={() => setSheet(null)} className="cx-solid cx-solid-flat shadow-[0_8px_18px_-10px_rgba(20,10,40,.55)] cx-press flex h-[52px] flex-1 items-center justify-center rounded-[16px] bg-[#0C831F] text-[15px] font-extrabold text-white" data-filters-done>Show {plural(list?.length ?? 0, 'master')}</button>
         </div>}>
         <div className="space-y-5 pb-3">
           <Slider label="Distance" value={f.km} empty="Any distance" fmt={v => `Within ${v} km`} min={1} max={50} step={1} onChange={v => setF(x => ({ ...x, km: v }))} />

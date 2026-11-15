@@ -521,7 +521,7 @@ function LiveStrip({ where }) {
 function ExploreAll({ n, onClick }) {
   return (
     <button type="button" onClick={onClick} data-explore-all
-      className="cx-press group relative mx-3 mt-3 flex h-[52px] w-[calc(100%-1.5rem)] items-center justify-center gap-2 overflow-hidden rounded-[18px] bg-gradient-to-r from-[#6D28D9] via-[#8B5CF6] to-[#A855F7] text-white shadow-[0_14px_30px_-16px_rgba(109,40,217,.95)]">
+      className="cx-solid cx-press group relative mx-3 mt-3 flex h-[52px] w-[calc(100%-1.5rem)] items-center justify-center gap-2 overflow-hidden rounded-[18px] bg-gradient-to-r from-[#6D28D9] via-[#8B5CF6] to-[#A855F7] text-white shadow-[0_14px_30px_-16px_rgba(109,40,217,.95)]">
       <span aria-hidden className="cx-explore-sheen pointer-events-none absolute inset-y-0 -left-full w-1/2 bg-gradient-to-r from-transparent via-white/35 to-transparent" />
       <span className="relative z-10 text-[14px] font-black tracking-[-0.02em]">Explore all {n + 9} celebration types</span>
       <span className="relative z-10 grid h-7 w-7 place-items-center rounded-full bg-white/20"><ChevronDown size={16} strokeWidth={3} /></span>
@@ -835,12 +835,12 @@ const FLAPS = [
  * live — flipping vertically, up and down, very creatively, so they feel
  * it is a quick-commerce app; it should stay at the same place").
  *
- * The button never moves or resizes: a fixed yellow tile with a hinge
- * line across its middle, like an airport departures board. Every 2.6 s
- * the face flips on that hinge — the old face folds away upward, the new
- * one drops in from below and settles with a small overshoot — and a
- * glint runs across after each flip. The green dot keeps pulsing through
- * it all. Reduced motion: no flip, just the first face.
+ * The button never moves or resizes: a plain yellow tile. Every 2.6 s the
+ * face rolls vertically — the old one slides up and out while the new one
+ * rises in and settles with a small overshoot. No hinge line, no glint
+ * (Mohan, 2026-11-15: "remove that dividing line, let it be plain"), and
+ * both lines sit on the tile's centre line. The green dot keeps pulsing.
+ * Reduced motion: no roll, just the first face.
  */
 function InstantPill({ onClick }) {
   const [i, setI] = useState(0)
@@ -851,9 +851,9 @@ function InstantPill({ onClick }) {
   }, [])
   const prev = FLAPS[(i + FLAPS.length - 1) % FLAPS.length]
   const face = ([top, sub, mark], cls, key) => (
-    <span key={key} className={'absolute inset-0 flex flex-col items-center justify-center [backface-visibility:hidden] ' + cls} aria-hidden={cls.includes('out')}>
-      <span className="flex items-center gap-1 whitespace-nowrap text-[12px] font-extrabold leading-none tracking-[-0.02em] text-[#1C1033]"><Zap size={11} className="fill-current" />{top}</span>
-      <span className="mt-[4px] flex items-center gap-1.5 whitespace-nowrap text-[10.5px] font-semibold leading-none text-[#2A1B00]">
+    <span key={key} className={'absolute inset-0 flex flex-col items-center justify-center gap-[5px] ' + cls} aria-hidden={cls.includes('out')}>
+      <span className="flex h-[12px] items-center justify-center gap-1 whitespace-nowrap text-[12px] font-extrabold leading-none tracking-[-0.02em] text-[#1C1033]"><Zap size={11} className="shrink-0 fill-current" />{top}</span>
+      <span className="flex h-[12px] items-center justify-center gap-1.5 whitespace-nowrap text-[10.5px] font-semibold leading-none text-[#2A1B00]">
         {mark === 'live'
           ? <span className="relative grid h-2 w-2 place-items-center"><span className="absolute h-2 w-2 animate-ping rounded-full bg-[#16A34A] opacity-75" /><span className="h-2 w-2 rounded-full bg-[#16A34A]" /></span>
           : <span className="grid h-3 w-3 place-items-center rounded-full bg-[#16A34A] text-[7px] font-black text-white">{mark === 'rupee' ? '₹' : '✓'}</span>}
@@ -863,12 +863,9 @@ function InstantPill({ onClick }) {
   )
   return (
     <button type="button" onClick={onClick} data-instant-pill data-flap={i} aria-label="Instant Booking — masters live now"
-      className="cx-press relative h-[40px] w-[132px] shrink-0 overflow-hidden rounded-[13px] shadow-[0_8px_16px_-10px_rgba(0,0,0,.5)] [perspective:240px]" style={{ background: YELLOW }}>
+      className="cx-press relative h-[40px] w-[132px] shrink-0 overflow-hidden rounded-[13px] shadow-[inset_0_1px_0_rgba(255,255,255,.55),inset_0_-2px_0_rgba(150,90,0,.22),0_8px_16px_-10px_rgba(0,0,0,.5)]" style={{ background: YELLOW }}>
       {face(prev, 'cx-flap-out', `o${i}`)}
       {face(FLAPS[i], 'cx-flap-in', `i${i}`)}
-      {/* The hinge, and the glint that follows each flip. */}
-      <span aria-hidden className="pointer-events-none absolute inset-x-0 top-1/2 h-px bg-[#B87A00]/30" />
-      <span aria-hidden key={`g${i}`} className="cx-flap-glint pointer-events-none absolute inset-y-0 -left-1/2 w-1/2 bg-gradient-to-r from-transparent via-white/60 to-transparent" />
     </button>
   )
 }
@@ -906,7 +903,7 @@ function VenueMap({ where, onEdit }) {
           <span className="block truncate text-[12px] font-black tracking-[-0.01em] text-[#2E1A4F]">Masters navigate straight to {where?.area ?? 'your venue'}</span>
           <span className="block truncate text-[10px] font-semibold text-[#6B6480]">Not the venue? Tap Edit to move the pin</span>
         </span>
-        <button type="button" onClick={onEdit} className="cx-press flex shrink-0 items-center gap-1 rounded-full bg-[#6D28D9] px-3 py-2 text-[11.5px] font-extrabold text-white shadow-[0_8px_16px_-10px_rgba(91,33,168,.95)]" data-venue-edit>
+        <button type="button" onClick={onEdit} className="cx-solid cx-solid-flat cx-press flex shrink-0 items-center gap-1 rounded-full bg-[#6D28D9] px-3 py-2 text-[11.5px] font-extrabold text-white shadow-[0_8px_16px_-10px_rgba(91,33,168,.95)]" data-venue-edit>
           <Pencil size={12} strokeWidth={2.6} />Edit
         </button>
       </div>
