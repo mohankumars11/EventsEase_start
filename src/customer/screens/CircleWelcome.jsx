@@ -9,7 +9,7 @@
  */
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Loader2, Sparkles, Users } from 'lucide-react'
+import { Loader2, Zap, Users } from 'lucide-react'
 import { OCCASION } from '../data/occasions'
 import InviteCard from '../ui/InviteCard'
 import { Swatches } from '../ui/guestCareUI'
@@ -39,7 +39,7 @@ export default function CircleWelcome() {
             <>
               <div className="mx-auto w-[72%]"><InviteCard inv={w.invitation} occasion={OCCASION[w.invitation.occasion] ?? null} theme={w.invitation.theme} /></div>
               <section className="mt-4 rounded-[24px] bg-white p-5 text-center shadow-[0_0_0_1px_#F5D0E6]">
-                <p className="flex items-center justify-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#DB2777]"><Sparkles size={13} />You’re invited to a style circle</p>
+                <p className="flex items-center justify-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#DB2777]"><Zap size={13} />You’re invited to a style circle</p>
                 <div className="mt-2 flex justify-center"><Swatches colors={w.circle.colors} size={34} /></div>
                 <p className="mt-2 text-[22px] font-black tracking-[-0.03em] text-[#1C1033]">{w.circle.name}</p>
                 {w.circle.note && <p className="mt-1 text-[13px] font-semibold text-[var(--ink-2)]">{w.circle.note}</p>}

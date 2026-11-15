@@ -17,7 +17,7 @@
  */
 import { useEffect, useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
-import { Check, ChevronRight, Send, Sparkles, Users, X } from 'lucide-react'
+import { Check, ChevronRight, Send, Zap, Users, X } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { OCCASION } from '../data/occasions'
 import { TRADE } from '../data/trades'
@@ -65,11 +65,11 @@ export default function Needs() {
 
       {/* Why this matters — said once, warmly, with no price promise. */}
       <section className="mx-3 mt-1 overflow-hidden rounded-[22px] bg-gradient-to-br from-[#F6F0FF] to-[#EEF9F2] p-4 ring-1 ring-[#E6DCF7]" data-needs-intro>
-        <p className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[var(--brand)]"><Sparkles size={13} />Optional · about a minute</p>
+        <p className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[var(--brand)]"><Zap size={13} />Optional · about a minute</p>
         <h2 className="mt-1 text-[21px] font-black leading-[1.12] tracking-[-0.035em]">Help us find the right masters for you</h2>
         <p className="mt-1 text-[12.5px] font-semibold leading-snug text-[var(--ink-2)]">A few taps about each service and we show the masters who do exactly that. Or skip it and see everyone — you can always filter.</p>
         <div className="mt-3 grid grid-cols-3 gap-1.5 text-center">
-          {[[Sparkles, 'Tell us a little'], [Users, 'Meet your masters'], [Send, 'Send a request']].map(([I, t], k) => (
+          {[[Zap, 'Tell us a little'], [Users, 'Meet your masters'], [Send, 'Send a request']].map(([I, t], k) => (
             <span key={t} className="flex flex-col items-center gap-1 rounded-[14px] bg-white/80 px-1 py-2">
               <span className="grid h-7 w-7 place-items-center rounded-full bg-[#F3ECFF] text-[var(--brand)]"><I size={14} /></span>
               <span className="text-[10.5px] font-extrabold leading-tight text-[var(--ink-2)]">{k + 1}. {t}</span>

@@ -18,7 +18,7 @@
  */
 import { useEffect, useMemo, useState } from 'react'
 import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { ArrowLeftRight, Camera, Check, ChevronDown, ChevronRight, Loader2, Minus, Plus, Send, Sparkles, TriangleAlert, X } from 'lucide-react'
+import { ArrowLeftRight, Camera, Check, ChevronDown, ChevronRight, Loader2, Minus, Plus, Send, Zap, TriangleAlert, X } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { OCCASION } from '../data/occasions'
 import { usePlan } from '../state/PlanContext'
@@ -471,7 +471,7 @@ function Review({ cat, o, ev, place, ctx, studio, setStudio, setWay, plan, user,
         )}
         {phase === 'confirm' && found && (
           <div className="mt-3 rounded-[18px] bg-[#F4EEFF] p-3.5" data-offer-confirm>
-            <p className="text-[14px] font-extrabold text-[#3B1670]"><Sparkles size={15} className="mr-1 inline" />{Math.min(10, found.pool.length)} {noun}{found.pool.length === 1 ? '' : 's'} can be asked</p>
+            <p className="text-[14px] font-extrabold text-[#3B1670]"><Zap size={15} className="mr-1 inline" />{Math.min(10, found.pool.length)} {noun}{found.pool.length === 1 ? '' : 's'} can be asked</p>
             <p className="mt-0.5 text-[12px] font-semibold leading-snug text-[#5B3E8E]">
               {found.exact ? `They cook ${fam?.name ?? 'this'} food and serve the way you asked.` : `None near you matches every detail — cuisine, diet or service — so these are the closest. They can accept, suggest changes or decline.`}
               {' '}Each replies with their own price for exactly this menu.
@@ -482,16 +482,16 @@ function Review({ cat, o, ev, place, ctx, studio, setStudio, setWay, plan, user,
         {msg && ctx.way === 'restaurant' && <button type="button" onClick={() => { setWay('caterer'); setMsg(''); setPhase('idle') }} className="mt-2 h-10 w-full rounded-[14px] bg-[#F4EEFF] text-[13px] font-extrabold text-[#4C1D95]" data-way-fallback>Hire a caterer instead</button>}
         {!ready && <p className="mt-3 rounded-[14px] bg-[#FFF7E6] px-3 py-2.5 text-[12.5px] font-bold text-[#7A4B00]">Add your event’s date and place first — caterers need both to say yes.</p>}
       </div>
-      <ActionBar note={phase === 'confirm' ? 'Your number stays private until you book' : `No price until ${noun}s reply — you compare and choose`}>
+      {/* Nothing is sent from the studio (Mohan, 2026-11-13: "remove 'Get
+          catering offers'"): the menu is saved on the plan and goes with the
+          catering quotation, confirmed from Preferences like every service. */}
+      <ActionBar note={phase === 'confirm' ? 'Your number stays private until you book' : 'Priced in your catering quotation — you confirm before anything is sent'}>
         {phase === 'confirm' ? (
           <button type="button" onClick={send} className="cx-press cx-cta flex h-[56px] w-full items-center justify-center gap-2 rounded-[18px] text-[16px] font-extrabold" data-send-menu><Send size={17} />Send my menu</button>
         ) : (
-          <div className="grid gap-1.5">
-            <button type="button" disabled={!ready || ['finding', 'sending'].includes(phase)} onClick={find} className="cx-press cx-cta flex h-[56px] w-full items-center justify-center gap-2 rounded-[18px] text-[16px] font-extrabold disabled:opacity-50" data-get-offers>
-              {['finding', 'sending'].includes(phase) ? <Loader2 size={18} className="animate-spin" /> : null}{ctx.way === 'restaurant' ? 'Get restaurant offers' : ctx.way === 'cook' ? 'Get offers from cooks' : 'Get catering offers'}
-            </button>
-            <button type="button" onClick={() => { plan.setPick(o.id, T, 'need'); navigate(`/o/${o.id}/plan`) }} className="h-10 rounded-[14px] text-[13px] font-extrabold text-[#4C1D95]" data-save-to-plan>Save to my plan and send later</button>
-          </div>
+          <button type="button" onClick={() => { plan.setPick(o.id, T, 'need'); navigate(`/o/${o.id}/prefs`) }} className="cx-press cx-cta flex h-[56px] w-full items-center justify-center gap-2 rounded-[18px] text-[16px] font-extrabold" data-save-to-plan>
+            <Check size={18} strokeWidth={3} />Use this menu · back to preferences
+          </button>
         )}
       </ActionBar>
       <SignInSheet open={signIn} onClose={() => setSignIn(false)} onDone={() => { setSignIn(false) }} why="to get catering offers" />

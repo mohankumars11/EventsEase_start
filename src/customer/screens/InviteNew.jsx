@@ -14,13 +14,13 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, Check, ChevronRight, Clock, Contact, FileSpreadsheet, Link2, Loader2, MapPin, MessageCircle, PartyPopper, Plus, Search, Sparkles, UserPlus, Users, X } from 'lucide-react'
+import { ArrowLeft, Check, ChevronRight, Clock, Contact, FileSpreadsheet, Link2, Loader2, MapPin, MessageCircle, PartyPopper, Plus, Search, Zap, UserPlus, Users, X } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { CATEGORIES, FEATURED, OCCASION, OCCASIONS } from '../data/occasions'
 import { occasionArt } from '../data/art'
 import { usePlan } from '../state/PlanContext'
 import { PALETTE, STYLES, TEMPLATES, isSolemn, parseTheme, recommendedFor, templatesFor, themeString } from '../data/inviteTemplates'
-import { addGuests, functionsFor, getInvitation, inviteText, parseGuestList, saveInvitation, shareText } from '../lib/rsvp'
+import { addGuests, functionsFor, getInvitation, inviteText, myInvitations, parseGuestList, saveInvitation, shareText } from '../lib/rsvp'
 import { canPickContacts, guestsFromFile, pickContacts } from '../lib/guestImport'
 import { myVouchers, redeem, usable } from '../lib/rewards'
 import InviteCard from '../ui/InviteCard'
@@ -87,6 +87,11 @@ export default function InviteNew() {
   const [voucher, setVoucher] = useState(null)
   const [paying, setPaying] = useState(false)
   useEffect(() => { if (user) myVouchers(user.id).then(l => setVoucher(l.find(v => v.kind === 'free_rsvp' && usable(v)) ?? null)).catch(() => {}) }, [user])
+  /* This occasion already has an invitation: open it, never a second blank one (Mohan, 2026-11-13). ?fresh=1 still starts a new one. */
+  useEffect(() => {
+    if (!user || !pre || q.get('fresh') === '1' || invId) return
+    myInvitations().then(l => { const x = (l ?? []).find(i => i.occasion_id === pre.id); if (x) navigate(`/invites/${x.id}`, { replace: true }) }).catch(() => {})
+  }, [user, pre?.id]) // eslint-disable-line react-hooks/exhaustive-deps
   const rail = useRef(null)
   useEffect(() => { rail.current?.querySelector('[data-rail-on]')?.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' }) }, [at])
   const opts = parseTheme(inv.theme, occ)
@@ -128,7 +133,7 @@ export default function InviteNew() {
     message: { label: 'Next', onClick: next },
     functions: { label: fns.length ? `Next · ${fns.length} function${fns.length === 1 ? '' : 's'}` : 'Next · one event', onClick: next },
     rsvp: { label: 'Review my invitation', onClick: next },
-    review: { label: busy ? 'Creating…' : 'Create my invitation', onClick: () => (user ? setPaying(true) : setSignIn(true)), disabled: busy, icon: busy ? Loader2 : Sparkles },
+    review: { label: busy ? 'Creating…' : 'Create my invitation', onClick: () => (user ? setPaying(true) : setSignIn(true)), disabled: busy, icon: busy ? Loader2 : Zap },
     guests: null,
     send: { label: 'Open my RSVP dashboard', onClick: () => navigate(`/invites/${invId}`, { replace: true }) },
   }[at]
@@ -194,7 +199,7 @@ export default function InviteNew() {
       {/* The invitation's checkout: the price, what it includes, and — the hook — it is free. */}
       <Sheet open={paying} onClose={() => setPaying(false)} title="Your invitation"
         footer={<button type="button" disabled={busy} onClick={async () => { await create(); setPaying(false) }} className="cx-press cx-cta flex h-14 w-full items-center justify-center gap-2 rounded-[18px] text-[16px] font-extrabold" data-rsvp-pay>
-          {busy ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />}Create for free · ₹0</button>}>
+          {busy ? <Loader2 size={18} className="animate-spin" /> : <Zap size={18} />}Create for free · ₹0</button>}>
         <div className="pb-2" data-rsvp-checkout>
           <div className="cx-pop flex items-center gap-3 rounded-[18px] bg-gradient-to-r from-[#FDF2F8] via-[#F5F0FF] to-[#ECFDF3] p-3.5 ring-1 ring-[#F5D0E6]">
             <span className="text-[30px]">🎉</span>

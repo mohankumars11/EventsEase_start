@@ -18,6 +18,8 @@ import { dayLabel, plural, rupees } from '../lib/format'
 import { planFloor, lineFloor, hasQty } from '../lib/estimate'
 import { qtyOf } from '../lib/booking'
 import { ActionBar, BackHeader, Empty, Photo, Journey } from '../ui/kit'
+import { hasBlueprint } from '../lib/occasionPlan'
+import Glyph from '../ui/Glyph'
 
 export default function PlanReview() {
   const plan = usePlan()
@@ -58,6 +60,17 @@ export default function PlanReview() {
               </div>
               {o && <Link to={`/o/${o.id}/match`} className="text-[12.5px] font-extrabold text-[#C9B2FF]">Edit</Link>}
             </div>
+            {o && hasBlueprint(o.id) && (
+              /* What is free stays visibly free, right next to what is
+                 payable: the toolkit is never a line on this bill. */
+              <div className="mx-4 mt-2 flex items-center gap-2.5 rounded-[18px] bg-[#F3FBF5] px-3 py-2.5 shadow-[inset_0_0_0_1.3px_#CDEBD6]" data-free-toolkit>
+                <Glyph name="invite" size={34} />
+                <p className="min-w-0 flex-1 text-[12.5px] font-bold leading-snug text-[#15803D]">
+                  Invitations, RSVP, group chat, polls, budget and schedule — included free, and not part of the amount below.
+                </p>
+                <span className="shrink-0 text-[13px] font-black text-[#15803D]">₹0</span>
+              </div>
+            )}
             <ul className="mx-4 mt-2 overflow-hidden rounded-[24px] shadow-[0_0_0_1px_var(--line)]">
               {g.lines.map((l, i) => {
                 const t = TRADE[l.tradeId]

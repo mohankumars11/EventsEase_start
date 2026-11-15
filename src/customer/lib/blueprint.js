@@ -29,6 +29,7 @@
  * recommended, never what a service IS.
  */
 import { TRADES } from '../data/trades'
+import { hasBlueprint, occasionPlan } from './occasionPlan'
 
 const HEAVY = new Set([
   'end_to_end_event_logistics', 'loading_unloading_crew', 'medium_large_goods_vehicle', 'mini_truck_pickup', 'warehouse_storage',
@@ -37,10 +38,17 @@ const HEAVY = new Set([
 const AT_HOME = new Set(['home', 'newhome'])
 
 export function blueprint(o, picks = {}, event = {}) {
+  /* Personal Celebrations are planned by their own blueprint (Category 1,
+     data/lifeBlueprints.js): 31 individually mapped occasions, driven by
+     the questions Event Details asked. It is the same shape out, so every
+     screen downstream — Masters, the brief, review, checkout — reads it
+     without knowing the difference. Everything else keeps the templates. */
+  if (hasBlueprint(o.id)) return fromOccasionPlan(o, picks, event)
+
   const guests = Number(event.guests) || null
   const home = AT_HOME.has(o.where) || event.context?.venueType === 'home' || event.venueChoice === 'home'
   const small = home || (guests != null && guests <= 60)
-  const needVenue = o.where === 'ask' && (event.venueChoice === 'need' || (!event.venueChoice && event.venue === 'need'))
+  const needVenue = o.where === 'ask' && (['need', 'bookvenue'].includes(event.venueChoice) || (!event.venueChoice && event.venue === 'need'))
   const priest = [...o.must, ...o.often].includes('priest_rituals') || picks.priest_rituals === 'need'
 
   const status = {}
@@ -52,7 +60,7 @@ export function blueprint(o, picks = {}, event = {}) {
      photos are an essential there; video rides on the same card. */
   if (['life', 'wedding'].includes(o.category) && status.photography) status.photography = 'ESSENTIAL'
   if (needVenue) { status.venue = 'ESSENTIAL'; reason.venue = 'You asked us to find the place' }
-  if (o.where !== 'ask' || (event.venueChoice && event.venueChoice !== 'need')) delete status.venue
+  if (o.where !== 'ask' || (event.venueChoice && !['need', 'bookvenue'].includes(event.venueChoice))) delete status.venue
   if (small) for (const t of HEAVY) if (status[t]) { status[t] = 'NOT_RECOMMENDED'; reason[t] = home ? 'Not needed at home' : 'Not needed for a small event' }
   if (priest) delete status.event_materials_supplier
 
@@ -75,5 +83,50 @@ export function blueprint(o, picks = {}, event = {}) {
     essential: rows.filter(r => r.kind === 'ESSENTIAL').map(r => r.tradeId),
     enhance: rows.filter(r => r.kind === 'RECOMMENDED' || r.kind === 'OPTIONAL').map(r => r.tradeId),
     small, home,
+  }
+}
+
+/* ── Category 1 ───────────────────────────────────────────────────── */
+
+const KIND = { essential: 'ESSENTIAL', recommended: 'RECOMMENDED', conditional: 'RECOMMENDED', optional: 'OPTIONAL' }
+const STATUS = { ESSENTIAL: 'CORE', RECOMMENDED: 'CONDITIONAL', OPTIONAL: 'OPTIONAL', NOT_RECOMMENDED: 'NOT_DEFAULT' }
+
+/**
+ * The occasion blueprint, in the shape every older screen already reads.
+ * `on` from the engine decides `state`, so a service the customer never
+ * asked for — a priest at a housewarming, a bar at a bachelor party — is
+ * not in `needed`, and no master is looked for.
+ */
+function fromOccasionPlan(o, picks, event) {
+  const p = occasionPlan(o, { event, answers: event.answers ?? {}, picks })
+  const byTrade = new Map()
+  for (const r of [...p.recommended, ...p.arranged, ...p.hidden.map(h => ({ ...h, kind: 'hidden', on: false }))]) {
+    const prev = byTrade.get(r.tradeId)
+    if (!prev || (prev.kind === 'hidden' && r.kind !== 'hidden')) byTrade.set(r.tradeId, r)
+  }
+  /* An add-on that is on and maps to a trade is a real requirement. */
+  for (const a of p.addons) if (a.on && a.tradeId && !byTrade.get(a.tradeId)?.on) byTrade.set(a.tradeId, { ...a, kind: 'optional', on: true })
+
+  const rows = TRADES.map(({ id: t }) => {
+    const r = byTrade.get(t)
+    const pick = picks[t]
+    const kind = !r || r.kind === 'hidden' ? 'NOT_RECOMMENDED' : r.kind === 'arranged' ? 'NOT_RECOMMENDED' : KIND[r.kind] ?? 'OPTIONAL'
+    const state = pick === 'have' ? 'have' : pick === 'skip' ? 'skip' : pick === 'later' ? 'later' : r?.on ? 'need' : 'off'
+    return {
+      tradeId: t, kind, reason: r?.reason ?? o.why?.[t] ?? null, state,
+      addedByCustomer: pick === 'need' && kind !== 'ESSENTIAL', customerExcluded: pick === 'skip',
+      alreadyArranged: pick === 'have' || r?.kind === 'arranged', savedForLater: pick === 'later',
+      hook: r?.hook ?? null, line: r?.line ?? null,
+      status: STATUS[kind],
+    }
+  })
+  const order = t => { const k = rows.find(r => r.tradeId === t)?.kind; return k === 'ESSENTIAL' ? 0 : k === 'RECOMMENDED' ? 1 : k === 'OPTIONAL' ? 2 : 3 }
+  return {
+    rows,
+    needed: rows.filter(r => r.state === 'need').map(r => r.tradeId).sort((a, b) => order(a) - order(b)),
+    essential: rows.filter(r => r.kind === 'ESSENTIAL').map(r => r.tradeId),
+    enhance: rows.filter(r => r.kind === 'RECOMMENDED' || r.kind === 'OPTIONAL').map(r => r.tradeId),
+    small: (Number(event.guests) || 0) <= 60, home: event.venueChoice === 'home',
+    occasionPlan: p,
   }
 }

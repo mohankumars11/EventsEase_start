@@ -5,7 +5,7 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { ArrowLeft, ArrowRight, CalendarDays, House, LayoutGrid, Search, Star, UserRound, X, Zap } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CalendarDays, House, LayoutGrid, ScanSearch, Search, Star, UserRound, X, Zap } from 'lucide-react'
 import { usePlan } from '../state/PlanContext'
 import { rupees, plural } from '../lib/format'
 import { planFloor } from '../lib/estimate'
@@ -64,16 +64,30 @@ export function TabBar() {
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const hidden = useScrolling()
+  const { bookings } = usePlan()
+  /* The live checkout stays in view while anything is in flight (Mohan,
+     2026-11-13: "the checkout should be recurring till he finds a master"):
+     a strip above the bar, until every request is a fortnight old. */
+  const inflight = (bookings ?? []).filter(b => (b.lineId || b.quoteRequestId) && Date.now() - (b.at ?? 0) < 14 * 86400000)
+  const strip = inflight.length > 0 && !pathname.endsWith('/board')
   return (
-    <nav className={'pointer-events-none fixed inset-x-0 bottom-0 z-[150] px-3 transition-transform duration-200 ease-out will-change-transform ' + (hidden ? 'translate-y-[130%]' : 'translate-y-0')}
-      style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 10px)' }} aria-label="Main" data-tabbar={hidden ? 'hidden' : 'shown'}>
-      <div className="pointer-events-auto relative mx-auto grid h-[66px] max-w-[540px] grid-cols-5 items-center rounded-[26px] bg-white px-1 shadow-[0_0_0_1px_#EEE6FA,0_18px_40px_-18px_rgba(58,18,144,.55)]">
+    <nav className={'pointer-events-none fixed inset-x-0 bottom-0 z-[150] transition-transform duration-200 ease-out will-change-transform ' + (hidden ? 'translate-y-[130%]' : 'translate-y-0')}
+      aria-label="Main" data-tabbar={hidden ? 'hidden' : 'shown'}>
+      {strip && (
+        <Link to="/board" className="cx-press pointer-events-auto mx-3 mb-2 flex h-11 max-w-[540px] items-center gap-2.5 rounded-full bg-gradient-to-r from-[#1C1033] to-[#4C1D95] pl-2 pr-3 text-white shadow-[0_16px_30px_-16px_rgba(28,16,51,.8)]" data-checkout-strip>
+          <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white/15"><span className="cx-live-dot h-2 w-2 rounded-full bg-[#4ADE80]" /></span>
+          <span className="min-w-0 flex-1 truncate text-[12.5px] font-extrabold">Live checkout · {inflight.length} {inflight.length === 1 ? 'request' : 'requests'} with masters</span>
+          <span className="shrink-0 text-[11.5px] font-black text-[#F4D99A]">Track &amp; pay ›</span>
+        </Link>
+      )}
+      <div className="pointer-events-auto relative grid grid-cols-5 items-center border-t border-[#EEEAF4] bg-white px-1 pt-1.5" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 6px)' }} data-tabbar-ground>
         {TABS.map((t, i) => t ? (
           <Link key={t.to} to={t.to} className="cx-press relative flex flex-col items-center gap-0.5" aria-current={t.match(pathname) ? 'page' : undefined} data-tab={t.label}>
-            <span className={'grid h-8 w-12 place-items-center rounded-full transition-all duration-300 ' + (t.match(pathname) ? 'bg-[var(--am-100)] text-[var(--brand)]' : 'text-[#A49DB8]')}>
-              <t.icon size={21} strokeWidth={t.match(pathname) ? 2.5 : 2} />
+            <span className={'grid h-7 w-12 place-items-center transition-colors duration-300 ' + (t.match(pathname) ? 'text-[#5B21B6]' : 'text-[#6B6880]')}>
+              <t.icon size={23} strokeWidth={t.match(pathname) ? 2.4 : 1.9} className={t.match(pathname) && t.to === '/' ? 'fill-current' : ''} />
             </span>
-            <span className={'whitespace-nowrap text-[10.5px] font-extrabold tracking-[-0.01em] ' + (t.match(pathname) ? 'text-[var(--brand)]' : 'text-[#A49DB8]')}>{t.label}</span>
+            <span className={'whitespace-nowrap text-[11px] font-extrabold tracking-[-0.01em] ' + (t.match(pathname) ? 'text-[#5B21B6]' : 'text-[#6B6880]')}>{t.label}</span>
+            <span className={'mt-0.5 h-[3px] w-7 rounded-full ' + (t.match(pathname) ? 'bg-[#5B21B6]' : 'bg-transparent')} />
           </Link>
         ) : (
           <div key={i} className="relative flex justify-center"><SearchOrb onClick={() => navigate('/search')} /></div>
@@ -83,6 +97,8 @@ export function TabBar() {
   )
 }
 
+/* The bar is pure white, like the head above it (Mohan, 2026-11-11:
+   "the navigation bar also should match … pure white"). */
 /* ── The search orb ─────────────────────────────────────────────────
  * Just search, and constant (Mohan, 2026-10-27/28): the magnifier alone,
  * still, always in full view, no tags. Marigold for someone who has not
@@ -93,8 +109,8 @@ function SearchOrb({ onClick }) {
   return (
     <>
       <button type="button" onClick={onClick} aria-label="Search" data-orb={back ? 'back' : 'new'}
-        className={'cx-press absolute -top-[42px] grid h-[60px] w-[60px] place-items-center rounded-full text-white ring-[5px] ring-white ' + (back ? 'cx-orb-back' : 'cx-orb-new')}>
-        <Search size={25} strokeWidth={2.6} />
+        className="cx-press grid h-[52px] w-[52px] place-items-center rounded-full bg-[#5B16D6] text-white shadow-[0_8px_18px_-8px_rgba(91,22,214,.8)]">
+        <ScanSearch size={25} strokeWidth={2.2} />
       </button>
     </>
   )
@@ -110,7 +126,7 @@ export function PlanBar({ withTabs = true }) {
   const instant = basket.filter(l => l.instant).length
   return (
     <div className="pointer-events-none fixed inset-x-0 z-[140] px-3 transition-[bottom] duration-200 ease-out" style={{ bottom: withTabs && !moving ? 'calc(env(safe-area-inset-bottom, 0px) + 88px)' : 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}>
-      <button type="button" onClick={() => navigate('/plan')} data-plan-bar
+      <button type="button" onClick={() => navigate('/board')} data-plan-bar
         className="cx-press cx-pop cx-cta pointer-events-auto mx-auto flex w-full max-w-[540px] items-center gap-3 rounded-[22px] p-2 pr-2.5 text-left text-white shadow-[0_18px_36px_-16px_rgba(58,18,144,.85)]">
         <span className="flex shrink-0 -space-x-3 pl-1">
           {basket.slice(0, 3).map(l => (
@@ -168,9 +184,10 @@ export function Sheet({ open, onClose, title, children, footer = null }) {
 }
 
 /* ── A header for every screen below the tabs ──────────────────────── */
-export function BackHeader({ title, sub = null, right = null, onBack, transparent = false }) {
+export function BackHeader({ title, sub = null, right = null, onBack, transparent = false, home = true }) {
   const navigate = useNavigate()
   const back = onBack ?? (() => (window.history.length > 1 ? navigate(-1) : navigate('/')))
+  const homeBtn = home ? <Link to="/" aria-label="Home" className={'cx-press grid h-11 w-11 shrink-0 place-items-center rounded-full ' + (transparent ? 'cx-glass-light' : 'cx-btn')} data-go-home><House size={19} /></Link> : null
   return (
     <header className={'cx-safe-top sticky top-0 z-[120] px-3 pb-2 ' + (transparent ? '' : 'bg-white')}>
       <div className="flex min-h-[44px] items-center gap-2">
@@ -180,6 +197,7 @@ export function BackHeader({ title, sub = null, right = null, onBack, transparen
           {sub && <p className="truncate text-[12px] font-semibold text-[var(--ink-3)]">{sub}</p>}
         </div>
         {right}
+        {homeBtn}
       </div>
     </header>
   )
@@ -280,7 +298,7 @@ const JOURNEYS = {
    link — the rail never jumps forward past an unfinished step. */
 const STEP_ROUTES = {
   celebration: (o) => o ? [`/o/${o}?step=when`, `/o/${o}/plan`, `/o/${o}/needs`, `/o/${o}/match`, '/checkout', null] : [],
-  service: (o, t) => t ? [`/brief/${t}`, `/s/${t}`, '/plan', '/checkout', null] : [],
+  service: (o, t) => t ? [`/brief/${t}`, `/brief/${t}`, '/board', '/board', null] : [],
 }
 export function Journey({ flow = 'celebration', at = 0, className = '', occasionId = null, tradeId = null }) {
   const steps = JOURNEYS[flow]

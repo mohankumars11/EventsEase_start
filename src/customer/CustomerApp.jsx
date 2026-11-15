@@ -15,7 +15,7 @@
  */
 import { installExternalLinks } from './lib/share'
 import { lazy, Suspense, useEffect, useState } from 'react'
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { PlanProvider } from './state/PlanContext'
 import { PlanBar, TabBar } from './ui/kit'
@@ -50,6 +50,9 @@ const Trade = screen(() => import('./screens/Trade'))
 const EventFlow = screen(() => import('./screens/EventFlow'))
 const LiveMatch = screen(() => import('./screens/LiveMatch'))
 const EventPlan = screen(() => import('./screens/EventPlan'))
+const Preferences = screen(() => import('./screens/Preferences'))
+const Venues = screen(() => import('./screens/Venues'))
+const Restaurants = screen(() => import('./screens/Restaurants'))
 const EventBoard = screen(() => import('./screens/EventBoard'))
 const MenuStudio = screen(() => import('./screens/MenuStudio'))
 const Services = screen(() => import('./screens/Small'), m => m.Services)
@@ -58,10 +61,13 @@ const Account = screen(() => import('./screens/Account'))
 const Category = screen(() => import('./screens/Category'))
 const Needs = screen(() => import('./screens/Needs'))
 const Brief = screen(() => import('./screens/Brief'))
+const SoloBrief = screen(() => import('./screens/SoloBrief'))
+/* Book a service: with an occasion the brief is that occasion's; without
+   one it first asks what the day is, then asks the same occasion-aware
+   questions a celebration would (Mohan, 2026-11-13). */
+function BriefGate() { const [q] = useSearchParams(); return q.get('o') ? <Brief /> : <SoloBrief /> }
 const Match = screen(() => import('./screens/Match'))
 const Partner = screen(() => import('./screens/Partner'))
-const PlanReview = screen(() => import('./screens/PlanReview'))
-const Checkout = screen(() => import('./screens/Checkout'))
 const InvitesList = screen(() => import('./screens/Invites'), m => m.InvitesList)
 const InviteNew = screen(() => import('./screens/InviteNew'))
 const InviteHost = screen(() => import('./screens/InviteHost'))
@@ -73,6 +79,8 @@ const Saved = screen(() => import('./screens/Small'), m => m.Saved)
 const Help = screen(() => import('./screens/Help'))
 const Wallet = screen(() => import('./screens/Wallet'))
 const Negotiate = screen(() => import('./screens/Negotiate'))
+const PlannerBrief = screen(() => import('./screens/PlannerBrief'))
+const PlannerProposals = screen(() => import('./screens/PlannerProposals'))
 const Refer = screen(() => import('./screens/Refer'))
 const Legal = screen(() => import('./screens/Legal'))
 const Rsvp = screen(() => import('./screens/Rsvp'))
@@ -156,18 +164,25 @@ export default function CustomerApp() {
             <Route path="/c/:categoryId" element={<Category />} />
             <Route path="/o/:occasionId" element={<EventFlow />} />
             <Route path="/o/:occasionId/plan" element={<EventPlan />} />
+            <Route path="/o/:occasionId/prefs" element={<Preferences />} />
+            <Route path="/o/:occasionId/venues" element={<Venues />} />
+            <Route path="/o/:occasionId/restaurants" element={<Restaurants />} />
             <Route path="/o/:occasionId/live" element={<LiveMatch />} />
             <Route path="/o/:occasionId/board" element={<EventBoard />} />
+            <Route path="/o/:occasionId/planner" element={<PlannerBrief />} />
+            <Route path="/o/:occasionId/planners" element={<PlannerProposals />} />
             <Route path="/o/:occasionId/menu" element={<MenuStudio />} />
             <Route path="/o/:occasionId/needs" element={<Needs />} />
-            <Route path="/brief/:tradeId" element={<Brief />} />
+            <Route path="/brief/:tradeId" element={<BriefGate />} />
+            <Route path="/board" element={<EventBoard />} />
             <Route path="/o/:occasionId/match" element={<Match />} />
             <Route path="/s" element={<Services />} />
             <Route path="/s/:tradeId" element={<Trade />} />
             <Route path="/p/:serviceId" element={<Partner />} />
             <Route path="/negotiate/:serviceId" element={<Negotiate />} />
-            <Route path="/plan" element={<PlanReview />} />
-            <Route path="/checkout" element={<Checkout />} />
+            {/* The old pick-and-pay checkout is retired (Mohan, 2026-11-14): everything books through the live checkout. */}
+            <Route path="/plan" element={<Navigate to="/board" replace />} />
+            <Route path="/checkout" element={<Navigate to="/board" replace />} />
             <Route path="/plans" element={<Plans />} />
             <Route path="/me" element={<Account />} />
             <Route path="/saved" element={<Saved />} />

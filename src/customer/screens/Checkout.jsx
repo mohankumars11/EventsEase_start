@@ -36,7 +36,7 @@
  */
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Send, ArrowLeft, BadgeCheck, BadgePercent, CalendarDays, Check, CheckCircle2, ChevronRight, Clock3, CreditCard, Gift, HandCoins, Loader2, Lock, MailOpen, MapPin, PartyPopper, Phone, ReceiptText, Share2, ShieldCheck, Sparkles, Ticket, Users, Zap } from 'lucide-react'
+import { Send, ArrowLeft, BadgeCheck, BadgePercent, CalendarDays, Check, CheckCircle2, ChevronRight, Clock3, CreditCard, Gift, HandCoins, Loader2, Lock, MailOpen, MapPin, PartyPopper, Phone, ReceiptText, Share2, ShieldCheck, Ticket, Users, Zap } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { payLines } from '../../lib/payLines'
@@ -56,23 +56,26 @@ import { OCCASION } from '../data/occasions'
 import { plural, rupees, whenLabel } from '../lib/format'
 import { previewLine, requestLine } from '../lib/booking'
 import { partnersFor, rank } from '../lib/market'
-import { asLine } from '../lib/quote'
+import { asLine, quote } from '../lib/quote'
+import { experienceOf } from '../lib/experience'
 import { rememberVoucher } from '../lib/bookings'
 import { confirmPaid } from '../lib/bookings'
 import { Photo, Sheet, Journey } from '../ui/kit'
 import SignInSheet from './SignInSheet'
-import InviteReady from '../ui/InviteReady'
+import InviteShare from '../ui/InviteShare'
 import WhenSheet from './WhenSheet'
 import PlaceSheet from './PlaceSheet'
 import { needsSummary } from '../ui/needs'
+import { peopleLine } from '../data/occasionProfile'
 import { linkBookings } from '../lib/eventPlans'
-import { filterByNeeds, loadCuisines } from '../lib/needs'
+import { filterByNeeds, loadCuisines, loadExperienceTiers } from '../lib/needs'
 import { supabase as sb } from '../../lib/supabase'
 
 export default function Checkout() {
   const { user, profile } = useAuth()
   const plan = usePlan()
   useEffect(() => { loadCuisines(sb).catch(() => {}) }, []) // cuisine names for the requirements note
+  useEffect(() => { loadExperienceTiers(sb).catch(() => {}) }, []) // a backup is held to the same experience as the first master
   const navigate = useNavigate()
   const ev = plan.event
   const [phone, setPhone] = useState(profile?.phone?.replace(/^\+91/, '') ?? '')
@@ -148,10 +151,20 @@ export default function Checkout() {
         const all = await partnersFor(l.tradeId).catch(() => [])
         const fit = filterByNeeds(all, l.tradeId, plan.needsOf(l.occasionId, l.tradeId), eventFor(l).guests).list ?? all
         const pool = rank(fit).filter(p => p.serviceId !== l.serviceId && p.fromRef).slice(0, 5)
+        /* A backup is held to exactly what the first master was: the same
+           experience and the same hours. Each candidate is quoted for that
+           ask, so the package put to the engine is one of theirs that
+           delivers it — not simply their cheapest — and a candidate with no
+           such package is not a backup at all. The server re-checks every
+           backup the same way (anchorBook priceBackups). */
+        const exp = l.experience ? experienceOf(l.tradeId, l.experience.tier) : null
+        const ask = { hours: l.experience?.hours ?? l.hours ?? null, guests: eventFor(l).guests, experience: exp }
         const out = []
         for (const p of pool) {
           if (out.length >= 2) break
-          const cand = { ...l, ...asLine(p), key: l.key, occasionId: l.occasionId, qty: null }
+          const held = exp ? quote(p, ask) : null
+          if (l.experience && !held) continue
+          const cand = { ...l, ...asLine(held ? { ...p, quote: held } : p), key: l.key, occasionId: l.occasionId, qty: null }
           const r = await previewLine(cand, eventFor(l), place).catch(() => null)
           if (r?.path === 'INSTANT' && Number(r.customer_paise) <= Number(q.customer_paise) * 1.25) out.push({ ...cand, chosenBy: 'sambramo', customer_paise: r.customer_paise })
         }
@@ -166,7 +179,7 @@ export default function Checkout() {
   const res = lines.map(l => ({ line: l, q: quotes[l.key] ?? null }))
   const instant = res.filter(r => r.q?.path === 'INSTANT')
   const quoteLines = res.filter(r => r.q?.path === 'QUOTE')
-  const blocked = res.filter(r => r.q && ['NOT_ELIGIBLE', 'ERROR'].includes(r.q.path))
+  const blocked = res.filter(r => r.q && ['NOT_ELIGIBLE', 'NOT_QUALIFIED', 'ERROR'].includes(r.q.path))   // NOT_QUALIFIED: the package does not deliver the chosen experience (208)
   const loading = ready && res.some(r => !r.q || r.q.loading)
   /* The money. `base` is the partner's price — the floor no offer goes
      under; a server that does not send it (older build) gets no offer. */
@@ -307,11 +320,11 @@ export default function Checkout() {
         <div className="grid grid-cols-2 gap-px bg-[#F1EDF7]">
           <Fact icon={CalendarDays} label="Date" value={ev.date ? whenLabel(ev.date) : 'Add date'} onClick={() => setSheet('when')} />
           <Fact icon={Clock3} label="Starts" value={ev.time ? `${ev.time}${ev.hours ? ` · ${ev.hours} h` : ''}` : 'Add time'} onClick={() => setSheet('when')} />
-          <Fact icon={Users} label="Guests" value={ev.guests ? `${ev.guests} guests` : '—'} />
+          <Fact icon={Users} label={occ && peopleLine(occ, ev) === 'Just the two of us' ? 'Who' : 'Guests'} value={ev.guests ? (occ ? peopleLine(occ, ev) : `${ev.guests} guests`) : '—'} />
           <Fact icon={MapPin} label="Venue" value={place?.area ?? 'Add venue'} onClick={() => setSheet('place')} />
         </div>
         <div className="cx-zigzag bg-[#F7F4FB] px-4 py-2.5 text-[12.5px] font-semibold text-[var(--ink-2)]">
-          {!ready ? 'Add the date, start time and venue — then every price below is exact.' : loading ? 'Checking every master’s availability for your date…' : blocked.length ? `${plural(blocked.length, 'master')} can’t take this date — change or remove them.` : 'Every master below is free on your date.'}
+          {!ready ? 'Add the date, start time and venue — then every price below is exact.' : loading ? 'Checking every master’s availability for your date…' : blocked.length ? `${plural(blocked.length, 'master')} can’t take this as planned — change or remove them.` : 'Every master below is free on your date.'}
         </div>
       </section>
 
@@ -371,7 +384,7 @@ export default function Checkout() {
         )}
       </section>
 
-      {occ && <InviteReady occasion={occ} where="checkout" className="mt-3" />}
+      {occ && <InviteShare o={occ} className="mt-3" />}
 
       {/* Often booked together */}
       {deals.length > 0 && (
@@ -384,7 +397,7 @@ export default function Checkout() {
                   <span className="min-w-0 flex-1"><span className="block truncate text-[14px] font-extrabold">{TRADE[d.t]?.label}</span><span className="line-clamp-2 block text-[11.5px] font-semibold text-[var(--ink-3)]">{d.hook}</span></span>
                   <Link to={`/s/${d.t}${occ ? `?o=${occ.id}` : ''}`} className="shrink-0 rounded-[10px] px-3.5 py-2 text-[13px] font-extrabold text-[#5B21A8] shadow-[inset_0_0_0_1.5px_#7C3AED]">ADD</Link>
                 </div>
-                <p className="flex items-center gap-1.5 px-3 pb-2 pt-0.5 text-[12px] font-bold text-[#5B21A8]"><Sparkles size={13} />Pairs perfectly with your {TRADE[d.with]?.label.toLowerCase()}</p>
+                <p className="flex items-center gap-1.5 px-3 pb-2 pt-0.5 text-[12px] font-bold text-[#5B21A8]"><Zap size={13} />Pairs perfectly with your {TRADE[d.with]?.label.toLowerCase()}</p>
               </div>
             ))}
           </div>
@@ -597,7 +610,7 @@ export default function Checkout() {
               <span className="min-w-0 flex-1"><span className="block text-[14px] font-extrabold text-[var(--ink)]">Your invitation is ready — share it</span><span className="block text-[11.5px] font-semibold text-[var(--ink-3)]">Made from your event details · change the design any time</span></span>
             </button>
           )}
-          <button type="button" onClick={() => navigate('/plans')} className={'cx-press cx-cta h-12 w-full rounded-[16px] text-[14px] font-extrabold ' + (phase === 'done' && occ ? 'mt-2' : 'mt-5')} data-see-plans>See my plans</button>
+          <button type="button" onClick={() => navigate(outcome?.requested || outcome?.sent ? '/board' : '/plans')} className={'cx-press cx-cta h-12 w-full rounded-[16px] text-[14px] font-extrabold ' + (phase === 'done' && occ ? 'mt-2' : 'mt-5')} data-see-plans>{outcome?.requested || outcome?.sent ? 'Open my live checkout' : 'See my plans'}</button>
         </div>
       </Sheet>
     </main>

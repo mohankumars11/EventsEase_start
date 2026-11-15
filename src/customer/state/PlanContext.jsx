@@ -21,17 +21,22 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { recommend } from '../lib/recommend360'
 import { blueprint } from '../lib/blueprint'
+import { TRADE_ORDER } from '../data/catalogue360.generated'
+
+/* The 360° matrix knows 34 trades; the restaurant (#35, 2026-11-11) is
+   placed by the blueprints and would be "added: unknown trade" to it. */
+const KNOWN_360 = new Set(TRADE_ORDER)
 
 const KEY = 'sbm.cx.plan.v1'
 /* `place`: where the event is ({ area, lat, lng, address }) — the engine checks travel and
    distance against it. `bookings`: what checkout sent, so Plans can show it at once. */
-const EMPTY = { event: { occasionId: null, date: null, time: null, hours: null, guests: null, venue: 'need', venueKind: null }, place: null, picks: {}, needs: {}, basket: [], saved: [], bookings: [] }
+const EMPTY = { event: { occasionId: null, date: null, time: null, hours: null, guests: null, venue: 'need', venueKind: null }, place: null, picks: {}, answers: {}, needs: {}, basket: [], saved: [], bookings: [] }
 
 function load() {
   try {
     const raw = localStorage.getItem(KEY)
     const s = raw ? { ...EMPTY, ...JSON.parse(raw) } : EMPTY
-    return { ...s, saved: (s.saved ?? []).filter(x => x && typeof x === 'object'), bookings: s.bookings ?? [] }
+    return { ...s, answers: s.answers ?? {}, saved: (s.saved ?? []).filter(x => x && typeof x === 'object'), bookings: s.bookings ?? [] }
   } catch { return EMPTY }
 }
 
@@ -41,12 +46,29 @@ export function PlanProvider({ children }) {
   const [state, setState] = useState(load)
   useEffect(() => { try { localStorage.setItem(KEY, JSON.stringify(state)) } catch { /* storage off */ } }, [state])
 
-  const setEvent = useCallback(patch => setState(s => ({ ...s, event: { ...s.event, ...patch } })), [])
+  const setEvent = useCallback(patch => setState(s => {
+    const prev = s.event ?? {}
+    const switching = patch.occasionId && patch.occasionId !== prev.occasionId
+    const base = switching ? { ...EMPTY.event, ...(s.events?.[patch.occasionId] ?? {}) } : prev
+    const event = { ...base, ...patch }
+    const events = { ...(s.events ?? {}) }
+    if (prev.occasionId) events[prev.occasionId] = prev
+    if (event.occasionId) events[event.occasionId] = event
+    return { ...s, event, events }
+  }), [])
 
   /** need | have | skip, per occasion and trade. Undefined means "the template's default". */
   const setPick = useCallback((occasionId, tradeId, value) => setState(s => ({
     ...s, picks: { ...s.picks, [occasionId]: { ...(s.picks[occasionId] ?? {}), [tradeId]: value } },
   })), [])
+
+  /** The occasion's own answers (Event Details' dynamic questions), per
+   *  occasion so switching celebration never carries a stale fact over. */
+  const setAnswers = useCallback((occasionId, answers) => setState(s => (
+    JSON.stringify(s.answers?.[occasionId] ?? {}) === JSON.stringify(answers)
+      ? s
+      : { ...s, answers: { ...s.answers, [occasionId]: answers } }
+  )), [])
 
   const add = useCallback((partner, occasionId = null) => setState(s => {
     const key = `${occasionId ?? 'solo'}:${partner.tradeId}`
@@ -81,12 +103,15 @@ export function PlanProvider({ children }) {
 
   const value = useMemo(() => ({
     ...state,
-    setEvent, setPick, add, remove, setQty, setPlace, setNeeds, recordBookings, clearOccasion, toggleSaved,
+    setEvent, setPick, setAnswers, add, remove, setQty, setPlace, setNeeds, recordBookings, clearOccasion, toggleSaved,
+    answersOf: occasionId => state.answers?.[occasionId] ?? {},
+    /** The event facts saved for an occasion, current or not. */
+    eventOf: occasionId => (state.event.occasionId === occasionId ? state.event : state.events?.[occasionId] ?? null),
     needsOf: (occasionId, tradeId) => state.needs?.[`${occasionId ?? 'solo'}:${tradeId}`] ?? {},
     inBasket: (serviceId) => state.basket.some(l => l.serviceId === serviceId),
     lineFor: (occasionId, tradeId) => state.basket.find(l => l.key === `${occasionId ?? 'solo'}:${tradeId}`) ?? null,
     isSaved: serviceId => state.saved.some(x => x.serviceId === serviceId),
-  }), [state, setEvent, setPick, add, remove, setQty, setPlace, setNeeds, recordBookings, clearOccasion, toggleSaved])
+  }), [state, setEvent, setPick, setAnswers, add, remove, setQty, setPlace, setNeeds, recordBookings, clearOccasion, toggleSaved])
 
   return <PlanContext.Provider value={value}>{children}</PlanContext.Provider>
 }
@@ -117,7 +142,13 @@ export function contextFor(occasion, picks = {}, event = {}) {
   if (event.venue === 'have') c.venueBooked = true
   if (!c.venueType) c.venueType = WHERE_TYPE[occasion.where] ?? VENUE_TYPE[event.venueKind] ?? undefined
   if (!c.venueType) delete c.venueType
-  const by = v => Object.keys(picks).filter(t => picks[t] === v)
+  /* A pick key is a trade id, EXCEPT an add-on, which is keyed `+id`
+     (lib/occasionPlan.js). Those are not trades and the 360° engine
+     rejects anything that is not in the registry — passing one through
+     here threw "added: unknown trade" and took the screen down the
+     moment a customer switched an add-on on. The add-on's own trade,
+     where it has one, already reaches `needed` through occasionPlan. */
+  const by = v => Object.keys(picks).filter(t => !t.startsWith('+') && KNOWN_360.has(t) && picks[t] === v)
   const [added, arranged, excluded, later] = ['need', 'have', 'skip', 'later'].map(by)
   if (added.length) c.added = added
   if (arranged.length) c.arranged = arranged
@@ -141,5 +172,5 @@ export function needsFor(occasion, picks = {}, event = {}) {
   /* The reason a customer reads is the template's own (o.why) or a rule's —
      never the 360° engine's "Core for a first birthday". */
   const rows = b.rows.map(x => ({ ...x, tier: TIER[x.status] }))
-  return { rows, needed: b.needed, essential: b.essential, enhance: b.enhance, small: b.small, result: r }
+  return { rows, needed: b.needed, essential: b.essential, enhance: b.enhance, small: b.small, result: r, occasionPlan: b.occasionPlan ?? null }
 }

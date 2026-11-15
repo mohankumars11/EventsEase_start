@@ -1,5 +1,5 @@
 /**
- * Sparkles that twinkle (Mohan, 2026-10-28: "very native, amazing, like
+ * Zap that twinkle (Mohan, 2026-10-28: "very native, amazing, like
  * sparkles — for the RSVP and the scratch things"). Four-point stars,
  * each on its own beat; transform and opacity only, so it costs no paint,
  * and still with reduced motion. Place inside a `relative` parent.

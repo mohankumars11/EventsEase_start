@@ -69,7 +69,7 @@ export function Services() {
     <main className="cx-enter min-h-[100dvh] bg-white cx-bottom-pad-bar">
       <header className="cx-safe-top px-3 pb-1">
         <h1 className="pt-2 text-[24px] font-extrabold tracking-[-0.035em]">Book a master</h1>
-        <p className="mt-0.5 text-[12.5px] font-semibold text-[var(--ink-3)]">34 services, every master verified · send a request, pay after they accept</p>
+        <p className="mt-0.5 text-[12.5px] font-semibold text-[var(--ink-3)]">35 services · tell us the day, masters reply live · pay only after one accepts</p>
       </header>
       {TRADE_GROUPS.map(g => (
         <section key={g.id} className="mt-5">

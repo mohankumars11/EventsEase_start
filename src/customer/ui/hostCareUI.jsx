@@ -16,7 +16,7 @@
  */
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Crown, Hotel, Loader2, Plane, Plus, Sparkles, UsersRound } from 'lucide-react'
+import { Crown, Hotel, Loader2, Plane, Plus, Zap, UsersRound } from 'lucide-react'
 import { Sheet } from './kit'
 import { CircleChat, CircleRow, ColorPick } from './guestCareUI'
 import { TRAVEL_MODES, addCircleMembers, careTally, hostCircles, hostCreateCircle, hostPost, saveCare, whenLabel } from '../lib/guestCare'
@@ -142,7 +142,7 @@ export function HostCircles({ inv }) {
   const members = c ? c.invitation_circle_members.map(m => name(m.guest_id)).filter(Boolean) : []
   return (
     <section className="mx-3 mt-3 rounded-[24px] bg-white p-4 shadow-[0_0_0_1px_#EEE6FA]" data-host-circles>
-      <p className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#DB2777]"><Sparkles size={13} />Style circles</p>
+      <p className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#DB2777]"><Zap size={13} />Style circles</p>
       <p className="mt-0.5 text-[18px] font-black tracking-[-0.03em]">Matching outfits, planned together</p>
       <p className="text-[12px] font-semibold text-[var(--ink-3)]">Cousins in yellow for Haldi, the bride’s friends in pastels — each circle chats and shares looks on their invite.</p>
       <div className="mt-3 space-y-2">

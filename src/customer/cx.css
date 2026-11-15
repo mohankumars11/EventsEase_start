@@ -57,6 +57,10 @@
 /* No backdrop-filter: on a list of forty photos it re-blurs every chip on
    every scrolled frame, which is what made long lists stutter on budget
    phones. A denser tint reads the same on any photo. */
+/* A gloss across a light surface: a sheen from the top edge, a soft
+   highlight that ends before the content (the Home head). */
+.cx-gloss::before { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(255, 255, 255, .85) 0%, rgba(255, 255, 255, .35) 38%, rgba(255, 255, 255, 0) 70%); }
+.cx-gloss-tail::after { content: ''; position: absolute; inset: auto 10% 0 10%; height: 1px; pointer-events: none; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .95), transparent); }
 .cx-glass {
   background: rgba(20, 12, 38, .58); color: #fff;
   border: 1px solid rgba(255, 255, 255, .22);
@@ -219,8 +223,8 @@
 
 /* The search orb: marigold for a first-timer, peacock teal for a returning customer.
    Its contents pop in and out; a soft halo breathes out from it — no spinning ring. */
-.cx-orb-new { background: radial-gradient(circle at 30% 25%, #FFD08A 0%, #FF8A1F 45%, #E8430F 100%); box-shadow: 0 14px 28px -10px rgba(232, 67, 15, .75), inset 0 1px 0 rgba(255, 255, 255, .55); }
-.cx-orb-back { background: radial-gradient(circle at 30% 25%, #8CF2DE 0%, #14B8A6 45%, #0B5E55 100%); box-shadow: 0 14px 28px -10px rgba(11, 94, 85, .75), inset 0 1px 0 rgba(255, 255, 255, .55); }
+/* The search orb takes the Instant pill's yellow (Mohan, 2026-11-10: "let it align to the instant booking at the top"). */
+.cx-orb-new, .cx-orb-back { background: radial-gradient(circle at 30% 25%, #FFF3B0 0%, #FFD84A 42%, #F5A70F 100%); box-shadow: 0 14px 28px -10px rgba(200, 125, 10, .8), inset 0 1px 0 rgba(255, 255, 255, .7); }
 .cx-orb-halo { animation: cx-orb-halo 2.6s ease-out infinite; }
 .cx-orb-breathe { animation: cx-orb-breathe 2.6s ease-in-out infinite; }
 @keyframes cx-orb-breathe { 0%, 100% { transform: scale(1); } 45% { transform: scale(1.16); } 60% { transform: scale(.96); } }
@@ -337,3 +341,70 @@
 @keyframes cx-blip { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 .cx-scan { background: linear-gradient(90deg, #F4F0FA 0%, #ECE4FA 40%, #F4F0FA 80%); background-size: 220% 100%; animation: cx-shimmer 1.2s linear infinite; }
 @media (prefers-reduced-motion: reduce) { .cx-radar-sweep, .cx-radar-ping, .cx-scan { animation: none; } }
+
+/* Two lines, then an ellipsis — for a service's one-line description on
+   the plan, which must never be cut off mid-word at phone width. */
+.cx-clamp-2 { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+
+/* The explore button's own sweep. Named apart from cx-sheen on purpose:
+   that keyframe set is already owned by two other rules, which position
+   the element themselves and would break if its stops moved. */
+@keyframes cx-explore-sheen {
+  0%, 8%    { transform: translateX(0); }
+  60%, 100% { transform: translateX(460%); }
+}
+.cx-explore-sheen { animation: cx-explore-sheen 3.8s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .cx-explore-sheen { animation: none; } }
+
+/* A diya and a birthday candle are lit things; a static flame on a tile
+   that is otherwise modelled reads as a sticker. The body breathes on a
+   short, uneven cycle (never a clean sine, which looks mechanical) from
+   its own base, and the halo behind it swells on the same beat. */
+@keyframes cx-flame {
+  0%, 100% { transform: scaleY(1) scaleX(1) }
+  22%      { transform: scaleY(1.09) scaleX(.95) }
+  41%      { transform: scaleY(.96) scaleX(1.04) }
+  63%      { transform: scaleY(1.06) scaleX(.97) }
+  81%      { transform: scaleY(.98) scaleX(1.02) }
+}
+@keyframes cx-glow {
+  0%, 100% { opacity: .22 }
+  41%      { opacity: .5 }
+  63%      { opacity: .34 }
+}
+/* transform-box: fill-box makes the percentage origin resolve against
+   the shape, not the whole SVG viewport — without it the flame pivots
+   around the tile's corner. */
+.cx-flame { transform-box: fill-box; transform-origin: 50% 100%; animation: cx-flame 1.7s ease-in-out infinite; will-change: transform }
+.cx-glow  { transform-box: fill-box; transform-origin: 50% 100%; animation: cx-glow 1.7s ease-in-out infinite }
+@media (prefers-reduced-motion: reduce) { .cx-flame, .cx-glow { animation: none } }
+
+/* ── 3D pictograms (ui/Glyph3D.jsx), 2026-11-10 ───────────────────── */
+@keyframes cx-g3-spark { 0%, 100% { opacity: .15; transform: scale(.5) rotate(0deg) } 45% { opacity: 1; transform: scale(1) rotate(20deg) } 70% { opacity: .55; transform: scale(.78) rotate(35deg) } }
+@keyframes cx-g3-bob { 0%, 100% { transform: translateY(0) } 50% { transform: translateY(-1.6px) } }
+.cx-g3-spark { transform-box: fill-box; transform-origin: 50% 50%; animation: cx-g3-spark 2.6s ease-in-out infinite; }
+.cx-g3-bob { transform-box: fill-box; animation: cx-g3-bob 2.8s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .cx-g3-spark, .cx-g3-bob { animation: none; opacity: 1 } }
+@keyframes cx-rsvp-fill { 0% { transform: scaleX(.12) } 38%, 86% { transform: scaleX(1) } 100% { transform: scaleX(.12) } }
+.cx-rsvp-bar { transform-origin: left center; animation: cx-rsvp-fill 6.5s cubic-bezier(.3, .7, .2, 1) infinite; }
+@keyframes cx-route { to { stroke-dashoffset: -18 } }
+.cx-route { animation: cx-route 1.1s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .cx-rsvp-bar, .cx-route { animation: none } }
+@keyframes cx-map-ring { 0% { width: 10px; height: 10px; opacity: .9 } 100% { width: 260px; height: 260px; opacity: 0 } }
+@media (prefers-reduced-motion: reduce) { [style*="cx-map-ring"] { animation: none !important } }
+@keyframes cx-story { from { transform: scaleX(0) } to { transform: scaleX(1) } }
+.cx-story { transform-origin: left center; animation: cx-story 3.6s linear both; }
+.cx-live-ring { translate: -50% -50%; animation: cx-spin 5s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .cx-story, .cx-live-ring { animation: none } }
+
+/* ── Event details, one card at a time (screens/EventFlow.jsx) ───────── */
+@keyframes cx-slide-in { from { opacity: 0; transform: translateX(34px) } to { opacity: 1; transform: none } }
+@keyframes cx-slide-back { from { opacity: 0; transform: translateX(-34px) } to { opacity: 1; transform: none } }
+.cx-slide-in { animation: cx-slide-in .36s cubic-bezier(.2, .9, .3, 1) both; }
+.cx-slide-back { animation: cx-slide-back .36s cubic-bezier(.2, .9, .3, 1) both; }
+@keyframes cx-confetti { 0% { opacity: 0; transform: translate(0, -6px) rotate(0) } 12% { opacity: 1 } 100% { opacity: 0; transform: translate(var(--dx, 0), 150px) rotate(var(--rot, 180deg)) } }
+.cx-confetti { opacity: 0; animation: cx-confetti 1.8s cubic-bezier(.25, .7, .4, 1) both; }
+.cx-range { -webkit-appearance: none; appearance: none; height: 8px; border-radius: 999px; background: linear-gradient(90deg, #8B5CF6, #6D28D9); outline: none; }
+.cx-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 26px; height: 26px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 4px #7C3AED, 0 6px 14px -4px rgba(91, 33, 182, .8); cursor: pointer; }
+.cx-range::-moz-range-thumb { width: 26px; height: 26px; border-radius: 50%; background: #fff; border: 4px solid #7C3AED; }
+@media (prefers-reduced-motion: reduce) { .cx-slide-in, .cx-slide-back, .cx-confetti { animation: none; opacity: 1 } .cx-confetti { display: none } }

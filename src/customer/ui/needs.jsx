@@ -17,8 +17,14 @@ export function needsSummary(tradeId, value = {}) {
   const picked = qs.filter(q => q.kind !== 'toggle').map(q => (Array.isArray(value[q.key]) ? value[q.key] : []).map(id => q.options.find(o => o.id === id)?.label).filter(Boolean).join(', ')).filter(Boolean)
   const musts = qs.filter(q => q.kind === 'toggle' && value[q.key] === true).length
   const typed = Object.entries(value).filter(([k, v]) => k.endsWith('__typed') && Array.isArray(v)).flatMap(([, v]) => v)
-  const qty = [value.$hours ? `${value.$hours} hours` : null, value.$guests ? `${Number(value.$guests).toLocaleString('en-IN')} guests` : null]
-  const said = [...qty, ...picked, ...typed.map(x => `“${x}”`), musts ? `${musts} must-have${musts > 1 ? 's' : ''}` : null].filter(Boolean).join(' · ')
+  /* The photo sheet stored its chip label ("4 hours"), which read "4 hours hours" here. */
+  const qty = [value.$hours ? (typeof value.$hours === 'number' ? `${value.$hours} hours` : String(value.$hours)) : null, value.$guests ? `${Number(value.$guests).toLocaleString('en-IN')} guests` : null]
+  /* Counts the customer set per item, or left to the master ("Chairs ×150 · Carpets: you suggest how many"). */
+  const label = id => qs.flatMap(q => q.options ?? []).find(o => o.id === id)?.label ?? id.replace(/_/g, ' ')
+  const counts = Object.entries(value.$items ?? {}).map(([id, n]) => (n === 'master' || n == null ? `${label(id)}: you suggest how many` : `${label(id)} ×${Number(n).toLocaleString('en-IN')}`))
+  if (!counts.length && value.$qty === 'master') counts.push('Quantity: you suggest how many')
+  else if (!counts.length && Number(value.$qty) > 0) counts.push(`×${Number(value.$qty).toLocaleString('en-IN')}`)
+  const said = [...qty, ...picked, ...counts, ...typed.map(x => `“${x}”`), musts ? `${musts} must-have${musts > 1 ? 's' : ''}` : null].filter(Boolean).join(' · ')
   return said || (value.$any ? 'Any master is fine' : '')
 }
 

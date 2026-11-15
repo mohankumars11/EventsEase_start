@@ -12,7 +12,7 @@
 import { useEffect, useState } from 'react'
 import { Link, Navigate, useParams, useSearchParams } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
-import { TRADE, TRADE_GROUPS } from '../data/trades'
+import { TRADE, TRADES, TRADE_GROUPS } from '../data/trades'
 import { OCCASION } from '../data/occasions'
 import { serviceArt } from '../data/art'
 import { usePlan } from '../state/PlanContext'
@@ -20,6 +20,8 @@ import { BackHeader, Journey, PlanBar } from '../ui/kit'
 import { ArtFill } from '../ui/art'
 import { MastersPanel } from '../ui/masters'
 import { OfferStrip } from '../ui/offers'
+
+const BROWSE = new Set(['venue', 'restaurant'])
 
 export default function Trade() {
   const { tradeId } = useParams()
@@ -30,6 +32,17 @@ export default function Trade() {
   const [rail, setRail] = useState(false)
   useEffect(() => { setRail(false); window.scrollTo({ top: 0 }) }, [tradeId])
   if (!t) return <Navigate to="/" replace />
+  /* Book a service never opens on a directory (Mohan, 2026-11-14: "take the
+     actual inputs … then ping the masters in real time"): the brief first,
+     then the masters live. A venue or a restaurant is chosen by looking,
+     so it opens its own screen for the event. The old list stays only
+     behind ?all=1, for "see every master" from a screen that has nobody. */
+  if (!q.get('all')) {
+    const evOk = occasion && plan.event.occasionId === occasion.id && plan.event.date
+    if (BROWSE.has(tradeId)) return <Navigate to={evOk ? `/o/${occasion.id}/${tradeId === 'venue' ? 'venues' : 'restaurants'}` : `/brief/${tradeId}`} replace />
+    if (occasion) return <Navigate to={evOk ? `/o/${occasion.id}/prefs?t=${tradeId}&add=1` : `/o/${occasion.id}`} replace />
+    return <Navigate to={`/brief/${tradeId}`} replace />
+  }
   const occId = occasion?.id ?? null
   const mine = TRADE_GROUPS.find(g => g.trades.some(x => x.id === tradeId))
   const groups = mine ? [mine, ...TRADE_GROUPS.filter(g => g !== mine)] : TRADE_GROUPS
@@ -55,7 +68,7 @@ export default function Trade() {
       )}
 
       <button type="button" onClick={() => setRail(true)} className="fixed left-0 top-1/2 z-[125] flex -translate-y-1/2 flex-col items-center gap-1 rounded-r-[14px] bg-[#1C1033]/90 px-1 py-3 text-white shadow-[0_10px_24px_-10px_rgba(28,16,51,.8)]" aria-label="All services" data-rail-tab>
-        <span className="cx-num text-[13px] font-black">34</span>
+        <span className="cx-num text-[13px] font-black">{TRADES.length}</span>
         <span className="text-[9px] font-extrabold uppercase tracking-[0.1em] [writing-mode:vertical-rl]">Services</span>
       </button>
       {rail && <div className="fixed inset-0 z-[160] bg-black/30" onClick={() => setRail(false)} aria-hidden />}

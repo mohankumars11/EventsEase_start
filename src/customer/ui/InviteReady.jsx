@@ -32,7 +32,7 @@ export default function InviteReady({ occasion: o, where = 'checkout', className
       <div className="flex items-center gap-3.5">
         <span className="w-[92px] shrink-0 drop-shadow-[0_14px_20px_rgba(91,33,182,.28)]"><InviteCard inv={inv} occasion={o} theme={inv.theme} size="mini" /></span>
         <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#DB2777]">✨ Made for you</p>
+          <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#DB2777]">Made for you</p>
           <h3 className="mt-0.5 text-[17px] font-black leading-[1.15] tracking-[-0.03em]">Your invitation is ready</h3>
           <p className="mt-1 text-[12px] font-semibold leading-snug text-[var(--ink-2)]">
             {needs ? 'Built from your event details. One step away from your masters — your request carries the date, time and place.'

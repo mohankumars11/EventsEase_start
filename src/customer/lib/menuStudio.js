@@ -79,6 +79,20 @@ export async function loadCatalogue({ live = true } = {}) {
   return cached
 }
 
+/* Instant menus (Mohan, 2026-11-13: "opening the menu book takes latency —
+   it should happen in milliseconds"): the bundled catalogue is on screen
+   at once, the database copy replaces it quietly when it answers. */
+export const catalogueNow = () => cached
+let refreshing = null
+export function catalogueFast(onUpdate) {
+  const first = cached ? Promise.resolve(cached) : bundle().then(b => (cached ??= fromBundle(b)))
+  if (cached?.source !== 'db') refreshing ??= first.then(base => fromDatabase(base).then(db => { if (db) cached = db; return cached }, () => cached))
+  refreshing?.then(c => { if (c?.source === 'db') onUpdate?.(c) })
+  return first
+}
+/** Load the menu book in the background before anyone opens catering. */
+export const warmCatalogue = () => { catalogueFast(); import('../data/masterDishes.generated').catch(() => {}) }
+
 // ── recommendation ─────────────────────────────────────────────────────
 export const DIETS = [
   { id: 'veg', label: 'Vegetarian' }, { id: 'non_veg', label: 'Non-veg' }, { id: 'mixed', label: 'Both' },

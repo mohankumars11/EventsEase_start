@@ -56,16 +56,28 @@ export function requestFor(line, event = {}, place = {}) {
 
   switch (ref.type) {
     case 'package':
-      return { ...base, package: ref.key, hours: ref.hours || hours }
+      /* package_id names the exact package the customer was shown; the
+         experience is what they chose it FOR. The server checks both
+         (anchorBook) and refuses rather than book a different package. */
+      return { ...base, package: ref.key, hours: ref.hours || hours,
+        ...(ref.packageId ? { package_id: ref.packageId } : {}),
+        ...(line.experience ? { experience: line.experience } : {}) }
     case 'item': {
       const r = { ...base, hours, items: [{ item_key: ref.key, qty }] }
       if (a === 'RENTAL_INVENTORY') r.end_date = event.date
       if (a === 'TRIP_VEHICLE') Object.assign(r, { pickup: place, dropoff: place, passengers: Math.min(guests, 50) })
       if (a === 'PERSONAL_SERVICE') r.items = [{ item_key: ref.key, qty }]
+      /* A staffing role from the catalogue still needs the head-count: the
+         engine reads `staff` (resolve_booking: staff_required). Without it
+         every host, usher and guard was refused — found 2026-11-03 by
+         scripts/check-offer-board-all-trades.mjs; the old one-match engine
+         built the same request and never matched them either. */
+      if (a === 'STAFFING') r.staff = qty
       return r
     }
     case 'rule': {
       const r = { ...base, hours, rule_kind: ref.key }
+      if (line.experience) r.experience = line.experience   // an hourly master can deliver one too — the server checks the hours
       if (a === 'STAFFING') r.staff = qty
       if (a === 'STORAGE_CAPACITY') Object.assign(r, { qty, end_date: event.date })
       if (a === 'TRIP_VEHICLE') Object.assign(r, { pickup: place, dropoff: place, passengers: Math.min(guests, 50), ...(ref.vehicle ? { items: [{ item_key: ref.vehicle }] } : {}) })
@@ -78,7 +90,13 @@ export function requestFor(line, event = {}, place = {}) {
 }
 
 async function call(body, auth) {
-  const r = await fetch(apiUrl(BOOK), { method: 'POST', headers: auth ? await authHeaders() : { 'content-type': 'application/json' }, body: JSON.stringify(body) })
+  /* Never hang a screen on an unreachable server: 20 s, then a plain error. */
+  const ctl = new AbortController()
+  const timer = setTimeout(() => ctl.abort(), 20000)
+  let r
+  try { r = await fetch(apiUrl(BOOK), { method: 'POST', headers: auth ? await authHeaders() : { 'content-type': 'application/json' }, body: JSON.stringify(body), signal: ctl.signal }) }
+  catch (e) { throw new Error(e?.name === 'AbortError' ? 'The booking service did not answer in time. Check your connection and try again.' : 'Could not reach the booking service. Check your connection.') }
+  finally { clearTimeout(timer) }
   let json = null
   try { json = await r.json() } catch { /* not json */ }
   if (!r.ok && !json?.path) throw new Error(json?.error ?? `Booking service error (${r.status})`)
@@ -107,8 +125,10 @@ export const requestLine = (line, event, place, { note, venue, backups = [] } = 
  * Ask for their fee: a quote request with no offer (whole-event planning —
  * a planner's listed package is a wedding's, so they price THIS event).
  */
-export const quoteLine = (line, event, place, { note, venue, group = null, menu = null } = {}) =>
-  call({ vendorServiceId: line.serviceId, request: requestFor(line, event, place), note, venue, quote: true, ...(group ? { quoteGroup: group } : {}), ...(menu ? { menu } : {}) }, true)
+export const quoteLine = (line, event, place, { note, venue, group = null, menu = null, plannerBriefId = null } = {}) =>
+  call({ vendorServiceId: line.serviceId, request: requestFor(line, event, place), note, venue, quote: true, ...(group ? { quoteGroup: group } : {}), ...(menu ? { menu } : {}),
+    /* A planner brief (210): the server takes the group from the brief itself. */
+    ...(plannerBriefId ? { plannerBriefId } : {}) }, true)
 
 /** Ask a partner for a price: always a quote request, carrying the customer's offer. */
 export const sendOffer = (line, event, place, offer, { note, venue } = {}) =>

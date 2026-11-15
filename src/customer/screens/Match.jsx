@@ -80,7 +80,7 @@ export default function Match() {
             {busy ? <Loader2 size={14} className="animate-spin" /> : <Wand2 size={14} />}Best of each
           </button>
         )}
-        {needed.length > 0 && chosen === needed.length && <button type="button" onClick={() => navigate('/plan')} className="cx-press shrink-0 rounded-full bg-[#0C831F] px-3.5 py-2 text-[12px] font-extrabold text-white">Review</button>}
+        {needed.length > 0 && chosen === needed.length && <button type="button" onClick={() => navigate('/board')} className="cx-press shrink-0 rounded-full bg-[#0C831F] px-3.5 py-2 text-[12px] font-extrabold text-white">Review</button>}
       </div>
       <div className="cx-noscroll mb-2.5 flex gap-1.5 overflow-x-auto px-3" data-service-strip>
         {needed.map(t => {

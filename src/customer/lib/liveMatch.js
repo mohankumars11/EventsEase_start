@@ -23,6 +23,7 @@ import { partnersFor, rank } from './market'
 import { filterByNeeds } from './needs'
 import { asLine, withQuotes } from './quote'
 import { previewLine } from './booking'
+import { experienceOf, hoursOf } from './experience'
 
 /** The line shape PlanContext.add() builds, without touching the plan. */
 export const lineOf = (p, occasionId) => ({
@@ -30,6 +31,7 @@ export const lineOf = (p, occasionId) => ({
   cover: p.cover, fromPaise: p.fromPaise, fromKind: p.fromKind, fromUnit: p.fromUnit, fromLabel: p.fromLabel,
   fromRef: p.fromRef ?? null, qty: null, hours: p.askHours ?? null, guests: p.askGuests ?? null, instant: p.instant, advancePct: p.advancePct,
   rating: p.rating, reviews: p.reviews, distanceKm: p.distanceKm, quoteHours: p.quoteHours,
+  experience: p.experience ?? null,
 })
 
 const hash = s => [...String(s)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7)
@@ -51,7 +53,10 @@ export async function matchTrade(tradeId, { occasionId, event, place, needs = {}
   const all = await partnersFor(tradeId, at).catch(() => [])
   onPool?.(all.length)
   const fit = filterByNeeds(all, tradeId, needs, event.guests).list ?? all
-  const ask = { hours: Number(needs.$hours) || Number(event.hours) || null, guests: Number(needs.$guests) || Number(event.guests) || null, diets: needs.$diet ?? [] }
+  /* hoursOf, not Number: the photography sheet stores "4 hours", and
+     Number("4 hours") is NaN — the customer's coverage was being dropped. */
+  const ask = { hours: hoursOf(needs.$hours) || Number(event.hours) || null, guests: Number(needs.$guests) || Number(event.guests) || null, diets: needs.$diet ?? [],
+    experience: experienceOf(tradeId, needs.$tier) }
   const quoted = withQuotes(fit, ask) ?? fit
   const pool = fair(rank(quoted).filter(p => (p.fromRef || p.quote) && !skip.includes(p.serviceId)), `${seed}|${tradeId}`)
   /* A menu card the customer chose (lib/menus) is that caterer's own menu:

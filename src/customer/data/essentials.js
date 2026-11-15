@@ -20,6 +20,7 @@ export const ESSENTIAL = {
   catering_food: ['$diet', '$cuisine', 'service_styles', '$dishes'],
   cake_desserts: ['product_types', 'flavours', 'sizes', 'dietary'],
   bar_beverages: ['service_lines'],
+  restaurant: ['dining_modes', 'cuisines', 'meal_formats'],
   venue: ['venue_type', 'facilities'],
   decoration_floral: ['services', 'themes', 'flowers'],
   tent_furniture: ['groups'],

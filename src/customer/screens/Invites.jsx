@@ -167,7 +167,7 @@ export function InviteEdit() {
         </div>
         <div className="mx-3 mt-2 grid grid-cols-2 gap-2">
           <ChipToggle on={themeOpts.art} onClick={() => set({ theme: themeString(themeOpts.t.id, { ...themeOpts, art: !themeOpts.art }) })}>Show illustration</ChipToggle>
-          <ChipToggle on={themeOpts.live} onClick={() => set({ theme: themeString(themeOpts.t.id, { ...themeOpts, live: !themeOpts.live }) })}>✨ Live animation</ChipToggle>
+          <ChipToggle on={themeOpts.live} onClick={() => set({ theme: themeString(themeOpts.t.id, { ...themeOpts, live: !themeOpts.live }) })}>Live animation</ChipToggle>
         </div>
         <div className="mx-3 mt-3 rounded-[20px] bg-white p-3.5 px-5 shadow-[0_0_0_1px_#EEE6FA]">
           <LookPicker base={themeOpts.base} look={{ pal: themeOpts.pal, font: themeOpts.font }} onChange={l => set({ theme: themeString(themeOpts.t.id, { ...themeOpts, ...l }) })} />

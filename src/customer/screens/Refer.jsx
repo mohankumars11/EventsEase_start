@@ -22,7 +22,7 @@
  */
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Check, ChevronDown, ChevronRight, Copy, Gift, Loader2, MessageCircle, PartyPopper, Share2, Sparkles, Trophy, UserPlus, Wallet } from 'lucide-react'
+import { Check, ChevronDown, ChevronRight, Copy, Gift, Loader2, MessageCircle, PartyPopper, Share2, Zap, Trophy, UserPlus, Wallet } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { BackHeader } from '../ui/kit'
 import Twinkle from '../ui/Twinkle'
@@ -190,7 +190,7 @@ function HoloTicket({ code, copied, onCopy }) {
         <div aria-hidden className="pointer-events-none absolute inset-0 opacity-60" style={{ backgroundImage: 'radial-gradient(rgba(91,33,168,.10) 1.2px, transparent 1.3px)', backgroundSize: '16px 16px' }} />
         <Twinkle />
         <div className="relative p-5">
-          <p className="flex items-center gap-2 text-[#5B21A8]"><span className="cx-brand text-[15px]">Sambramo</span><span className="rounded-full bg-[#F0E9FF] px-2 py-0.5 text-[11px] font-extrabold">Invite pass</span><Sparkles size={14} className="text-[#C026D3]" /></p>
+          <p className="flex items-center gap-2 text-[#5B21A8]"><span className="cx-brand text-[15px]">Sambramo</span><span className="rounded-full bg-[#F0E9FF] px-2 py-0.5 text-[11px] font-extrabold">Invite pass</span><Zap size={14} className="text-[#C026D3]" /></p>
           <div className="mt-3 grid grid-cols-2 gap-2.5">
             <span className="rounded-[18px] bg-white p-3 shadow-[0_10px_22px_-16px_rgba(91,33,168,.7)] ring-1 ring-[#EADFFB]">
               <span className="block text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#7A6E8F]">They get</span>

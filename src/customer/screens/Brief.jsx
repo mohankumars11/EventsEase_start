@@ -12,11 +12,12 @@
  */
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, Check, ChevronDown, Minus, Plus, RotateCcw, Search, Sparkles, X, Zap } from 'lucide-react'
+import { ArrowLeft, Check, ChevronDown, Minus, Plus, RotateCcw, Search, X, Zap } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { OCCASION } from '../data/occasions'
 import { TRADE } from '../data/trades'
 import { serviceArt } from '../data/art'
+import { optionIcon, TILE_TINTS } from '../lib/optionIcon'
 import { usePlan, needsFor as planNeeds } from '../state/PlanContext'
 import { partnersFor } from '../lib/market'
 import { answered, courseLabel, filterByNeeds, loadCuisines, loadDishes, needsFor } from '../lib/needs'
@@ -166,7 +167,7 @@ export default function Brief() {
         )}
         {must.length > 0 && (
           <section className="rounded-[22px] bg-white p-3.5 shadow-[0_0_0_1px_#EFE7DD]" data-q="must">
-            <p className="flex items-center gap-1.5 text-[15px] font-extrabold tracking-[-0.02em]"><Sparkles size={16} className="text-[#0C831F]" />Must-haves</p>
+            <p className="flex items-center gap-1.5 text-[15px] font-extrabold tracking-[-0.02em]"><Zap size={16} className="text-[#0C831F]" />Must-haves</p>
             <p className="text-[11.5px] font-semibold text-[var(--ink-3)]">Switch on only what you can’t do without.</p>
             <div className="mt-2 divide-y divide-[#F4EEE6]">
               {must.map(q => (
@@ -238,17 +239,20 @@ export function Question({ q, value, onChange, occasion, typed, onTyped }) {
       </div>
       {tiles ? (
         <div className="mt-2.5 grid grid-cols-2 gap-2">
-          {shown.map(o => {
+          {shown.map((o, i) => {
             const on = value.includes(o.id)
+            /* An icon per answer, never a radio circle (Mohan, 2026-11-10). */
+            const Icon = optionIcon(o.label), [tint, ink] = TILE_TINTS[i % TILE_TINTS.length]
             return (
               <button key={o.id} type="button" onClick={() => toggle(o.id)} aria-pressed={on}
-                className={'cx-press relative flex min-h-[54px] items-center rounded-[16px] px-3 py-2.5 pr-8 text-left text-[13px] font-bold leading-snug transition ' + (on ? 'bg-[#EEFAF2] text-[#0B5F33] shadow-[inset_0_0_0_2px_#16A34A]' : 'bg-[#FBF8F4] text-[var(--ink)] shadow-[inset_0_0_0_1px_#EDE5DA]')}>
+                className={'cx-press relative flex min-h-[54px] items-center gap-2.5 rounded-[16px] px-2.5 py-2.5 pr-7 text-left text-[13px] font-bold leading-snug transition ' + (on ? 'bg-gradient-to-br from-[#7C3AED] to-[#5B21B6] text-white shadow-[0_12px_22px_-12px_rgba(91,33,182,.95)]' : 'bg-white text-[var(--ink)] shadow-[0_0_0_1.2px_#ECE6F6,0_8px_18px_-16px_rgba(58,18,144,.5)]')}>
+                <span className="grid h-9 w-9 shrink-0 place-items-center self-start rounded-[11px]" style={{ background: on ? 'rgba(255,255,255,.18)' : tint, color: on ? '#fff' : ink }}><Icon size={17} strokeWidth={2.2} /></span>
                 <span className="min-w-0">
                   {artFor(exampleSlug(o.label)) && <img src={artFor(exampleSlug(o.label))} alt="" className="mb-1.5 aspect-[4/3] w-full rounded-[10px] object-cover" loading="lazy" />}
                   <span className="block">{o.label}</span>
-                  {explain(o.label) && <span className={'mt-0.5 block text-[11px] font-semibold leading-snug ' + (on ? 'text-[#2F7A52]' : 'text-[var(--ink-3)]')}>{explain(o.label)}</span>}
+                  {explain(o.label) && <span className={'mt-0.5 block text-[11px] font-semibold leading-snug ' + (on ? 'text-white/80' : 'text-[var(--ink-3)]')}>{explain(o.label)}</span>}
                 </span>
-                <span className={'absolute right-2.5 top-1/2 grid h-5 w-5 -translate-y-1/2 place-items-center rounded-full transition ' + (on ? 'cx-pop bg-[#0C831F] text-white' : 'ring-[1.5px] ring-[#D9D0C4]')}>{on && <Check size={12} strokeWidth={3.4} />}</span>
+                {on && <span className="cx-pop absolute right-1.5 top-1.5 grid h-[18px] w-[18px] place-items-center rounded-full bg-white text-[#5B21B6]"><Check size={11} strokeWidth={3.4} /></span>}
               </button>
             )
           })}
@@ -257,10 +261,11 @@ export function Question({ q, value, onChange, occasion, typed, onTyped }) {
         <div className="mt-2.5 flex flex-wrap gap-1.5">
           {shown.map(o => {
             const on = value.includes(o.id)
+            const Icon = on ? Check : optionIcon(o.label)
             return (
               <button key={o.id} type="button" onClick={() => toggle(o.id)} aria-pressed={on}
-                className={'cx-press flex items-center gap-1 rounded-full px-3.5 py-2 text-[12.5px] font-bold transition ' + (on ? 'bg-[#EEFAF2] text-[#0B5F33] shadow-[inset_0_0_0_1.5px_#16A34A]' : 'bg-[#FBF8F4] text-[var(--ink-2)] shadow-[inset_0_0_0_1px_#EDE5DA]')}>
-                {on && <Check size={13} strokeWidth={3} />}{o.label}
+                className={'cx-press flex items-center gap-1.5 rounded-[12px] px-3 py-2 text-[12.5px] font-bold transition ' + (on ? 'bg-gradient-to-br from-[#7C3AED] to-[#5B21B6] text-white' : 'bg-white text-[var(--ink-2)] shadow-[0_0_0_1.2px_#ECE6F6]')}>
+                <Icon size={14} strokeWidth={2.4} className={on ? '' : 'text-[#7C3AED]'} />{o.label}
               </button>
             )
           })}

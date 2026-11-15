@@ -28,6 +28,9 @@ import SignInSheet from './SignInSheet'
 import WhenSheet from './WhenSheet'
 import PlaceSheet from './PlaceSheet'
 import { ActionBar, BackHeader, Photo, RatingChip, Sheet } from '../ui/kit'
+import { loadExperienceTiers } from '../lib/needs'
+import { experienceOf } from '../lib/experience'
+import { supabase } from '../../lib/supabase'
 
 const REASONS = ['Booking several services', 'Weekday event', 'Paying in full now', 'Flexible on date', 'Fewer guests than usual', 'Repeat customer']
 
@@ -58,7 +61,9 @@ export default function Negotiate() {
     if (!place?.lat) { setSheet('place'); return }
     setBusy(true); setErr('')
     try {
-      const line = { serviceId, tradeId, fromRef: p.fromRef, fromKind: p.fromKind, fromUnit: p.fromUnit, fromLabel: p.fromLabel, qty: null }
+      const exp = occasion ? experienceOf(tradeId, plan.needsOf(occasion.id, tradeId).$tier) : null
+      const line = { serviceId, tradeId, fromRef: p.fromRef, fromKind: p.fromKind, fromUnit: p.fromUnit, fromLabel: p.fromLabel, qty: null,
+        experience: exp ? { trade: tradeId, tier: exp.tier, name: exp.name, version: exp.version, hours: p.fromRef?.hours ?? null } : null }
       const r = await sendOffer(line, ev, place, { offer_paise: offer, reasons, message: msg.trim() || undefined },
         { venue: { address: place.address, area: place.area, city: 'Bengaluru' } })
       if (!r?.quoteRequestId) throw new Error(r?.reasons_text?.[0] ?? r?.error ?? 'The master cannot take this request.')
@@ -69,13 +74,19 @@ export default function Negotiate() {
     } catch (e) { setErr(e.message) } finally { setBusy(false) }
   }
 
+  /* From the offer board (?pkg=): negotiate THAT package, for the experience
+     the customer chose — not the master's cheapest. The server refuses it if
+     the package does not deliver the experience (anchorBook priceOffer). */
+  const pkg = q.get('pkg')
   useEffect(() => {
-    partnersFor(tradeId).then(l => {
-      const x = l.find(y => y.serviceId === serviceId)
-      setP(x ?? null)
+    Promise.all([partnersFor(tradeId), loadExperienceTiers(supabase).catch(() => null)]).then(([l]) => {
+      let x = l.find(y => y.serviceId === serviceId) ?? null
+      const o2 = pkg && x ? (x.offers ?? []).find(o => o.type === 'package' && o.ref?.packageId === pkg) : null
+      if (o2) x = { ...x, fromRef: o2.ref, fromPaise: o2.paise, fromLabel: o2.label, fromKind: 'package', fromUnit: 'package' }
+      setP(x)
       if (x?.fromPaise) setOffer(Math.round((x.fromPaise * 0.9) / 10000) * 10000)
     }).catch(() => setP(null))
-  }, [serviceId, tradeId])
+  }, [serviceId, tradeId, pkg])
 
   const base = p?.fromPaise ?? 0
   const pct = useMemo(() => (base && offer ? Math.round((1 - offer / base) * 100) : 0), [base, offer])

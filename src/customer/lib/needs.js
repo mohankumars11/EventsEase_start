@@ -61,7 +61,7 @@ const YEARS = [{ id: '3', label: '3+ years' }, { id: '5', label: '5+ years' }, {
    (MENU_DIETS in components/vendor/listing/catering/options.js; copied, not
    imported, because that module pulls the whole food-catalogue seed in). */
 const DIETS = [['veg', 'Pure vegetarian'], ['non_veg', 'Non-vegetarian'], ['mixed', 'Veg + non-veg'], ['vegan', 'Vegan'], ['jain', 'Jain']].map(([id, label]) => ({ id, label }))
-export const CAPACITY = { venue: 'max_capacity', catering_food: 'max_guests' }
+export const CAPACITY = { venue: 'max_capacity', catering_food: 'max_guests', restaurant: 'seating_capacity' }
 
 let CUISINES = null
 /** Cuisine regions (Karnataka, North India…) for the catering question. */
@@ -96,6 +96,30 @@ export async function loadDishes(supabase) {
   return DISHES
 }
 export const courseLabel = c => String(c ?? 'other').replace(/_/g, ' ').replace(/^\w/, x => x.toUpperCase())
+
+let TIERS = null
+/**
+ * The experiences a customer can choose for a trade — "Important Moments",
+ * "Complete Story", "Cinematic Experience" for photography — from
+ * sambramo_experience_tiers (migration 208), by trade, in order.
+ *
+ * Takes the client as an argument for the same reason loadCuisines does:
+ * scripts/apply-requirement-templates.mjs bundles this file and primes it
+ * with its own client. Until 208 is applied it resolves to {} and every
+ * trade simply has no experience to choose — nothing else changes.
+ */
+export async function loadExperienceTiers(supabase) {
+  if (TIERS) return TIERS
+  try {
+    const { data, error } = await supabase.from('sambramo_experience_tiers')
+      .select('trade_id, tier, name, line, model, min_hours, required_inclusions, version, sort').eq('active', true).order('sort')
+    TIERS = {}
+    if (!error) for (const r of data ?? []) (TIERS[r.trade_id] ??= []).push(r)
+  } catch { TIERS = {} }
+  return TIERS
+}
+/** This trade's experiences, once loaded — [] before, or when it has none. */
+export const experienceTiers = tradeId => TIERS?.[tradeId] ?? []
 
 const cache = {}
 /**
@@ -137,14 +161,18 @@ export function pickFacets(tradeId, answers) {
 export const TYPED = '__typed'
 
 const asList = v => (Array.isArray(v) ? v : v == null || v === '' ? [] : [v]).map(x => String(x).toLowerCase())
-export const answered = picks => Object.entries(picks ?? {}).filter(([, v]) => (Array.isArray(v) ? v.length : v === true || (typeof v === 'number' && v > 0))).length
+/* A typed answer (ui/choiceTiles `other:<text>`) is for the master to read,
+   never a filter: free text cannot honestly be matched to a ticked box. */
+const isTyped = x => typeof x === 'string' && x.startsWith('other:')
+const ticked = v => (Array.isArray(v) ? v.filter(x => !isTyped(x)) : isTyped(v) ? [] : v)
+export const answered = picks => Object.entries(picks ?? {}).filter(([, v]) => { const t = ticked(v); return Array.isArray(t) ? t.length : t === true || (typeof t === 'number' && t > 0) }).length
 
 /** Does one master meet the customer's picks? Unanswered questions count as unmet. */
 export function matchNeeds(partner, tradeId, picks = {}, guests = null) {
   const f = partner.facets ?? {}
   const met = [], unmet = []
   for (const q of needsFor(tradeId)) {
-    const want = picks[q.key]
+    const want = ticked(picks[q.key])
     if (q.kind === 'toggle' ? want !== true : !want?.length) continue
     let ok
     if (q.kind === 'toggle') ok = f[q.key] === true

@@ -16,7 +16,7 @@
  */
 import { useEffect, useMemo, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
-import { BookmarkPlus, CalendarDays, Check, ChevronRight, MailOpen, MapPin, MoreHorizontal, Pencil, Plus, Search, Sparkles, Undo2, Users, X } from 'lucide-react'
+import { BookmarkPlus, CalendarDays, Check, ChevronRight, MailOpen, MapPin, MoreHorizontal, Pencil, Plus, Search, Zap, Undo2, Users, X } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { OCCASION } from '../data/occasions'
 import { TRADE } from '../data/trades'
@@ -126,7 +126,7 @@ export default function Recommend() {
       {addOns.length > 0 && (
         <section className="mt-7" data-addons>
           <div className="px-4 pb-3">
-            <h3 className="flex items-center gap-1.5 text-[16.5px] font-extrabold tracking-[-0.025em]"><Sparkles size={16} className="text-[var(--gold)]" />Make it unforgettable</h3>
+            <h3 className="flex items-center gap-1.5 text-[16.5px] font-extrabold tracking-[-0.025em]"><Zap size={16} className="text-[var(--gold)]" />Make it unforgettable</h3>
             <p className="text-[12px] font-semibold text-[var(--ink-3)]">Optional add-ons — only if you want them</p>
           </div>
           <div className="grid grid-cols-3 gap-2 px-3">
@@ -149,7 +149,7 @@ export default function Recommend() {
       </Link>
 
       <button type="button" onClick={() => setFindOpen(true)} className="cx-press mx-3 mt-3 flex w-[calc(100%-24px)] items-center gap-2.5 rounded-[16px] bg-[#FAF8FD] px-3.5 py-3 text-left shadow-[inset_0_0_0_1px_#E7E1F0]" data-find-any>
-        <Search size={17} className="text-[var(--brand)]" /><span className="flex-1 text-[13.5px] font-extrabold text-[var(--ink-2)]">Need something else? Search all 34 services</span><ChevronRight size={16} className="text-[var(--ink-3)]" />
+        <Search size={17} className="text-[var(--brand)]" /><span className="flex-1 text-[13.5px] font-extrabold text-[var(--ink-2)]">Need something else? Search all 35 services</span><ChevronRight size={16} className="text-[var(--ink-3)]" />
       </button>
       <p className="mt-4 px-4 text-center text-[11px] font-semibold text-[var(--ink-3)]">
         {saved === 'account' ? 'Saved to your account · ' : saved === 'phone' ? 'Saved on this phone · ' : ''}Recommendations {result.ruleVersion}

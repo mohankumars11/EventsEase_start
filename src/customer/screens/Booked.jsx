@@ -102,6 +102,23 @@ export default function Booked({ tab = 'all' }) {
     setMsg(r.ok ? (c?.ok ? 'Paid in full — nothing more is due.' : 'Payment received — confirming with Razorpay.') : r.dismissed ? '' : r.error ?? 'Payment did not go through.')
     setTimeout(() => { load(); setOwed({}) }, 1200)
   }
+  /* Withdraw a price request nobody has answered yet. The quote lane
+     (migration 164) has no customer-closed state and no customer update
+     policy, so this is not faked on the phone: support closes it the same
+     day, on WhatsApp, with the request already named. */
+  const [askW, setAskW] = useState(null) // the request waiting for a second tap
+  async function withdraw(q) {
+    if (askW !== q.id) { setAskW(q.id); setTimeout(() => setAskW(x => (x === q.id ? null : x)), 5000); return }
+    setAskW(null); setBusy(`w:${q.id}`); setMsg('')
+    const { data: w, error: we } = await supabase.rpc('customer_withdraw_quote', { p_request_id: q.id })
+    setBusy(null)
+    if (!we && w?.ok) { setMsg('Request withdrawn — the master has been told. Nothing was charged.'); load(); return }
+    if (!we && w && !w.ok) { setMsg(w.reason ?? 'Could not withdraw it.'); return }
+    /* Before migration 214 the function does not exist: support closes it. */
+    const text = `Hi Sambramo, please withdraw my price request ${String(q.id).slice(0, 8).toUpperCase()} for ${q.service_name}${q.event_date ? ` on ${dayLabel(q.event_date)}` : ''}. Nobody has replied yet.`
+    window.open(`https://wa.me/${String(BRAND.supportPhone).replace(/\D/g, '')}?text=${encodeURIComponent(text)}`, '_blank', 'noopener')
+    setMsg('Your withdrawal is with our team on WhatsApp — it closes the same day, and you pay nothing.')
+  }
   async function accept(q) {
     setBusy(q.response.id); setMsg('')
     try {
@@ -125,8 +142,11 @@ export default function Booked({ tab = 'all' }) {
   const shown = data.lines.filter(l => IN_TAB[tab](l.status))
   const due = shown.filter(l => l.status === 'accepted')
   const live = shown.filter(l => l.status !== 'accepted')
-  const waiting = tab === 'all' || tab === 'upcoming' ? data.quotes.filter(q => ['VENDOR_QUOTE', 'QUOTE_ACTION_REQUIRED'].includes(q.state)) : []
-  const closed = tab === 'all' || tab === 'cancelled' ? data.quotes.filter(q => !['VENDOR_QUOTE', 'QUOTE_ACTION_REQUIRED'].includes(q.state)) : []
+  /* A request nobody answered by its reply-by time has lapsed, whatever its row still says. */
+  const lapsed = q => !q.response && q.expires_at && new Date(q.expires_at) < new Date()
+  const open = q => ['VENDOR_QUOTE', 'QUOTE_ACTION_REQUIRED'].includes(q.state) && !lapsed(q)
+  const waiting = tab === 'all' || tab === 'upcoming' ? data.quotes.filter(open) : []
+  const closed = tab === 'all' || tab === 'cancelled' ? data.quotes.filter(q => !open(q)) : []
   const empty = !shown.length && !waiting.length && !closed.length
   /* The three ways to pay what accepted masters need, summed across them —
      the same payNow() the server charges with. */
@@ -184,7 +204,7 @@ export default function Booked({ tab = 'all' }) {
           <BookingCard line={l} />
           {l.status === 'dispatching' && <RequestTimer lineId={l.id} />}
           {['pending', 'dispatching', 'accepted', 'paid'].includes(l.status) && (
-            <button type="button" onClick={() => setCancelFor(l)} className="ml-3 mt-1 text-[12px] font-extrabold text-[var(--ink-3)] underline-offset-2 hover:underline" data-cancel-open>Cancel booking</button>
+            <button type="button" onClick={() => setCancelFor(l)} className="cx-press ml-2 mt-1.5 flex items-center gap-1 rounded-full bg-[#FFF1F0] px-3 py-1.5 text-[12px] font-extrabold text-[#B42318]" data-cancel-open><XCircle size={13} />{l.status === 'dispatching' ? 'Withdraw request' : 'Cancel booking'}</button>
           )}
           {again && l.id === again.id && k === [...due, ...live].findIndex(x => x.id === again.id) && <BookAgain line={l} />}
         </div>
@@ -202,6 +222,11 @@ export default function Booked({ tab = 'all' }) {
             </div>
             {q.response && <span className="cx-num shrink-0 text-[15px] font-extrabold">{rupees(q.response.customer_amount_paise)}</span>}
           </div>
+          {!q.response && (
+            <button type="button" disabled={busy === `w:${q.id}`} onClick={() => withdraw(q)} className="cx-press mt-2 flex items-center gap-1 rounded-full bg-[#FFF1F0] px-3 py-1.5 text-[12px] font-extrabold text-[#B42318]" data-withdraw-quote={q.id}>
+              {busy === `w:${q.id}` ? <Loader2 size={13} className="animate-spin" /> : <XCircle size={13} />}{askW === q.id ? 'Tap again to withdraw' : 'Withdraw request'}
+            </button>
+          )}
           {q.response ? (
             <>
               {q.response.notes && <p className="mt-2 rounded-[12px] bg-[var(--am-50)] px-3 py-2 text-[12.5px] font-semibold text-[var(--ink-2)]">“{q.response.notes}”</p>}
@@ -223,7 +248,7 @@ export default function Booked({ tab = 'all' }) {
       {closed.slice(0, 6).map(q => (
         <article key={q.id} className="flex items-center gap-3 rounded-[18px] bg-[#FAF9FC] p-3 ring-1 ring-[var(--line)]">
           <XCircle size={17} className="text-[var(--ink-3)]" />
-          <p className="min-w-0 flex-1 truncate text-[13px] font-bold text-[var(--ink-2)]">{q.service_name} · {q.state === 'UNAVAILABLE' ? 'Master declined' : q.state === 'EXPIRED' ? 'No reply in time' : q.state.toLowerCase().replace(/_/g, ' ')}</p>
+          <p className="min-w-0 flex-1 truncate text-[13px] font-bold text-[var(--ink-2)]">{q.service_name} · {q.state === 'UNAVAILABLE' ? 'Master declined' : q.state === 'EXPIRED' ? 'No reply in time' : q.state === 'CUSTOMER_WITHDRAWN' ? 'You withdrew it' : lapsed(q) ? 'No reply in time' : q.state.toLowerCase().replace(/_/g, ' ')}</p>
         </article>
       ))}
 

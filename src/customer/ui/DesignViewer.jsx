@@ -114,7 +114,7 @@ export default function DesignViewer({ list, start, inv, occ, look, setLook, rec
           <div className="mt-2.5 min-h-[86px]">
             {tab === 'effects' ? (
               <div className="grid grid-cols-2 gap-2 pt-1">
-                {[['art', 'Illustration'], ['live', '✨ Live animation']].map(([k, l]) => (
+                {[['art', 'Illustration'], ['live', 'Live animation']].map(([k, l]) => (
                   <button key={k} type="button" onClick={() => setLook(x => ({ ...x, [k]: !x[k] }))} aria-pressed={!!look[k]}
                     className={'cx-press flex h-12 items-center justify-center gap-1.5 rounded-[14px] text-[13.5px] font-extrabold transition ' + (look[k] ? 'bg-[#EEFAF2] text-[#0B5F33] shadow-[inset_0_0_0_1.5px_#16A34A]' : 'bg-[#F6F3FA] text-[var(--ink-2)]')}>
                     {look[k] && <Check size={14} strokeWidth={3} />}{l}

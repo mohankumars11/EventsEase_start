@@ -62,7 +62,7 @@ export async function circleEnter(join, name, phone = null) {
 }
 export const circleLink = join => `${RSVP_ORIGIN}/rsvp/circle/${join}`
 export const circleInviteText = (circle, inviteTitle) =>
-  `Join our style circle “${circle.name}” for ${inviteTitle} 👗✨ — let’s plan what we’re wearing together, and RSVP while you’re there: ${circleLink(circle.join)}`
+  `Join our style circle “${circle.name}” for ${inviteTitle} 👗 — let’s plan what we’re wearing together, and RSVP while you’re there: ${circleLink(circle.join)}`
 
 /* ── Host side ─────────────────────────────────────────────────────── */
 export async function hostCircles(invitationId) {

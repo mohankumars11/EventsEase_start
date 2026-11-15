@@ -16,6 +16,7 @@ import { useMemo, useState } from 'react'
 import { ArrowRight, Bell, Briefcase, Check, Home as HomeIcon, Loader2, LocateFixed, MapPin, Plus, Search, UserRound } from 'lucide-react'
 import { BENGALURU_AREAS } from '../../data/bengaluruAreas'
 import { Sheet } from './kit'
+import PinMap from './PinMap'
 import { locate } from '../lib/where'
 import { registerInterest } from '../lib/rewards'
 
@@ -27,6 +28,7 @@ const LABELS = [['home', 'Home', HomeIcon], ['work', 'Work', Briefcase], ['other
 
 export default function LocationSheet({ open, onClose, onPick }) {
   const [q, setQ] = useState('')
+  const [pin, setPin] = useState(null)
   const [busy, setBusy] = useState(false)
   const [away, setAway] = useState(null) // a city we are not in yet
   const [saved, setSaved] = useState(readSaved)
@@ -60,6 +62,9 @@ export default function LocationSheet({ open, onClose, onPick }) {
   return (
     <Sheet open={open} onClose={onClose} title="Where’s the celebration?">
       <div className="pb-3" data-location-sheet>
+        {/* A live map under a fixed pin: move it, confirm (Mohan, 2026-11-13). */}
+        <PinMap height={200} onChange={p => setPin(p)} />
+        {pin && <button type="button" onClick={() => choose({ area: pin.area, city: pin.city ?? undefined, lat: pin.lat, lng: pin.lng, address: pin.line ?? '', pincode: pin.pincode ?? undefined, source: 'map' })} className="cx-press cx-cta mt-2 mb-3 flex h-12 w-full items-center justify-center gap-2 rounded-[16px] text-[14px] font-extrabold" data-pin-confirm>Confirm this spot · {pin.area}</button>}
         <label className="flex h-12 items-center gap-2.5 rounded-[16px] bg-[#F6F3FA] px-3.5 focus-within:ring-2 focus-within:ring-[#C4B5FD]">
           <Search size={17} className="text-[var(--brand)]" />
           <input value={q} onChange={e => { setQ(e.target.value); setAway(null) }} placeholder="Search an area or city" className="h-full flex-1 bg-transparent text-[14.5px] font-bold outline-none placeholder:text-[var(--ink-3)]" data-location-search />

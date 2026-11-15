@@ -9,6 +9,7 @@
 import { needsSummary } from '../ui/needs'
 import { COLOURS, FONTS, FOOD_WAYS, CAKES, themesFor } from '../data/visualCatalogue'
 import { MEALS, SERVE, menuText } from './sambramoMenu'
+import { experienceOf } from './experience'
 
 const ref = p => (p?.id ? ` (reference: pexels.com/photo/${p.id})` : '')
 
@@ -18,6 +19,16 @@ const studioText = st => `Menu: ${st.name} — ` + st.sections.filter(s => s.ite
 
 export function briefFor(o, tradeId, needs = {}) {
   const parts = []
+  /* The experience first: it is the headline of what was asked for. Said
+     with its minimum, so the partner reads the same bar the customer was
+     promised — "Complete Story (at least 4 h)", not just a name. */
+  const exp = experienceOf(tradeId, needs.$tier)
+  if (exp) {
+    const bar = [exp.min_hours ? `at least ${exp.min_hours} h` : null, ...(exp.required_inclusions ?? []).map(x => x.replace(/_/g, ' '))].filter(Boolean)
+    parts.push(`Experience: ${exp.name}${bar.length ? ` (${bar.join(', ')})` : ''}`)
+  }
+  /* A level asked on a trade without experience rows (ui/TierCards GENERIC_TIERS). */
+  if (!exp && needs.$level) parts.push(`Level: ${needs.$level[0] + String(needs.$level).slice(1).toLowerCase()} service`)
   const said = needsSummary(tradeId, needs)
   if (said) parts.push(said)
   /* Said to the partner, not the customer: "Hire a cook" becomes what the job is. */
@@ -34,7 +45,7 @@ export function briefFor(o, tradeId, needs = {}) {
   for (const d of needs.$designs ?? []) parts.push(`Design: ${d.theme}${ref(d)}`)
   const cakeSpec = [needs.$weight, needs.$tiers, needs.$shape, needs.$egg, needs.$delivery].filter(Boolean)
   if (cakeSpec.length) parts.push(`Cake: ${cakeSpec.join(', ')}`)
-  if (needs.$hours) parts.push(`Coverage: ${needs.$hours}`)
+  if (needs.$hours) parts.push(`Coverage: ${typeof needs.$hours === 'number' ? `${needs.$hours} hours` : needs.$hours}`)
   if (needs.$extras?.length) parts.push(`Extras: ${needs.$extras.join(', ')}`)
   const meal = MEALS.find(m => m[0] === needs.$meal)
   if (meal) parts.push(`Meal: ${meal[1]}`)

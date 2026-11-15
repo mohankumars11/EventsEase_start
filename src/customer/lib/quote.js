@@ -21,6 +21,7 @@
  * stays "Price on request".
  */
 import { rupees } from './format'
+import { experienceOf, hoursOf, packageFits } from './experience'
 
 const HOURLY = new Set(['hour'])
 const COVERS = new Set(['session', 'event', 'half_day', 'full_day', 'fixed'])
@@ -35,19 +36,28 @@ export function asksFor(tradeId, list) {
   }
 }
 
-/** The customer's answers for one service: their own, else the event's. */
-export function askOf(picks = {}, event = {}) {
-  return { hours: Number(picks.$hours) || null, guests: Number(picks.$guests) || Number(event.guests) || null, diets: picks.$diet ?? [] }
+/** The customer's answers for one service: their own, else the event's.
+    With `tradeId`, also the experience they chose for it (migration 208). */
+export function askOf(picks = {}, event = {}, tradeId = null) {
+  return { hours: hoursOf(picks.$hours), guests: Number(picks.$guests) || Number(event.guests) || null, diets: picks.$diet ?? [],
+    experience: tradeId ? experienceOf(tradeId, picks.$tier) : null }
 }
 const dietOk = (want, d) => !want?.length || !d || want.some(w => w === d || (w === 'non_veg' && d === 'mixed') || (w === 'mixed' && d === 'non_veg'))
 
 /** One master's price for the ask, or null when nothing they offer covers it. */
 export function quote(p, ask = {}) {
-  const h = Number(ask.hours) || null, g = Number(ask.guests) || null
+  /* A chosen experience raises the bar to its own minimum hours, and only a
+     package that really delivers it may be the quote — judged on hours and
+     inclusions, never on the partner's own label. A partner with no such
+     package drops out rather than being quoted for something shorter. */
+  const exp = ask.experience?.model === 'PARTNER_PACKAGE' ? ask.experience : null
+  const g = Number(ask.guests) || null
+  const h = Math.max(hoursOf(ask.hours) ?? 0, Number(exp?.min_hours) || 0) || null
   if (!h && !g) return null
   const c = []
   for (const o of p.offers ?? []) {
     if (o.type === 'package') {
+      if (exp && !packageFits(o, exp, h).ok) continue
       if (h && o.hours && o.hours < h) continue
       if (!h && !o.hours) continue
       c.push({ paise: o.paise, note: o.hours ? `${o.label ?? 'Package'} · ${o.hours} h` : `${o.label ?? 'Package'}`, o, hours: o.hours ?? h, line: { fromKind: 'package', fromUnit: 'package' } })
@@ -56,10 +66,12 @@ export function quote(p, ask = {}) {
       const n = Math.max(g, o.minQty || 1)
       c.push({ paise: o.paise * n, note: `${n.toLocaleString('en-IN')} plates × ${rupees(o.paise)}`, o, guests: n, line: { fromKind: 'plate', fromUnit: 'per plate' } })
     } else if (o.type === 'rule' && HOURLY.has(o.key)) {
+      if (exp?.required_inclusions?.length) continue   // an hourly rate cannot promise an album
       if (!h || (o.maxHours && h > o.maxHours)) continue
       const n = Math.max(h, o.minHours || o.minQty || 0)
       c.push({ paise: o.paise * n, note: `${n} h × ${rupees(o.paise)}/h`, o, hours: n, line: { fromKind: 'hour', fromUnit: 'per hour' } })
     } else if (o.type === 'rule' && COVERS.has(o.key)) {
+      if (exp?.required_inclusions?.length) continue
       const cover = o.includedHours ?? DEFAULT_COVER[o.key] ?? 0
       if (!h || cover < h) continue
       c.push({ paise: o.paise, note: `${o.key.replace('_', ' ')} · up to ${cover} h`, o, hours: h, line: { fromKind: 'once', fromUnit: `per ${o.key.replace('_', ' ')}` } })
@@ -69,7 +81,9 @@ export function quote(p, ask = {}) {
   const best = c.reduce((a, b) => (b.paise < a.paise ? b : a))
   return {
     paise: best.paise, note: best.note, hours: best.hours ?? null, guests: best.guests ?? null,
-    line: { ...best.line, fromPaise: best.o.paise, fromLabel: best.o.label ?? null, fromRef: best.o.ref },
+    line: { ...best.line, fromPaise: best.o.paise, fromLabel: best.o.label ?? null, fromRef: best.o.ref,
+      // What the customer chose, carried to the booking request so the server can check it.
+      experience: exp ? { trade: exp.trade_id, tier: exp.tier, name: exp.name, version: exp.version, hours: h } : null },
   }
 }
 

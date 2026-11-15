@@ -24,7 +24,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'motion/react'
-import { ArrowLeftRight, BadgePercent, CalendarCheck2, Check, ChevronRight, ClipboardList, Clock3, Loader2, Lock, MapPin, Phone, Send, ShieldCheck, Sparkles, Star, Users } from 'lucide-react'
+import { ArrowLeftRight, BadgeCheck, BadgePercent, Bell, CalendarCheck2, Check, ChevronRight, ClipboardList, Clock3, Loader2, Lock, MapPin, Phone, Plus, Send, ShieldCheck, Zap, Star, Users } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { payLines } from '../../lib/payLines'
@@ -34,11 +34,14 @@ import { TRADE } from '../data/trades'
 import { occasionArt, serviceArt } from '../data/art'
 import { usePlan, needsFor } from '../state/PlanContext'
 import { savedWhere } from '../lib/where'
-import { dayLabel, plural, timeLabel } from '../lib/format'
-import { quoteLine, requestLine } from '../lib/booking'
+import { dayLabel, plural, timeLabel, rupees } from '../lib/format'
+import { quoteLine, requestLine, requestFor } from '../lib/booking'
+import { syncRequirements, dispatchEverything } from '../lib/eventSpine'
 import { matchTrade, priceOne, some, lineOf } from '../lib/liveMatch'
 import { asLine } from '../lib/quote'
-import { loadCuisines } from '../lib/needs'
+import { loadCuisines, loadExperienceTiers, needsFor as questionsFor } from '../lib/needs'
+import { buildBoard } from '../lib/offerBoard'
+import OfferBoard from '../ui/OfferBoard'
 import { myVouchers, bookingVouchers } from '../lib/rewards'
 import { confirmPaid, rememberVoucher } from '../lib/bookings'
 import { linkBookings } from '../lib/eventPlans'
@@ -49,8 +52,10 @@ import { copyFor } from '../data/requirementCopy'
 import { briefFor } from '../lib/brief'
 import { loadCatalogue, snapshotFor } from '../lib/menuStudio'
 import { ArtFill } from '../ui/art'
+import { useProgress } from '../lib/progress'
 import SignInSheet from './SignInSheet'
-import InviteReady from '../ui/InviteReady'
+import InviteShare from '../ui/InviteShare'
+import LiveMap from '../ui/LiveMap'
 
 const spring = { type: 'spring', stiffness: 420, damping: 34 }
 const nap = ms => new Promise(r => setTimeout(r, ms))
@@ -64,20 +69,35 @@ export default function LiveMatch() {
   const { occasionId } = useParams()
   const o = OCCASION[occasionId]
   const navigate = useNavigate()
+  useProgress(o?.id, 3, !!o)
   const plan = usePlan()
   const { user, profile } = useAuth()
   const ev = plan.event
   const place = plan.place?.lat ? plan.place : savedWhere()
   const valid = !!(o && ev.occasionId === o.id && ev.date)
+  /* The board prices for the same city the request is later sent with (venue.city below), so a city margin can never make the two differ. */
+  const boardPlace = place ? { ...place, city: place.city ?? 'Bengaluru' } : place
   const [params] = useSearchParams()
   const planner = params.get('planner') === '1'
+  /* ?only=photography,venue — one service sent on its own from its quotation
+     card (Mohan, 2026-11-11: "send it now, or find the masters at the end");
+     ?master=<serviceId> opens that master's offers first (the Venues and
+     Restaurants screens' "Book this"). */
+  const only = (params.get('only') ?? '').split(',').filter(t => TRADE[t])
+  const master = params.get('master')
   const services = useMemo(() => (valid ? needsFor(o, plan.picks[o.id] ?? {}, ev).needed : []), [valid, o, plan.picks, ev])
-  const needed = useMemo(() => (planner ? [PLANNER] : services), [planner, services])
+  const needed = useMemo(() => (planner ? [PLANNER] : only.length ? only : services), [planner, services, only.join(',')]) // eslint-disable-line react-hooks/exhaustive-deps
   const who = planner ? 'planner' : 'master'
   const seed = `${user?.id ?? 'guest'}|${ev.date}|${o?.id}`
   const [rows, setRows] = useState({}) // tradeId → { near, match, backups, pool, stage }
   const [phase, setPhase] = useState('matching') // matching | ready | sending | sent | paying | paid | unpaid | error
   const [swap, setSwap] = useState(null)
+  const [boardFor, setBoardFor] = useState(null) // tradeId whose offer board is open
+  const autoOpened = useRef(false)
+  useEffect(() => {
+    if (master && only.length === 1 && rows[only[0]]?.stage === 'offers' && !autoOpened.current) { autoOpened.current = true; setBoardFor(only[0]) }
+  }, [master, rows]) // eslint-disable-line react-hooks/exhaustive-deps
+  const attempt = useRef(0) // bumps after a send that failed somewhere, so a retry is a new batch
   const [signIn, setSignIn] = useState(false)
   const [phone, setPhone] = useState(profile?.phone?.replace(/^\+91/, '') ?? '')
   const [voucher, setVoucher] = useState(null)
@@ -102,9 +122,20 @@ export default function LiveMatch() {
     setRows(Object.fromEntries(needed.map(t => [t, { stage: 'near' }])))
     setPhase('matching')
     ;(async () => {
-      await loadCuisines(supabase).catch(() => {})
+      /* Experiences too: arriving here straight from a reload must not drop
+         the customer's chosen experience (it did, until 2026-11-03). */
+      await Promise.all([loadCuisines(supabase), loadExperienceTiers(supabase)].map(x => x.catch(() => {})))
       const t0 = Date.now()
       await some(needed.map((t, i) => async () => {
+        /* Every master who can deliver it, each with every package of theirs
+           that does, priced for the date — the board (Mohan, 2026-11-03). The
+           radar is its loading moment; nothing is chosen for the customer. */
+        if (!planner) {
+          const board = await buildBoard({ tradeId: t, occasionId: o.id, event: ev, place: boardPlace, needs: plan.needsOf(o.id, t) }).catch(() => null)
+          await nap(Math.max(0, 700 + i * 320 - (Date.now() - t0)))
+          if (live) setRows(x => ({ ...x, [t]: { stage: board?.masters?.length ? 'offers' : 'none', board, near: board?.total ?? 0 } }))
+          return
+        }
         const r = await matchTrade(t, { occasionId: o.id, event: ev, place, needs: plan.needsOf(o.id, t), seed,
           onPool: n => { if (live) setRows(x => ({ ...x, [t]: { ...(x[t] ?? {}), stage: 'date', near: n } })) } })
         /* The result is real; only its reveal is paced, one service after
@@ -124,6 +155,18 @@ export default function LiveMatch() {
   const near = list.reduce((s, x) => s + (x.r.near ?? 0), 0)
   const landed = list.filter(x => x.r.stage === 'done')
   const gaps = list.filter(x => x.r.stage === 'none')
+  const toChoose = list.filter(x => x.r.stage === 'offers')
+
+  /* The customer chose an offer on a board: it becomes this service's line,
+     exactly as a match was — send() is unchanged — and the other masters they
+     ticked to compare become their backups, theirs first (197). */
+  function chooseOffer(t, offer, partner, backups) {
+    const line = { ...offer.line, name: partner.name, cover: partner.cover, rating: partner.rating, distanceKm: partner.distanceKm }
+    setRows(x => ({ ...x, [t]: { ...x[t], stage: 'done', chosen: true,
+      match: { line, partner, offer, q: { path: offer.path, customer_paise: offer.price } },
+      backups: backups.map(b => ({ ...b.line, chosenBy: 'customer', customer_paise: b.price })) } }))
+    setBoardFor(null)
+  }
   const instant = landed.filter(x => x.r.match.q.path === 'INSTANT')
   const total = instant.reduce((s, x) => s + Number(x.r.match.q.customer_paise || 0), 0)
   const allNear = list.every(x => x.r.near != null)
@@ -139,6 +182,16 @@ export default function LiveMatch() {
      master who fits (up to ten a service); the board shows their prices
      live and the customer accepts one (Mohan, 2026-11-02: optional, a
      button at the end). */
+  /* What the master reads: the customer's choices, and anything typed on the plan. */
+  function noteFor(t) {
+    const nd = plan.needsOf(o.id, t)
+    const wants = briefFor(o, t, nd)
+    const also = (ev.custom ?? []).length ? `Also: ${ev.custom.join(', ')}` : null
+    const where = ev.venueChoice === 'other' && ev.venueOther ? `Venue: ${ev.venueOther}` : null
+    const told = nd.$instructions && t !== 'catering_food' ? `From the customer: ${String(nd.$instructions).trim()}` : null
+    return [wants && `Needs: ${wants}`, told, also, where].filter(Boolean).join(' · ') || undefined
+  }
+
   async function send(all = false) {
     const compare = all === true ? 10 : 1
     if (!user) { setSignIn(true); return }
@@ -146,6 +199,44 @@ export default function LiveMatch() {
     const tel = `+91${phone.replace(/\D/g, '').slice(-10)}`
     if (profile?.id && profile.phone !== tel) supabase.from('profiles').update({ phone: tel }).eq('id', profile.id).then(() => {}, () => {})
     const results = []
+    /* One event on the server (202–206): every chosen service becomes a
+       requirement with a code, its answers checked by the server, and the
+       whole tap goes as ONE batch — a service already with professionals is
+       never sent twice, and a double tap is the same batch. Only when the
+       spine is unavailable (signed out of it, or before 202) does the old
+       per-line path below run — never silently mixed with this one. */
+    if (!planner && compare === 1) {
+      const sync = await syncRequirements({ userId: user.id, occasionId: o.id, context: { ...ev, place: place ?? null },
+        services: landed.map(({ t }) => ({ tradeId: t, needs: plan.needsOf(o.id, t) })) })
+      if (sync.ok) {
+        const lines = [], early = []
+        for (const { t, r } of landed) {
+          const q = sync.reqs[t], line = r.match.line
+          const base = { key: line.key, tradeId: t, serviceId: line.serviceId, name: line.name, cover: line.cover, occasionId: o.id, requirementCode: q?.code ?? null }
+          if (q?.state === 'dispatched') { early.push({ ...base, path: 'ALREADY_SENT', reasons: ['Already with professionals'] }); continue }
+          if (!q?.ok || q.state !== 'ready') {
+            early.push({ ...base, path: 'INCOMPLETE', reasons: [q?.message ?? (q?.missing?.length ? `${copyFor(o, t).title}: tell us first — ${q.missing.map(k => questionsFor(t).find(x => x.key === k)?.title ?? k).join(', ')}` : 'Could not save this service')] })
+            continue
+          }
+          lines.push({ base, planServiceId: q.id, vendorServiceId: line.serviceId, request: requestFor(line, ev, place), venue, note: noteFor(t),
+            backups: (r.backups ?? []).map(b => ({ serviceId: b.serviceId, chosenBy: b.chosenBy ?? 'sambramo', request: requestFor(b, ev, place) })) })
+        }
+        const sig = lines.map(l => `${l.planServiceId}:${l.vendorServiceId}:${l.request.package_id ?? l.request.rule_kind ?? ''}`).sort().join('|')
+        const clientKey = `snd-${[...sig].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7).toString(36)}-${attempt.current}`
+        const out = lines.length ? await dispatchEverything({ planId: sync.planId, clientKey, lines: lines.map(({ base, ...l }) => l) }) : { ok: true, sent: [], failed: [], skipped: [] }
+        if (!out.ok) { attempt.current++; setSent({ results: [{ path: 'ERROR', reasons: [out.reason] }] }); setPhase('error'); return }
+        for (const l of lines) {
+          const s2 = (out.sent ?? []).find(x => x.planServiceId === l.planServiceId)
+          const f2 = (out.failed ?? []).find(x => x.planServiceId === l.planServiceId)
+          results.push(s2
+            ? { ...l.base, path: s2.path, lineId: s2.lineId, bookingRequestId: s2.requestId, amountPaise: s2.price, replyBy: s2.replyBy, backups: s2.backups, at: Date.now() }
+            : { ...l.base, path: 'ERROR', reasons: f2?.reasons?.length ? f2.reasons : [String(f2?.reason ?? 'Could not send')] })
+        }
+        results.push(...early)
+        if (results.some(x => x.path === 'ERROR')) attempt.current++
+      }
+    }
+    if (!results.length) {
     for (const { t, r } of landed) {
       const line = r.match.line
       try {
@@ -163,7 +254,9 @@ export default function LiveMatch() {
         const st = t === 'catering_food' ? plan.needsOf(o.id, t).$studio : null
         const nd = st ? plan.needsOf(o.id, t) : null
         const menu = st ? snapshotFor(await loadCatalogue({ live: false }), st, { diet: nd.$studioDiet ?? nd.$diet?.[0] ?? 'veg', meal: nd.$meal, serve: nd.$serve,
-          guests: Number(nd.$guests) || Number(ev.guests) || null, allergies: nd.$allergies, instructions: nd.$instructions, refs: nd.$refs ?? [], menuId: st.menuId ?? null }) : null
+          guests: Number(nd.$guests) || Number(ev.guests) || null, allergies: nd.$allergies, refs: nd.$refs ?? [], menuId: st.menuId ?? null,
+          /* The edition the customer chose on the menu card is a promise the caterer must read. */
+          instructions: [nd.$instructions, { jain: 'JAIN edition — no onion, garlic or root vegetables', satvik: 'SATVIK edition — no onion or garlic' }[st.edition]].filter(Boolean).join(' · ') || null }) : null
         if (!planner && compare > 1) {
           /* Compare: the brief goes to the best N as price requests. */
           const others = (r.pool ?? []).filter(p => p.serviceId !== line.serviceId).slice(0, compare - 1).map(p => lineOf(asLine(p), o.id))
@@ -184,6 +277,7 @@ export default function LiveMatch() {
       } catch (e) {
         results.push({ key: line.key, tradeId: t, name: line.name, path: 'ERROR', reasons: [e.message] })
       }
+    }
     }
     plan.recordBookings(results)
     linkBookings(user.id, results).catch(() => {})
@@ -228,22 +322,31 @@ export default function LiveMatch() {
       {!done && (
         <>
           <section className="px-4 pt-2">
-            <h2 className="text-[26px] font-black leading-[1.05] tracking-[-0.04em]">{phase === 'matching' ? `Finding your ${who}${planner ? '' : 's'}` : landed.length ? (planner ? 'Your planner is ready' : 'Your masters are ready') : `No ${who} is free`}</h2>
+            <h2 className="text-[26px] font-black leading-[1.05] tracking-[-0.04em]">{phase === 'matching' ? `Finding your ${who}${planner ? '' : 's'}` : landed.length ? (planner ? 'Your planner is ready' : 'Your masters are ready') : toChoose.length ? `${toChoose.reduce((s, x) => s + (x.r.board?.total ?? 0), 0)} masters can do it — choose yours` : `No ${who} is free yet`}</h2>
             <p className="mt-1 flex items-center gap-1.5 text-[13px] font-bold text-[var(--ink-3)]">
               <span className={'h-2 w-2 rounded-full ' + (phase === 'matching' ? 'cx-live-dot bg-[#16A34A]' : 'bg-[#16A34A]')} />
               Live · near {place?.area ?? 'you'} · {dayLabel(ev.date)}{ev.time ? `, ${timeLabel(ev.time)}` : ''}
             </p>
           </section>
 
-          <Radar active={phase === 'matching'} dots={Math.min(near, 16)} faces={landed.map(x => x.r.match.line.cover).slice(0, 6)} art={occasionArt(o)} tone={o.tone} count={near} />
-
-          <div className="mx-4 mt-1 grid grid-cols-3 gap-2" data-stages>
-            {[[MapPin, 'Nearby'], [Users, 'Your needs'], [CalendarCheck2, `Free ${dayLabel(ev.date).split(',')[0]}`]].map(([Icon, label], i) => (
-              <span key={label} className={'flex items-center justify-center gap-1.5 rounded-full px-2 py-2 text-[12px] font-extrabold transition-colors ' + (stageOk[i] ? 'bg-[#EAF8EF] text-[#0B5B30]' : 'bg-[#F6F3FA] text-[var(--ink-3)]')} data-stage-ok={stageOk[i]}>
-                {stageOk[i] ? <Check size={14} strokeWidth={3.2} /> : <Icon size={14} />}{label}
-              </span>
-            ))}
+          {/* The streets around the event, every master found on them with their own logo (Mohan, 2026-11-14). */}
+          <div className="mx-3 mt-3">
+            <LiveMap place={place} searching={phase === 'matching'} count={near || null}
+              masters={list.flatMap(({ t, r }) => (r.board?.masters ?? []).map(m => ({ id: m.partner.serviceId, name: m.partner.name, cover: m.partner.avatar ?? m.partner.cover, distanceKm: m.partner.distanceKm, lat: m.partner.lat, lng: m.partner.lng, tradeId: t }))
+                .concat(r.match?.line ? [{ id: r.match.line.serviceId, name: r.match.line.name, cover: r.match.line.cover, distanceKm: r.match.line.distanceKm, tradeId: t }] : []))} />
           </div>
+          <LiveFeed list={list} phase={phase} place={place} ev={ev} o={o} />
+          {/* Nobody waits on this screen: add more meanwhile, we tell you when a master accepts. */}
+          {!planner && (
+            <div className="mx-3 mt-3 flex items-center gap-3 rounded-[20px] bg-gradient-to-br from-[#F6F0FF] to-[#EDE3FF] p-3 shadow-[inset_0_0_0_1px_#E3D5FA]" data-while-you-wait>
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[14px] bg-white text-[#6D28D9] shadow-[0_8px_18px_-12px_rgba(76,29,149,.6)]"><Bell size={20} /></span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[13.5px] font-black leading-tight text-[#2E1065]">No need to wait here</span>
+                <span className="block text-[11.5px] font-semibold leading-snug text-[#5B4A7A]">We notify you the moment a master replies or accepts. Meanwhile add anything else your {o.name.toLowerCase()} needs.</span>
+              </span>
+              <Link to={`/o/${o.id}/plan`} className="cx-press flex h-10 shrink-0 items-center gap-1 rounded-full bg-[#1C1033] px-3 text-[12px] font-extrabold text-white" data-add-more-live><Plus size={14} />Add more</Link>
+            </div>
+          )}
 
           {planner && (
             <section className="mx-4 mt-5 rounded-[22px] bg-[#F7F3FF] p-3.5 shadow-[inset_0_0_0_1px_#E7DCFB]" data-brief>
@@ -259,18 +362,20 @@ export default function LiveMatch() {
           )}
 
           <section className="mt-5 space-y-2.5 px-4" data-matches>
-            {list.filter(x => x.r.stage !== 'none').map(({ t, r }, i) => <MatchCard key={t} t={t} r={r} i={i} guests={ev.guests} onSwap={() => setSwap({ t })} name={planner ? 'Event planner' : copyFor(o, t).title} fee={planner} />)}
+            {list.filter(x => x.r.stage !== 'none').map(({ t, r }, i) => (r.stage === 'offers'
+              ? <OffersRow key={t} t={t} r={r} i={i} name={copyFor(o, t).title} onOpen={() => setBoardFor(t)} />
+              : <MatchCard key={t} t={t} r={r} i={i} guests={ev.guests} onSwap={() => (planner ? setSwap({ t }) : setBoardFor(t))} name={planner ? 'Event planner' : copyFor(o, t).title} fee={planner} />))}
             {gaps.length > 0 && (
               <div className="rounded-[22px] bg-[#FFF8F3] p-3.5 shadow-[0_0_0_1px_#FBE3D3]" data-gaps>
                 <p className="text-[14px] font-extrabold">No {who} free {dayLabel(ev.date).split(',')[0]} for</p>
                 <div className="mt-2.5 flex flex-wrap gap-2">
                   {gaps.map(({ t }) => (
-                    <Link key={t} to={`/s/${t}?o=${o.id}`} className="cx-press flex items-center gap-1.5 rounded-full bg-white py-1 pl-1 pr-2.5 text-[12.5px] font-extrabold shadow-[0_0_0_1px_#F6DCCB]" data-gap={t}>
+                    <Link key={t} to={`/o/${o.id}/prefs?t=${t}`} className="cx-press flex items-center gap-1.5 rounded-full bg-white py-1 pl-1 pr-2.5 text-[12.5px] font-extrabold shadow-[0_0_0_1px_#F6DCCB]" data-gap={t}>
                       <ArtFill art={serviceArt(t)} tone="#FFF1E7" className="h-7 w-7 rounded-full" inset="10%" />{copyFor(o, t).title}<ChevronRight size={14} className="text-[#C2652A]" />
                     </Link>
                   ))}
                 </div>
-                <p className="mt-2 text-[11.5px] font-bold text-[#9A4A12]">Tap one to pick a master yourself, or go ahead without it.</p>
+                <p className="mt-2 text-[11.5px] font-bold text-[#9A4A12]">Tap one to loosen its choices, or go ahead without it — we tell you when a master frees up.</p>
               </div>
             )}
           </section>
@@ -290,7 +395,7 @@ export default function LiveMatch() {
         </>
       )}
 
-      {done && <Done o={o} ev={ev} phase={phase} sent={sent} total={planner ? 0 : total} planner={planner} services={services.length} />}
+      {done && <Done o={o} ev={ev} phase={phase} sent={sent} total={planner ? 0 : total} planner={planner} services={services.length} next={params.get('next')} only={only} />}
 
       {!done && (
         <ActionBar>
@@ -301,12 +406,12 @@ export default function LiveMatch() {
           ) : landed.length ? (
             <>
               <div className="mb-2.5 flex items-end justify-between gap-3 px-1">
-                {/* No price, not even an estimate, until a master accepts with theirs
-                    (Mohan, 2026-11-02): the masters' own rates still choose who is
-                    matched and who backs them up, behind the scenes. */}
+                {/* The customer saw every price on the boards and chose (Mohan,
+                    2026-11-03) — so the total is shown; a master who replies with a
+                    price adds theirs when they do. */}
                 <span>
-                  <span className="block text-[11.5px] font-extrabold uppercase tracking-[0.1em] text-[var(--ink-3)]">Price</span>
-                  <span className="block text-[16px] font-black leading-tight tracking-[-0.02em]" data-total>When they accept</span>
+                  <span className="block text-[11.5px] font-extrabold uppercase tracking-[0.1em] text-[var(--ink-3)]">{planner ? 'Price' : 'Your total'}</span>
+                  <span className="cx-num block text-[16px] font-black leading-tight tracking-[-0.02em]" data-total>{!planner && total > 0 ? rupees(total) : 'When they accept'}</span>
                 </span>
                 {requestLive === false ? (
                   <span className="text-right">
@@ -327,12 +432,19 @@ export default function LiveMatch() {
                   : phase === 'unpaid' ? <>Pay now<ChevronRight size={18} /></>
                     : !phoneOk ? <><Phone size={17} />Add your mobile number</> : requestLive === false ? <>Book · pay advance<ChevronRight size={18} /></> : <><Send size={18} />{planner ? 'Send to planner' : `Send ${plural(landed.length, 'request')}`}</>}
               </button>
-              {!planner && ['ready', 'error'].includes(phase) && (
+              {!planner && toChoose.length > 0 && (
+                <p className="mt-2 text-center text-[12px] font-bold text-[var(--ink-3)]" data-still-to-choose>Still to choose: {toChoose.map(x => copyFor(o, x.t).title).join(', ')}</p>
+              )}
+              {planner && ['ready', 'error'].includes(phase) && (
                 <button type="button" onClick={phoneOk ? () => send(true) : askPhone} className="cx-press mt-2 flex h-11 w-full items-center justify-center gap-1.5 rounded-[16px] text-[13.5px] font-extrabold text-[var(--brand)] shadow-[inset_0_0_0_1.5px_#E3D5FA]" data-compare-all>
                   Compare &amp; negotiate with every master
                 </button>
               )}
             </>
+          ) : toChoose.length ? (
+            <button type="button" onClick={() => setBoardFor(toChoose[0].t)} className="cx-press cx-cta flex h-[58px] w-full items-center justify-center gap-2 rounded-[20px] text-[15.5px] font-extrabold" data-choose-first>
+              Choose your {(TRADE[toChoose[0].t]?.label ?? copyFor(o, toChoose[0].t).title).toLowerCase()} master<ChevronRight size={18} />
+            </button>
           ) : (
             <Link to={`/o/${o.id}/match?all=1`} className="cx-press cx-cta flex h-[58px] w-full items-center justify-center gap-2 rounded-[20px] text-[15.5px] font-extrabold">See all masters<ChevronRight size={18} /></Link>
           )}
@@ -340,14 +452,50 @@ export default function LiveMatch() {
       )}
 
       <SwapSheet swap={swap} rows={rows} onClose={() => setSwap(null)} onPick={choose} occasionId={o.id} />
+      <OfferBoard open={!!boardFor} onClose={() => setBoardFor(null)} title={boardFor ? copyFor(o, boardFor).title : ''} tradeId={boardFor} occasionId={o.id}
+        event={ev} place={boardPlace} needs={boardFor ? plan.needsOf(o.id, boardFor) : {}} initial={boardFor ? rows[boardFor]?.board : null} focus={master}
+        onChoose={(offer, partner, backups) => chooseOffer(boardFor, offer, partner, backups)} />
       <SignInSheet open={signIn} onClose={() => setSignIn(false)} onDone={() => setSignIn(false)} why="to send your requests" />
     </main>
   )
 }
 
+const Radar2 = () => <span className="relative grid h-4 w-4 place-items-center"><span className="absolute h-4 w-4 animate-ping rounded-full bg-[#7C3AED]/30" /><span className="h-2 w-2 rounded-full bg-[#7C3AED]" /></span>
+
+/* The live feed: what the engine is doing, in the customer's words, each
+   line a fact from the rows — never a slogan (Mohan, 2026-11-14: "keep
+   informing the user … real time, nothing fake, everything ID-verified"). */
+function LiveFeed({ list, phase, place, ev, o }) {
+  const where = place?.area ?? 'you'
+  const day = dayLabel(ev.date).split(',')[0]
+  const lines = []
+  for (const { t, r } of list) {
+    const name = TRADE[t]?.label ?? copyFor(o, t).title
+    if (r.stage === 'near') lines.push({ k: `${t}:near`, on: false, text: `Checking ${name.toLowerCase()} masters near ${where}…` })
+    else if (r.stage === 'offers') lines.push({ k: `${t}:offers`, on: true, text: `${r.board.total} ${name.toLowerCase()} ${r.board.total === 1 ? 'master is' : 'masters are'} free on ${day}${r.board.range ? ` · from ${rupees(r.board.range.lo)}` : ''}` })
+    else if (r.stage === 'done') lines.push({ k: `${t}:done`, on: true, text: `${r.match.line.name} picked for ${name.toLowerCase()}` })
+    else if (r.stage === 'none') lines.push({ k: `${t}:none`, on: false, warn: true, text: `Nobody free for ${name.toLowerCase()} on ${day} yet — we keep looking` })
+    else lines.push({ k: `${t}:date`, on: false, text: `${r.near ?? ''} ${name.toLowerCase()} masters — checking ${day}…` })
+  }
+  const verified = list.reduce((s, x) => s + (x.r.board?.total ?? 0), 0)
+  return (
+    <ul className="mx-3 mt-3 space-y-1.5" data-live-feed>
+      {lines.map(l => (
+        <li key={l.k} className={'cx-rise flex items-center gap-2.5 rounded-[14px] px-3 py-2 text-[12.5px] font-bold ' + (l.on ? 'bg-[#EAF8EF] text-[#0B5B30]' : l.warn ? 'bg-[#FFF8F3] text-[#9A4A12]' : 'bg-[#F6F3FA] text-[var(--ink-2)]')} data-feed={l.k}>
+          {l.on ? <Check size={14} strokeWidth={3.2} className="shrink-0" /> : <Loader2 size={14} className={'shrink-0 ' + (l.warn ? '' : 'animate-spin')} />}<span className="min-w-0 flex-1">{l.text}</span>
+        </li>
+      ))}
+      <li className="flex items-center gap-2.5 rounded-[14px] bg-[#F6F3FA] px-3 py-2 text-[12.5px] font-bold text-[var(--ink-2)]" data-feed="verified">
+        <BadgeCheck size={14} className="shrink-0 text-[#7C3AED]" /><span className="min-w-0 flex-1">{verified ? `All ${verified} ID-verified by Sambramo · ` : 'Every master is ID-verified · '}₹0 to request · pay only after one accepts</span>
+        {phase === 'matching' && <span className="cx-live-dot h-2 w-2 shrink-0 rounded-full bg-[#16A34A]" />}
+      </li>
+    </ul>
+  )
+}
+
 /* The radar: rings, a sweep, a dot for every master found nearby, and the
    matched masters' faces landing on it. Dots are centred with margins, not
-   translate — the pop-in animation owns `transform`. */
+   translate — the pop-in animation owns `transform`. (Kept; the map took its place on 2026-11-14.) */
 function Radar({ active, dots, faces, art, tone, count }) {
   const at = i => { const a = (i * 137.5 * Math.PI) / 180, r = 30 + ((i * 53) % 58); return { left: `${50 + r * Math.cos(a) * 0.5}%`, top: `${50 + r * Math.sin(a) * 0.5}%` } }
   return (
@@ -366,6 +514,30 @@ function Radar({ active, dots, faces, art, tone, count }) {
       </div>
       {count > 0 && <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-[#1C1033] px-3 py-1.5 text-[12px] font-extrabold text-white shadow-[0_10px_20px_-10px_rgba(28,16,51,.9)]" data-near-count>{count} masters checked</span>}
     </div>
+  )
+}
+
+/* A service whose offers are in: how many masters can deliver it, the price
+   range, and the way into its board. Nothing is chosen until the customer
+   chooses. */
+function OffersRow({ t, r, i, name, onOpen }) {
+  const b = r.board
+  const exp = b?.ask?.experience
+  const faces = (b?.masters ?? []).slice(0, 4).map(m => m.partner.cover).filter(Boolean)
+  return (
+    <motion.button type="button" onClick={onOpen} initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ ...spring, delay: 0.02 * i }}
+      className="cx-press flex w-full items-center gap-3 rounded-[22px] bg-white p-3 text-left shadow-[0_0_0_1px_#E9E1F7,0_18px_30px_-26px_rgba(91,33,168,.9)]" data-match={t} data-state="offers">
+      <ArtFill art={serviceArt(t)} tone="#F6F1FF" className="h-[60px] w-[60px] shrink-0 rounded-[16px]" inset="12%" />
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-[11.5px] font-extrabold text-[var(--brand)]">{name}{exp ? ` · ${exp.name}` : ''}</span>
+        <span className="block text-[15px] font-black tracking-[-0.02em]">{b.total} can deliver it</span>
+        <span className="mt-0.5 block text-[12px] font-bold text-[var(--ink-3)]">{b.range ? `${rupees(b.range.lo)}${b.range.hi !== b.range.lo ? ` – ${rupees(b.range.hi)}` : ''}` : 'They send prices'} · compare and choose</span>
+      </span>
+      <span className="flex shrink-0 -space-x-2">
+        {faces.map((f, k) => <span key={k} className="h-7 w-7 overflow-hidden rounded-full ring-2 ring-white"><Photo src={f} className="h-full w-full object-cover" /></span>)}
+      </span>
+      <ChevronRight size={18} className="shrink-0 text-[var(--ink-3)]" />
+    </motion.button>
   )
 }
 
@@ -404,7 +576,8 @@ function MatchCard({ t, r, i, guests, onSwap, name, fee = false }) {
         </div>
       </div>
       <div className="flex items-center justify-between border-t border-[#F3EFF8] bg-[#FCFBFE] px-3 py-1.5">
-        <span className="flex items-center gap-1 text-[11.5px] font-extrabold text-[#0B6B3D]"><CalendarCheck2 size={13} />{quote ? 'Replies with a price' : 'Free on your date'}</span>
+        <span className="flex min-w-0 items-center gap-1 text-[11.5px] font-extrabold text-[#0B6B3D]"><CalendarCheck2 size={13} className="shrink-0" />
+          <span className="truncate">{m.offer ? [m.offer.kind === 'rate' ? 'By the hour' : m.offer.label ? `“${m.offer.label}”` : null, m.offer.summary, m.offer.price ? rupees(m.offer.price) : 'they send a price'].filter(Boolean).join(' · ') : quote ? 'Replies with a price' : 'Free on your date'}</span></span>
         <button type="button" onClick={onSwap} className="cx-press flex items-center gap-1 rounded-full px-2.5 py-1 text-[12px] font-extrabold text-[var(--brand)]" data-swap={t}><ArrowLeftRight size={13} />Change</button>
       </div>
     </motion.div>
@@ -437,14 +610,14 @@ function SwapSheet({ swap, rows, onClose, onPick, occasionId }) {
         ))}
         {!others.length && <li className="py-6 text-center text-[13px] font-semibold text-[var(--ink-3)]">No one else fits this request yet.</li>}
       </ul>
-      {t && <Link to={`/s/${t}?o=${occasionId}`} className="mb-3 flex items-center justify-center gap-1 text-[13px] font-extrabold text-[var(--brand)]">See every master<ChevronRight size={15} /></Link>}
+      {t && <Link to={`/s/${t}?o=${occasionId}&all=1`} className="mb-3 flex items-center justify-center gap-1 text-[13px] font-extrabold text-[var(--brand)]">See every master<ChevronRight size={15} /></Link>}
     </Sheet>
   )
 }
 
 const by = sent => (sent?.replyBy ? `By ${new Date(sent.replyBy).toLocaleString('en-IN', { weekday: 'short', hour: 'numeric', minute: '2-digit' })}` : 'We alert you')
 
-function Done({ o, ev, phase, sent, total, planner = false, services = 0 }) {
+function Done({ o, ev, phase, sent, total, planner = false, services = 0, next = null, only = [] }) {
   const paid = phase === 'paid'
   const n = paid ? sent?.held?.length ?? 0 : sent?.requested?.length ?? 0
   const steps = paid
@@ -469,11 +642,27 @@ function Done({ o, ev, phase, sent, total, planner = false, services = 0 }) {
           </li>
         ))}
       </ol>
-      <div className="mt-4 grid grid-cols-2 gap-2.5">
-        <Link to={`/o/${o.id}/board`} className="cx-press flex h-[54px] items-center justify-center rounded-[18px] bg-[#F4EEFF] text-[14.5px] font-extrabold text-[#3B1670]" data-track>Track live</Link>
-        <Link to="/" className="cx-press cx-cta flex h-[54px] items-center justify-center gap-1.5 rounded-[18px] text-[14.5px] font-extrabold"><Sparkles size={16} />Home</Link>
+      {/* One service sent: carry on with the next while the masters reply (Mohan, 2026-11-13). */}
+      {only.length > 0 && (
+        <div className="mt-4 rounded-[20px] bg-gradient-to-br from-[#F6F0FF] to-[#EDE3FF] p-3.5 shadow-[inset_0_0_0_1px_#E3D5FA]" data-next-service>
+          <p className="text-[13.5px] font-extrabold text-[#2E1065]">We’ll notify you the moment a master accepts</p>
+          <p className="text-[12px] font-semibold text-[#5B4A7A]">Your {only.map(t => (TRADE[t]?.label ?? t).toLowerCase()).join(', ')} quotation is with the masters. Keep planning — confirm it from your live checkout when they reply.</p>
+          <Link to={`/o/${o.id}/prefs${next ? `?t=${next}` : ''}`} className="cx-press cx-cta mt-2.5 flex h-12 w-full items-center justify-center gap-1.5 rounded-[15px] text-[14px] font-extrabold" data-next-go>
+            {next ? <>Next: {TRADE[next]?.label ?? next}<ChevronRight size={17} /></> : <>Back to my preferences<ChevronRight size={17} /></>}
+          </Link>
+        </div>
+      )}
+      {/* While masters reply: add more, follow it live, or go home — we notify either way (Mohan, 2026-11-14). */}
+      <div className="mt-4 rounded-[20px] bg-[#F3FBF5] p-3.5 shadow-[inset_0_0_0_1px_#C7EBD3]" data-notify-note>
+        <p className="flex items-center gap-1.5 text-[13.5px] font-black text-[#0B4F2A]"><Bell size={15} />We’ll notify you the moment a master accepts</p>
+        <p className="mt-0.5 text-[12px] font-semibold text-[#2F6B4A]">Every master is ID-verified. Nothing is paid until you confirm one on your live checkout.</p>
       </div>
-      <InviteReady occasion={o} where="checkout" className="mt-5" />
+      <div className="mt-3 grid grid-cols-3 gap-2">
+        {!planner && <Link to={`/o/${o.id}/plan`} className="cx-press flex h-[54px] flex-col items-center justify-center rounded-[18px] bg-[#F4EEFF] text-[12.5px] font-extrabold text-[#3B1670]" data-add-more-done><Plus size={16} />Add more</Link>}
+        <Link to={`/o/${o.id}/board`} className={'cx-press flex h-[54px] flex-col items-center justify-center rounded-[18px] bg-[#F4EEFF] text-[12.5px] font-extrabold text-[#3B1670] ' + (planner ? 'col-span-2' : '')} data-track><Radar2 />Track live</Link>
+        <Link to="/" className="cx-press cx-cta flex h-[54px] flex-col items-center justify-center gap-0.5 rounded-[18px] text-[12.5px] font-extrabold"><Zap size={16} />Home</Link>
+      </div>
+      <InviteShare o={o} className="mt-5" />
     </section>
   )
 }

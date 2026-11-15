@@ -18,6 +18,7 @@ import { Check, Loader2, LocateFixed, MapPin, Navigation, Search } from 'lucide-
 import { reverseAddress } from '../../lib/partnerLocation'
 import { BENGALURU_AREAS } from '../../data/bengaluruAreas'
 import { Sheet } from '../ui/kit'
+import PinMap from '../ui/PinMap'
 
 async function here() {
   if (typeof window !== 'undefined' && window.Capacitor) {
@@ -75,6 +76,8 @@ export default function PlaceSheet({ open, onClose, value, onPick }) {
         className="cx-press cx-cta cx-pay flex h-14 w-full items-center justify-center gap-2 rounded-[18px] text-[15px] font-extrabold" data-place-done>
         {!picked ? 'Choose your area to continue' : addrOk ? <><Check size={18} strokeWidth={3} />Confirm · {picked.area}</> : <><MapPin size={17} />Add house / flat to continue</>}
       </button>}>
+      {/* The live map first: move it under the pin (Mohan, 2026-11-13). */}
+      <div className="mb-3"><PinMap value={picked ?? value} height={230} onChange={p => { setPicked(x => ({ ...(x ?? {}), area: p.area, city: p.city, lat: p.lat, lng: p.lng, exact: true, pincode: p.pincode })); if (p.line && address.trim().length < 6) setAddress(p.line) }} /></div>
       <button type="button" onClick={useHere} className="cx-press cx-btn flex w-full items-center gap-3 rounded-[18px] px-4 py-3.5 text-left">
         {busy ? <Loader2 size={20} className="animate-spin" /> : <LocateFixed size={20} />}
         <span className="flex-1"><span className="block text-[14.5px] font-extrabold">Use my current location</span>
@@ -88,7 +91,7 @@ export default function PlaceSheet({ open, onClose, value, onPick }) {
             <span className="absolute inset-0 animate-ping rounded-full bg-[#10B981]/30" /><Navigation size={17} className="relative" />
           </span>
           <span className="min-w-0 flex-1"><span className="block truncate text-[14.5px] font-extrabold text-[#064E3B]">{picked.area}{picked.city && picked.city !== picked.area ? `, ${picked.city}` : ''}</span>
-            <span className="block text-[11.5px] font-bold text-[#047857]">{picked.exact ? 'Pinned from your GPS' : 'Area picked'} · {addrOk ? 'ready to confirm' : 'add the house / flat below'}</span></span>
+            <span className="block text-[11.5px] font-bold text-[#047857]">{picked.exact ? 'Pinned on the map' : 'Area picked'} · {addrOk ? 'ready to confirm' : 'add the house / flat below'}</span></span>
         </div>
       )}
 

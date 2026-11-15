@@ -17,9 +17,10 @@
  */
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Check, ChevronRight, Plus } from 'lucide-react'
+import { Check, Plus } from 'lucide-react'
 import { categoryArt, occasionArt, serviceArt } from '../data/art'
 import { TRADE } from '../data/trades'
+import { priceTag } from '../data/startingPrices'
 import { FAMILIES } from '../data/families'
 
 export function ArtFill({ art, tone = '#F3EDFF', className = '', inset = '14%', position = '50% 18%' }) {
@@ -44,25 +45,38 @@ export function Rotator({ items, every = 2600, delay = 0, className = '', wrap =
   return <span key={i} className={'cx-rise ' + (wrap ? 'line-clamp-2 ' : 'block truncate ') + className}>{items[i]}</span>
 }
 
-/* The card (Mohan's reference, 2026-10-26): the picture on a soft warm
-   ground — the 3D art is drawn on white, so it multiplies straight onto
-   it — and a white name strip with a chevron, lifted on a warm shadow. */
+/* The card (Mohan, 2026-11-10): the picture on a soft warm ground — the
+   3D art is drawn on white, so it multiplies straight onto it — at its
+   full height again, so the whole character shows; square corners, no
+   rounding; and the price set the way a quick-commerce shelf sets it:
+   "Starts at" over the figure, an outlined BOOK riding the picture.
+   Every card in a row is the same height — the title always takes two
+   lines' room and the price sits on the bottom edge — so a row of them
+   lines up exactly. */
 const groundOf = tone => `radial-gradient(130% 100% at 50% 25%, #FFFFFF 0%, ${tone} 45%, color-mix(in srgb, ${tone} 55%, #F2B9A6 45%) 100%)`
 
-export function Card({ to, art, tone = '#FBE9F0', title, children, data }) {
+export function Card({ to, art, tone = '#FBE9F0', title, price, foot = null, action = 'BOOK', children, data }) {
   return (
-    <Link to={to} className="cx-press cx-card2 relative flex flex-col overflow-hidden rounded-[20px]" {...data}>
+    <Link to={to} className="cx-press cx-card2 relative flex h-full flex-col overflow-hidden" {...data}>
       <div className="relative aspect-[1/0.9]" style={{ background: groundOf(tone) }}>
         {art?.src && (art.kind === 'art'
           ? <img src={art.src} alt="" loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover object-[50%_18%] mix-blend-multiply" />
           : <span className="absolute inset-[14%]"><img src={art.src} alt="" loading="lazy" decoding="async" className="h-full w-full object-contain drop-shadow-[0_8px_10px_rgba(120,60,40,.2)]" /></span>)}
+        {action && <span className="absolute bottom-1.5 right-1.5 rounded-[7px] border-[1.5px] border-[#0C831F] bg-white px-2 py-[3px] text-[10px] font-black tracking-[0.06em] text-[#0C831F] shadow-[0_4px_10px_-6px_rgba(12,131,31,.7)]" data-card-action>{action}</span>}
       </div>
-      <div className="relative -mt-2.5 flex flex-1 flex-col rounded-t-[14px] bg-white px-2.5 pb-2.5 pt-2">
-        <p className="flex items-start justify-between gap-1">
-          <span className="line-clamp-2 text-[12.5px] font-extrabold leading-[1.18] tracking-[-0.02em] text-[#1C1033]">{title}</span>
-          <ChevronRight size={15} strokeWidth={2.8} className="mt-[1px] shrink-0 text-[#1C1033]" />
+      <div className="relative flex flex-1 flex-col bg-white px-2.5 pb-2.5 pt-2">
+        <p className="min-h-[2.36em] text-[12.5px] leading-[1.18]">
+          <span className="line-clamp-2 font-extrabold tracking-[-0.02em] text-[#1C1033]">{title}</span>
         </p>
-        {children && <div className="mt-1 text-[10.5px] font-bold leading-[1.25] text-[var(--ink-3)]">{children}</div>}
+        {children && <div className="mt-1 min-h-[1.25em] text-[10.5px] font-bold leading-[1.25] text-[var(--ink-3)]">{children}</div>}
+        {price
+          ? (
+            <p className="mt-auto pt-1.5" data-card-price>
+              <span className="block text-[8.5px] font-extrabold uppercase tracking-[0.09em] text-[#8A8398]">Starts at</span>
+              <span className="block text-[15px] font-black leading-none tracking-[-0.03em] text-[#1C1033]">{price}</span>
+            </p>
+          )
+          : foot && <p className="mt-auto pt-1.5 text-[11px] font-extrabold leading-tight text-[var(--brand)]">{foot}</p>}
       </div>
     </Link>
   )
@@ -72,8 +86,8 @@ export function Card({ to, art, tone = '#FBE9F0', title, children, data }) {
 export function CategoryCard({ category, index = 0 }) {
   const names = (category.occasions ?? category.events ?? []).map(o => o.name)
   return (
-    <Card to={`/c/${category.id}`} art={categoryArt(category)} tone={category.tone} title={category.short} data={{ 'data-category': category.id }}>
-      <span className="flex items-start gap-1"><span className="mt-[4px] h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-[var(--ok)]" /><Rotator items={names} delay={index * 380} wrap className="text-[#0B7A45]" /></span>
+    <Card to={`/c/${category.id}`} art={categoryArt(category)} tone={category.tone} title={category.short} action="EXPLORE" foot={`${names.length} occasions ›`} data={{ 'data-category': category.id }}>
+      <span className="flex items-start gap-1"><span className="mt-[4px] h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-[var(--ok)]" /><Rotator items={names} delay={index * 380} className="text-[#0B7A45]" /></span>
     </Card>
   )
 }
@@ -82,8 +96,8 @@ export function CategoryCard({ category, index = 0 }) {
 export function FamilyCard({ family, index = 0 }) {
   const to = family.trades.length === 1 ? `/s/${family.trades[0]}` : `/f/${family.id}`
   return (
-    <Card to={to} art={serviceArt(family.trades[0])} tone={family.tone} title={family.label} data={{ 'data-family': family.id }}>
-      <span className="flex items-start gap-1"><span className="mt-[4px] h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-[var(--ok)]" /><Rotator items={family.trades.length > 1 ? family.trades.map(t => TRADE[t].label) : family.line.split(' · ')} delay={index * 380} wrap className="text-[#0B7A45]" /></span>
+    <Card to={to} art={serviceArt(family.trades[0])} tone={family.tone} title={family.label} action="EXPLORE" data={{ 'data-family': family.id }}>
+      <span className="flex items-start gap-1"><span className="mt-[4px] h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-[var(--ok)]" /><Rotator items={family.trades.length > 1 ? family.trades.map(t => TRADE[t].label) : family.line.split(' · ')} delay={index * 380} className="text-[#0B7A45]" /></span>
     </Card>
   )
 }
@@ -93,7 +107,7 @@ export function FamilyCard({ family, index = 0 }) {
 const HOOKS = ['Ready to book', 'Book in minutes', '25% off first', 'Masters ready', 'Enjoy it all']
 export function OccasionCard({ occasion, index = 0 }) {
   return (
-    <Card to={`/o/${occasion.id}`} art={occasionArt(occasion)} tone={occasion.tone} title={occasion.name} data={{ 'data-occasion': occasion.id }}>
+    <Card to={`/o/${occasion.id}`} art={occasionArt(occasion)} tone={occasion.tone} title={occasion.name} price={priceTag(occasion.id, occasion.category)} data={{ 'data-occasion': occasion.id }}>
       <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-[var(--ok)]" /><Rotator items={HOOKS} delay={(index % 6) * 420} every={2400} className="text-[#0B7A45]" /></span>
     </Card>
   )
@@ -102,7 +116,7 @@ export function OccasionCard({ occasion, index = 0 }) {
 export function ServiceCard({ tradeId, to = `/s/${tradeId}` }) {
   const t = TRADE[tradeId]
   return (
-    <Card to={to} art={serviceArt(tradeId)} tone={FAMILIES.find(x => x.trades.includes(tradeId))?.tone ?? '#F3ECFF'} title={t.label} data={{ 'data-trade': tradeId }}>
+    <Card to={to} art={serviceArt(tradeId)} tone={FAMILIES.find(x => x.trades.includes(tradeId))?.tone ?? '#F3ECFF'} title={t.label} foot="Book a master ›" data={{ 'data-trade': tradeId }}>
       <span className="line-clamp-1">{t.why}</span>
     </Card>
   )

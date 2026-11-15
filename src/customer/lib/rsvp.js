@@ -13,6 +13,9 @@ import { supabase } from '../../lib/supabase'
 
 export const RSVP_ORIGIN = import.meta.env?.VITE_RSVP_ORIGIN || 'https://sambramoh.vercel.app'
 export const rsvpLink = token => `${RSVP_ORIGIN}/rsvp/${token}`
+/* Where "Get Sambramo" points from a shared invitation. The web app until
+   there is a store listing; set VITE_APP_LINK to the Play Store URL then. */
+export const APP_LINK = import.meta.env?.VITE_APP_LINK || `${RSVP_ORIGIN}/`
 
 export const STATUS = {
   attending: { label: 'Coming', tone: 'bg-[#E9F8EF] text-[#0B6B3D]' },
@@ -156,6 +159,25 @@ export function inviteText(inv, guest = null, { reminder = false } = {}) {
   const where = inv.venue_name ? ` at ${inv.venue_name}` : ''
   const head = reminder ? `${hi}A gentle reminder — please let us know if you can make it to ${inv.title}` : `${hi}You’re invited to ${inv.title}${inv.hosts_line ? ` — ${inv.hosts_line}` : ''}`
   return `${head}${when ? ` on ${when}` : ''}${where}. 💜\nPlease RSVP here: ${rsvpLink(guest ? guest.token : inv.open_token)}`
+}
+
+/**
+ * The message a host shares straight from the event card (ui/InviteShare):
+ * the invitation's open link to view and RSVP, then the app link (Mohan,
+ * 2026-11-11: "the downloadable link will go along with the invitation").
+ */
+export function inviteShareText(inv, { guests = null } = {}) {
+  const lines = [
+    `You’re invited — ${inv.title}${inv.hosts_line ? ` · ${inv.hosts_line}` : ''}`,
+    inv.event_date ? `📅 ${day(inv.event_date)}${inv.start_time ? ` · ${time(inv.start_time)}` : ''}` : null,
+    inv.venue_name ? `📍 ${inv.venue_name}` : null,
+    '',
+    'Open your invitation and RSVP in one tap 👇',
+    rsvpLink(inv.open_token),
+    '',
+    `Get Sambramo — plan any celebration in minutes: ${APP_LINK}`,
+  ]
+  return lines.filter(l => l !== null).join('\n')
 }
 
 /** WhatsApp to one number (or the chooser when there is none). */

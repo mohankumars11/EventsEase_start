@@ -16,7 +16,7 @@
  */
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { BadgeCheck, CalendarCheck2, ChevronRight, Gift, HandCoins, MessagesSquare, PartyPopper, ShieldCheck, Sparkles, Wallet, Zap } from 'lucide-react'
+import { BadgeCheck, CalendarCheck2, ChevronRight, Gift, HandCoins, MessagesSquare, PartyPopper, ShieldCheck, Wallet, Zap } from 'lucide-react'
 import { CATEGORIES, OCCASIONS } from '../data/occasions'
 import { TRADES, TRADE_GROUPS } from '../data/trades'
 import { artFor } from '../data/art'
@@ -106,7 +106,7 @@ export default function Explore() {
         <Link to="/refer" className="cx-press cx-cta mx-4 mt-3 flex h-14 items-center justify-center gap-2 rounded-[18px] text-[15px] font-extrabold"><Gift size={18} />Invite a friend<ChevronRight size={18} /></Link>
       </Part>
 
-      <p className="mt-10 flex items-center justify-center gap-1.5 text-[12px] font-bold text-[#A79BC2]"><Sparkles size={14} />Crafted with love in Mysuru</p>
+      <p className="mt-10 flex items-center justify-center gap-1.5 text-[12px] font-bold text-[#A79BC2]"><Zap size={14} />Crafted with love in Mysuru</p>
     </main>
   )
 }

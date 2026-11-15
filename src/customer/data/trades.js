@@ -1,5 +1,5 @@
 /**
- * The 34 trades, as a customer reads them.
+ * The 35 trades, as a customer reads them.
  *
  * The registry (src/data/trades/registry.js) names a trade the way a
  * partner signs up for it — "Beverages, Ice Cream & Cold Storage",
@@ -10,9 +10,9 @@
  * registry's, so a customer tile and a partner listing always agree.
  */
 import {
-  Mic, CupSoda, Brush, Cake, Utensils, Disc3, Sparkles, ClipboardList, Armchair, Lightbulb, Boxes, Gift,
+  Mic, CupSoda, Brush, Cake, Utensils, Disc3, Palette, ClipboardList, Armchair, Lightbulb, Boxes, Gift,
   HandHeart, Mail, Music, HardHat, Container, Hand, Truck, Bus, Camera, PlugZap, Flame, LifeBuoy,
-  ShieldCheck, Speaker, Tent, Route, PackageOpen, SquareParking, Building2, Video, Warehouse, HeartHandshake,
+  ShieldCheck, Speaker, Tent, Route, PackageOpen, SquareParking, Building2, Video, Warehouse, HeartHandshake, UtensilsCrossed,
 } from 'lucide-react'
 import { TRADE_BY_ID } from '../../data/trades/registry'
 
@@ -22,8 +22,9 @@ export const TRADES = [
   t('catering_food', 'Catering', 'Food for every guest, cooked and served hot', Utensils, 'food'),
   t('cake_desserts', 'Cakes & desserts', 'The cake, and a dessert table if you want one', Cake, 'food'),
   t('bar_beverages', 'Drinks & ice cream', 'Mocktail, coffee and ice-cream counters', CupSoda, 'food'),
+  t('restaurant', 'Restaurants', 'A table, a private room, or a bulk order delivered', UtensilsCrossed, 'food'),
   t('venue', 'Venue', 'Halls, lawns and terraces for your guest count', Building2, 'space'),
-  t('decoration_floral', 'Décor & flowers', 'Stage, entrance and flowers, set up and removed', Sparkles, 'space'),
+  t('decoration_floral', 'Décor & flowers', 'Stage, entrance and flowers, set up and removed', Palette, 'space'),
   t('tent_furniture', 'Tents & furniture', 'Shamiana, hangar, chairs and sofas', Tent, 'space'),
   t('event_lighting', 'Lighting', 'Fairy lights to stage rigs, with operators', Lightbulb, 'space'),
   t('photography', 'Photography', 'Every ritual and every relative, captured', Camera, 'media'),

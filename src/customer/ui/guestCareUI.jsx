@@ -9,7 +9,7 @@
  *   LookBadge    an outfit card: what I'm wearing, in which colours
  */
 import { useEffect, useRef, useState } from 'react'
-import { Check, Hotel, Loader2, MapPin, Minus, Phone, Plus, Send, Shirt, Sparkles, UserPlus, X } from 'lucide-react'
+import { Check, Hotel, Loader2, MapPin, Minus, Phone, Plus, Send, Shirt, Zap, UserPlus, X } from 'lucide-react'
 import { Sheet } from './kit'
 import { whatsappUrl } from '../lib/rsvp'
 import { LOOK_COLORS, OUTFITS, POINTS, TRAVEL_MODES, circleCreate, circleFeed, circleInviteText, circlePost, whenLabel } from '../lib/guestCare'
@@ -128,7 +128,7 @@ export function GuestCircles({ token, inviteTitle, focus = false }) {
   const circle = feed.circles.find(c => c.id === open)
   return (
     <section className="rounded-[22px] bg-white p-4 shadow-[0_0_0_1px_#EEE6FA]" data-guest-circles>
-      <p className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#DB2777]"><Sparkles size={13} />Style circles</p>
+      <p className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#DB2777]"><Zap size={13} />Style circles</p>
       <p className="mt-0.5 text-[16px] font-black tracking-[-0.02em]">Twinning with the family?</p>
       <p className="text-[12.5px] font-semibold text-[var(--ink-3)]">Plan matching outfits together — share what you’re wearing, pick the colours.</p>
       <div className="mt-3 space-y-2">
@@ -245,7 +245,7 @@ export function LookBadge({ look, dark = false }) {
 }
 
 export function Swatches({ colors = [], size = 24 }) {
-  if (!colors?.length) return <span className="grid shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#F9A8D4] to-[#C4B5FD]" style={{ width: size, height: size }}><Sparkles size={size * 0.5} className="text-white" /></span>
+  if (!colors?.length) return <span className="grid shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#F9A8D4] to-[#C4B5FD]" style={{ width: size, height: size }}><Zap size={size * 0.5} className="text-white" /></span>
   return (
     <span className="flex shrink-0 -space-x-1.5">
       {colors.slice(0, 4).map(c => <span key={c} className="rounded-full ring-2 ring-white" style={{ width: size, height: size, background: c }} />)}

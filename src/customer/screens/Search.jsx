@@ -15,7 +15,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, CalendarDays, Headset, LayoutGrid, MailOpen, Mic, PartyPopper, RotateCcw, Search as SearchIcon, ShieldCheck, Sparkles, Users, Wallet, X } from 'lucide-react'
+import { ArrowLeft, CalendarDays, Headset, LayoutGrid, MailOpen, Mic, PartyPopper, RotateCcw, Search as SearchIcon, ShieldCheck, Zap, Users, Wallet, X } from 'lucide-react'
 import { usePlan } from '../state/PlanContext'
 import { listen, canListen } from '../lib/voice'
 import { CATEGORIES, CATEGORY, FEATURED, OCCASIONS } from '../data/occasions'
@@ -105,7 +105,7 @@ export default function Search() {
       {!res && mode === 'occasions' && (
         <section className="cx-enter" key="o">
           <div ref={chips} className="cx-noscroll flex gap-2 overflow-x-auto px-4 pb-3 pt-1">
-            <Chip on={cat === 'trending'} onClick={() => setCat('trending')}><Sparkles size={13} className="text-[var(--gold)]" />Trending</Chip>
+            <Chip on={cat === 'trending'} onClick={() => setCat('trending')}><Zap size={13} className="text-[var(--gold)]" />Trending</Chip>
             {CATEGORIES.map(c => <Chip key={c.id} on={cat === c.id} onClick={() => setCat(c.id)}>{c.short}</Chip>)}
           </div>
           <Head title={cat === 'trending' ? 'What families are booking' : CATEGORY[cat].short} sub={cat === 'trending' ? `${FEATURED.length} favourites, from ${OCCASIONS.length} occasions` : `${list.length} occasions · ${CATEGORY[cat].line}`} />

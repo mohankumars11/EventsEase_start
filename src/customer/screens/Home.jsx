@@ -22,35 +22,59 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { tilesFor, tileUrl, DEFAULT_TILES } from '../../lib/slippyMap'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowRight, BadgeCheck, CalendarCheck2, CalendarClock, ChevronDown, ChevronRight, Gift, Headset, IndianRupee, Loader2, LocateFixed, MailOpen, MapPin, Mic, Music2, PartyPopper, RotateCcw, Search, ShieldCheck, Users, UtensilsCrossed, Zap } from 'lucide-react'
+import { ArrowRight, BadgeCheck, CalendarCheck2, Check, ChevronDown, ChevronRight, Gift, Headset, IndianRupee, LayoutGrid, Mail, MailOpen, MapPin, MessageCircle, Mic, Music2, Navigation, PartyPopper, Pencil, RotateCcw, Search, ShieldCheck, UtensilsCrossed, Zap } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
-import { BENGALURU_AREAS } from '../../data/bengaluruAreas'
 import { CATEGORIES, OCCASION, OCCASIONS } from '../data/occasions'
+import { plateLabel, priceTag } from '../data/startingPrices'
 import { TRADES, TRADE_GROUPS } from '../data/trades'
-import { artFor, categoryArt, hdArtFor, occasionArt, serviceArt } from '../data/art'
+import { TEMPLATES } from '../data/inviteTemplates'
+import { artFor, hdArtFor, occasionArt, serviceArt } from '../data/art'
 import { Card, CategoryCard, Rotator, ServiceCard } from '../ui/art'
-import { Sheet } from '../ui/kit'
 import { OfferDeck } from '../ui/offers'
+import Glyph3D from '../ui/Glyph3D'
+import RazorpayLogo from '../ui/RazorpayLogo'
 import Spotlight from '../ui/Spotlight'
 import LocationSheet from '../ui/LocationSheet'
-import { locate, saveWhere, savedWhere } from '../lib/where'
+import ResumeBar from '../ui/ResumeBar'
+import { InstantSheet, OfferSlider, PrebookCard, QuickCard } from '../ui/homeDeck'
+import { saveWhere, savedWhere } from '../lib/where'
 import { listen, canListen } from '../lib/voice'
 
 const CREAM = '#FFFFFF' // screen ground: pure white (2026-10-31); cards keep their own tones
+/* The head of the page is ONE plain purple (Mohan, 2026-11-10: "not the
+   light purple at the top — a plain purple"). Plain on purpose: the
+   pinned block is its own element, after the location row rather than
+   inside it — that is what lets it stay pinned all the way down — and
+   only a flat colour lets two elements meet without a seam. Everything
+   standing on it is white, or the Instant yellow. */
+/* The top surface — location through the category row — a light purple
+   with a gloss across it (Mohan, 2026-11-12: "a lightweight, very solid,
+   light, professional, glossy look"). The head and the pinned block are
+   siblings, so each paints its half of the one gradient. */
+/* The head is one solid royal amethyst, a shade lighter than the brand
+   purple (Mohan, 2026-11-13: "make it like this but reduce the colour a
+   bit — royal light amethyst"); white type on it, the tab bar below stays
+   white like every successful delivery app's. */
+/* Royal blue, to the reference screen (Mohan, 2026-11-14: "build the top
+   exactly like that … the contrast should be perfect, like a brand
+   product"): one deep blue from the status bar to the icon row, white
+   type, the Instant yellow as the only other colour. */
+const HEAD_TOP = 'linear-gradient(180deg, #0F4FC4 0%, #0C49B8 100%)'
+const HEAD_PIN = 'linear-gradient(180deg, #0C49B8 0%, #0A43AE 100%)'
+const HEAD_STRIP = '#0F4FC4'
+const TRACK = 'rgba(255,255,255,.08)' // the door bar: a hairline track, the chosen door a white pill
+const YELLOW = 'linear-gradient(135deg, #FFD54A 0%, #FFC21A 100%)' // the Instant yellow
+/* What the second line of the promise cycles through — the real trades,
+   in the order a customer thinks of them, so "Book …" is always naming
+   something the app can actually book. */
+const BOOKABLE = ['venues', 'caterers', 'decorators', 'photographers', 'DJs & music', 'cake & desserts', 'makeup artists', 'mehendi artists', 'priests', 'anchors & MCs', 'transport', 'event staff']
+
 const POPULAR_OCC = ['birthday-party', 'wedding-reception', 'haldi-ceremony', 'housewarming-ceremony', 'naming-ceremony', 'wedding-anniversary', 'baby-shower', 'engagement-ceremony', 'corporate-annual-day', 'mehendi-ceremony']
 const POPULAR_SVC = ['photography', 'catering_food', 'decoration_floral', 'cake_desserts', 'bridal_makeup_hair', 'dj_music', 'mehendi_artist', 'priest_rituals']
 
-/* The four promises, each its own colour. */
-const PROMISES = [
-  [Zap, 'Instant Booking', 'No quote, no waiting', '#7C3AED', '#F3ECFF'],
-  [MapPin, 'GPS Navigation', 'Straight to your venue', '#2563EB', '#EAF1FF'],
-  [ShieldCheck, 'Secure Payment', 'Held safe till delivered', '#0F9D58', '#E7F8EF'],
-  [CalendarClock, 'On-Time Service', 'For your event date', '#EA580C', '#FFF1E6'],
-]
-
 /* In the spotlight: [id, badge, hook]. Only ones with their own picture are shown. */
 const SPOT_OCC = [
-  ['birthday-party', '🔥 Trending', 'Cake, décor and a photographer — planned in minutes'],
+  ['birthday-party', '🔥 Trending', 'Cake, decor and a photographer — planned in minutes'],
   ['wedding-reception', 'Wedding season', 'Every master for the big night, in one plan'],
   ['haldi-ceremony', 'Most booked', 'Marigolds, music and the yellow glow'],
   ['baby-shower', 'Loved by moms', 'Décor, games and a cake for the little one'],
@@ -58,7 +82,7 @@ const SPOT_OCC = [
   ['engagement-ceremony', 'Popular', 'Rings, flowers and the first dance'],
   ['wedding-anniversary', 'Romantic', 'Make the years feel brand new'],
   ['cocktail-party', 'This weekend', 'DJ, bar and lights — sorted'],
-  ['naming-ceremony', 'Family favourite', 'Priest, cradle décor and lunch'],
+  ['naming-ceremony', 'Family favourite', 'Priest, cradle decor and lunch'],
   ['corporate-annual-day', 'For teams', 'Stage, sound, anchor and dinner'],
 ]
 const SPOT_SVC = [
@@ -86,7 +110,21 @@ export default function Home() {
   const navigate = useNavigate()
   const [door, setDoor] = useState(() => { try { return sessionStorage.getItem('sbm.cx.door') ?? 'occasions' } catch { return 'occasions' } })
   const [filter, setFilter] = useState('all')
+  const [allCats, setAllCats] = useState(false)
   const [whereOpen, setWhereOpen] = useState(false)
+  const [instant, setInstant] = useState(false)
+  /* Once, after sign-in: the door pill slides to "Book a Service" and back,
+     so a new customer sees there are two ways in (Mohan, 2026-11-13). */
+  const [nudge, setNudge] = useState(false)
+  useEffect(() => {
+    if (!user) return
+    let seen = false
+    try { seen = localStorage.getItem('sbm.cx.door.nudged') === '1' } catch { /* off */ }
+    if (seen) return
+    const a = setTimeout(() => setNudge(true), 1100)
+    const b = setTimeout(() => { setNudge(false); try { localStorage.setItem('sbm.cx.door.nudged', '1') } catch { /* off */ } }, 2900)
+    return () => { clearTimeout(a); clearTimeout(b) }
+  }, [user])
   const [where, setWhere] = useState(savedWhere)
   const grid = useRef(null)
   const compact = useCompact()
@@ -101,72 +139,125 @@ export default function Home() {
   const days = Math.round((sat - new Date().setHours(0, 0, 0, 0)) / 864e5)
   const satLabel = sat.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })
   const cats = filter === 'all' ? CATEGORIES : CATEGORIES.filter(c => c.id === filter)
-  const toGrid = () => requestAnimationFrame(() => grid.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+  /* A chip takes the page to the grid, landing its heading just under the
+     pinned block. The block is measured, not assumed: it tightens as the
+     page scrolls, so the landing is checked once more after it settles.
+     "All" only moves the page when the customer is already past the grid
+     — from the top of the page it just resets the filter. */
+  const head = useRef(null)
+  const strip = useRef(null)
+  const gap = () => {
+    const g = grid.current, h = head.current
+    if (!g || !h) return null
+    /* The section's own top padding (16px) is the breathing room: its
+       edge tucks 6px under the block, so the heading shows 10px clear. */
+    return g.getBoundingClientRect().top - ((strip.current?.offsetHeight ?? 0) + h.offsetHeight - 6)
+  }
+  const toGrid = (onlyIfPast = false) => requestAnimationFrame(() => {
+    const off = gap()
+    if (off == null || (onlyIfPast && off > 0)) return
+    window.scrollBy({ top: off, behavior: 'smooth' })
+    /* Re-measured only once the scroll has stopped — mid-flight the
+       block is still tightening and the reading is wrong. */
+    let done = false
+    const fix = () => { const again = gap(); if (again != null && Math.abs(again) > 3) window.scrollBy({ top: again, behavior: 'smooth' }) }
+    const settle = () => { if (done) return; done = true; window.removeEventListener('scrollend', settle); setTimeout(fix, 340) } // the block's own 300 ms tighten
+    window.addEventListener('scrollend', settle, { once: true })
+    setTimeout(settle, 1100)
+  })
+  const pick = id => { setFilter(id); toGrid(id === 'all') }
   const voice = async () => { const said = await listen().catch(() => null); navigate(said ? `/search?q=${encodeURIComponent(said)}` : '/search') }
 
   return (
-    <main className="cx-enter bg-white pb-[calc(env(safe-area-inset-bottom,0px)+130px)]">
-      {/* ── The cream top, edge to edge ─────────────────────────────── */}
-      <section style={{ background: CREAM }}>
-        <header className="cx-safe-top flex items-center justify-between gap-2 px-4 pb-0.5">
-          <button type="button" onClick={() => setWhereOpen(true)} className="flex min-w-0 items-center gap-2 py-1 text-left" data-where>
-            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#EFE6FF]"><MapPin size={16} className="fill-[var(--brand)] text-[#EFE6FF]" strokeWidth={1.6} /></span>
+    <main className="cx-enter bg-white pb-[calc(env(safe-area-inset-bottom,0px)+96px)]">
+      {/* The page scrolls under a phone's status bar; the strip it scrolls
+          under is painted the head's purple, so nothing shows through it. */}
+      <div ref={strip} aria-hidden className="pointer-events-none fixed inset-x-0 top-0 z-[116]" style={{ height: 'env(safe-area-inset-top, 0px)', background: HEAD_STRIP }} />
+
+      {/* ── The head: location and the promise, on royal light amethyst ── */}
+      <div className="relative" style={{ background: HEAD_TOP }} data-top-surface>
+        <header className="cx-safe-top flex items-center justify-between gap-2 px-4">
+          <button type="button" onClick={() => setWhereOpen(true)} className="flex min-w-0 items-center gap-2.5 text-left" data-where>
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[11px] bg-white/20"><MapPin size={18} className="fill-white text-[#0C49B8]" strokeWidth={1.8} /></span>
             <span className="min-w-0">
-              <span className="flex items-center gap-0.5 text-[13.5px] font-extrabold leading-tight tracking-[-0.015em]"><span className="truncate">{where?.area ?? 'Bengaluru'}</span><ChevronDown size={14} className="shrink-0" /></span>
-              <span className="block truncate text-[10.5px] font-semibold leading-tight text-[var(--ink-3)]">{where?.for?.name ? `For ${where.for.name} · ` : ''}{[where?.city ?? 'Bengaluru', where?.pincode].filter(Boolean).join(', ')}{where?.test ? ' · testing' : ''}</span>
+              <span className="flex items-center gap-0.5 text-[16px] font-extrabold leading-tight tracking-[-0.02em] text-white"><span className="truncate">{where?.area ?? 'Bengaluru'}</span><ChevronDown size={15} strokeWidth={2.6} className="shrink-0" /></span>
+              <span className="block truncate text-[11.5px] font-semibold leading-tight text-white/85">{where?.for?.name ? `For ${where.for.name} · ` : ''}{[where?.city ?? 'Bengaluru', where?.pincode].filter(Boolean).join(', ')}{where?.test ? ' · testing' : ''}</span>
             </span>
           </button>
           <div className="flex shrink-0 items-center gap-1.5">
-            <Link to="/help" aria-label="Help" className="cx-press grid h-10 w-10 place-items-center rounded-full bg-white text-[var(--am-ink)] shadow-[0_4px_12px_-6px_rgba(58,18,144,.35)]" data-help><Headset size={18} /></Link>
+            <Link to="/help" aria-label="Help" className="cx-press grid h-9 w-9 place-items-center rounded-full bg-white/20 text-white" data-help><Headset size={17} /></Link>
             <Link to="/invites" aria-label="Invitations and RSVP" onClick={() => { try { localStorage.setItem('sbm.cx.invites.seen', '1') } catch { /* off */ } }}
-              className="cx-press relative grid h-10 w-10 place-items-center rounded-full bg-white text-[#DB2777] shadow-[0_4px_12px_-6px_rgba(58,18,144,.35)]" data-head-invites>
-              {/* The outer line keeps flashing in the envelope's own pink, so a first-time customer asks "what is this?" */}
-              <span aria-hidden className="cx-flash-ring pointer-events-none absolute -inset-[3px] rounded-full" />
-              <MailOpen size={19} />
-              {!invitesSeen && <span className="absolute -right-1 -top-1 rounded-full bg-[#DB2777] px-1.5 py-[1px] text-[8.5px] font-black tracking-[0.04em] text-white ring-2 ring-white">NEW</span>}
+              className="cx-press relative grid h-9 w-9 place-items-center rounded-full bg-white text-[#DB2777] shadow-[0_4px_10px_-6px_rgba(0,0,0,.45)]" data-head-invites>
+              <Mail size={17} strokeWidth={2.2} />
+              {!invitesSeen && <span className="absolute -right-1.5 -top-2 rounded-full bg-[#FFC21A] px-1 py-[1px] text-[8.5px] font-black tracking-[0.04em] text-[#1C1033]">NEW</span>}
             </Link>
           </div>
         </header>
-      </section>
 
-      {/* ── Pinned while scrolling: search, the two doors, the icon row ──
-          Everything else (the hero too) scrolls away. Once the page moves,
-          the block tightens: the search slims, the doors flatten, and the
-          picture tiles morph into one-line pills — Zepto / Swiggy style —
-          so the pinned part never eats the screen. */}
-      <div className={'sticky z-[115] transition-[background-color,box-shadow] duration-300 ' + (compact ? 'bg-white shadow-[0_12px_26px_-20px_rgba(20,15,31,.55)]' : 'bg-white')}
-        style={{ top: 'env(safe-area-inset-top, 0px)' }} data-sticky-head={compact ? 'compact' : 'full'}>
-        <div className={'px-4 transition-[padding] duration-300 ' + (compact ? 'pb-1.5 pt-1.5' : 'pb-2 pt-1')}>
-          {/* Search: real names cycle; the mic listens where the phone can. */}
-          <div className={'flex items-center gap-3 rounded-[14px] bg-white pl-3.5 pr-1 shadow-[0_0_0_1px_#ECE7F3,0_8px_20px_-12px_rgba(58,18,144,.22)] transition-[height] duration-300 ' + (compact ? 'h-[44px]' : 'h-[50px]')} data-sticky-search>
-            <button type="button" onClick={() => navigate('/search')} className="flex min-w-0 flex-1 items-center gap-3 text-left" data-search>
-              <Search size={20} className="shrink-0 text-[var(--ink)]" />
-              <span className="flex min-w-0 flex-1 items-center gap-1 text-[15px] font-medium text-[#8E889C]">Search<Rotator items={hints.map((h, k) => <span className="font-extrabold" style={{ color: HINT_INK[k % HINT_INK.length] }}>“{h}”</span>)} every={1900} /></span>
-            </button>
-            {canListen() && <><span className="h-6 w-px shrink-0 bg-[#E7E2EE]" /><button type="button" onClick={voice} aria-label="Search by voice" className="cx-press grid h-10 w-10 shrink-0 place-items-center rounded-full text-[var(--ink)]" data-mic><Mic size={20} /></button></>}
-          </div>
-        </div>
-
-        {/* One bar, two sides — the same shape as the search box, a little shorter. */}
-        <div className={'relative mx-4 grid grid-cols-2 rounded-[14px] bg-white p-1 shadow-[0_0_0_1px_#ECE7F3,0_8px_20px_-14px_rgba(58,18,144,.22)] transition-[height] duration-300 ' + (compact ? 'h-[38px]' : 'h-[44px]')} role="tablist" data-door-bar>
-          <span aria-hidden className={'absolute bottom-1 left-1 top-1 w-[calc(50%-4px)] rounded-[11px] bg-gradient-to-r from-[#0C831F] to-[#16A34A] shadow-[0_6px_14px_-8px_rgba(12,131,31,.9)] transition-transform duration-300 ease-out ' + (celebrate ? 'translate-x-0' : 'translate-x-full')} />
-          {[['occasions', 'Celebrations'], ['services', 'Book a Service']].map(([id, t]) => (
-            <button key={id} type="button" role="tab" aria-selected={door === id} onClick={() => choose(id)} data-door={t}
-              className={'relative z-10 rounded-[11px] font-black tracking-[-0.02em] transition-[color,font-size] duration-300 ' + (compact ? 'text-[13px] ' : 'text-[14px] ') + (door === id ? 'text-white' : 'text-[#14532D]')}>{t}</button>
-          ))}
-        </div>
-
-        {/* Icon row: filters the grid below. Pinned, it keeps exactly the shape it has at rest. */}
-        <div className="cx-noscroll flex gap-1 overflow-x-auto px-3 pb-1 pt-2.5" key={door}>
-          <IconChip on={filter === 'all'} onClick={() => setFilter('all')} label="All" all />
-          {(celebrate ? CATEGORIES.map(c => ({ id: c.id, label: CHIP[c.id] ?? c.short, src: categoryArt(c).src })) : TRADE_GROUPS.map(g => ({ id: g.id, label: g.chip ?? g.label, src: serviceArt(g.trades[0].id).src })))
-            .map(x => <IconChip key={x.id} on={filter === x.id} onClick={() => { setFilter(x.id); toGrid() }} label={x.label} src={x.src} />)}
+        {/* The promise. The second line names a real service and keeps
+            changing, so the claim is specific rather than a slogan. */}
+        <div className="flex items-center gap-2.5 px-4 pb-2.5 pt-2" data-promise-row>
+          <span aria-hidden className="grid h-9 w-9 shrink-0 place-items-center rounded-[10px] shadow-[0_6px_12px_-8px_rgba(0,0,0,.55)]" style={{ background: YELLOW }}>
+            <Zap size={19} className="fill-[#F97316] text-[#1C1033]" strokeWidth={1.8} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block whitespace-nowrap text-[16.5px] font-extrabold leading-[1.1] tracking-[-0.025em] text-white" data-book-minutes>Book in Minutes</span>
+            <span className="flex min-w-0 items-center gap-1 whitespace-nowrap text-[12px] font-semibold leading-tight text-white/95">
+              Book<Rotator items={BOOKABLE} every={1500} className="font-semibold text-white" />
+            </span>
+          </span>
+          <span aria-hidden className="h-7 w-px shrink-0 bg-white/45" />
+          <InstantPill onClick={() => setInstant(true)} />
         </div>
       </div>
 
-      <section style={{ background: CREAM }} className="pb-2">
+      {/* ── Pinned while scrolling ─────────────────────────────────────
+          A sibling of the head, not a child of it. A sticky element can
+          only stick inside its parent, and inside the head it went with
+          the head the moment the head scrolled away. Here it stays for the
+          whole page — the doors, the search and the icon row — so a
+          customer can change door or category from anywhere on the page
+          (Mohan, 2026-11-10). */}
+      <div ref={head} className={'sticky z-[115] pb-1.5 transition-shadow duration-300 ' + (compact ? 'shadow-[0_16px_30px_-18px_rgba(8,30,90,.45)]' : 'shadow-[0_10px_24px_-20px_rgba(8,30,90,.35)]')}
+        style={{ top: 'env(safe-area-inset-top, 0px)', background: HEAD_PIN }} data-sticky-head={compact ? 'compact' : 'full'}>
+
+        {/* The two doors: a deeper track, the chosen door a white pill. */}
+        <div className={'relative mx-3 grid grid-cols-2 rounded-[13px] p-[2px] shadow-[0_0_0_1px_rgba(255,255,255,.5)] transition-[height,margin] duration-300 ' + (compact ? 'mt-1.5 h-[34px]' : 'h-[37px]')}
+          style={{ background: TRACK }} role="tablist" data-door-bar>
+          <span aria-hidden className={'absolute bottom-[2px] left-[2px] top-[2px] w-[calc(50%-2px)] rounded-[11px] bg-white shadow-[0_4px_12px_-8px_rgba(0,0,0,.5)] transition-transform duration-300 ease-out ' + ((celebrate && !nudge) ? 'translate-x-0' : 'translate-x-full') + (nudge ? ' duration-700' : '')} />
+          {nudge && <span className="cx-pop pointer-events-none absolute -bottom-8 right-2 z-20 rounded-full bg-[#1C1033] px-2.5 py-1 text-[10.5px] font-extrabold text-white shadow-[0_8px_18px_-8px_rgba(0,0,0,.6)]" data-door-nudge>Book one service here too</span>}
+          {[['occasions', 'Celebrations'], ['services', 'Book a Service']].map(([id, t]) => (
+            <button key={id} type="button" role="tab" aria-selected={door === id} onClick={() => choose(id)} data-door={t}
+              className={'relative z-10 rounded-[11px] font-extrabold tracking-[-0.02em] transition-[color,font-size] duration-300 ' + (compact ? 'text-[13px] ' : 'text-[14px] ') + ((nudge ? id === 'services' : door === id) ? 'text-[#0C49B8]' : 'text-white')}>{t}</button>
+          ))}
+        </div>
+
+        {/* Search: white on white, held by a hairline, on the same gutter as the doors. */}
+        <div className={'mx-3 transition-[margin] duration-300 ' + (compact ? 'mt-1.5' : 'mt-2')}>
+          <div className={'flex items-center gap-2.5 rounded-[13px] bg-white pl-3 pr-1 shadow-[0_6px_16px_-12px_rgba(0,0,0,.45)] transition-[height] duration-300 ' + (compact ? 'h-[36px]' : 'h-[40px]')} data-sticky-search>
+            <button type="button" onClick={() => navigate('/search')} className="flex min-w-0 flex-1 items-center gap-2 text-left" data-search>
+              <Search size={17} className="shrink-0 text-[#1C1033]" strokeWidth={2.4} />
+              <span className="flex min-w-0 flex-1 items-center gap-1 text-[13.5px] font-medium text-[#6B6880]">Search<Rotator items={hints.map((h, k) => <span className="font-extrabold" style={{ color: HINT_INK[k % HINT_INK.length] }}>“{h}”</span>)} every={1900} /></span>
+            </button>
+            <span className="h-5 w-px shrink-0 bg-[#E7E2EE]" /><button type="button" onClick={canListen() ? voice : () => navigate('/search')} aria-label="Search by voice" className="cx-press grid h-8 w-8 shrink-0 place-items-center rounded-full text-[#1C1033]" data-mic><Mic size={17} /></button>
+          </div>
+        </div>
+
+        {/* Icon row: modelled 3D marks standing on the white, no plate.
+            Each one filters the grid below and takes the page to it. */}
+        <div className="cx-noscroll flex gap-0.5 overflow-x-auto px-2 pt-2" key={door} data-icon-row>
+          <IconChip on={filter === 'all'} onClick={() => pick('all')} label="All" mark="all" compact={compact} />
+          {(celebrate ? CATEGORIES.map(c => ({ id: c.id, label: CHIP[c.id] ?? c.short, mark: c.id })) : TRADE_GROUPS.map(g => ({ id: g.id, label: g.chip ?? g.label, mark: `svc:${g.id}` })))
+            .map(x => <IconChip key={x.id} on={filter === x.id} onClick={() => pick(x.id)} label={x.label} mark={x.mark} compact={compact} />)}
+        </div>
+      </div>
+
+      <ResumeBar className="mt-3" />
+      <QuickCard where={where?.area ?? null} />
+
+      <section style={{ background: CREAM }} className="pb-1">
         {/* The hero comes after the controls, and nothing is laid over its picture. */}
-        <Hero key={door} door={door} />
+        <OfferSlider door={door} />
       </section>
 
       {/* ── Weekend: the next Saturday, and what people book for it ──── */}
@@ -181,9 +272,9 @@ export default function Home() {
           </div>
           <div className="cx-rail cx-noscroll !gap-2.5 !px-3">
             {WEEKEND.map(id => OCCASION[id]).filter(o => o && occasionArt(o).kind === 'art').map(o => (
-              <div key={o.id} className="w-[31%] max-w-[150px]" data-weekend={o.id}>
-                <Card to={`/o/${o.id}`} art={occasionArt(o)} tone={o.tone} title={o.name}>
-                  <span className="flex items-center gap-1 text-[#0B7A45]"><Zap size={10} className="shrink-0 fill-current" />Plan it for this weekend</span>
+              <div key={o.id} className="w-[38%] max-w-[172px]" data-weekend={o.id}>
+                <Card to={`/o/${o.id}`} art={occasionArt(o)} tone={o.tone} title={o.name} price={priceTag(o.id, o.category)}>
+                  <span className="flex items-center gap-1 text-[#0B7A45]"><Zap size={10} className="shrink-0 fill-current" />Book it for this weekend</span>
                 </Card>
               </div>
             ))}
@@ -191,13 +282,16 @@ export default function Home() {
         </section>
       )}
 
+      <PromiseStrip />
+      {celebrate && <PrebookCard />}
+
       {/* ── In the spotlight: one big card, the next ones peeking in ─── */}
       <Spotlight key={door} items={celebrate
         ? SPOT_OCC.map(([id, badge, hook]) => OCCASION[id] && occasionArt(OCCASION[id]).kind === 'art' && { id, to: `/o/${id}`, title: OCCASION[id].name, badge, hook, art: hdArtFor(`occ-${id}`), tone: OCCASION[id].tone }).filter(Boolean)
         : SPOT_SVC.map(([id, badge, hook]) => TRADES.some(t => t.id === id) && serviceArt(id).kind === 'art' && { id, to: `/s/${id}`, title: TRADES.find(t => t.id === id).label, badge, hook, art: hdArtFor(`svc-${id}`), tone: '#E9DDFB' }).filter(Boolean)} />
 
       {/* ── The grid, on cream ───────────────────────────────────────── */}
-      <section ref={grid} style={{ background: CREAM }} className="mt-3 scroll-mt-16 py-4">
+      <section ref={grid} style={{ background: CREAM }} className="mt-3 py-4">
         <div className="flex items-end justify-between gap-3 px-4 pb-3">
           <div className="min-w-0">
             <h2 className="text-[20px] font-black leading-tight tracking-[-0.035em]">{celebrate ? 'Book a Celebration' : 'Popular Services Near You'}</h2>
@@ -207,7 +301,10 @@ export default function Home() {
         </div>
         {filter === 'all' ? (
           celebrate ? (
-            <div className="grid grid-cols-3 gap-2 px-3">{cats.map((c, i) => <CategoryCard key={c.id} category={c} index={i} />)}</div>
+            <>
+              <div className="grid grid-cols-3 gap-2 px-3">{(allCats ? cats : cats.slice(0, 9)).map((c, i) => <CategoryCard key={c.id} category={c} index={i} />)}</div>
+              {!allCats && cats.length > 9 && <ExploreAll n={cats.length - 9} onClick={() => setAllCats(true)} />}
+            </>
           ) : (
             /* Every service its own card, three a row, under a plain heading
                (Mohan, 2026-10-31: no Catering card that is also drinks). */
@@ -226,7 +323,7 @@ export default function Home() {
           <div data-cat-open={filter}>
             <div className="grid grid-cols-3 gap-2 px-3">
               {celebrate
-                ? OCCASIONS.filter(o => o.category === filter).sort((x, y) => (y.featured ? 1 : 0) - (x.featured ? 1 : 0)).slice(0, 6).map(o => <Card key={o.id} to={`/o/${o.id}`} art={occasionArt(o)} tone={o.tone} title={o.name}>{null}</Card>)
+                ? OCCASIONS.filter(o => o.category === filter).sort((x, y) => (y.featured ? 1 : 0) - (x.featured ? 1 : 0)).slice(0, 6).map(o => <Card key={o.id} to={`/o/${o.id}`} art={occasionArt(o)} tone={o.tone} title={o.name} price={priceTag(o.id, o.category)}>{null}</Card>)
                 : (TRADE_GROUPS.find(g => g.id === filter)?.trades ?? []).map(t => <ServiceCard key={t.id} tradeId={t.id} />)}
             </div>
             <Link to={celebrate ? `/c/${filter}` : '/s'} className="cx-press mx-3 mt-3 flex h-11 items-center justify-center gap-1 rounded-[14px] bg-[#F4EEFF] text-[13.5px] font-extrabold text-[var(--brand)]" data-cat-view-all>
@@ -264,7 +361,7 @@ export default function Home() {
         </div>
         <div className="cx-rail cx-noscroll !gap-2.5 !px-3">
           {POPULAR_OCC.map(id => OCCASION[id]).filter(Boolean).map(o => (
-            <div key={o.id} className="w-[31%] max-w-[150px]"><Card to={`/o/${o.id}`} art={occasionArt(o)} tone={o.tone} title={o.name}>{null}</Card></div>
+            <div key={o.id} className="w-[38%] max-w-[172px]"><Card to={`/o/${o.id}`} art={occasionArt(o)} tone={o.tone} title={o.name} price={priceTag(o.id, o.category)}>{null}</Card></div>
           ))}
         </div>
       </section>
@@ -277,118 +374,258 @@ export default function Home() {
           <Link to="/s" className="cx-press flex shrink-0 items-center gap-0.5 rounded-full bg-white px-3 py-2 text-[12.5px] font-extrabold text-[var(--brand)] shadow-[0_0_0_1px_#E9DDFB]">View all<ChevronRight size={15} /></Link>
         </div>
         <div className="cx-rail cx-noscroll !gap-2.5 !px-3">
-          {POPULAR_SVC.map(t => <div key={t} className="w-[31%] max-w-[150px]"><ServiceCard tradeId={t} /></div>)}
+          {POPULAR_SVC.map(t => <div key={t} className="w-[38%] max-w-[172px]"><ServiceCard tradeId={t} /></div>)}
         </div>
       </section>
 
-      {/* ── Invites and refunds: two picture cards side by side (2026-10-31) ── */}
-      <div className="mx-3 mt-2 grid grid-cols-2 gap-2.5" data-home-hooks>
-        <Link to="/invites" className="cx-press relative flex min-h-[176px] flex-col overflow-hidden rounded-[22px] bg-gradient-to-br from-[#FFE4F1] via-[#FDF0F7] to-[#F3E8FF] p-3.5" data-home-invites>
-          <span className="w-fit rounded-full bg-[#DB2777] px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.08em] text-white">Free</span>
-          <span className="mt-2 block text-[16px] font-black leading-[1.1] tracking-[-0.02em] text-[#5B1240]">Invite guests on WhatsApp</span>
-          <span className="mt-1 block text-[11.5px] font-bold leading-snug text-[#8A2B5E]">Live RSVP · headcount · food choices</span>
-          <img src={artFor('svc-invitation_printing')} alt="" className="pointer-events-none absolute -bottom-3 -right-3 h-[92px] w-[92px] object-contain mix-blend-multiply" loading="lazy" />
-          <span className="mt-auto flex w-fit items-center gap-1 rounded-full bg-white/80 px-2.5 py-1 text-[11.5px] font-extrabold text-[#DB2777]">Create<ChevronRight size={14} /></span>
-        </Link>
-        <Link to="/legal/cancellation" className="cx-press relative flex min-h-[176px] flex-col overflow-hidden rounded-[22px] bg-gradient-to-br from-[#E2F7EA] via-[#F1FBF5] to-[#E7F6EF] p-3.5" data-refunds>
-          <span className="w-fit rounded-full bg-[#0C831F] px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.08em] text-white">Clear</span>
-          <span className="mt-2 block text-[16px] font-black leading-[1.1] tracking-[-0.02em] text-[#064E3B]">Refunds & cancellation</span>
-          <span className="mt-1 block text-[11.5px] font-bold leading-snug text-[#047857]">Pay only after your master accepts</span>
-          <span aria-hidden className="pointer-events-none absolute -bottom-4 -right-4 grid h-[96px] w-[96px] place-items-center rounded-full bg-[#0C831F]/10"><RotateCcw size={44} className="text-[#0C831F]/70" /></span>
-          <span className="mt-auto flex w-fit items-center gap-1 rounded-full bg-white/80 px-2.5 py-1 text-[11.5px] font-extrabold text-[#0C831F]">See how<ChevronRight size={14} /></span>
-        </Link>
-      </div>
+      {/* ── Live RSVP: the invite, and what it gives back ───────────── */}
+      <RsvpCard />
 
-      {/* ── Promises: the real streets, not the words "GPS navigation" ── */}
-      <section className="mx-3 mt-2.5 overflow-hidden rounded-[22px] bg-white shadow-[0_0_0_1px_#EEE6FA]" data-promises>
-        <VenueMap where={where} />
-        <div className="grid grid-cols-3">
-          {PROMISES.filter(p => p[1] !== 'GPS Navigation').map(([I, t, d, c, bg], k) => (
-            <div key={t} className={'flex flex-col items-center px-1 py-3 text-center ' + (k ? 'border-l border-[#F1ECF8]' : '')}>
-              <span className="grid h-10 w-10 place-items-center rounded-[14px]" style={{ background: bg, color: c }}><I size={20} strokeWidth={2.3} /></span>
-              <p className="mt-1.5 text-[11px] font-extrabold leading-tight" style={{ color: c }}>{t}</p>
-              <p className="mt-0.5 text-[9.5px] font-semibold leading-tight text-[var(--ink-3)]">{d}</p>
-            </div>
-          ))}
-        </div>
+      {/* ── Where the masters go: the real streets, and a way to change it ── */}
+      <section className="mx-3 mt-3 overflow-hidden rounded-[22px] bg-white shadow-[0_0_0_1px_#ECE6F6,0_16px_32px_-26px_rgba(58,18,144,.6)]" data-promises>
+        <VenueMap where={where} onEdit={() => setWhereOpen(true)} />
       </section>
 
-      {/* ── The offer, edge to edge ──────────────────────────────────── */}
-      <section className="relative mt-4 overflow-hidden bg-gradient-to-r from-[#FFF4D6] via-[#FFEBD2] to-[#FFE0EC] px-4 py-5" data-offer>
-        <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#B45309]">Welcome offer</p>
-        <p className="mt-1 text-[30px] font-black leading-none tracking-[-0.04em] text-[#1C1033]">25% OFF</p>
-        <p className="mt-1 max-w-[62%] text-[12.5px] font-semibold leading-snug text-[#5B4A3A]">On your first celebration booking — up to ₹2,500. Yours on sign-up.</p>
-        <Link to="/rewards" className="cx-press mt-3 inline-flex h-10 items-center gap-1.5 rounded-full bg-[#1C1033] px-4 text-[13px] font-extrabold text-white" data-offer-cta>See my 25% voucher<ArrowRight size={15} /></Link>
-        <Gift size={92} strokeWidth={1.2} className="absolute -right-2 bottom-2 text-[#F59E0B]/40" />
-      </section>
-
-      {/* ── Book a service, edge to edge ─────────────────────────────── */}
-      <section className="relative overflow-hidden bg-gradient-to-r from-[#E8F8EE] to-[#E6F2FF] px-4 py-5" data-service-band>
-        <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#0C831F]">Book a service</p>
-        <p className="mt-1 text-[24px] font-black leading-[1.05] tracking-[-0.04em] text-[#1C1033]">One master,<br /><span className="text-[#0C831F]">booked in a minute</span></p>
-        <p className="mt-1 max-w-[56%] text-[12.5px] font-semibold leading-snug text-[#3F5A4B]">A photographer, a cook, a DJ — price upfront, 25% off your first booking.</p>
-        <Link to="/s" className="cx-press relative z-10 mt-3 inline-flex h-11 items-center gap-2 rounded-full bg-[#0C831F] pl-4 pr-1.5 text-[13.5px] font-extrabold text-white shadow-[0_10px_22px_-10px_rgba(12,131,31,.9)]" data-book-service>
-          <Zap size={16} />Book a service<span className="grid h-8 w-8 place-items-center rounded-full bg-white text-[#0C831F]"><ArrowRight size={16} /></span>
-        </Link>
-        <img src={artFor('svc-photography')} alt="" className="absolute -right-2 bottom-0 h-[130px] w-auto mix-blend-multiply" loading="lazy" />
-      </section>
-
-      {/* ── Refer & earn, edge to edge ───────────────────────────────── */}
-      <section className="relative overflow-hidden bg-gradient-to-r from-[#F3ECFF] to-[#FCE7F3] px-4 py-5" data-refer-band>
-        <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[var(--brand)]">Refer & earn</p>
-        <p className="mt-1 text-[24px] font-black leading-[1.05] tracking-[-0.04em] text-[#1C1033]">Celebrate<br /><span className="bg-gradient-to-r from-[#7C3AED] to-[#DB2777] bg-clip-text text-transparent">Together</span></p>
-        <p className="mt-1 max-w-[56%] text-[12.5px] font-semibold leading-snug text-[#5F5675]">Invite the people you celebrate with.</p>
-        <Link to="/refer" className="cx-press relative z-10 mt-3 inline-flex h-11 items-center gap-2 rounded-full bg-gradient-to-r from-[#6D28D9] to-[#8B5CF6] pl-4 pr-1.5 text-[13.5px] font-extrabold text-white shadow-[0_10px_22px_-10px_rgba(109,40,217,.9)]" data-refer>
-          <Users size={16} />Refer your friend<span className="grid h-8 w-8 place-items-center rounded-full bg-white text-[var(--brand)]"><ArrowRight size={16} /></span>
-        </Link>
-        <img src={artFor('cat-life')} alt="" className="absolute -right-3 bottom-0 h-[130px] w-auto mix-blend-multiply" loading="lazy" />
-      </section>
+      {/* ── The three bands, as one moving deck ──────────────────────
+          They were three full-width bands stacked down the page, which
+          is three screens of scrolling for three messages. As a deck
+          they cost one screen, and the one that is showing changes by
+          itself — the way a marketing rail works everywhere else. */}
+      <BandDeck />
 
       <SignOff />
 
+      <InstantSheet open={instant} onClose={() => setInstant(false)} />
       <LocationSheet open={whereOpen} onClose={() => setWhereOpen(false)} onPick={p => { saveWhere(p); setWhere(savedWhere()); setWhereOpen(false) }} />
     </main>
   )
 }
 
+/**
+ * The marketing deck — welcome offer, book a service, refer & earn.
+ *
+ * A scroll-snap rail that also advances on its own every 4 s, pauses for
+ * 7 s whenever the customer touches it, and loops. Native swipe, no
+ * library: the same mechanic as the offer deck above it, so the two read
+ * as one idea rather than two carousels built by different hands.
+ */
+const BANDS = [
+  {
+    id: 'offer', to: '/rewards', kicker: 'Welcome offer', kickerFg: '#B45309',
+    bg: 'linear-gradient(120deg, #FFF4D6 0%, #FFEBD2 55%, #FFE0EC 100%)',
+    big: '25% OFF', bigFg: '#1C1033',
+    line: 'On your first celebration booking — up to ₹2,500. Yours on sign-up.', lineFg: '#5B4A3A',
+    cta: 'See my 25% voucher', ctaBg: '#1C1033', ctaFg: '#FFFFFF',
+    art: <Gift size={88} strokeWidth={1.2} className="absolute -right-3 bottom-1 text-[#F59E0B]/40" />,
+  },
+  {
+    id: 'service', to: '/s', kicker: 'Book a service', kickerFg: '#0C831F',
+    bg: 'linear-gradient(120deg, #E8F8EE 0%, #E6F2FF 100%)',
+    big: 'One master, booked in a minute', bigFg: '#1C1033',
+    line: 'A photographer, a cook, a DJ — price upfront, 25% off your first booking.', lineFg: '#3F5A4B',
+    cta: 'Book a service', ctaBg: '#0C831F', ctaFg: '#FFFFFF',
+    art: <img src={artFor('svc-photography')} alt="" className="pointer-events-none absolute -right-2 bottom-0 h-[118px] w-auto mix-blend-multiply" loading="lazy" />,
+  },
+  {
+    id: 'refer', to: '/refer', kicker: 'Refer & earn', kickerFg: '#6A2BD9',
+    bg: 'linear-gradient(120deg, #F3ECFF 0%, #FCE7F3 100%)',
+    big: 'Celebrate Together', bigFg: '#1C1033',
+    line: 'Invite the people you celebrate with.', lineFg: '#5F5675',
+    cta: 'Refer your friend', ctaBg: '#6D28D9', ctaFg: '#FFFFFF',
+    art: <img src={artFor('cat-life')} alt="" className="pointer-events-none absolute -right-3 bottom-0 h-[118px] w-auto mix-blend-multiply" loading="lazy" />,
+  },
+]
+
+/**
+ * Explore the rest of the categories.
+ *
+ * Nine cards is enough to show what the app covers; the other nine are
+ * behind this. A sweep of light crosses it every few seconds so it reads
+ * as something to press rather than a divider.
+ */
+/**
+ * The live strip — what is true right now, one line at a time.
+ *
+ * Quick commerce sells a PROMISE, and the promise is the only thing the
+ * customer cannot see for themselves: that a master is awake, that they
+ * accept on the spot, and that money does not move until they do. This
+ * card says that, changing every few seconds, with a pulse so it reads
+ * as a live state and not a slogan.
+ *
+ * Every line is something the app actually guarantees — a policy or a
+ * state — never an invented name, count or "Priya just booked". A feed
+ * of fictional strangers is the easiest thing here to build and the
+ * fastest way to lose somebody who later notices it repeating.
+ */
+const LIVE_LINES = where => [
+  { icon: Zap, fg: '#0C831F', bg: '#E9F8EF', text: <>Masters are <b>accepting requests now</b>{where ? <> near {where}</> : null}</> },
+  { icon: ShieldCheck, fg: '#6D28D9', bg: '#F3ECFF', text: <>Sending a request is <b>free</b> — you pay <b>only after a master accepts</b></> },
+  { icon: CalendarCheck2, fg: '#1D4ED8', bg: '#EAF1FF', text: <>Master accepted? Pay to <b>lock your date</b> — an advance from 20% on bookings over ₹25,000</> },
+  { icon: IndianRupee, fg: '#B45309', bg: '#FFF4DA', text: <><b>No hidden charges</b> — ₹0 booking fee; the price you see is the price you pay</> },
+  { icon: BadgeCheck, fg: '#BE185D', bg: '#FDECF4', text: <>Every master is <b>ID-verified</b> before they go live</> },
+  { icon: RotateCcw, fg: '#0B6B3D', bg: '#E9F8EF', text: <>Master cancels on you? You get a <b>full refund</b></> },
+]
+
+/* The live card (Mohan, 2026-11-10: "India's quickest celebration
+   platform … make it very amazing, futuristic, like a card"). The claim
+   is the headline and stays put; under it the live line changes, with a
+   story-style bar per line so it reads as a feed, and a band of light
+   runs round the border. */
+function LiveStrip({ where }) {
+  const lines = useMemo(() => LIVE_LINES(where), [where])
+  const [i, setI] = useState(0)
+  useEffect(() => {
+    const t = setInterval(() => setI(n => (n + 1) % lines.length), 3600)
+    return () => clearInterval(t)
+  }, [lines.length])
+  const l = lines[i]
+  return (
+    <div className="relative mx-3 mt-3 overflow-hidden rounded-[20px] p-[1.6px] shadow-[0_16px_32px_-24px_rgba(58,18,144,.7)]" data-live-strip>
+      <span aria-hidden className="cx-live-ring absolute left-1/2 top-1/2 aspect-square w-[160%]"
+        style={{ background: 'conic-gradient(from 0deg, #7C3AED, #22C55E, #FFB61C, #EC4899, #7C3AED)' }} />
+      <div className="relative rounded-[18.6px] bg-white px-3 pb-2.5 pt-2.5">
+        <div className="flex items-center justify-between gap-2">
+          <p className="flex min-w-0 items-center gap-1.5 text-[13px] font-black tracking-[-0.025em] text-[#1C1033]">
+            <span className="grid h-6 w-6 shrink-0 place-items-center rounded-[8px] shadow-[0_4px_10px_-6px_rgba(200,125,10,.9)]" style={{ background: YELLOW }}><Zap size={13} className="fill-[#6B3E00] text-[#6B3E00]" /></span>
+            <span className="min-w-0 text-[12.5px] leading-tight">India’s quickest celebration platform</span>
+          </p>
+          <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-gradient-to-br from-[#16A34A] to-[#0B6B3D] px-2.5 py-1.5 text-[9.5px] font-black uppercase tracking-[0.09em] text-white shadow-[0_6px_14px_-8px_rgba(11,107,61,.95)]">
+            <span className="relative grid h-1.5 w-1.5 place-items-center">
+              <span className="absolute h-1.5 w-1.5 animate-ping rounded-full bg-white opacity-80" />
+              <span className="h-1.5 w-1.5 rounded-full bg-white" />
+            </span>
+            Live
+          </span>
+        </div>
+        <div className="mt-2 flex min-h-[34px] items-center gap-2.5">
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[11px] transition-colors duration-500" style={{ background: l.bg, color: l.fg }}>
+            <l.icon size={16} strokeWidth={2.4} />
+          </span>
+          <span key={i} className="cx-rise min-w-0 flex-1 text-[12.5px] font-semibold leading-snug text-[#2E1A4F]">{l.text}</span>
+        </div>
+        <div className="mt-2 flex gap-1" aria-hidden>
+          {lines.map((_, k) => (
+            <span key={k} className="relative h-[3px] flex-1 overflow-hidden rounded-full bg-[#EEEAF5]">
+              {k < i && <span className="absolute inset-0 rounded-full bg-[#86EFAC]" />}
+              {k === i && <span key={`f${i}`} className="cx-story absolute inset-0 rounded-full bg-[#16A34A]" />}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ExploreAll({ n, onClick }) {
+  return (
+    <button type="button" onClick={onClick} data-explore-all
+      className="cx-press group relative mx-3 mt-3 flex h-[52px] w-[calc(100%-1.5rem)] items-center justify-center gap-2 overflow-hidden rounded-[18px] bg-gradient-to-r from-[#6D28D9] via-[#8B5CF6] to-[#A855F7] text-white shadow-[0_14px_30px_-16px_rgba(109,40,217,.95)]">
+      <span aria-hidden className="cx-explore-sheen pointer-events-none absolute inset-y-0 -left-full w-1/2 bg-gradient-to-r from-transparent via-white/35 to-transparent" />
+      <span className="relative z-10 text-[14px] font-black tracking-[-0.02em]">Explore all {n + 9} celebration types</span>
+      <span className="relative z-10 grid h-7 w-7 place-items-center rounded-full bg-white/20"><ChevronDown size={16} strokeWidth={3} /></span>
+    </button>
+  )
+}
+
+function BandDeck() {
+  const rail = useRef(null)
+  const [i, setI] = useState(0)
+  const quietUntil = useRef(0)
+  useEffect(() => {
+    const t = setInterval(() => {
+      const el = rail.current
+      if (!el || Date.now() < quietUntil.current || document.visibilityState !== 'visible') return
+      const cards = [...el.children]
+      if (!cards.length) return
+      const next = (i + 1) % cards.length
+      el.scrollTo({ left: cards[next].offsetLeft - cards[0].offsetLeft, behavior: 'smooth' })
+    }, 4000)
+    return () => clearInterval(t)
+  }, [i])
+  const onScroll = () => {
+    const el = rail.current
+    if (!el) return
+    const cards = [...el.children]
+    const at = cards.reduce((best, c, k) => (Math.abs(c.offsetLeft - cards[0].offsetLeft - el.scrollLeft) < Math.abs(cards[best].offsetLeft - cards[0].offsetLeft - el.scrollLeft) ? k : best), 0)
+    if (at !== i) setI(at)
+  }
+  const hold = () => { quietUntil.current = Date.now() + 7000 }
+  return (
+    <section className="mt-4" data-band-deck>
+      <div ref={rail} onScroll={onScroll} onTouchStart={hold} onPointerDown={hold}
+        className="cx-noscroll flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-px-3 px-3 pb-1">
+        {BANDS.map(b => (
+          <Link key={b.id} to={b.to} data-band={b.id}
+            className="cx-press relative flex min-h-[172px] w-[88%] shrink-0 snap-start flex-col overflow-hidden rounded-[22px] px-4 py-4"
+            style={{ background: b.bg }}>
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.14em]" style={{ color: b.kickerFg }}>{b.kicker}</p>
+            <p className={'mt-1 font-black tracking-[-0.04em] ' + (b.id === 'offer' ? 'text-[30px] leading-none' : 'text-[23px] leading-[1.05]')} style={{ color: b.bigFg }}>{b.big}</p>
+            <p className="mt-1 max-w-[62%] text-[12.5px] font-semibold leading-snug" style={{ color: b.lineFg }}>{b.line}</p>
+            <span className="relative z-10 mt-auto inline-flex h-10 w-fit items-center gap-1.5 rounded-full px-4 text-[13px] font-extrabold"
+              style={{ background: b.ctaBg, color: b.ctaFg }}>{b.cta}<ArrowRight size={15} /></span>
+            {b.art}
+          </Link>
+        ))}
+      </div>
+      {/* Which of the three is showing. */}
+      <div className="mt-2 flex justify-center gap-1.5" aria-hidden>
+        {BANDS.map((b, k) => <span key={b.id} className={'h-1.5 rounded-full transition-all duration-300 ' + (k === i ? 'w-5 bg-[var(--brand)]' : 'w-1.5 bg-[#D9CEF0]')} />)}
+      </div>
+    </section>
+  )
+}
+
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]] } return a }
 
-/* ── The hero: four scenes, each a headline with its own picture ──────
+/* ── The hero: scenes, each a headline with its own picture ───────────
    Every 3 s the headline, the question chips and the little live card
    change together, so what the words promise is what the card shows:
-   "Prices Upfront" shows a price, "Confirmed the Moment You Pay" shows
-   the payment going through. The chips ask, they do not boast. */
+   "Prices Upfront" shows a price, "Pay Only After a Master Accepts"
+   shows the payment going through. Each scene has its own colour of
+   card (Mohan, 2026-11-10: "one light purple, one green, one orange…"). */
+const PLATE = (plateLabel() ?? 'Per-plate prices').replace(/^from/, 'From').replace(' per plate', ' / plate')
 const SCENES = {
   occasions: [
-    { lines: ['Book Your', 'Celebration', 'in Minutes'], ask: ['Booked your party yet?', '25% off your first booking'],
-      card: { icon: CalendarCheck2, tone: '#7C3AED', title: 'Birthday Party', sub: '6 masters lined up', meter: 1, to: '/o/birthday-party' }, art: ['hero-family'] },
-    { lines: ['Invite', 'Everyone in', 'One Tap'], ask: ['Who’s coming? Know it live', 'Free WhatsApp RSVP'],
-      card: { icon: MailOpen, tone: '#DB2777', title: 'WhatsApp invites', sub: 'Live RSVP headcount', to: '/invites' }, art: ['hero-invite', 'svc-invitation_printing'] },
-    { lines: ['No Waiting', 'for Quotes.', 'Prices Upfront'], ask: ['Seen the price before you book?', 'No “we’ll call you back”'],
-      card: { icon: IndianRupee, tone: '#B45309', title: '₹815 / plate', sub: 'Catering · price shown upfront', to: '/s/catering_food' }, art: ['hero-price', 'svc-catering_food'] },
-    { lines: ['No Chasing', 'for Replies.', 'Masters Ready'], ask: ['Tried instant booking?', 'Ready on your date'],
-      card: { icon: Zap, tone: '#0C831F', title: 'Accepted', sub: 'Your photographer said yes', to: '/s/photography' }, art: ['hero-masters', 'svc-decoration_floral'] },
-    { lines: ['Pay Only', 'After They', 'Accept'], ask: ['Your money stays safe', 'Requests are free to send'],
-      card: { icon: ShieldCheck, tone: '#0C831F', title: 'Payment secured', sub: 'Paid after acceptance', razorpay: true, to: '/legal/cancellation' }, art: ['hero-secure', 'svc-wedding_planning'] },
-    { lines: ['Plan a', 'Surprise', 'Birthday'], ask: ['They’ll never see it coming', 'Cake, décor & a photographer'],
-      card: { icon: PartyPopper, tone: '#DB2777', title: 'Surprise Birthday', sub: 'Ready in 4 taps', to: '/o/surprise-birthday-party' }, art: ['occ-surprise-birthday-party'] },
-    { lines: ['Weekend', 'Party?', 'Sorted.'], ask: ['This Saturday, all set', 'DJ, food & lights in one go'],
-      card: { icon: Music2, tone: '#7C3AED', title: 'Rooftop party', sub: 'Book it for this Saturday', to: '/o/rooftop-party' }, art: ['hero-weekend', 'occ-friends-get-together'] },
-    { lines: ['Private', 'Dining,', 'Booked'], ask: ['A table that’s all yours', 'Chef, décor & music'],
-      card: { icon: UtensilsCrossed, tone: '#B45309', title: 'Private dinner', sub: 'For 2 to 50 guests', to: '/o/private-dinner-party' }, art: ['occ-private-dinner-party'] },
+    { tone: 'purple', lines: ['Book Your', 'Celebration', 'in Minutes'], ask: ['Booked your party yet?', '25% off your first booking'],
+      card: { icon: CalendarCheck2, title: 'Birthday Party', sub: '6 masters lined up', meter: 1, to: '/o/birthday-party' }, art: ['hero-family'] },
+    { tone: 'pink', lines: ['Invite', 'Everyone in', 'One Tap'], ask: ['Who’s coming? Know it live', 'Free WhatsApp RSVP'],
+      card: { icon: MailOpen, title: 'WhatsApp invites', sub: 'Live RSVP headcount', to: '/invites' }, art: ['hero-invite', 'svc-invitation_printing'] },
+    { tone: 'orange', lines: ['No Waiting', 'for Quotes.', 'Prices Upfront'], ask: ['Seen the price before you book?', 'No “we’ll call you back”'],
+      card: { icon: IndianRupee, title: PLATE, sub: 'Catering · price shown upfront', to: '/s/catering_food' }, art: ['hero-price', 'svc-catering_food'] },
+    { tone: 'green', lines: ['No Chasing', 'for Replies.', 'Masters Ready'], ask: ['Tried instant booking?', 'Ready on your date'],
+      card: { icon: Zap, title: 'Accepted', sub: 'Your photographer said yes', to: '/s/photography' }, art: ['hero-masters', 'svc-decoration_floral'] },
+    { tone: 'blue', lines: ['Pay Only After', 'a Master', 'Accepts'], ask: ['Requests are free to send', 'Pay to lock your date'],
+      card: { icon: ShieldCheck, title: 'Payment secured', sub: 'Only after a master accepts', razorpay: true, to: '/legal/cancellation' }, art: ['hero-secure', 'svc-wedding_planning'] },
+    { tone: 'gold', lines: ['Plan a', 'Surprise', 'Birthday'], ask: ['They’ll never see it coming', 'Cake, decor & a photographer'],
+      card: { icon: PartyPopper, title: 'Surprise Birthday', sub: 'Ready in 4 taps', to: '/o/surprise-birthday-party' }, art: ['occ-surprise-birthday-party'] },
+    { tone: 'purple', lines: ['Weekend', 'Party?', 'Sorted.'], ask: ['This Saturday, all set', 'DJ, food & lights in one go'],
+      card: { icon: Music2, title: 'Rooftop party', sub: 'Book it for this Saturday', to: '/o/rooftop-party' }, art: ['hero-weekend', 'occ-friends-get-together'] },
+    { tone: 'orange', lines: ['Private', 'Dining,', 'Booked'], ask: ['A table that’s all yours', 'Chef, decor & music'],
+      card: { icon: UtensilsCrossed, title: 'Private dinner', sub: 'For 2 to 50 guests', to: '/o/private-dinner-party' }, art: ['occ-private-dinner-party'] },
   ],
   services: [
-    { lines: ['Book the', 'Right Service', 'in Minutes'], ask: ['Need a photographer today?', '25% off your first booking'],
-      card: { icon: CalendarCheck2, tone: '#7C3AED', title: '11 photographers', sub: 'Near you · instant', to: '/s/photography' }, art: ['svc-photography'] },
-    { lines: ['Invite', 'Everyone in', 'One Tap'], ask: ['Who’s coming? Know it live', 'Free WhatsApp RSVP'],
-      card: { icon: MailOpen, tone: '#DB2777', title: 'WhatsApp invites', sub: 'Live RSVP headcount', to: '/invites' }, art: ['hero-invite', 'svc-invitation_printing'] },
-    { lines: ['No Enquiries.', 'No Waiting.', 'Just Book'], ask: ['Seen the price before you book?', 'Pick, request, pay'],
-      card: { icon: IndianRupee, tone: '#B45309', title: '₹4,348', sub: 'Photography · price upfront', to: '/s/photography' }, art: ['svc-dj_music'] },
-    { lines: ['Masters Are', 'Ready for', 'Your Date'], ask: ['Tried instant booking?', 'Verified before they go live'],
-      card: { icon: BadgeCheck, tone: '#0C831F', title: 'Verified master', sub: 'ID and work checked', to: '/s' }, art: ['hero-masters', 'svc-bridal_makeup_hair'] },
-    { lines: ['Pay Only', 'After They', 'Accept'], ask: ['Your money stays safe', 'Requests are free to send'],
-      card: { icon: ShieldCheck, tone: '#0C831F', title: 'Payment secured', sub: 'Paid after acceptance', razorpay: true, to: '/legal/cancellation' }, art: ['hero-secure', 'svc-wedding_planning'] },
+    { tone: 'purple', lines: ['Book the', 'Right Service', 'in Minutes'], ask: ['Need a photographer today?', '25% off your first booking'],
+      card: { icon: CalendarCheck2, title: '11 photographers', sub: 'Near you · instant', to: '/s/photography' }, art: ['svc-photography'] },
+    { tone: 'pink', lines: ['Invite', 'Everyone in', 'One Tap'], ask: ['Who’s coming? Know it live', 'Free WhatsApp RSVP'],
+      card: { icon: MailOpen, title: 'WhatsApp invites', sub: 'Live RSVP headcount', to: '/invites' }, art: ['hero-invite', 'svc-invitation_printing'] },
+    { tone: 'orange', lines: ['No Enquiries.', 'No Waiting.', 'Just Book'], ask: ['Seen the price before you book?', 'Pick, request, pay'],
+      card: { icon: IndianRupee, title: '₹4,348', sub: 'Photography · price upfront', to: '/s/photography' }, art: ['svc-dj_music'] },
+    { tone: 'green', lines: ['Masters Are', 'Ready for', 'Your Date'], ask: ['Tried instant booking?', 'Verified before they go live'],
+      card: { icon: BadgeCheck, title: 'Verified master', sub: 'ID and work checked', to: '/s' }, art: ['hero-masters', 'svc-bridal_makeup_hair'] },
+    { tone: 'blue', lines: ['Pay Only After', 'a Master', 'Accepts'], ask: ['Requests are free to send', 'Pay to lock your date'],
+      card: { icon: ShieldCheck, title: 'Payment secured', sub: 'Only after a master accepts', razorpay: true, to: '/legal/cancellation' }, art: ['hero-secure', 'svc-wedding_planning'] },
   ],
+}
+/* One light ground per scene, the accent the words and the button take
+   from it. Light on purpose: the art is drawn on white and multiplies
+   into whatever it stands on, so the card colours the picture too. */
+const TONES = {
+  purple: { bg: 'linear-gradient(135deg, #F5EEFF 0%, #E5D6FF 100%)', ink: '#6D28D9', cta: 'linear-gradient(135deg, #7C3AED, #5B21B6)', glow: 'rgba(91,33,182,.95)' },
+  pink: { bg: 'linear-gradient(135deg, #FFF0F6 0%, #FFD7E8 100%)', ink: '#DB2777', cta: 'linear-gradient(135deg, #EC4899, #BE185D)', glow: 'rgba(190,24,93,.95)' },
+  orange: { bg: 'linear-gradient(135deg, #FFF5E8 0%, #FFE0BC 100%)', ink: '#C2410C', cta: 'linear-gradient(135deg, #F97316, #C2410C)', glow: 'rgba(194,65,12,.95)' },
+  green: { bg: 'linear-gradient(135deg, #ECFAF1 0%, #CDEFDB 100%)', ink: '#0C831F', cta: 'linear-gradient(135deg, #16A34A, #0B6B3D)', glow: 'rgba(11,107,61,.95)' },
+  blue: { bg: 'linear-gradient(135deg, #EEF5FF 0%, #D3E3FF 100%)', ink: '#1D4ED8', cta: 'linear-gradient(135deg, #3B82F6, #1D4ED8)', glow: 'rgba(29,78,216,.95)' },
+  gold: { bg: 'linear-gradient(135deg, #FFFAE6 0%, #FFEBAE 100%)', ink: '#B45309', cta: 'linear-gradient(135deg, #F59E0B, #B45309)', glow: 'rgba(180,83,9,.95)' },
 }
 /* The four promises as marks a customer has seen on real apps: a bolt for
    instant, the blue verified rosette, the payment partner's own glyph, a
@@ -416,13 +653,6 @@ function Mark({ kind }) {
       <path d="m7.6 12.3 3 3 5.8-6.2" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
-  if (kind === 'safe') return (
-    <svg viewBox="0 0 24 24" className="h-full w-full" aria-hidden>
-      <rect width="24" height="24" rx="7" fill="#fff" stroke="#DCE7F7" />
-      <path d="M10.6 4.5h7.6L12.9 19.5H8.1l3.4-8.9-2.7 2.4z" fill="#3395FF" />
-      <path d="M8.1 19.5 10 14.4l1.6-1.2-2.3 6.3z" fill="#072654" />
-    </svg>
-  )
   return (
     <svg viewBox="0 0 24 24" className="h-full w-full" aria-hidden>
       <rect width="24" height="24" rx="12" fill="#0C831F" />
@@ -432,8 +662,17 @@ function Mark({ kind }) {
     </svg>
   )
 }
-const FEATURES = [['instant', 'Pay after accept'], ['verified', 'Verified masters'], ['safe', 'Safe payment'], ['refunds', 'Easy refunds']]
+/* Said in full, never "pay after accept": accept WHAT, by WHOM, is the
+   question a first-time customer actually has (Mohan, 2026-11-10). */
+const FEATURES = [['instant', 'Pay after a master accepts'], ['verified', 'Verified masters']]
 
+/**
+ * The hero — one card, coloured per scene.
+ *
+ * The art spreads across the card with no frame: it is drawn on white,
+ * so mix-blend-multiply dissolves its ground into the card's colour, and
+ * object-contain keeps every bit of the character in view.
+ */
 function Hero({ door }) {
   const scenes = SCENES[door] ?? SCENES.occasions
   const [i, setI] = useState(0)
@@ -441,61 +680,90 @@ function Hero({ door }) {
   /* The two doors have different numbers of scenes: index modulo the
      current list, or switching door on a late scene reads past the end. */
   const s = scenes[i % scenes.length]
+  const T = TONES[s.tone] ?? TONES.purple
   const C = s.card
   const Live = C.to ? Link : 'div'
+  const open = C.to ?? (door === 'services' ? '/s' : '/explore#celebrations')
   return (
-    <div className="relative mt-3" data-hero={i}>
-      {/* What we ask sits ABOVE the picture — the hero itself stays clear. */}
-      <p key={`a${door}${i}`} className="cx-rise flex items-center gap-1.5 px-4 text-[11.5px] font-extrabold text-[#5B21B6]" data-hero-ask>
-        <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-[#7C3AED]" /><span className="truncate">{s.ask[0]}</span>
-      </p>
-      <div className="relative mt-1 min-h-[176px]">
-        <Link to={C.to ?? (door === 'services' ? '/s' : '/explore#celebrations')} className="relative z-10 block w-[56%] pl-4 pt-1" data-hero-open>
-          <h1 key={`${door}-${i}`} className="cx-rise min-h-[90px] text-[28px] font-black leading-[1.02] tracking-[-0.045em] text-[#16092E]" aria-live="polite">
-            {s.lines[0]}<br />{s.lines[1]}<br />
-            <span className="bg-gradient-to-r from-[#7C3AED] to-[#A855F7] bg-clip-text text-transparent">{s.lines[2]}</span>
+    <div className="relative mx-3 mt-3 overflow-hidden rounded-[22px] shadow-[0_16px_34px_-26px_rgba(58,18,144,.6)]" data-hero={i} data-hero-tone={s.tone}>
+      <span key={`bg${door}${i}`} aria-hidden className="cx-enter absolute inset-0" style={{ background: T.bg }} />
+      {/* One height for every scene: the headline is given three lines'
+          room whether it uses two or three, so the page below never
+          jumps when the scene changes. */}
+      <div className="relative h-[170px]">
+        <Link to={open} aria-label={C.title} className="absolute bottom-0 right-0 top-0 w-[50%]">
+          <img key={`img${door}${i}`} src={(s.art ?? []).map(artFor).find(Boolean) ?? artFor('hero-family')} alt=""
+            className="absolute inset-0 h-full w-full object-contain object-right-bottom mix-blend-multiply" />
+        </Link>
+        <Link to={open} className="relative z-10 flex h-full w-[56%] flex-col py-3 pl-3.5 pr-1" data-hero-open>
+          <p key={`a${door}${i}`} className="cx-rise flex items-center gap-1.5 text-[9.5px] font-extrabold uppercase tracking-[0.09em]" style={{ color: T.ink }} data-hero-ask>
+            <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full" style={{ background: T.ink }} /><span className="truncate">{s.ask[0]}</span>
+          </p>
+          <h1 key={`${door}-${i}`} className="cx-rise mt-1.5 text-[21px] font-black leading-[1.1] tracking-[-0.042em] text-[#16092E]" aria-live="polite">
+            {s.lines[0]} {s.lines[1]}{' '}
+            <span style={{ color: T.ink }}>{s.lines[2]}</span>
           </h1>
-          <div className="mt-2.5 grid grid-cols-2 gap-x-2 gap-y-2">
+          <span className="mt-auto flex flex-col gap-1 pt-2" data-hero-marks>
             {FEATURES.map(([k, t]) => (
-              <span key={k} className="flex items-center gap-1.5 text-[10.5px] font-extrabold leading-tight text-[#2A2140]" data-mark={k}>
-                <span className="h-[22px] w-[22px] shrink-0 drop-shadow-[0_2px_4px_rgba(20,15,31,.18)]"><Mark kind={k} /></span>{t}
+              <span key={k} className="flex items-center gap-1.5 text-[10.5px] font-extrabold leading-tight tracking-[-0.01em] text-[#2A2140]" data-mark={k}>
+                <span className="h-[18px] w-[18px] shrink-0 drop-shadow-[0_2px_4px_rgba(20,15,31,.18)]"><Mark kind={k} /></span>{t}
               </span>
             ))}
-          </div>
-        </Link>
-        <Link to={C.to ?? (door === 'services' ? '/s' : '/explore#celebrations')} aria-label={C.title} className="absolute bottom-0 right-0 top-0 w-[50%]">
-          <img key={`img${door}${i}`} src={(s.art ?? []).map(artFor).find(Boolean) ?? artFor('hero-family')} alt="" className="cx-kenburns absolute inset-0 h-full w-full object-cover object-[60%_30%] mix-blend-multiply [mask-image:linear-gradient(90deg,transparent_0%,#000_20%)]" />
+          </span>
         </Link>
       </div>
-      {/* The live card and the offer sit BELOW the picture, never on it. */}
-      <div className="mt-2 flex items-stretch gap-2 px-4" data-hero-below>
-        <Live {...(C.to ? { to: C.to } : {})} key={`c${door}${i}`} className="cx-pop flex min-w-0 flex-1 flex-col justify-center rounded-[16px] bg-white px-2.5 py-2 shadow-[0_0_0_1px_#EFE6DA,0_10px_22px_-16px_rgba(58,18,144,.6)]">
+
+      {/* What you can do with it, right now: the live card and one action. */}
+      <div className="relative flex h-[74px] items-stretch gap-2 px-3 pb-3 pt-0.5" data-hero-below>
+        <Live {...(C.to ? { to: C.to } : {})} key={`c${door}${i}`} className="cx-pop flex min-w-0 flex-1 flex-col justify-center rounded-[13px] bg-white/90 px-2.5 py-2 shadow-[0_0_0_1px_rgba(255,255,255,.9),0_8px_18px_-14px_rgba(20,15,31,.5)]">
           <span className="flex items-center gap-2">
-            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[10px] text-white" style={{ background: C.tone }}><C.icon size={16} strokeWidth={2.6} /></span>
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[10px] text-white" style={{ background: T.cta }}><C.icon size={16} strokeWidth={2.6} /></span>
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-[12.5px] font-black tracking-[-0.02em] text-[#1C1033]">{C.title}</span>
-              <span className="block truncate text-[10px] font-bold text-[#6B6480]">{C.sub}</span>
+              <span className="block truncate text-[12.5px] font-black leading-[1.15] tracking-[-0.025em] text-[#1C1033]">{C.title}</span>
+              <span className="block truncate text-[10px] font-semibold leading-[1.2] text-[#6B6480]">{C.sub}</span>
             </span>
-            {C.to && <ChevronRight size={16} className="shrink-0 text-[var(--ink-3)]" />}
+            {C.to && <ChevronRight size={15} className="shrink-0 text-[var(--ink-3)]" />}
           </span>
-          {C.meter && <span className="mt-1.5 block h-1 overflow-hidden rounded-full bg-[#EDE6FB]"><span className="block h-full w-[78%] animate-pulse rounded-full bg-[#7C3AED]" /></span>}
-          {C.razorpay && <span className="mt-1 flex items-center gap-1 text-[9.5px] font-bold text-[#5F5675]"><ShieldCheck size={10} className="text-[#0F9D58]" />Secured by <RazorpayMark /></span>}
+          {C.meter && <span className="mt-1.5 block h-1 overflow-hidden rounded-full bg-[#EDE6FB]"><span className="block h-full w-[78%] animate-pulse rounded-full" style={{ background: T.ink }} /></span>}
+          {C.razorpay && <span className="mt-1 flex items-center gap-1 text-[9.5px] font-bold text-[#5F5675]"><ShieldCheck size={10} className="text-[#0F9D58]" />Secured by <RazorpayLogo className="h-[9px] w-auto" /></span>}
         </Live>
-        <Link to={door === 'services' ? '/s' : '/rewards'} key={`b${door}${i}`} className="cx-pop flex w-[36%] shrink-0 items-center justify-center rounded-[16px] bg-[#0C831F] px-2 py-2 text-center text-[11.5px] font-extrabold leading-tight text-white shadow-[0_8px_18px_-10px_rgba(12,131,31,.9)]" style={{ animationDelay: '.15s' }}>{s.ask[1]}</Link>
+        <Link to={door === 'services' ? '/s' : '/rewards'} key={`b${door}${i}`} style={{ animationDelay: '.15s', background: T.cta, boxShadow: `0 8px 18px -11px ${T.glow}` }}
+          className="cx-pop flex w-[37%] shrink-0 flex-col items-center justify-center gap-0.5 rounded-[13px] px-2 py-2 text-center">
+          <span className="line-clamp-3 text-[10.5px] font-extrabold leading-[1.2] tracking-[-0.005em] text-white">{s.ask[1]}</span>
+          <span className="flex items-center gap-0.5 text-[8.5px] font-black uppercase tracking-[0.06em] text-white/80">Book now<ChevronRight size={10} strokeWidth={3} /></span>
+        </Link>
       </div>
     </div>
   )
 }
 
-/* Razorpay's mark. Drop the official SVG from their brand kit in as
-   src/customer/art/logo-razorpay.svg and it replaces this drawing. */
-function RazorpayMark() {
-  const official = artFor('logo-razorpay')
-  if (official) return <img src={official} alt="Razorpay" className="h-3 w-auto" />
+/**
+ * Safe payments, and cancellation — the two things a first booking is
+ * nervous about, said once, as two cards that fill the row.
+ *
+ * The payment card carries Razorpay's own logo (ui/RazorpayLogo, their
+ * file, not a redrawing): every payment here goes through them, so it is
+ * a fact the customer can check. Each line is what actually happens —
+ * money is held until the event is delivered, and a master who cancels
+ * means everything back (data/policies.js).
+ */
+function PromiseStrip() {
   return (
-    <span className="inline-flex items-center gap-0.5 font-black tracking-[-0.02em] text-[#072654]">
-      <svg viewBox="0 0 12 14" className="h-3 w-auto" aria-hidden><path d="M4.6 0 12 0 6.4 14H1.8L5 6.2 2.6 8.4Z" fill="#3395FF" /></svg>Razorpay
-    </span>
+    <div className="mx-3 mt-4 grid grid-cols-2 gap-2.5" data-promise-strip>
+      <Link to="/legal/cancellation" className="cx-press relative flex min-h-[124px] flex-col overflow-hidden rounded-[18px] bg-white p-3 shadow-[0_0_0_1px_#DCE8FA,0_14px_28px_-24px_rgba(7,38,84,.75)]" data-mark="safe">
+        <span aria-hidden className="pointer-events-none absolute -right-7 -top-7 h-20 w-20 rounded-full bg-[#EAF3FF]" />
+        <span className="relative flex items-center gap-1 text-[9.5px] font-black uppercase tracking-[0.1em] text-[#3E5878]"><ShieldCheck size={13} className="text-[#3395FF]" />Secured by</span>
+        <RazorpayLogo className="relative mt-1.5 h-[19px] w-auto self-start" />
+        <span className="relative mt-auto block pt-2 text-[14px] font-black leading-tight tracking-[-0.02em] text-[#072654]">Safe payments</span>
+        <span className="relative mt-0.5 block text-[11px] font-semibold leading-snug text-[#4B5B76]">Held safely until your event is done</span>
+      </Link>
+      <Link to="/legal/cancellation" className="cx-press relative flex min-h-[124px] flex-col overflow-hidden rounded-[18px] bg-white p-3 shadow-[0_0_0_1px_#D4F0DE,0_14px_28px_-24px_rgba(11,107,61,.75)]" data-mark="refunds">
+        <span aria-hidden className="pointer-events-none absolute -right-7 -top-7 h-20 w-20 rounded-full bg-[#E9F8EF]" />
+        <span className="relative h-9 w-9 drop-shadow-[0_4px_8px_rgba(12,131,31,.3)]"><Mark kind="refunds" /></span>
+        <span className="relative mt-auto block pt-2 text-[14px] font-black leading-tight tracking-[-0.02em] text-[#064E3B]">Easy cancellation & refunds</span>
+        <span className="relative mt-0.5 block text-[11px] font-semibold leading-snug text-[#3F6B57]">Full refund if a master cancels</span>
+      </Link>
+    </div>
   )
 }
 
@@ -520,17 +788,51 @@ function useCompact() {
   return c
 }
 
-function IconChip({ on, onClick, label, src, all = false }) {
-  /* A plain picture on white — no box behind it — and the name on ONE line
-     (Mohan, 2026-10-31). The chosen one is marked by its colour and a bar. */
+/**
+ * One chip in the icon row.
+ *
+ * A modelled 3D mark standing on the white, no plate behind it (Mohan,
+ * 2026-11-10; white ground 2026-11-11). The chosen one lifts a little into
+ * a soft purple glow, its label goes full ink and a yellow bar — the
+ * Instant yellow — sits under it. Pinned and tightened, the marks shrink to keep the block short.
+ */
+function IconChip({ on, onClick, label, mark, compact = false }) {
+  const plate = compact ? 36 : 48
+  const size = compact ? 24 : 34
+  const all = mark === 'all'
   return (
-    <button type="button" onClick={onClick} aria-pressed={on} className="cx-press flex min-w-[58px] shrink-0 flex-col items-center gap-1 px-1 pb-1" data-chip={label}>
-      <span className="relative grid h-[46px] w-[46px] place-items-center">
-        {all ? <span className={'grid h-[40px] w-[40px] place-items-center rounded-[13px] ' + (on ? 'bg-[var(--brand)]' : 'bg-[#F1EAFE]')}><span className="grid grid-cols-2 gap-[3px]">{[0, 1, 2, 3].map(i => <span key={i} className={'h-[8px] w-[8px] rounded-[3px] ' + (on ? 'bg-white' : 'bg-[var(--brand)]')} />)}</span></span>
-          : <img src={src} alt="" className={'h-full w-full object-contain transition-transform duration-200 ' + (on ? 'scale-110' : '')} loading="lazy" />}
+    <button type="button" onClick={onClick} aria-pressed={on} className="cx-press flex min-w-[68px] shrink-0 flex-col items-center px-1" data-chip={label}>
+      {/* Each mark stands on a light-blue plate (the reference); "All" is the white grid. */}
+      <span className={'relative grid place-items-center rounded-full transition-[width,height,background-color] duration-300 ' + (all ? 'bg-white/[.14] shadow-[inset_0_0_0_1.5px_rgba(255,255,255,.35)]' : 'bg-white/[.16]')} style={{ width: plate, height: plate }}>
+        {all
+          ? <LayoutGrid size={compact ? 18 : 23} className="fill-white text-white" strokeWidth={2.2} />
+          : <span className="relative" style={{ filter: 'saturate(1.3) contrast(1.1) brightness(1.08) drop-shadow(0 4px 6px rgba(4,20,70,.4))' }}><Glyph3D id={mark} size={size} className={'relative transition-transform duration-300 ' + (on ? 'scale-[1.06]' : '')} /></span>}
       </span>
-      <span className={'whitespace-nowrap text-center text-[11.5px] leading-tight tracking-[-0.01em] ' + (on ? 'font-black text-[var(--brand)]' : 'font-bold text-[#2E1A4F]')}>{label}</span>
-      <span className={'h-[3px] w-6 rounded-full ' + (on ? 'bg-[var(--brand)]' : 'bg-transparent')} />
+      <span className={'whitespace-nowrap text-center leading-tight tracking-[-0.01em] text-white transition-[font-size,margin] duration-300 ' + (compact ? 'mt-0.5 text-[10.5px] ' : 'mt-1 text-[11.5px] ') + (on ? 'font-extrabold' : 'font-bold')}>{label}</span>
+      <span className={'h-[3px] w-7 rounded-full transition-colors duration-300 ' + (compact ? 'mt-0.5 ' : 'mt-1 ') + (on ? 'bg-[#FFC21A]' : 'bg-transparent')} />
+    </button>
+  )
+}
+
+/**
+ * Instant booking — and the reason it is instant.
+ *
+ * The pill says what the button DOES; the live line under it says why it
+ * can: masters are online now and accept on the spot. The dot pulses, so
+ * the claim reads as a live state rather than a slogan.
+ */
+function InstantPill({ onClick }) {
+  return (
+    <button type="button" onClick={onClick} data-instant-pill
+      className="cx-press flex shrink-0 flex-col items-center justify-center rounded-[13px] px-2.5 py-1.5 shadow-[0_8px_16px_-10px_rgba(0,0,0,.5)]" style={{ background: YELLOW }}>
+      <span className="flex items-center gap-1 whitespace-nowrap text-[12px] font-extrabold leading-none tracking-[-0.02em] text-[#1C1033]"><Zap size={11} className="fill-current" />Instant Booking</span>
+      <span className="mt-[4px] flex items-center gap-1.5 whitespace-nowrap text-[10.5px] font-semibold leading-none text-[#2A1B00]">
+        <span className="relative grid h-2 w-2 place-items-center">
+          <span className="absolute h-2 w-2 animate-ping rounded-full bg-[#16A34A] opacity-75" />
+          <span className="h-2 w-2 rounded-full bg-[#16A34A]" />
+        </span>
+        Masters live now
+      </span>
     </button>
   )
 }
@@ -540,32 +842,107 @@ const CHIP = { life: 'Celebrations', wedding: 'Indian Weddings', festivals: 'Fes
 /* The search hints, each in its own colour — brand, rose, green, saffron, teal, magenta. */
 const HINT_INK = ['#7C3AED', '#DB2777', '#0C831F', '#EA580C', '#0F766E', '#C026D3']
 
-/* The streets around the customer's venue — real OpenStreetMap tiles. */
-function VenueMap({ where }) {
+/* The streets around the customer's venue — real OpenStreetMap tiles —
+   with the route a master drives in, and an Edit that opens the location
+   sheet so the pin can be moved to the actual venue (Mohan, 2026-11-10). */
+function VenueMap({ where, onEdit }) {
   const centre = where?.lat && where?.lng ? { lat: Number(where.lat), lng: Number(where.lng) } : { lat: 12.9716, lng: 77.5946 }
-  const W = 360, H = 132, zoom = 15
+  const W = 360, H = 158, zoom = 15
   const tiles = tilesFor({ centre, zoom, width: W, height: H })
   return (
-    <div className="relative h-[132px] overflow-hidden bg-[#EEF0F2]" data-venue-map>
-      <div className="absolute left-1/2 top-0 h-[132px] w-[360px] -translate-x-1/2">
+    <div className="relative h-[158px] overflow-hidden bg-[#EEF0F2]" data-venue-map>
+      <div className="absolute left-1/2 top-0 h-[158px] w-[360px] -translate-x-1/2">
         {tiles.map(t => <img key={t.key} src={tileUrl(DEFAULT_TILES, t)} alt="" className="absolute h-[256px] w-[256px] max-w-none" style={{ left: t.left, top: t.top }} loading="lazy" draggable={false} />)}
       </div>
-      <span className="absolute left-1/2 top-1/2 grid h-9 w-9 -translate-x-1/2 -translate-y-full place-items-center rounded-full bg-[#7C3AED] text-white shadow-[0_6px_14px_-4px_rgba(91,33,168,.8)] ring-4 ring-white"><MapPin size={17} /></span>
-      <span className="absolute bottom-2 left-2 flex items-center gap-1.5 rounded-full bg-white/95 px-2.5 py-1 text-[11.5px] font-extrabold text-[#3B1670] shadow">Masters navigate straight to {where?.area ?? 'your venue'}</span>
-      <span className="absolute bottom-1 right-1.5 text-[8.5px] font-semibold text-[#5F5675]">© OpenStreetMap</span>
+      <span aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,rgba(255,255,255,0)_0%,rgba(91,33,182,.12)_75%)]" />
+      {/* The way in: a dashed line that keeps moving toward the pin. */}
+      <svg className="absolute left-1/2 top-0 h-[158px] w-[360px] -translate-x-1/2" viewBox="0 0 360 158" aria-hidden>
+        <path d="M-8 150C52 136 74 92 122 96S168 80 180 64" fill="none" stroke="#FFFFFF" strokeWidth="7" strokeLinecap="round" opacity=".85" />
+        <path className="cx-route" d="M-8 150C52 136 74 92 122 96S168 80 180 64" fill="none" stroke="#6D28D9" strokeWidth="3.6" strokeLinecap="round" strokeDasharray="1 8" />
+      </svg>
+      <span aria-hidden className="absolute left-1/2 top-[64px] h-12 w-12 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#7C3AED]/25 cx-orb-halo" />
+      <span className="absolute left-1/2 top-[64px] grid h-9 w-9 -translate-x-1/2 -translate-y-full place-items-center rounded-full bg-[#6D28D9] text-white shadow-[0_6px_14px_-4px_rgba(91,33,168,.8)] ring-4 ring-white"><MapPin size={17} /></span>
+      <span className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-white/95 px-2 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-[#4C1D95] shadow">Your venue</span>
+      <span className="absolute right-1.5 top-1.5 text-[8.5px] font-semibold text-[#5F5675]">© OpenStreetMap</span>
+      <div className="absolute inset-x-2 bottom-2 flex items-center gap-2 rounded-[15px] bg-white/95 p-1.5 pl-2 shadow-[0_10px_22px_-12px_rgba(30,8,70,.6)]">
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#F1EAFF] text-[#6D28D9]"><Navigation size={15} className="fill-current" /></span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-[12px] font-black tracking-[-0.01em] text-[#2E1A4F]">Masters navigate straight to {where?.area ?? 'your venue'}</span>
+          <span className="block truncate text-[10px] font-semibold text-[#6B6480]">Not the venue? Tap Edit to move the pin</span>
+        </span>
+        <button type="button" onClick={onEdit} className="cx-press flex shrink-0 items-center gap-1 rounded-full bg-[#6D28D9] px-3 py-2 text-[11.5px] font-extrabold text-white shadow-[0_8px_16px_-10px_rgba(91,33,168,.95)]" data-venue-edit>
+          <Pencil size={12} strokeWidth={2.6} />Edit
+        </button>
+      </div>
     </div>
   )
 }
 
+/**
+ * Live RSVP — what the free invite gives back.
+ *
+ * It was a picture card with a 3D envelope in its corner, which said
+ * "invitation" and nothing about why anyone would send one through us.
+ * This draws the thing itself: the three answers a guest can give,
+ * filling as they come in, and the veg / non-veg split the caterer is
+ * told. It is a drawing of the feature, never a count — there are no
+ * numbers on it, because there is no event behind it yet.
+ */
+function RsvpCard() {
+  return (
+    <Link to="/invites" className="cx-press relative mx-3 mt-3 block overflow-hidden rounded-[24px] p-4" data-home-invites
+      style={{ background: 'linear-gradient(140deg, #FFF3F8 0%, #FFE6F0 55%, #FFDAEA 100%)', boxShadow: '0 0 0 1px #FAD2E3, 0 18px 34px -26px rgba(190,24,93,.65)' }}>
+      <span aria-hidden className="pointer-events-none absolute -right-12 -top-14 h-44 w-44 rounded-full bg-white/55" />
+      <div className="relative flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <span className="flex w-fit items-center gap-1.5 rounded-full bg-[#DB2777] px-2.5 py-1 text-[9.5px] font-black uppercase tracking-[0.1em] text-white">
+            <span className="relative grid h-1.5 w-1.5 place-items-center"><span className="absolute h-1.5 w-1.5 animate-ping rounded-full bg-white opacity-80" /><span className="h-1.5 w-1.5 rounded-full bg-white" /></span>
+            Live RSVP · Free
+          </span>
+          <p className="mt-2.5 text-[19px] font-black leading-[1.12] tracking-[-0.035em] text-[#3B0A24]">Invite everyone on WhatsApp.<br /><span className="text-[#DB2777]">See who’s coming, live.</span></p>
+          <p className="mt-1 text-[12px] font-semibold leading-snug text-[#8A3A5E]">Guests reply in one tap — no app to install.</p>
+        </div>
+        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-[16px] bg-[#25D366] text-white shadow-[0_10px_20px_-10px_rgba(18,140,70,.9)]"><MessageCircle size={24} strokeWidth={2.4} /></span>
+      </div>
+
+      <div className="relative mt-3.5 rounded-[18px] bg-white/90 p-3 shadow-[0_0_0_1px_rgba(255,255,255,.9),0_10px_22px_-18px_rgba(190,24,93,.6)]" aria-hidden>
+        <p className="mb-1.5 flex items-center justify-between text-[10px] font-black uppercase tracking-[0.1em] text-[#B0306E]">Your guest list<span className="font-bold normal-case tracking-normal text-[#B79AAE]">updates as they reply</span></p>
+        {[['Coming', '#16A34A', '82%'], ['Maybe', '#F59E0B', '40%'], ['Can’t make it', '#B5ADC4', '18%']].map(([t, c, w], i) => (
+          <div key={t} className="flex items-center gap-2 py-[3px]">
+            <span className="w-[86px] shrink-0 text-[11px] font-extrabold text-[#3B2A4A]">{t}</span>
+            <span className="relative h-2 flex-1 overflow-hidden rounded-full bg-[#F3EEF7]"><span className="cx-rsvp-bar absolute inset-y-0 left-0 rounded-full" style={{ width: w, background: c, animationDelay: `${i * 0.35}s` }} /></span>
+          </div>
+        ))}
+        <div className="mt-2 flex items-center gap-2 border-t border-[#F4E8F0] pt-2">
+          <span className="flex items-center gap-1 text-[11px] font-extrabold text-[#15803D]"><FoodMark />Veg</span>
+          <span className="flex h-2 flex-1 overflow-hidden rounded-full"><span className="h-full w-[62%] bg-[#22C55E]" /><span className="h-full flex-1 bg-[#DC2626]" /></span>
+          <span className="flex items-center gap-1 text-[11px] font-extrabold text-[#B91C1C]">Non-veg<FoodMark non /></span>
+        </div>
+      </div>
+
+      <div className="relative mt-3 flex items-center justify-between gap-2">
+        <span className="flex items-center gap-1 rounded-full bg-[#DB2777] px-4 py-2.5 text-[13px] font-extrabold text-white shadow-[0_10px_20px_-12px_rgba(190,24,93,.95)]">Create a free invite<ChevronRight size={15} /></span>
+        <span className="text-right text-[11.5px] font-bold leading-tight text-[#8A3A5E]">1,000+ most-loved<br />designs, animated</span>
+      </div>
+    </Link>
+  )
+}
+/* The veg / non-veg square every Indian menu carries. */
+const FoodMark = ({ non = false }) => (
+  <span className={'grid h-3.5 w-3.5 place-items-center rounded-[3px] border-[1.5px] ' + (non ? 'border-[#B91C1C]' : 'border-[#15803D]')}>
+    <span className={'h-1.5 w-1.5 rounded-full ' + (non ? 'bg-[#B91C1C]' : 'bg-[#15803D]')} />
+  </span>
+)
+
 /* ── The sign-off ────────────────────────────────────────────────── */
 function SignOff() {
   return (
-    <footer className="mt-12 overflow-hidden" aria-label="Crafted with love in Mysuru">
+    <footer className="mt-8 overflow-hidden" aria-label="Crafted with love in Mysuru">
       <div className="px-6">
         <p className="text-[42px] font-extrabold leading-[0.96] tracking-[-0.05em] text-[#E6DDF6]">Crafted<br />with love <Heart /><br /><span className="text-[#D8CAF1]">in Mysuru.</span></p>
         <p className="mt-3 text-[12.5px] font-bold text-[#A79BC2]">For every celebration across India.</p>
       </div>
-      <div className="mt-6 bg-gradient-to-b from-white via-[#FBF8FF] to-[#F3EDFF] pt-2">
+      <div className="mt-3 bg-gradient-to-b from-white via-[#FBF8FF] to-[#F3EDFF] pt-1">
         <Palace className="block h-auto w-full" />
       </div>
     </footer>

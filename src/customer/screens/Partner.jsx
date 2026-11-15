@@ -88,15 +88,15 @@ export default function Partner() {
               <HandCoins size={18} />Negotiate
             </button>
             {added ? (
-              <button type="button" onClick={() => navigate('/plan')} className="cx-press flex h-14 flex-1 items-center justify-center gap-2 rounded-[18px] bg-[var(--ok)] text-[15px] font-extrabold text-white">
+              <button type="button" onClick={() => navigate('/board')} className="cx-press flex h-14 flex-1 items-center justify-center gap-2 rounded-[18px] bg-[var(--ok)] text-[15px] font-extrabold text-white">
                 <Check size={18} strokeWidth={3} />In your plan · Review
               </button>
             ) : (
-              <button type="button" disabled={!summary} onClick={() => summary && plan.add(summary, occId)} data-add-plan
+              <button type="button" disabled={!summary} onClick={() => navigate(occId && plan.event.occasionId === occId && plan.event.date ? `/o/${occId}/live?only=${tradeId}&master=${serviceId}` : `/brief/${tradeId}?master=${serviceId}`)} data-add-plan
                 className="cx-press cx-cta flex h-14 flex-1 items-center justify-center gap-2 rounded-[18px] text-[15px] font-extrabold">
                 {summary?.instant && <Zap size={17} className="shrink-0 fill-[var(--gold)] text-[var(--gold)]" />}
                 <span className="flex flex-col items-start leading-tight">
-                  <span>Add to plan</span>
+                  <span>Book them live</span>
                   <span className="text-[11.5px] font-bold opacity-85">price when they accept</span>
                 </span>
               </button>

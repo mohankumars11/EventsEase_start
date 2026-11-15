@@ -26,6 +26,7 @@ export const WHEN = {
   catering_food: 'On the day · cooked fresh, served at mealtime',
   cake_desserts: 'On the day · delivered before the cake-cutting',
   bar_beverages: 'During the party · counters open with the guests',
+  restaurant: 'Book ahead · the table or room is held for your group',
   venue: 'Book first · it decides your date and guest count',
   decoration_floral: 'Set up 2 to 4 hours before guests arrive',
   tent_furniture: 'Put up the day before or that morning',
@@ -71,4 +72,5 @@ export const INCLUDES = {
   event_materials_supplier: ['Plates and cutlery', 'Banners', 'Pooja items'],
   tent_furniture: ['Shamiana', 'Chairs and sofas', 'Flooring'],
   bar_beverages: ['Mocktails', 'Coffee', 'Ice cream'],
+  restaurant: ['Set menus', 'Private room', 'Bulk order'],
 }

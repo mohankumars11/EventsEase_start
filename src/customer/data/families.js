@@ -1,5 +1,5 @@
 /**
- * The 34 trades in the twelve families a customer shops by — the tiles
+ * The 35 trades in the twelve families a customer shops by — the tiles
  * on Home's "Book a Service" door and the Services tab. Every trade is in
  * exactly one family (checked at load), so nothing a partner lists is
  * unreachable from here.
@@ -10,7 +10,7 @@ const F = (id, label, line, tone, trades) => ({ id, label, line, tone, trades })
 
 export const FAMILIES = [
   F('photo', 'Photography', 'Candid · Traditional · Film', '#F3ECFF', ['photography', 'videography']),
-  F('food', 'Catering', 'Veg · Non-veg · Live counters', '#FFF1E2', ['catering_food', 'bar_beverages']),
+  F('food', 'Catering & Dining', 'Caterers · Restaurants · Live counters', '#FFF1E2', ['catering_food', 'restaurant', 'bar_beverages']),
   F('decor', 'Decoration', 'Stage · Flowers · Lights', '#FFE9F1', ['decoration_floral', 'event_lighting']),
   F('venue', 'Venues', 'Halls · Lawns · Terraces', '#E8F1FF', ['venue']),
   F('beauty', 'Makeup & Mehendi', 'Bridal · Party · Family', '#E9F8EF', ['bridal_makeup_hair', 'mehendi_artist']),
