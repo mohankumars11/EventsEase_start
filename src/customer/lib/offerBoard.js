@@ -142,6 +142,8 @@ function requestOf(p, opt, { tradeId, occasionId, event, place, ask }) {
 export async function priceOffers({ base, venue, candidates }) {
   const r = await fetch(apiUrl('/api/anchor?op=offers'), {
     method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ base, venue, candidates }),
+    /* An unreachable server must fail, not spin: the screen then says it cannot connect. */
+    signal: AbortSignal.timeout?.(20000),
   })
   const out = await r.json().catch(() => ({}))
   if (!r.ok) throw new Error(out.error ?? `offers ${r.status}`)

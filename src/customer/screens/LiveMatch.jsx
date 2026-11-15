@@ -98,6 +98,7 @@ export default function LiveMatch() {
   const who = planner ? 'planner' : 'master'
   const seed = `${user?.id ?? 'guest'}|${ev.date}|${o?.id}`
   const [rows, setRows] = useState({}) // tradeId → { near, match, backups, pool, stage }
+  const [retry, setRetry] = useState(0)
   const [phase, setPhase] = useState('matching') // matching | ready | sending | sent | paying | paid | unpaid | error
   const [swap, setSwap] = useState(null)
   const [boardFor, setBoardFor] = useState(null) // tradeId whose offer board is open
@@ -140,9 +141,12 @@ export default function LiveMatch() {
            that does, priced for the date — the board (Mohan, 2026-11-03). The
            radar is its loading moment; nothing is chosen for the customer. */
         if (!planner) {
-          const board = await buildBoard({ tradeId: t, occasionId: o.id, event: ev, place: boardPlace, needs: plan.needsOf(o.id, t) }).catch(() => null)
+          /* A failed check is not "nobody is free" (Mohan, 2026-11-15: the phone
+             said so while the API was simply unreachable) — it is its own state. */
+          let failed = false
+          const board = await buildBoard({ tradeId: t, occasionId: o.id, event: ev, place: boardPlace, needs: plan.needsOf(o.id, t) }).catch(() => { failed = true; return null })
           await nap(Math.max(0, 700 + i * 320 - (Date.now() - t0)))
-          if (live) setRows(x => ({ ...x, [t]: { stage: board?.masters?.length ? 'offers' : 'none', board, near: board?.total ?? 0 } }))
+          if (live) setRows(x => ({ ...x, [t]: { stage: failed ? 'offline' : board?.masters?.length ? 'offers' : 'none', board, near: board?.total ?? 0 } }))
           return
         }
         const r = await matchTrade(t, { occasionId: o.id, event: ev, place, needs: plan.needsOf(o.id, t), seed,
@@ -155,7 +159,7 @@ export default function LiveMatch() {
       if (live) setPhase('ready')
     })()
     return () => { live = false }
-  }, [sig]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [sig, retry]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!o) return <Navigate to="/" replace />
   if (!valid) return <Navigate to={`/o/${o.id}`} replace />
@@ -165,6 +169,7 @@ export default function LiveMatch() {
   const landed = list.filter(x => x.r.stage === 'done')
   const gaps = list.filter(x => x.r.stage === 'none')
   const toChoose = list.filter(x => x.r.stage === 'offers')
+  const offline = list.filter(x => x.r.stage === 'offline')
 
   /* The customer chose an offer on a board: it becomes this service's line,
      exactly as a match was — send() is unchanged — and the other masters they
@@ -339,7 +344,7 @@ export default function LiveMatch() {
           {/* The sheet rising over it: what is happening, and a bar that moves while it does. */}
           <section className="relative z-[2] -mt-6 rounded-t-[26px] bg-white px-4 pb-1 pt-2.5 text-center shadow-[0_-14px_30px_-22px_rgba(28,16,51,.55)]" data-match-sheet>
             <span aria-hidden className="mx-auto mb-2.5 block h-1.5 w-11 rounded-full bg-[#E3DEEE]" />
-            <h2 className="text-[22px] font-black leading-[1.1] tracking-[-0.035em]">{phase === 'matching' ? `Finding your ${who}${planner ? '' : 's'}` : landed.length ? (planner ? 'Your planner is ready' : 'Your masters are ready') : toChoose.length ? `${toChoose.reduce((s, x) => s + (x.r.board?.total ?? 0), 0)} masters can do it — choose yours` : `No ${who} is free yet`}</h2>
+            <h2 className="text-[22px] font-black leading-[1.1] tracking-[-0.035em]">{phase === 'matching' ? `Finding your ${who}${planner ? '' : 's'}` : landed.length ? (planner ? 'Your planner is ready' : 'Your masters are ready') : toChoose.length ? `${toChoose.reduce((s, x) => s + (x.r.board?.total ?? 0), 0)} masters can do it — choose yours` : offline.length ? 'Can’t reach Sambramo right now' : `No ${who} is free yet`}</h2>
             <p className="mt-1 flex items-center justify-center gap-1.5 text-[13px] font-bold text-[var(--ink-3)]">
               <span className={'h-2 w-2 rounded-full ' + (phase === 'matching' ? 'cx-live-dot bg-[#16A34A]' : 'bg-[#16A34A]')} />
               <span className="truncate">{phase === 'matching' ? 'Searching' : 'Live'} near {place?.area ?? 'you'} · {dayLabel(ev.date)}</span>
@@ -351,6 +356,11 @@ export default function LiveMatch() {
             </div>
           </section>
           <LiveFeed list={list} phase={phase} place={place} ev={ev} o={o} />
+          {phase === 'ready' && offline.length > 0 && (
+            <button type="button" onClick={() => setRetry(n => n + 1)} className="cx-press cx-cta mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-[16px] text-[14.5px] font-extrabold" data-match-retry>
+              Try again
+            </button>
+          )}
           {/* Nobody waits on this screen: add more meanwhile, we tell you when a master accepts. */}
           {!planner && (
             <div className="mx-3 mt-3 flex items-center gap-3 rounded-[20px] bg-gradient-to-br from-[#F6F0FF] to-[#EDE3FF] p-3 shadow-[inset_0_0_0_1px_#E3D5FA]" data-while-you-wait>
@@ -494,6 +504,7 @@ function LiveFeed({ list, phase, place, ev, o }) {
     if (r.stage === 'near') lines.push({ k: `${t}:near`, on: false, text: `Checking ${name.toLowerCase()} masters near ${where}…` })
     else if (r.stage === 'offers') lines.push({ k: `${t}:offers`, on: true, text: `${r.board.total} ${name.toLowerCase()} ${r.board.total === 1 ? 'master is' : 'masters are'} free on ${day}${r.board.range ? ` · from ${rupees(r.board.range.lo)}` : ''}` })
     else if (r.stage === 'done') lines.push({ k: `${t}:done`, on: true, text: `${r.match.line.name} picked for ${name.toLowerCase()}` })
+    else if (r.stage === 'offline') lines.push({ k: `${t}:offline`, on: false, warn: true, text: `Couldn’t check ${name.toLowerCase()} — no connection to Sambramo. Check your internet and try again` })
     else if (r.stage === 'none') lines.push({ k: `${t}:none`, on: false, warn: true, text: `Nobody free for ${name.toLowerCase()} on ${day} yet — we keep looking` })
     else lines.push({ k: `${t}:date`, on: false, text: `${r.near ?? ''} ${name.toLowerCase()} masters — checking ${day}…` })
   }
