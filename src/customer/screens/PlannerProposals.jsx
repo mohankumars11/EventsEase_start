@@ -21,6 +21,13 @@ import { rupees, timeLabel } from '../lib/format'
 import { supabase } from '../../lib/supabase'
 import { ActionBar, BackHeader } from '../ui/kit'
 import { useAuth } from '../../context/AuthContext'
+import { savedWhere } from '../lib/where'
+import LiveMap from '../ui/LiveMap'
+import AlertsAsk from '../ui/AlertsAsk'
+import { alertsGranted } from '../lib/alerts'
+import { enableAlerts } from '../../lib/push'
+
+const PLANNER_TRADE = 'wedding_planning'
 
 const STATUS = {
   asked: ['Asked', 'bg-[#F4F1F8] text-[var(--ink-3)]'], acknowledged: ['On it', 'bg-[#EAF2FF] text-[#1D4ED8]'],
@@ -89,6 +96,14 @@ export default function PlannerProposals() {
   const [state, setState] = useState({ loading: true, brief: null, list: [], engagement: null })
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
+  const [askAlerts, setAskAlerts] = useState(false)
+  useEffect(() => {
+    alertsGranted().then(ok => {
+      if (ok) return
+      try { if (sessionStorage.getItem('sbm.cx.alerts.asked')) return; sessionStorage.setItem('sbm.cx.alerts.asked', '1') } catch { /* private mode */ }
+      setAskAlerts(true)
+    })
+  }, [])
 
   const load = async () => {
     if (!user || !o) return
@@ -105,6 +120,14 @@ export default function PlannerProposals() {
   if (!user) return <Navigate to={`/o/${o.id}/planner`} replace />
   const { brief, list, engagement } = state
   const n = k => list.filter(x => x.status === k).length
+  /* The same live window as every other request (Mohan, 2026-11-15:
+     "find my planners also goes to the old screen"). */
+  const place = plan.place?.lat ? plan.place : savedWhere()
+  const masters = list.map(x => ({ id: x.request.vendor_service_id ?? x.request.id, tradeId: PLANNER_TRADE }))
+  const proposals = n('proposal') + n('accepted')
+  const due = brief?.proposal_due_at ? new Date(brief.proposal_due_at).getTime() - Date.now() : 0
+  const clock = due > 0 ? `${Math.floor(due / 3600000) ? `${Math.floor(due / 3600000)}h ` : ''}${String(Math.floor((due % 3600000) / 60000)).padStart(2, '0')}m` : null
+  const headline = engagement ? 'Your Planning Master is chosen' : proposals ? `${proposals} ${proposals === 1 ? 'proposal is' : 'proposals are'} in` : `Asking ${list.length} Planning ${list.length === 1 ? 'Master' : 'Masters'} live`
 
   async function accept(x) {
     setBusy(true); setMsg('')
@@ -114,14 +137,27 @@ export default function PlannerProposals() {
 
   return (
     <main className="cx-enter min-h-[100dvh] bg-white pb-[calc(env(safe-area-inset-bottom,0px)+110px)]" data-planner-proposals>
-      <BackHeader title="Your planners" onBack={() => navigate(`/o/${o.id}/plan`)} />
+      <BackHeader title="Your Planning Masters" sub={o.name} onBack={() => navigate(`/o/${o.id}/plan`)} />
       {state.loading ? <p className="mx-4 mt-4 flex items-center gap-2 text-[13px] font-bold text-[var(--ink-3)]"><Loader2 size={15} className="animate-spin" />Checking on your Planning Masters…</p> : !brief ? (
         <p className="mx-4 mt-4 text-[13px] font-bold text-[var(--ink-3)]">No brief yet. <button type="button" className="text-[var(--brand)]" onClick={() => navigate(`/o/${o.id}/planner`)}>Write one</button></p>
       ) : (
         <>
-          <section className="mx-4 mt-2 rounded-[18px] bg-[#F7F3FF] p-3 text-[12.5px] font-bold text-[#3B1670]" data-planner-summary>
-            Asked {list.length} · on it {n('acknowledged')} · proposals {n('proposal') + n('accepted')} · declined {n('declined')}
-            {brief.proposal_due_at && !engagement && <span className="block font-semibold text-[var(--ink-3)]">Planners aim to reply by {hhmm(brief.proposal_due_at)} — a target, not a promise. Proposals appear here as they come.</span>}
+          <div className="mt-2"><LiveMap full height={230} place={place} searching={!proposals && !engagement} count={list.length || null} masters={masters} /></div>
+          <section className="relative z-[2] -mt-6 rounded-t-[26px] bg-white px-4 pb-1 pt-2.5 shadow-[0_-14px_30px_-22px_rgba(28,16,51,.55)]" data-planner-summary>
+            <span aria-hidden className="mx-auto mb-2.5 block h-1.5 w-11 rounded-full bg-[#E3DEEE]" />
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h1 className="text-[22px] font-black leading-[1.1] tracking-[-0.035em] text-[#1C1033]">{headline}</h1>
+                <p className="mt-1 flex items-center gap-1.5 text-[12.5px] font-bold text-[var(--ink-3)]"><span className={'h-2 w-2 rounded-full bg-[#16A34A] ' + (proposals ? '' : 'cx-live-dot')} />Live near {place?.area ?? 'you'}</p>
+              </div>
+              {clock && !engagement && <span className="shrink-0 rounded-[14px] bg-[#F4EEFF] px-2.5 py-1.5 text-center"><span className="block text-[9.5px] font-black uppercase tracking-[0.12em] text-[#7C3AED]">Aim to reply in</span><span className="cx-num block text-[14px] font-black text-[#2E1065]">{clock}</span></span>}
+            </div>
+            <dl className="mt-3 grid grid-cols-3 gap-2 text-center">
+              {[['Asked', list.length, '#6D28D9', '#F6F1FF'], ['On it', n('acknowledged'), '#1D4ED8', '#EEF4FF'], ['Proposals', proposals, '#0B7A45', '#ECFDF3']].map(([l, v, c, bg]) => (
+                <div key={l} className="rounded-[14px] py-2" style={{ background: bg }}><dt className="text-[10px] font-black uppercase tracking-[0.12em]" style={{ color: c }}>{l}</dt><dd className="cx-num text-[19px] font-black leading-tight" style={{ color: c }}>{v}</dd></div>
+              ))}
+            </dl>
+            {brief.proposal_due_at && !engagement && <p className="mt-2 text-center text-[11.5px] font-semibold text-[var(--ink-3)]">A target, not a promise — proposals appear here as they come.</p>}
           </section>
           {engagement && (
             <section className="mx-4 mt-3 rounded-[18px] bg-[#EAF8EF] p-3 text-[13px] font-extrabold text-[#0B5B30]" data-engagement={engagement.status}>
@@ -131,6 +167,8 @@ export default function PlannerProposals() {
           <section className="mx-4 mt-3 space-y-2.5">{list.map(x => <Proposal key={x.request.id} x={x} onAccept={accept} busy={busy || !!engagement} />)}</section>
         </>
       )}
+      <AlertsAsk open={askAlerts} place={plan.place?.lat ? plan.place : savedWhere()} masters={state.list.map(x => ({ id: x.request.vendor_service_id ?? x.request.id, tradeId: PLANNER_TRADE }))}
+        onAllow={() => { setAskAlerts(false); if (user?.id) enableAlerts({ profileId: user.id, app: 'customer' }).catch(() => {}) }} onLater={() => setAskAlerts(false)} />
       <ActionBar>
         {msg && <p className="mb-2 rounded-[12px] bg-[#F4EEFF] px-3 py-1.5 text-[12px] font-bold text-[#4C1D95]" data-planner-msg>{msg}</p>}
         {engagement?.status === 'pending_payment'

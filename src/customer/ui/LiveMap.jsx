@@ -51,14 +51,22 @@ export default function LiveMap({ place, masters = [], searching = false, height
      between 70 and 140 px out, never on top of the customer's pin. */
   const figures = useMemo(() => {
     const seen = new Set()
-    const list = masters.filter(m => m && !seen.has(m.id) && seen.add(m.id)).slice(0, 12)
+    const uniq = masters.filter(m => m && !seen.has(m.id) && seen.add(m.id))
+    /* Services take turns, so a caterer-heavy list still shows the cake and the camera. */
+    const byTrade = {}
+    for (const m of uniq) (byTrade[m.tradeId] ??= []).push(m)
+    const lanes = Object.values(byTrade), mixed = []
+    for (let k = 0; mixed.length < uniq.length; k++) for (const l of lanes) if (l[k]) mixed.push(l[k])
+    const big = height > 500
+    const list = mixed.slice(0, big ? 18 : 12)
     return list.map((m, i) => {
       const h = hash(m.id)
       const angle = ((i / list.length) * 360 + (h % 20) - 10 + 15) * (Math.PI / 180)
-      const r = (i % 2 ? 118 : 82) + (h % 18)
-      return { id: m.id, tradeId: m.tradeId, dx: Math.cos(angle) * r * 1.35, dy: Math.sin(angle) * r * 0.85, drift: i % 4, delay: (i % 6) * 0.4 }
+      /* Three rings at about 58%, 78% and 96% of the way to the edge, as an ellipse the shape of the map. */
+      const rr = [0.58, 0.78, 0.96][i % 3] - (h % 6) / 100
+      return { id: m.id, tradeId: m.tradeId, dx: Math.cos(angle) * rr * (width / 2 - 30), dy: Math.sin(angle) * rr * (height / 2 - 36), drift: i % 4, delay: (i % 6) * 0.4 }
     })
-  }, [masters])
+  }, [masters, width, height])
 
   return (
     <div ref={box} className={'relative overflow-hidden bg-[#EEF0F3] ' + (full ? '' : 'rounded-[22px] shadow-[0_0_0_1px_rgba(28,16,51,.08)]')} style={{ height }} data-live-map data-figures={figures.length}>

@@ -8,8 +8,8 @@
  * at the sides, faded and smaller; the name in display type under it, the
  * one-line hook in grey, a solid purple "Book now", and the dots.
  *
- * Cheap to paint on a budget phone: no blur, no backdrop-filter, and only
- * the cards near the middle load their picture (1024 px originals).
+ * Cheap to paint on a budget phone: no blur, no backdrop-filter. Every
+ * picture is decoded up front, so none pops in mid-swipe.
  *
  *   <Spotlight items={[{ id, to, title, hook, badge, art, tone }]} />
  */
@@ -24,29 +24,41 @@ export default function Spotlight({ title = 'In the spotlight', items }) {
   const raf = useRef(0)
   const held = useRef(0)
   const [at, setAt] = useState(0)
+  /* Positions are read on screen (getBoundingClientRect): offsetLeft is
+     measured from the nearest positioned ancestor, not from the track. */
   const center = (k, smooth = true) => {
     const el = track.current, c = el?.children[k]
-    if (c) el.scrollTo({ left: c.offsetLeft - (el.clientWidth - c.clientWidth) / 2, behavior: smooth ? 'smooth' : 'auto' })
+    if (!c) return
+    const tr = el.getBoundingClientRect(), rc = c.getBoundingClientRect()
+    el.scrollTo({ left: el.scrollLeft + (rc.left + rc.width / 2) - (tr.left + tr.width / 2), behavior: smooth ? 'smooth' : 'auto' })
   }
   useEffect(() => {
     const t = setInterval(() => { if (Date.now() > held.current) center((at + 1) % items.length) }, 3800)
     return () => clearInterval(t)
   }, [at, items.length])
+  /* The cards follow the finger (Mohan, 2026-11-15: "it should be very
+     smooth while sliding — not a hard band"): every frame, each card's size
+     and light come from how far it is from the centre, written straight to
+     its style. No React render per frame, no transition fighting the drag. */
+  const paint = () => {
+    const el = track.current
+    if (!el) return
+    const tr = el.getBoundingClientRect(), mid = tr.left + tr.width / 2
+    let best = 0, d = Infinity
+    for (let k = 0; k < el.children.length; k++) {
+      const c = el.children[k], rc = c.getBoundingClientRect(), dd = rc.left + rc.width / 2 - mid
+      const f = Math.min(1, Math.abs(dd) / (c.clientWidth + 12))
+      c.style.transform = `scale(${1 - 0.14 * f})`
+      c.style.opacity = String(1 - 0.45 * f)
+      if (Math.abs(dd) < d) { d = Math.abs(dd); best = k }
+    }
+    setAt(best)
+  }
   const onScroll = () => {
     if (raf.current) return
-    raf.current = requestAnimationFrame(() => {
-      raf.current = 0
-      const el = track.current
-      if (!el) return
-      const mid = el.scrollLeft + el.clientWidth / 2
-      let best = 0, d = Infinity
-      for (let k = 0; k < el.children.length; k++) {
-        const c = el.children[k], dd = Math.abs(c.offsetLeft + c.clientWidth / 2 - mid)
-        if (dd < d) { d = dd; best = k }
-      }
-      setAt(best)
-    })
+    raf.current = requestAnimationFrame(() => { raf.current = 0; paint() })
   }
+  useEffect(() => { paint(); window.addEventListener('resize', paint); return () => window.removeEventListener('resize', paint) }, [items.length]) // eslint-disable-line react-hooks/exhaustive-deps
   const hold = () => { held.current = Date.now() + 6000 }
   if (!items.length) return null
   const cur = items[at] ?? items[0]
@@ -65,13 +77,11 @@ export default function Spotlight({ title = 'In the spotlight', items }) {
         className="cx-noscroll mt-4 flex snap-x snap-mandatory items-center gap-3 overflow-x-auto py-3"
         style={{ '--w': 'min(58vw, 280px)', paddingInline: 'calc(50% - var(--w) / 2)' }} data-spotlight-track>
         {items.map((x, k) => {
-          const on = k === at
-          const near = Math.abs(k - at) <= 2
           return (
-            <Link key={x.id} to={x.to} className="block shrink-0 snap-center transition-[transform,opacity] duration-500 ease-out"
-              style={{ width: 'var(--w)', transform: on ? 'scale(1)' : 'scale(.86)', opacity: on ? 1 : 0.55 }} aria-label={x.title} data-spotlight-card={x.id}>
+            <Link key={x.id} to={x.to} className="block shrink-0 snap-center transition-none [will-change:transform]"
+              style={{ width: 'var(--w)' }} aria-label={x.title} data-spotlight-card={x.id}>
               <span className="relative block aspect-[3/4] overflow-hidden rounded-[24px] bg-white shadow-[0_0_0_1px_#ECE6F6,0_22px_40px_-24px_rgba(46,16,101,.45)]">
-                {near && x.art && <img src={x.art} alt="" decoding="async" className="absolute inset-0 h-full w-full object-cover object-[50%_28%]" />}
+                {x.art && <img src={x.art} alt="" decoding="async" draggable={false} className="absolute inset-0 h-full w-full object-cover object-[50%_28%]" />}
                 {x.badge && <span className="absolute left-3 top-3 rounded-full bg-[#2A1F3D]/75 px-3.5 py-1.5 text-[13px] font-extrabold text-white">{x.badge}</span>}
                 <span className="absolute right-3 top-3 grid h-10 w-10 place-items-center rounded-[12px] bg-[#2A1F3D]/70 text-white"><ArrowUpRight size={19} strokeWidth={2.4} /></span>
               </span>

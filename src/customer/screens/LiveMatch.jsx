@@ -24,7 +24,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'motion/react'
-import { ArrowLeftRight, BadgeCheck, BadgePercent, Bell, CalendarCheck2, Check, ChevronRight, ClipboardList, Clock3, Loader2, Lock, MapPin, Phone, Plus, Send, ShieldCheck, Zap, Star, Users } from 'lucide-react'
+import { createPortal } from 'react-dom'
+import { ArrowLeftRight, BadgeCheck, ChevronDown, Maximize2, BadgePercent, Bell, CalendarCheck2, Check, ChevronRight, ClipboardList, Clock3, Loader2, Lock, MapPin, Phone, Plus, Send, ShieldCheck, Zap, Star, Users } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { payLines } from '../../lib/payLines'
@@ -72,6 +73,8 @@ const nap = ms => new Promise(r => setTimeout(r, ms))
    each service. Same rules: one request at a time with backups, they
    accept, then the customer pays; the number is released after payment. */
 const PLANNER = 'wedding_planning'
+/* How many masters one service's brief goes to when the customer asks them all. */
+const ASK_ALL = 8
 
 export default function LiveMatch() {
   const { occasionId } = useParams()
@@ -112,6 +115,16 @@ export default function LiveMatch() {
   const [voucher, setVoucher] = useState(null)
   const [sent, setSent] = useState(null)
   const [askAlerts, setAskAlerts] = useState(false)
+  const [mapFull, setMapFull] = useState(false)
+  /* "Keep your phone away — we'll ping you", the moment the search starts
+     (the way a ride app asks when the ride is requested) — once a session,
+     and only while notifications are not yet allowed. */
+  useEffect(() => {
+    let k = 'sbm.cx.alerts.asked'
+    try { if (sessionStorage.getItem(k)) return } catch { k = null }
+    const t = setTimeout(() => alertsGranted().then(ok => { if (!ok) { setAskAlerts(true); try { k && sessionStorage.setItem(k, '1') } catch { /* private */ } } }), 1200)
+    return () => clearTimeout(t)
+  }, [])
   const phoneRef = useRef(null)
   /* Is request → accept → pay (197) live? Until it is pasted, sending holds
      the masters' dates and the advance is taken at once — the screen must
@@ -170,6 +183,11 @@ export default function LiveMatch() {
   const gaps = list.filter(x => x.r.stage === 'none')
   const toChoose = list.filter(x => x.r.stage === 'offers')
   const offline = list.filter(x => x.r.stage === 'offline')
+  /* Masters on the map: the real ones once found; while searching, the
+     app's own figures for each service being looked for (never a place). */
+  const found = list.flatMap(({ t, r }) => (r.board?.masters ?? []).map(m => ({ id: m.partner.serviceId, tradeId: t })).concat(r.match?.line ? [{ id: r.match.line.serviceId, tradeId: t }] : []))
+  const mapMasters = found.length ? found : needed.flatMap(t => [0, 1, 2, 3].map(i => ({ id: `${t}~${i}`, tradeId: t }))).slice(0, 10)
+  const asking = toChoose.reduce((s2, x) => s2 + Math.min(ASK_ALL, x.r.board?.masters?.length ?? 0), 0)
 
   /* The customer chose an offer on a board: it becomes this service's line,
      exactly as a match was — send() is unchanged — and the other masters they
@@ -204,6 +222,51 @@ export default function LiveMatch() {
     const where = ev.venueChoice === 'other' && ev.venueOther ? `Venue: ${ev.venueOther}` : null
     const told = nd.$instructions && t !== 'catering_food' ? `From the customer: ${String(nd.$instructions).trim()}` : null
     return [wants && `Needs: ${wants}`, told, also, where].filter(Boolean).join(' · ') || undefined
+  }
+
+  /* The Menu Studio menu, when catering was built there — it travels with every request. */
+  async function menuFor(t) {
+    const st = t === 'catering_food' ? plan.needsOf(o.id, t).$studio : null
+    if (!st) return null
+    const nd = plan.needsOf(o.id, t)
+    return snapshotFor(await loadCatalogue({ live: false }), st, { diet: nd.$studioDiet ?? nd.$diet?.[0] ?? 'veg', meal: nd.$meal, serve: nd.$serve,
+      guests: Number(nd.$guests) || Number(ev.guests) || null, allergies: nd.$allergies, refs: nd.$refs ?? [], menuId: st.menuId ?? null,
+      instructions: [nd.$instructions, { jain: 'JAIN edition — no onion, garlic or root vegetables', satvik: 'SATVIK edition — no onion or garlic' }[st.edition]].filter(Boolean).join(' · ') || null })
+  }
+
+  /*
+   * Ask them all, live (Mohan, 2026-11-15: "whenever they click on find my
+   * masters, all the real nearby masters will accept … as per their
+   * quotations … chat, negotiate, compare"). The brief goes to every master
+   * on the board who can deliver it — nearest and fairest first, at most
+   * ASK_ALL a service so no master is one of thirty — as one group per
+   * service. Each master gets a push, replies with their own price, and the
+   * live window (/o/:id/board) shows the replies as they land; accepting one
+   * closes the rest politely. Nothing is charged until the customer accepts.
+   */
+  async function askAll() {
+    if (!user) { setSignIn(true); return }
+    if (!phoneOk) { askPhone(); return }
+    setPhase('sending')
+    const tel = `+91${phone.replace(/D/g, '').slice(-10)}`
+    if (profile?.id && profile.phone !== tel) supabase.from('profiles').update({ phone: tel }).eq('id', profile.id).then(() => {}, () => {})
+    const results = []
+    for (const { t, r } of list.filter(x => x.r.board?.masters?.length)) {
+      const masters = r.board.masters.slice(0, ASK_ALL)
+      const group = crypto.randomUUID()
+      const note = noteFor(t)
+      const menu = await menuFor(t).catch(() => null)
+      const out = await some(masters.map(m => () => quoteLine({ ...m.offers[0].line, name: m.partner.name, cover: m.partner.cover }, ev, place, { note, venue, group, menu })
+        .catch(e => ({ path: 'ERROR', reasons_text: [e.message] }))), 4)
+      masters.forEach((m, k) => results.push({ key: `${o.id}:${t}:${m.partner.serviceId}`, tradeId: t, serviceId: m.partner.serviceId, name: m.partner.name, cover: m.partner.cover,
+        occasionId: o.id, group, path: out[k].path, lineId: null, quoteRequestId: out[k].quoteRequestId ?? null, bookingRequestId: out[k].bookingRequestId ?? null,
+        reasons: out[k].reasons_text ?? [], at: Date.now() }))
+    }
+    const ok = results.filter(x => x.quoteRequestId)
+    if (!ok.length) { setSent({ results }); setPhase('error'); return }
+    plan.recordBookings(ok)
+    linkBookings(user.id, ok).catch(() => {})
+    navigate(`/o/${o.id}/board?asked=${ok.length}`)
   }
 
   async function send(all = false) {
@@ -335,16 +398,28 @@ export default function LiveMatch() {
 
       {!done && (
         <>
-          {/* The map, edge to edge, the masters on it. */}
-          <div className="mt-2">
-            <LiveMap full height={300} place={place} searching={phase === 'matching'} count={near || null}
-              masters={list.flatMap(({ t, r }) => (r.board?.masters ?? []).map(m => ({ id: m.partner.serviceId, tradeId: t }))
-                .concat(r.match?.line ? [{ id: r.match.line.serviceId, tradeId: t }] : []))} />
+          {/* The map, edge to edge, the masters on it — tap it to open it full
+              screen, the way Rapido does (Mohan, 2026-11-15). */}
+          <div className="relative mt-2">
+            <button type="button" onClick={() => setMapFull(true)} aria-label="Open the map full screen" className="block w-full text-left" data-map-expand>
+              <LiveMap full height={380} place={place} searching={phase === 'matching'} count={near || null} masters={mapMasters} />
+            </button>
+            <span aria-hidden className="pointer-events-none absolute bottom-9 right-3 z-[3] grid h-10 w-10 place-items-center rounded-full bg-white text-[#1C1033] shadow-[0_6px_16px_-6px_rgba(0,0,0,.45)]"><Maximize2 size={17} strokeWidth={2.4} /></span>
           </div>
+          {mapFull && createPortal(
+            <div className="cx cx-ask-fade fixed inset-0 z-[420] bg-[#EEF0F3]" role="dialog" aria-label="Live map" data-map-full>
+              <LiveMap full bare height={typeof window !== 'undefined' ? window.innerHeight : 800} place={place} searching={phase === 'matching'} count={near || null} masters={mapMasters} />
+              <button type="button" onClick={() => setMapFull(false)} aria-label="Close the map" className="absolute left-4 grid h-12 w-12 place-items-center rounded-full bg-white text-[#0B0B14] shadow-[0_6px_16px_-6px_rgba(0,0,0,.45)]" style={{ top: 'calc(env(safe-area-inset-top, 0px) + 14px)' }} data-map-close><ChevronDown size={24} strokeWidth={2.4} /></button>
+              <div className="absolute inset-x-3 rounded-[22px] bg-white p-4 shadow-[0_18px_40px_-18px_rgba(28,16,51,.6)]" style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 14px)' }}>
+                <p className="text-[18px] font-black tracking-[-0.03em] text-[#1C1033]">{phase === 'matching' ? `Finding your ${who}s` : `${near || 0} masters near ${place?.area ?? 'you'}`}</p>
+                <p className="mt-0.5 text-[12.5px] font-bold text-[var(--ink-3)]">Live near {place?.area ?? 'you'} · {dayLabel(ev.date)}</p>
+                <div className="mt-3 h-[5px] overflow-hidden rounded-full bg-[#EEE9F5]">{phase === 'matching' ? <span className="cx-progress-run block h-full w-1/3 rounded-full bg-gradient-to-r from-[#7C3AED] to-[#5B21B6]" /> : <span className="block h-full w-full rounded-full bg-[#16A34A]" />}</div>
+              </div>
+            </div>, document.body)}
           {/* The sheet rising over it: what is happening, and a bar that moves while it does. */}
           <section className="relative z-[2] -mt-6 rounded-t-[26px] bg-white px-4 pb-1 pt-2.5 text-center shadow-[0_-14px_30px_-22px_rgba(28,16,51,.55)]" data-match-sheet>
             <span aria-hidden className="mx-auto mb-2.5 block h-1.5 w-11 rounded-full bg-[#E3DEEE]" />
-            <h2 className="text-[22px] font-black leading-[1.1] tracking-[-0.035em]">{phase === 'matching' ? `Finding your ${who}${planner ? '' : 's'}` : landed.length ? (planner ? 'Your planner is ready' : 'Your masters are ready') : toChoose.length ? `${toChoose.reduce((s, x) => s + (x.r.board?.total ?? 0), 0)} masters can do it — choose yours` : offline.length ? 'Can’t reach Sambramo right now' : `No ${who} is free yet`}</h2>
+            <h2 className="text-[22px] font-black leading-[1.1] tracking-[-0.035em]">{phase === 'matching' ? `Finding your ${who}${planner ? '' : 's'}` : landed.length ? (planner ? 'Your planner is ready' : 'Your masters are ready') : toChoose.length ? `${toChoose.reduce((s, x) => s + (x.r.board?.total ?? 0), 0)} masters can do it — ask them live` : offline.length ? 'Can’t reach Sambramo right now' : `No ${who} is free yet`}</h2>
             <p className="mt-1 flex items-center justify-center gap-1.5 text-[13px] font-bold text-[var(--ink-3)]">
               <span className={'h-2 w-2 rounded-full ' + (phase === 'matching' ? 'cx-live-dot bg-[#16A34A]' : 'bg-[#16A34A]')} />
               <span className="truncate">{phase === 'matching' ? 'Searching' : 'Live'} near {place?.area ?? 'you'} · {dayLabel(ev.date)}</span>
@@ -361,16 +436,8 @@ export default function LiveMatch() {
               Try again
             </button>
           )}
-          {/* Nobody waits on this screen: add more meanwhile, we tell you when a master accepts. */}
           {!planner && (
-            <div className="mx-3 mt-3 flex items-center gap-3 rounded-[20px] bg-gradient-to-br from-[#F6F0FF] to-[#EDE3FF] p-3 shadow-[inset_0_0_0_1px_#E3D5FA]" data-while-you-wait>
-              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[14px] bg-white text-[#6D28D9] shadow-[0_8px_18px_-12px_rgba(76,29,149,.6)]"><Bell size={20} /></span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-[13.5px] font-black leading-tight text-[#2E1065]">No need to wait here</span>
-                <span className="block text-[11.5px] font-semibold leading-snug text-[#5B4A7A]">We notify you the moment a master replies or accepts. Meanwhile add anything else your {o.name.toLowerCase()} needs.</span>
-              </span>
-              <Link to={`/o/${o.id}/plan`} className="cx-solid cx-solid-flat shadow-[0_8px_18px_-10px_rgba(20,10,40,.55)] cx-press flex h-10 shrink-0 items-center gap-1 rounded-full bg-[#1C1033] px-3 text-[12px] font-extrabold text-white" data-add-more-live><Plus size={14} />Add more</Link>
-            </div>
+            <Link to={`/o/${o.id}/plan`} className="mx-auto mt-2 flex w-fit items-center gap-1 rounded-full px-3 py-1.5 text-[12.5px] font-extrabold text-[var(--brand)]" data-add-more-live><Plus size={14} />Add another service</Link>
           )}
 
           {planner && (
@@ -405,7 +472,7 @@ export default function LiveMatch() {
             )}
           </section>
 
-          {phase !== 'matching' && landed.length > 0 && (<>
+          {phase !== 'matching' && (landed.length > 0 || toChoose.length > 0) && (<>
             <motion.section initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={spring} className="mx-4 mt-4 rounded-[22px] bg-[#FAF8FD] p-3.5 shadow-[inset_0_0_0_1px_#EEE9F5]" data-contact>
               <label className="flex items-center gap-2.5">
                 <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white text-[var(--brand)] shadow-[0_0_0_1px_#ECE6F4]"><Phone size={17} /></span>
@@ -467,9 +534,17 @@ export default function LiveMatch() {
               )}
             </>
           ) : toChoose.length ? (
-            <button type="button" onClick={() => setBoardFor(toChoose[0].t)} className="cx-press cx-cta flex h-[58px] w-full items-center justify-center gap-2 rounded-[20px] text-[15.5px] font-extrabold" data-choose-first>
-              Choose your {(TRADE[toChoose[0].t]?.label ?? copyFor(o, toChoose[0].t).title).toLowerCase()} master<ChevronRight size={18} />
-            </button>
+            <>
+              {phase === 'error' && <p className="mb-2 rounded-[12px] bg-[#FFF1F0] px-3 py-1.5 text-[12px] font-bold text-[#B42318]" data-send-error>{sent?.results?.flatMap(x => x.reasons ?? [])[0] ?? 'Could not send — try again.'}</p>}
+              <button type="button" disabled={phase === 'sending'} onClick={askAll} className="cx-press cx-cta flex h-[58px] w-full items-center justify-center gap-2.5 rounded-[20px] text-[16px] font-extrabold" data-ask-all>
+                {phase === 'sending' ? <><Loader2 size={18} className="animate-spin" />Asking every master…</>
+                  : !phoneOk ? <><Phone size={17} />Add your mobile number</>
+                    : <><Zap size={18} className="fill-current" />Ask all {Math.min(asking, ASK_ALL * toChoose.length)} masters live<ChevronRight size={18} /></>}
+              </button>
+              <button type="button" onClick={() => setBoardFor(toChoose[0].t)} className="cx-press mt-2 flex h-11 w-full items-center justify-center gap-1.5 rounded-[16px] text-[13.5px] font-extrabold text-[var(--brand)] shadow-[inset_0_0_0_1.5px_#E3D5FA]" data-choose-first>
+                Or choose one {(TRADE[toChoose[0].t]?.label ?? copyFor(o, toChoose[0].t).title).toLowerCase()} master yourself
+              </button>
+            </>
           ) : (
             <Link to={`/o/${o.id}/match?all=1`} className="cx-press cx-cta flex h-[58px] w-full items-center justify-center gap-2 rounded-[20px] text-[15.5px] font-extrabold">See all masters<ChevronRight size={18} /></Link>
           )}

@@ -80,7 +80,9 @@
  * when the finger lifts. It uses the `scale` property, not `transform`,
  * so a button that is positioned with a translate never jumps.
  */
-.cx :is(button, a[href], [role='button']):not(:disabled) {
+/* Anything that brings its own transition (a Tailwind transition-* class) keeps it:
+   overriding it once froze the Spotlight cards' scale into hard snaps. */
+.cx :is(button, a[href], [role='button']):not(:disabled):not([class*='transition']) {
   transition-property: scale, background-color, color, border-color, box-shadow, opacity, filter;
   transition-duration: .22s;
   transition-timing-function: cubic-bezier(.3, 1.7, .5, 1);
