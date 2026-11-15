@@ -38,7 +38,7 @@ function zoomFor(km, height) {
   return 6
 }
 
-export default function LiveMap({ place, masters = [], searching = false, height = 250, count = null }) {
+export default function LiveMap({ place, masters = [], searching = false, height = 250, count = null, full = false }) {
   const box = useRef(null)
   const [width, setWidth] = useState(360)
   useEffect(() => {
@@ -66,7 +66,7 @@ export default function LiveMap({ place, masters = [], searching = false, height
   const mid = project(centre, view)
 
   return (
-    <div ref={box} className="relative overflow-hidden rounded-[22px] bg-[#E9EEF2] shadow-[0_0_0_1px_rgba(28,16,51,.08),0_22px_44px_-30px_rgba(28,16,51,.6)]" style={{ height }} data-live-map data-pins={pins.length}>
+    <div ref={box} className={'relative overflow-hidden bg-[#E9EEF2] ' + (full ? '' : 'rounded-[22px] shadow-[0_0_0_1px_rgba(28,16,51,.08),0_22px_44px_-30px_rgba(28,16,51,.6)]')} style={{ height }} data-live-map data-pins={pins.length}>
       {tiles.map(t => <img key={t.key} src={tileUrl(TILES, t)} alt="" draggable={false} className="pointer-events-none absolute h-[256px] w-[256px] max-w-none select-none" style={{ left: t.left, top: t.top }} />)}
       {/* A soft brand wash, so the pins read on any street map. */}
       <span aria-hidden className="pointer-events-none absolute inset-0 bg-[#4C1D95]/[.06]" />
@@ -79,7 +79,7 @@ export default function LiveMap({ place, masters = [], searching = false, height
         if (x < -20 || y < -20 || x > width + 20 || y > height + 20) return null
         return (
           <span key={p.id} className="cx-blip absolute flex flex-col items-center" style={{ left: x, top: y, translate: '-50% -100%', animationDelay: `${Math.min(i, 20) * 60}ms` }} data-map-pin={p.id} title={p.name}>
-            <span className="relative h-10 w-10 overflow-hidden rounded-full bg-white shadow-[0_8px_16px_-6px_rgba(28,16,51,.7)]" style={{ boxShadow: `0 0 0 2.5px ${RING[p.group] ?? '#7C3AED'}, 0 8px 16px -6px rgba(28,16,51,.7)` }}>
+            <span className="cx-pin-bob relative h-10 w-10 overflow-hidden rounded-full bg-white shadow-[0_8px_16px_-6px_rgba(28,16,51,.7)]" style={{ boxShadow: `0 0 0 2.5px ${RING[p.group] ?? '#7C3AED'}, 0 8px 16px -6px rgba(28,16,51,.7)`, animationDelay: `${(i % 7) * 0.35}s` }}>
               {p.cover ? <Photo src={p.cover} className="h-full w-full object-cover" /> : <ArtFill art={serviceArt(p.tradeId)} tone="#F6F1FF" className="h-full w-full" inset="14%" />}
             </span>
             <span className="-mt-[3px] h-0 w-0 border-x-[5px] border-t-[6px] border-x-transparent" style={{ borderTopColor: RING[p.group] ?? '#7C3AED' }} />

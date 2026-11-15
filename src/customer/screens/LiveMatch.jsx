@@ -58,6 +58,13 @@ import InviteShare from '../ui/InviteShare'
 import LiveMap from '../ui/LiveMap'
 
 const spring = { type: 'spring', stiffness: 420, damping: 34 }
+/* Are notifications already allowed? Native first, then the browser. */
+async function alertsGranted() {
+  try {
+    if (window.Capacitor) { const { PushNotifications } = await import('@capacitor/push-notifications'); return (await PushNotifications.checkPermissions()).receive === 'granted' }
+  } catch { /* plugin missing */ }
+  return typeof Notification !== 'undefined' && Notification.permission === 'granted'
+}
 const nap = ms => new Promise(r => setTimeout(r, ms))
 /* "One planner for all" (?planner=1): the whole plan goes to one event
    planner as the brief — for the host who hands it over rather than books
@@ -102,6 +109,7 @@ export default function LiveMatch() {
   const [phone, setPhone] = useState(profile?.phone?.replace(/^\+91/, '') ?? '')
   const [voucher, setVoucher] = useState(null)
   const [sent, setSent] = useState(null)
+  const [askAlerts, setAskAlerts] = useState(false)
   const phoneRef = useRef(null)
   /* Is request → accept → pay (197) live? Until it is pasted, sending holds
      the masters' dates and the advance is taken at once — the screen must
@@ -281,7 +289,7 @@ export default function LiveMatch() {
     }
     plan.recordBookings(results)
     linkBookings(user.id, results).catch(() => {})
-    if (profile?.id) enableAlerts({ profileId: profile.id, app: 'customer' }).catch(() => {})
+    if (profile?.id) alertsGranted().then(ok => (ok ? enableAlerts({ profileId: profile.id, app: 'customer' }).catch(() => {}) : setAskAlerts(true)))
     const requested = results.filter(x => x.path === 'REQUEST')
     const held = results.filter(x => x.lineId && x.path !== 'REQUEST')
     if (requested.length && voucher?.id) rememberVoucher(voucher.id)
@@ -321,20 +329,26 @@ export default function LiveMatch() {
 
       {!done && (
         <>
-          <section className="px-4 pt-2">
-            <h2 className="text-[26px] font-black leading-[1.05] tracking-[-0.04em]">{phase === 'matching' ? `Finding your ${who}${planner ? '' : 's'}` : landed.length ? (planner ? 'Your planner is ready' : 'Your masters are ready') : toChoose.length ? `${toChoose.reduce((s, x) => s + (x.r.board?.total ?? 0), 0)} masters can do it — choose yours` : `No ${who} is free yet`}</h2>
-            <p className="mt-1 flex items-center gap-1.5 text-[13px] font-bold text-[var(--ink-3)]">
-              <span className={'h-2 w-2 rounded-full ' + (phase === 'matching' ? 'cx-live-dot bg-[#16A34A]' : 'bg-[#16A34A]')} />
-              Live · near {place?.area ?? 'you'} · {dayLabel(ev.date)}{ev.time ? `, ${timeLabel(ev.time)}` : ''}
-            </p>
-          </section>
-
-          {/* The streets around the event, every master found on them with their own logo (Mohan, 2026-11-14). */}
-          <div className="mx-3 mt-3">
-            <LiveMap place={place} searching={phase === 'matching'} count={near || null}
+          {/* The map, edge to edge, the masters on it. */}
+          <div className="mt-2">
+            <LiveMap full height={300} place={place} searching={phase === 'matching'} count={near || null}
               masters={list.flatMap(({ t, r }) => (r.board?.masters ?? []).map(m => ({ id: m.partner.serviceId, name: m.partner.name, cover: m.partner.avatar ?? m.partner.cover, distanceKm: m.partner.distanceKm, lat: m.partner.lat, lng: m.partner.lng, tradeId: t }))
                 .concat(r.match?.line ? [{ id: r.match.line.serviceId, name: r.match.line.name, cover: r.match.line.cover, distanceKm: r.match.line.distanceKm, tradeId: t }] : []))} />
           </div>
+          {/* The sheet rising over it: what is happening, and a bar that moves while it does. */}
+          <section className="relative z-[2] -mt-6 rounded-t-[26px] bg-white px-4 pb-1 pt-2.5 text-center shadow-[0_-14px_30px_-22px_rgba(28,16,51,.55)]" data-match-sheet>
+            <span aria-hidden className="mx-auto mb-2.5 block h-1.5 w-11 rounded-full bg-[#E3DEEE]" />
+            <h2 className="text-[22px] font-black leading-[1.1] tracking-[-0.035em]">{phase === 'matching' ? `Finding your ${who}${planner ? '' : 's'}` : landed.length ? (planner ? 'Your planner is ready' : 'Your masters are ready') : toChoose.length ? `${toChoose.reduce((s, x) => s + (x.r.board?.total ?? 0), 0)} masters can do it — choose yours` : `No ${who} is free yet`}</h2>
+            <p className="mt-1 flex items-center justify-center gap-1.5 text-[13px] font-bold text-[var(--ink-3)]">
+              <span className={'h-2 w-2 rounded-full ' + (phase === 'matching' ? 'cx-live-dot bg-[#16A34A]' : 'bg-[#16A34A]')} />
+              <span className="truncate">{phase === 'matching' ? 'Searching' : 'Live'} near {place?.area ?? 'you'} · {dayLabel(ev.date)}</span>
+            </p>
+            <div className="mx-auto mt-3 h-[5px] w-full overflow-hidden rounded-full bg-[#EEE9F5]" role="progressbar" aria-label="Matching progress" data-match-progress>
+              {phase === 'matching'
+                ? <span className="cx-progress-run block h-full w-1/3 rounded-full bg-gradient-to-r from-[#7C3AED] to-[#5B21B6]" />
+                : <span className="block h-full rounded-full bg-[#16A34A] transition-[width] duration-700" style={{ width: `${Math.max(8, Math.round(((list.length - list.filter(x => x.r.stage === 'near').length) / Math.max(1, list.length)) * 100))}%` }} />}
+            </div>
+          </section>
           <LiveFeed list={list} phase={phase} place={place} ev={ev} o={o} />
           {/* Nobody waits on this screen: add more meanwhile, we tell you when a master accepts. */}
           {!planner && (
@@ -456,6 +470,19 @@ export default function LiveMatch() {
         event={ev} place={boardPlace} needs={boardFor ? plan.needsOf(o.id, boardFor) : {}} initial={boardFor ? rows[boardFor]?.board : null} focus={master}
         onChoose={(offer, partner, backups) => chooseOffer(boardFor, offer, partner, backups)} />
       <SignInSheet open={signIn} onClose={() => setSignIn(false)} onDone={() => setSignIn(false)} why="to send your requests" />
+      {/* "Put your phone away and relax" — asked right after sending, when it means something. */}
+      <Sheet open={askAlerts} onClose={() => setAskAlerts(false)} title="">
+        <div className="pb-4" data-ask-alerts>
+          <span className="relative mb-4 grid h-[88px] w-[88px] place-items-center rounded-[26px] bg-gradient-to-br from-[#EDE3FF] to-[#D8C7FF]">
+            <Bell size={46} strokeWidth={2} className="cx-bell-ring fill-[#7C3AED] text-[#5B21B6]" />
+            <span className="absolute -right-1 -top-1 grid h-7 w-7 place-items-center rounded-full bg-[#16A34A] text-[12px] font-black text-white ring-[3px] ring-white">{Math.max(1, sent?.requested?.length ?? sent?.results?.length ?? 1)}</span>
+          </span>
+          <h3 className="text-[30px] font-black leading-[1.05] tracking-[-0.04em] text-[#1C1033]">Put your phone away and relax</h3>
+          <p className="mt-2 text-[14.5px] font-semibold leading-snug text-[var(--ink-2)]">Allow notifications and we’ll tell you the moment a master accepts — and, on the day, when each one is on the way. You can turn them off any time in Settings.</p>
+          <button type="button" onClick={() => { setAskAlerts(false); if (profile?.id) enableAlerts({ profileId: profile.id, app: 'customer' }).catch(() => {}) }} className="cx-press cx-cta mt-5 flex h-[54px] w-full items-center justify-center rounded-[16px] text-[16px] font-extrabold" data-alerts-allow>Allow</button>
+          <button type="button" onClick={() => setAskAlerts(false)} className="cx-press mt-1.5 flex h-12 w-full items-center justify-center rounded-[16px] text-[15px] font-extrabold text-[#1C1033]" data-alerts-later>Not now</button>
+        </div>
+      </Sheet>
     </main>
   )
 }

@@ -118,11 +118,11 @@ export default function Home() {
   const [nudge, setNudge] = useState(false)
   useEffect(() => {
     if (!user) return
-    let seen = false
-    try { seen = localStorage.getItem('sbm.cx.door.nudged') === '1' } catch { /* off */ }
-    if (seen) return
-    const a = setTimeout(() => setNudge(true), 1100)
-    const b = setTimeout(() => { setNudge(false); try { localStorage.setItem('sbm.cx.door.nudged', '1') } catch { /* off */ } }, 2900)
+    let seen = 0
+    try { seen = Number(localStorage.getItem('sbm.cx.door.nudges')) || 0 } catch { /* off */ }
+    if (seen >= 3) return
+    const a = setTimeout(() => setNudge(true), 1400)
+    const b = setTimeout(() => { setNudge(false); try { localStorage.setItem('sbm.cx.door.nudges', String(seen + 1)) } catch { /* off */ } }, 4200)
     return () => { clearTimeout(a); clearTimeout(b) }
   }, [user])
   const [where, setWhere] = useState(savedWhere)
@@ -225,7 +225,7 @@ export default function Home() {
         <div className={'relative mx-3 grid grid-cols-2 rounded-[13px] p-[2px] shadow-[0_0_0_1px_rgba(255,255,255,.5)] transition-[height,margin] duration-300 ' + (compact ? 'mt-1.5 h-[34px]' : 'h-[37px]')}
           style={{ background: TRACK }} role="tablist" data-door-bar>
           <span aria-hidden className={'absolute bottom-[2px] left-[2px] top-[2px] w-[calc(50%-2px)] rounded-[11px] bg-white shadow-[0_4px_12px_-8px_rgba(0,0,0,.5)] transition-transform duration-300 ease-out ' + ((celebrate && !nudge) ? 'translate-x-0' : 'translate-x-full') + (nudge ? ' duration-700' : '')} />
-          {nudge && <span className="cx-pop pointer-events-none absolute -bottom-8 right-2 z-20 rounded-full bg-[#1C1033] px-2.5 py-1 text-[10.5px] font-extrabold text-white shadow-[0_8px_18px_-8px_rgba(0,0,0,.6)]" data-door-nudge>Book one service here too</span>}
+          {nudge && <span className="cx-pop pointer-events-none absolute -bottom-9 right-1 z-20 flex items-center gap-1 rounded-full bg-[#FFC21A] px-2.5 py-1 text-[11px] font-extrabold text-[#1C1033] shadow-[0_8px_18px_-8px_rgba(0,0,0,.6)]" data-door-nudge><Zap size={11} className="fill-current" />Just one service? 35 here — tap to switch</span>}
           {[['occasions', 'Celebrations'], ['services', 'Book a Service']].map(([id, t]) => (
             <button key={id} type="button" role="tab" aria-selected={door === id} onClick={() => choose(id)} data-door={t}
               className={'relative z-10 rounded-[11px] font-extrabold tracking-[-0.02em] transition-[color,font-size] duration-300 ' + (compact ? 'text-[13px] ' : 'text-[14px] ') + ((nudge ? id === 'services' : door === id) ? 'text-[#0C49B8]' : 'text-white')}>{t}</button>
@@ -245,9 +245,9 @@ export default function Home() {
 
         {/* Icon row: modelled 3D marks standing on the white, no plate.
             Each one filters the grid below and takes the page to it. */}
-        <div className="cx-noscroll flex gap-0.5 overflow-x-auto px-2 pt-2" key={door} data-icon-row>
+        <div className={'cx-noscroll flex gap-0.5 overflow-x-auto px-2 pt-2 ' + (nudge ? 'cx-rise' : '')} key={door + (nudge ? ':nudge' : '')} data-icon-row>
           <IconChip on={filter === 'all'} onClick={() => pick('all')} label="All" mark="all" compact={compact} />
-          {(celebrate ? CATEGORIES.map(c => ({ id: c.id, label: CHIP[c.id] ?? c.short, mark: c.id })) : TRADE_GROUPS.map(g => ({ id: g.id, label: g.chip ?? g.label, mark: `svc:${g.id}` })))
+          {(celebrate && !nudge ? CATEGORIES.map(c => ({ id: c.id, label: CHIP[c.id] ?? c.short, mark: c.id })) : TRADE_GROUPS.map(g => ({ id: g.id, label: g.chip ?? g.label, mark: `svc:${g.id}` })))
             .map(x => <IconChip key={x.id} on={filter === x.id} onClick={() => pick(x.id)} label={x.label} mark={x.mark} compact={compact} />)}
         </div>
       </div>
@@ -821,18 +821,52 @@ function IconChip({ on, onClick, label, mark, compact = false }) {
  * can: masters are online now and accept on the spot. The dot pulses, so
  * the claim reads as a live state rather than a slogan.
  */
+/* The faces the button flips through — every one a fact, never a slogan. */
+const FLAPS = [
+  ['Instant Booking', 'Masters live now', 'live'],
+  ['Instant Booking', '₹0 to request', 'rupee'],
+  ['Book in a tap', 'Pay after accept', 'lock'],
+  ['Instant Booking', 'ID-verified masters', 'tick'],
+]
+/*
+ * Instant Booking, as a split-flap board (Mohan, 2026-11-15: "make it
+ * live — flipping vertically, up and down, very creatively, so they feel
+ * it is a quick-commerce app; it should stay at the same place").
+ *
+ * The button never moves or resizes: a fixed yellow tile with a hinge
+ * line across its middle, like an airport departures board. Every 2.6 s
+ * the face flips on that hinge — the old face folds away upward, the new
+ * one drops in from below and settles with a small overshoot — and a
+ * glint runs across after each flip. The green dot keeps pulsing through
+ * it all. Reduced motion: no flip, just the first face.
+ */
 function InstantPill({ onClick }) {
-  return (
-    <button type="button" onClick={onClick} data-instant-pill
-      className="cx-press flex shrink-0 flex-col items-center justify-center rounded-[13px] px-2.5 py-1.5 shadow-[0_8px_16px_-10px_rgba(0,0,0,.5)]" style={{ background: YELLOW }}>
-      <span className="flex items-center gap-1 whitespace-nowrap text-[12px] font-extrabold leading-none tracking-[-0.02em] text-[#1C1033]"><Zap size={11} className="fill-current" />Instant Booking</span>
+  const [i, setI] = useState(0)
+  useEffect(() => {
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
+    const t = setInterval(() => setI(n => (n + 1) % FLAPS.length), 2600)
+    return () => clearInterval(t)
+  }, [])
+  const prev = FLAPS[(i + FLAPS.length - 1) % FLAPS.length]
+  const face = ([top, sub, mark], cls, key) => (
+    <span key={key} className={'absolute inset-0 flex flex-col items-center justify-center [backface-visibility:hidden] ' + cls} aria-hidden={cls.includes('out')}>
+      <span className="flex items-center gap-1 whitespace-nowrap text-[12px] font-extrabold leading-none tracking-[-0.02em] text-[#1C1033]"><Zap size={11} className="fill-current" />{top}</span>
       <span className="mt-[4px] flex items-center gap-1.5 whitespace-nowrap text-[10.5px] font-semibold leading-none text-[#2A1B00]">
-        <span className="relative grid h-2 w-2 place-items-center">
-          <span className="absolute h-2 w-2 animate-ping rounded-full bg-[#16A34A] opacity-75" />
-          <span className="h-2 w-2 rounded-full bg-[#16A34A]" />
-        </span>
-        Masters live now
+        {mark === 'live'
+          ? <span className="relative grid h-2 w-2 place-items-center"><span className="absolute h-2 w-2 animate-ping rounded-full bg-[#16A34A] opacity-75" /><span className="h-2 w-2 rounded-full bg-[#16A34A]" /></span>
+          : <span className="grid h-3 w-3 place-items-center rounded-full bg-[#16A34A] text-[7px] font-black text-white">{mark === 'rupee' ? '₹' : '✓'}</span>}
+        {sub}
       </span>
+    </span>
+  )
+  return (
+    <button type="button" onClick={onClick} data-instant-pill data-flap={i} aria-label="Instant Booking — masters live now"
+      className="cx-press relative h-[40px] w-[132px] shrink-0 overflow-hidden rounded-[13px] shadow-[0_8px_16px_-10px_rgba(0,0,0,.5)] [perspective:240px]" style={{ background: YELLOW }}>
+      {face(prev, 'cx-flap-out', `o${i}`)}
+      {face(FLAPS[i], 'cx-flap-in', `i${i}`)}
+      {/* The hinge, and the glint that follows each flip. */}
+      <span aria-hidden className="pointer-events-none absolute inset-x-0 top-1/2 h-px bg-[#B87A00]/30" />
+      <span aria-hidden key={`g${i}`} className="cx-flap-glint pointer-events-none absolute inset-y-0 -left-1/2 w-1/2 bg-gradient-to-r from-transparent via-white/60 to-transparent" />
     </button>
   )
 }
